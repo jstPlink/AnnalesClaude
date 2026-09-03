@@ -25,7 +25,9 @@ Il NAS non ha bisogno del codice sorgente, solo di [`docker-compose.yaml`](docke
 
 1. Copiare `docker-compose.yaml` sul NAS (o incollarne il contenuto).
 2. Container Manager → **Progetto** → *Crea* → sorgente: il file compose.
-3. Avviare. L'app risponde su `http://<ip-nas>:8080`.
+3. Avviare. L'app risponde su `http://<ip-nas>:8973` (la porta a sinistra in
+   `ports:` — cambiala se 8973 è occupata; la `80` a destra è interna al
+   container, non toccarla).
 
 ### Da riga di comando (SSH)
 
@@ -46,12 +48,31 @@ docker image prune -f          # opzionale, libera le vecchie immagini
 
 Su Synology: *Container Manager → Progetto → Azione → Ricostruisci* (fa pull + restart).
 
+## 4. Esporre su Internet con Cloudflare
+
+Le porte del compose (`8973:80`) restano **sulla LAN**. Cloudflare non si collega
+mai alla 8973 o alla 80 direttamente: parla con il NAS su 443/HTTPS, e qualcosa
+sul NAS inoltra a `127.0.0.1:8973`.
+
+**Opzione A — Cloudflare Tunnel** (come già fai per `pocketbase.fplinio.it`):
+nel tunnel aggiungi un *public hostname* (es. `diario.fplinio.it`) con
+**Service = `http://localhost:8973`** (oppure `http://<ip-nas>:8973`). Fine:
+niente porte aperte sul router, HTTPS gestito da Cloudflare.
+Se `cloudflared` gira come container sulla stessa rete Docker puoi anche usare
+`http://annales-diario:80` (nome del container + porta interna).
+
+**Opzione B — reverse proxy del NAS + DNS proxied**: record DNS `diario` →
+proxied (arancione) su Cloudflare; sul NAS un reverse proxy (Synology
+*Portale applicazioni web* o Nginx Proxy Manager) che ascolta su 443 con
+certificato e inoltra a `127.0.0.1:8973`. Cloudflare raggiunge il NAS sulla 443.
+
+In entrambi i casi: **quello che colleghi è `8973` (porta host del NAS)**, mai la
+80 del container.
+
 ## Note
 
 - **Backend PocketBase**: l'URL (`https://pocketbase.fplinio.it`) è compilato
   dentro il bundle a build time dal workflow. Per cambiarlo si modifica
   `VITE_PB_URL` in `.github/workflows/docker-publish.yml` e si fa un nuovo push.
-- **HTTPS**: il container espone solo HTTP:80. Metterlo dietro il reverse proxy
-  del NAS o un Cloudflare Tunnel.
 - **Architettura**: l'immagine è multi-arch (`amd64` + `arm64`), funziona sia sui
   NAS Intel sia su quelli ARM.

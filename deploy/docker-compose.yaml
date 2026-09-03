@@ -12,7 +12,11 @@ services:
     image: ghcr.io/jstplink/annalesclaude:latest
     container_name: annales-diario
     ports:
-      # host:container  — cambia la porta host (8080) se occupata sul NAS
-      - "8080:80"
+      # <porta-sul-NAS>:<porta-nel-container>
+      # La 80 a destra e' INTERNA al container: non cambiarla, non e' esposta
+      # fuori dal NAS. La porta a sinistra e' quella che usi sul NAS: 8973 e'
+      # scelta a caso per non collidere con Seafile/DSM/Portainer ecc.
+      # Alternative libere tipiche: 8973, 8090, 8480, 9080, 8791.
+      - "8973:80"
     restart: unless-stopped
     pull_policy: always

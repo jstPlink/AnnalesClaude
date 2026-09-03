@@ -44,7 +44,7 @@ multi-stage: `node:22-alpine` per la build, `nginx:1.27-alpine` per servire.
 
 ```bash
 docker compose up -d --build      # build immagine + avvio
-# app su http://<host>:8080  (porta host modificabile in docker-compose.yml)
+# app su http://<host>:8973  (porta host modificabile in docker-compose.yml)
 docker compose down               # stop
 ```
 
@@ -52,7 +52,7 @@ docker compose down               # stop
 
 ```bash
 docker build -t annales-diario:latest .
-docker run -d --name annales-diario -p 8080:80 --restart unless-stopped annales-diario:latest
+docker run -d --name annales-diario -p 8973:80 --restart unless-stopped annales-diario:latest
 ```
 
 ### Backend PocketBase

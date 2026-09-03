@@ -8,6 +8,6 @@ services:
     image: annales-diario:latest
     container_name: annales-diario
     ports:
-      # host:container — cambia la porta host come serve sul NAS
-      - "8080:80"
+      # host:container — cambia la porta host come serve
+      - "8973:80"
     restart: unless-stopped
