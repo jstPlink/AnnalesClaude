@@ -83,7 +83,6 @@ export default function NoteView() {
   const [record, setRecord] = useState(null)
   const [newFiles, setNewFiles] = useState([])
   const [removedImages, setRemovedImages] = useState([])
-  const [tab, setTab] = useState('write')
   const [loading, setLoading] = useState(!isNew)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -202,30 +201,33 @@ export default function NoteView() {
           </CircleButton>
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 pb-3">
-          <label className="flex flex-col items-center rounded-2xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-ink-soft">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-1.5 px-3 pb-3">
+          <label className="flex flex-col items-center rounded-xl border border-line bg-cream px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
             inizio
             <input
               type="time"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="bg-transparent text-center text-base font-bold text-ink outline-none"
+              className="time-compact w-16 bg-transparent text-center text-sm font-bold text-ink outline-none"
             />
           </label>
 
-          <YearPill
-            year={year}
-            onChange={changeYear}
-            subtitle={dayMonthLabel(form.dateKey)}
-          />
+          <div className="flex min-w-0 justify-center">
+            <YearPill
+              year={year}
+              onChange={changeYear}
+              subtitle={dayMonthLabel(form.dateKey)}
+              minWidth={96}
+            />
+          </div>
 
-          <label className="flex flex-col items-center rounded-2xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-ink-soft">
+          <label className="flex flex-col items-center rounded-xl border border-line bg-cream px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
             fine
             <input
               type="time"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="bg-transparent text-center text-base font-bold text-ink outline-none"
+              className="time-compact w-16 bg-transparent text-center text-sm font-bold text-ink outline-none"
             />
           </label>
         </div>
@@ -249,44 +251,21 @@ export default function NoteView() {
         />
 
         <div className="mt-4">
-          <div className="mb-2 inline-flex rounded-full border border-line bg-panel p-1 text-sm font-semibold">
-            <button
-              type="button"
-              onClick={() => setTab('write')}
-              className={
-                'rounded-full px-4 py-1 transition ' +
-                (tab === 'write' ? 'bg-sand text-ink' : 'text-ink-soft')
-              }
-            >
-              Scrivi
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('preview')}
-              className={
-                'rounded-full px-4 py-1 transition ' +
-                (tab === 'preview' ? 'bg-sand text-ink' : 'text-ink-soft')
-              }
-            >
-              Anteprima
-            </button>
-          </div>
-
-          {tab === 'write' ? (
-            <textarea
-              rows={10}
-              placeholder="Scrivi in Markdown…"
-              value={form.content}
-              onChange={(e) => set({ content: e.target.value })}
-              className="w-full resize-y rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink-soft"
-            />
-          ) : (
-            <div className="markdown-body min-h-[8rem] rounded-2xl border border-line bg-panel px-4 py-3 text-[15px] text-ink">
-              {form.content.trim() ? (
+          <textarea
+            rows={10}
+            placeholder="Scrivi in Markdown…"
+            value={form.content}
+            onChange={(e) => set({ content: e.target.value })}
+            className="w-full resize-y rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink-soft"
+          />
+          {form.content.trim() && (
+            <div className="mt-2">
+              <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
+                Anteprima
+              </p>
+              <div className="markdown-body rounded-2xl border border-line-soft bg-cream px-4 py-3 text-[15px] text-ink">
                 <Markdown remarkPlugins={[remarkGfm]}>{form.content}</Markdown>
-              ) : (
-                <p className="italic text-ink-soft">Niente da mostrare.</p>
-              )}
+              </div>
             </div>
           )}
         </div>

@@ -154,6 +154,16 @@ body {
   border-radius: 9999px;
 }
 
+/* Input orario compatto: niente icona orologio nativa, così "HH:mm" non viene
+   tagliato negli spazi stretti dell'header della nota. */
+input[type='time'].time-compact::-webkit-calendar-picker-indicator {
+  display: none;
+}
+input[type='time'].time-compact {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* Transizioni tra i mesi nella vista mensile. */
 @keyframes fadeIn {
   from {

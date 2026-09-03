@@ -3,23 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
-import MoodBar from '../components/MoodBar'
 import ImageCarousel from '../components/ImageCarousel'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
-import { useAuth } from '../context/AuthContext'
 import {
   listNotesInRange,
   groupByDay,
   describeError,
   parsePeople,
 } from '../lib/notes'
-import { averageMood, MOOD_TITLE_THRESHOLD } from '../lib/mood'
+import { averageMood, moodColor, MOOD_TITLE_THRESHOLD } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
   addMonths,
   isWeekend,
+  monthDayKeys,
   monthRange,
   parseWall,
   todayKey,
@@ -30,7 +29,6 @@ const SWIPE_THRESHOLD = 55
 
 export default function MonthView() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
   const today = new Date()
   const [cursor, setCursor] = useState({
     year: today.getFullYear(),
@@ -88,35 +86,36 @@ export default function MonthView() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
+  const todayK = todayKey()
+
+  // Tutti i giorni del mese, con o senza note.
   const days = useMemo(() => {
     const grouped = groupByDay(notes)
-    return [...grouped.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, dayNotes]) => {
-        const images = dayNotes.flatMap((n) =>
-          (n.images || []).map((fn) => ({
-            url: fileUrl(n, fn, { thumb: '200x200' }),
-            alt: n.title || '',
-          })),
-        )
-        const titles = dayNotes
-          .filter((n) => Number(n.mood) > MOOD_TITLE_THRESHOLD)
-          .map((n) => n.title)
-          .filter(Boolean)
-        return {
-          key,
-          dayNum: parseWall(key)?.d ?? '',
-          weekday: weekdayShort(key),
-          weekend: isWeekend(key),
-          avgMood: averageMood(dayNotes),
-          titles,
-          people: [
-            ...new Set(dayNotes.flatMap((n) => parsePeople(n.people))),
-          ],
-          images,
-        }
-      })
-  }, [notes])
+    return monthDayKeys(cursor.year, cursor.month).map((key) => {
+      const dayNotes = grouped.get(key) || []
+      const images = dayNotes.flatMap((n) =>
+        (n.images || []).map((fn) => ({
+          url: fileUrl(n, fn, { thumb: '200x200' }),
+          alt: n.title || '',
+        })),
+      )
+      const titles = dayNotes
+        .filter((n) => Number(n.mood) > MOOD_TITLE_THRESHOLD)
+        .map((n) => n.title)
+        .filter(Boolean)
+      return {
+        key,
+        dayNum: parseWall(key)?.d ?? '',
+        weekday: weekdayShort(key),
+        weekend: isWeekend(key),
+        hasNotes: dayNotes.length > 0,
+        avgMood: dayNotes.length ? averageMood(dayNotes) : null,
+        titles,
+        people: [...new Set(dayNotes.flatMap((n) => parsePeople(n.people)))],
+        images,
+      }
+    })
+  }, [notes, cursor.year, cursor.month])
 
   return (
     <PhoneShell>
@@ -133,8 +132,13 @@ export default function MonthView() {
             />
           </div>
           <div className="flex justify-end">
-            <CircleButton size={40} variant="light" onClick={logout} title="Esci">
-              <Icon name="logout" size={18} />
+            <CircleButton
+              size={40}
+              variant="light"
+              onClick={() => navigate('/profilo')}
+              title="Profilo"
+            >
+              <Icon name="user" size={18} />
             </CircleButton>
           </div>
         </div>
@@ -148,9 +152,6 @@ export default function MonthView() {
           <h2 className="text-2xl font-extrabold text-ink">
             {MONTHS_IT[cursor.month]}
           </h2>
-          <p className="mt-0.5 text-xs text-ink-soft">
-            scorri lateralmente per cambiare mese
-          </p>
         </div>
       </header>
 
@@ -170,43 +171,51 @@ export default function MonthView() {
           </p>
         )}
 
-        {loading && !notes.length && (
-          <p className="p-8 text-center text-ink-soft">Carico…</p>
-        )}
-
-        {!loading && !error && !days.length && (
-          <p className="p-10 text-center text-ink-soft">
-            Nessuna nota in {MONTHS_IT[cursor.month]} {cursor.year}.
-          </p>
-        )}
-
         <ul className="divide-y divide-line-soft">
           {days.map((d) => (
             <li key={d.key}>
               <button
                 type="button"
                 onClick={() => navigate(`/day/${d.key}`)}
-                className="flex w-full items-stretch gap-3 px-3 py-3 text-left transition active:bg-panel"
+                className={
+                  'flex w-full items-center gap-3 px-3 py-2.5 text-left transition active:bg-panel ' +
+                  (d.hasNotes ? '' : 'opacity-55')
+                }
               >
-                <div
-                  className={
-                    'flex w-11 shrink-0 flex-col items-center justify-center ' +
-                    (d.weekend ? 'text-weekend' : 'text-ink')
-                  }
-                >
-                  <span className="text-2xl font-extrabold leading-none">
+                <div className="flex w-12 shrink-0 flex-col items-center gap-1">
+                  <span
+                    className={
+                      'text-2xl font-extrabold leading-none ' +
+                      (d.weekend ? 'text-weekend' : 'text-ink')
+                    }
+                  >
                     {d.dayNum}
                   </span>
-                  <span className="mt-1 text-xs font-semibold lowercase">
+                  <span
+                    className={
+                      'text-xs font-semibold lowercase ' +
+                      (d.weekend ? 'text-weekend' : 'text-ink-soft')
+                    }
+                  >
                     {d.weekday}
                   </span>
+                  {/* Barra del mood: grande, sotto il giorno */}
+                  {d.hasNotes ? (
+                    <span
+                      className="mt-1 h-3 w-full rounded-full"
+                      style={{
+                        backgroundColor: moodColor(d.avgMood),
+                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+                      }}
+                    />
+                  ) : (
+                    <span className="mt-1 h-[3px] w-5 rounded-full bg-line" />
+                  )}
                 </div>
 
-                <MoodBar value={d.avgMood} />
-
-                <div className="min-w-0 flex-1 self-center">
+                <div className="min-w-0 flex-1 self-stretch">
                   {d.titles.length > 0 ? (
-                    <ul className="space-y-0.5">
+                    <ul className="space-y-0.5 py-0.5">
                       {d.titles.map((t, i) => (
                         <li
                           key={i}
@@ -215,26 +224,32 @@ export default function MonthView() {
                           {t}
                         </li>
                       ))}
+                      {d.people.length > 0 && (
+                        <li className="truncate text-xs text-ink-soft">
+                          {d.people.join(', ')}
+                        </li>
+                      )}
                     </ul>
-                  ) : (
-                    <span className="text-sm italic text-ink-soft/70">
-                      {d.people.length ? d.people.join(', ') : '—'}
-                    </span>
-                  )}
-                  {d.titles.length > 0 && d.people.length > 0 && (
-                    <p className="mt-1 truncate text-xs text-ink-soft">
+                  ) : d.people.length > 0 ? (
+                    <span className="text-sm italic text-ink-soft/80">
                       {d.people.join(', ')}
-                    </p>
-                  )}
+                    </span>
+                  ) : d.key === todayK ? (
+                    <span className="text-sm italic text-ink-soft/70">oggi</span>
+                  ) : null}
                 </div>
 
-                <div className="flex w-[72px] shrink-0 items-center justify-end">
-                  <ImageCarousel images={d.images} size={64} />
+                <div className="flex w-[68px] shrink-0 items-center justify-end">
+                  <ImageCarousel images={d.images} size={60} />
                 </div>
               </button>
             </li>
           ))}
         </ul>
+
+        {loading && !notes.length && (
+          <p className="p-6 text-center text-sm text-ink-soft">Carico…</p>
+        )}
 
         <div className="h-4" />
       </main>

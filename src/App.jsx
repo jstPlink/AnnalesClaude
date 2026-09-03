@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import MonthView from './pages/MonthView'
 import DayView from './pages/DayView'
 import NoteView from './pages/NoteView'
+import Profile from './pages/Profile'
 
 export default function App() {
   return (
@@ -17,6 +18,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <MonthView />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profilo"
+            element={
+              <RequireAuth>
+                <Profile />
               </RequireAuth>
             }
           />

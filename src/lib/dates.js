@@ -132,3 +132,10 @@ export function addMonths({ year, month }, n) {
   const total = year * 12 + month + n
   return { year: Math.floor(total / 12), month: ((total % 12) + 12) % 12 }
 }
+
+// Elenco di chiavi giorno "YYYY-MM-DD" per tutti i giorni del mese. month è 0–11.
+export function monthDayKeys(year, month) {
+  const last = new Date(year, month + 1, 0).getDate()
+  const mm = pad(month + 1)
+  return Array.from({ length: last }, (_, i) => `${year}-${mm}-${pad(i + 1)}`)
+}

@@ -7,6 +7,7 @@ export default function YearPill({
   onChange,
   subtitle = null,
   span = 8,
+  minWidth = 128,
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -35,13 +36,16 @@ export default function YearPill({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex min-w-[128px] flex-col items-center rounded-full border border-line bg-sand px-6 py-1.5 shadow-sm transition active:scale-95"
+        style={{ minWidth }}
+        className="flex max-w-full flex-col items-center rounded-full border border-line bg-sand px-4 py-1.5 shadow-sm transition active:scale-95"
       >
         <span className="text-2xl font-extrabold leading-tight text-ink">
           {year}
         </span>
         {subtitle && (
-          <span className="text-sm font-semibold text-ink-soft">{subtitle}</span>
+          <span className="max-w-full truncate text-sm font-semibold text-ink-soft">
+            {subtitle}
+          </span>
         )}
       </button>
 
