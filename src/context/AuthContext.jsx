@@ -35,6 +35,16 @@ export function AuthProvider({ children }) {
     return pb.collection('users').authWithPassword(email, password)
   }, [])
 
+  const signup = useCallback(async (email, password, extra = {}) => {
+    await pb.collection('users').create({
+      email,
+      password,
+      passwordConfirm: password,
+      ...extra,
+    })
+    return pb.collection('users').authWithPassword(email, password)
+  }, [])
+
   const logout = useCallback(() => {
     pb.authStore.clear()
   }, [])
@@ -44,6 +54,7 @@ export function AuthProvider({ children }) {
     isAuthed: Boolean(user) && pb.authStore.isValid,
     ready,
     login,
+    signup,
     logout,
   }
 
