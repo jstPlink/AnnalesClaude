@@ -1,0 +1,381 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import PhoneShell from '../components/PhoneShell'
+import Footer from '../components/Footer'
+import YearPill from '../components/YearPill'
+import CircleButton from '../components/CircleButton'
+import Icon from '../components/Icon'
+import MoodSlider from '../components/MoodSlider'
+import {
+  createNote,
+  deleteNote,
+  getNote,
+  updateNote,
+  describeError,
+  peopleToText,
+} from '../lib/notes'
+import { fileUrl } from '../lib/pocketbase'
+import {
+  dayKey,
+  dayMonthLabel,
+  parseWall,
+  timeInputValue,
+} from '../lib/dates'
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function emptyForm(dKey) {
+  return {
+    title: '',
+    content: '',
+    mood: 0.5,
+    dateKey: dKey,
+    timeStart: '09:00',
+    timeEnd: '10:00',
+    people: '',
+  }
+}
+
+function formFromRecord(rec) {
+  return {
+    title: rec.title ?? '',
+    content: rec.content ?? '',
+    mood: Number(rec.mood ?? 0.5),
+    dateKey: dayKey(rec.date),
+    timeStart: timeInputValue(rec.timeStart) || '09:00',
+    timeEnd: timeInputValue(rec.timeEnd) || '10:00',
+    people: peopleToText(rec.people),
+  }
+}
+
+const snapshot = (f) =>
+  JSON.stringify({
+    title: f.title,
+    content: f.content,
+    mood: Number(f.mood),
+    dateKey: f.dateKey,
+    timeStart: f.timeStart,
+    timeEnd: f.timeEnd,
+    people: f.people,
+  })
+
+export default function NoteView() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [search] = useSearchParams()
+  const isNew = !id
+
+  const dateParam = search.get('date')
+  const initialDate =
+    dateParam && DATE_RE.test(dateParam)
+      ? dateParam
+      : dayKey(new Date())
+
+  const [form, setForm] = useState(() => emptyForm(initialDate))
+  const [baseline, setBaseline] = useState(() => snapshot(emptyForm(initialDate)))
+  const [existingImages, setExistingImages] = useState([])
+  const [record, setRecord] = useState(null)
+  const [newFiles, setNewFiles] = useState([])
+  const [removedImages, setRemovedImages] = useState([])
+  const [tab, setTab] = useState('write')
+  const [loading, setLoading] = useState(!isNew)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    if (isNew) return
+    let alive = true
+    setLoading(true)
+    getNote(id)
+      .then((rec) => {
+        if (!alive) return
+        setRecord(rec)
+        const f = formFromRecord(rec)
+        setForm(f)
+        setBaseline(snapshot(f))
+        setExistingImages(rec.images || [])
+      })
+      .catch((err) => alive && setError(describeError(err)))
+      .finally(() => alive && setLoading(false))
+    return () => {
+      alive = false
+    }
+  }, [id, isNew])
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }))
+
+  const previews = useMemo(
+    () => newFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [newFiles],
+  )
+  useEffect(() => {
+    return () => previews.forEach((p) => URL.revokeObjectURL(p.url))
+  }, [previews])
+
+  const dirty =
+    isNew ||
+    snapshot(form) !== baseline ||
+    newFiles.length > 0 ||
+    removedImages.length > 0
+
+  // Verde = salva (nota nuova o modificata). Rosso = elimina (esistente invariata).
+  const mode = isNew || dirty ? 'save' : 'delete'
+
+  const parsed = parseWall(form.dateKey)
+  const year = parsed?.y ?? new Date().getFullYear()
+
+  function changeYear(newYear) {
+    if (!parsed) return
+    const mm = String(parsed.mo).padStart(2, '0')
+    const dd = String(parsed.d).padStart(2, '0')
+    set({ dateKey: `${newYear}-${mm}-${dd}` })
+  }
+
+  const onPickFiles = useCallback((e) => {
+    const picked = Array.from(e.target.files || [])
+    if (picked.length) setNewFiles((prev) => [...prev, ...picked])
+    e.target.value = ''
+  }, [])
+
+  async function handleSave() {
+    setBusy(true)
+    setError('')
+    try {
+      if (isNew) {
+        const rec = await createNote(form, newFiles)
+        navigate(`/day/${dayKey(rec.date) || form.dateKey}`, { replace: true })
+      } else {
+        await updateNote(id, form, newFiles, removedImages)
+        navigate(`/day/${form.dateKey}`, { replace: true })
+      }
+    } catch (err) {
+      setError(describeError(err))
+      setBusy(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm('Eliminare definitivamente questa nota?')) return
+    setBusy(true)
+    setError('')
+    try {
+      await deleteNote(id)
+      navigate(`/day/${form.dateKey}`, { replace: true })
+    } catch (err) {
+      setError(describeError(err))
+      setBusy(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <PhoneShell>
+        <div className="flex flex-1 items-center justify-center text-ink-soft">
+          Carico…
+        </div>
+      </PhoneShell>
+    )
+  }
+
+  return (
+    <PhoneShell>
+      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex items-start justify-between px-4 pb-2">
+          <CircleButton size={40} onClick={() => navigate(-1)} title="Indietro">
+            <Icon name="chevron-left" size={20} />
+          </CircleButton>
+          <CircleButton
+            size={44}
+            variant={mode}
+            disabled={busy}
+            onClick={mode === 'save' ? handleSave : handleDelete}
+            title={mode === 'save' ? 'Salva' : 'Elimina nota'}
+          >
+            <Icon name={mode === 'save' ? 'check' : 'trash'} size={20} />
+          </CircleButton>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 px-4 pb-3">
+          <label className="flex flex-col items-center rounded-2xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-ink-soft">
+            inizio
+            <input
+              type="time"
+              value={form.timeStart}
+              onChange={(e) => set({ timeStart: e.target.value })}
+              className="bg-transparent text-center text-base font-bold text-ink outline-none"
+            />
+          </label>
+
+          <YearPill
+            year={year}
+            onChange={changeYear}
+            subtitle={dayMonthLabel(form.dateKey)}
+          />
+
+          <label className="flex flex-col items-center rounded-2xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-ink-soft">
+            fine
+            <input
+              type="time"
+              value={form.timeEnd}
+              onChange={(e) => set({ timeEnd: e.target.value })}
+              className="bg-transparent text-center text-base font-bold text-ink outline-none"
+            />
+          </label>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+        {error && (
+          <p className="mb-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
+            {error}
+          </p>
+        )}
+
+        <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
+
+        <input
+          type="text"
+          placeholder="Titolo della nota"
+          value={form.title}
+          onChange={(e) => set({ title: e.target.value })}
+          className="mt-5 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-lg font-bold text-ink outline-none focus:border-ink-soft"
+        />
+
+        <div className="mt-4">
+          <div className="mb-2 inline-flex rounded-full border border-line bg-panel p-1 text-sm font-semibold">
+            <button
+              type="button"
+              onClick={() => setTab('write')}
+              className={
+                'rounded-full px-4 py-1 transition ' +
+                (tab === 'write' ? 'bg-sand text-ink' : 'text-ink-soft')
+              }
+            >
+              Scrivi
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('preview')}
+              className={
+                'rounded-full px-4 py-1 transition ' +
+                (tab === 'preview' ? 'bg-sand text-ink' : 'text-ink-soft')
+              }
+            >
+              Anteprima
+            </button>
+          </div>
+
+          {tab === 'write' ? (
+            <textarea
+              rows={10}
+              placeholder="Scrivi in Markdown…"
+              value={form.content}
+              onChange={(e) => set({ content: e.target.value })}
+              className="w-full resize-y rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink-soft"
+            />
+          ) : (
+            <div className="markdown-body min-h-[8rem] rounded-2xl border border-line bg-panel px-4 py-3 text-[15px] text-ink">
+              {form.content.trim() ? (
+                <Markdown remarkPlugins={[remarkGfm]}>{form.content}</Markdown>
+              ) : (
+                <p className="italic text-ink-soft">Niente da mostrare.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Persone
+          </label>
+          <input
+            type="text"
+            placeholder="es. Jessica, Marco"
+            value={form.people}
+            onChange={(e) => set({ people: e.target.value })}
+            className="w-full rounded-2xl border border-line bg-panel px-4 py-2.5 text-sm text-ink outline-none focus:border-ink-soft"
+          />
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Immagini
+          </p>
+          {existingImages.length === 0 && previews.length === 0 ? (
+            <p className="text-sm italic text-ink-soft">
+              Nessuna immagine. Usa il pulsante in basso a destra per aggiungerne.
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {existingImages.map((fn) => (
+                <div
+                  key={fn}
+                  className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
+                >
+                  <img
+                    src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => {
+                      setExistingImages((prev) => prev.filter((x) => x !== fn))
+                      setRemovedImages((prev) => [...prev, fn])
+                    }}
+                    className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </div>
+              ))}
+              {previews.map((p, i) => (
+                <div
+                  key={p.url}
+                  className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
+                >
+                  <img src={p.url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() =>
+                      setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="h-6" />
+      </main>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={onPickFiles}
+      />
+
+      <Footer
+        primaryIcon="image-plus"
+        primaryTitle="Aggiungi immagini"
+        onPrimary={() => fileInputRef.current?.click()}
+      />
+    </PhoneShell>
+  )
+}

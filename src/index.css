@@ -1,0 +1,192 @@
+@import 'tailwindcss';
+
+/*
+  Palette e token del diario. Stile: crema/beige, forme molto arrotondate,
+  testo marrone scuro, font tondeggiante (fallback di sistema).
+*/
+@theme {
+  --font-sans: 'ui-rounded', 'SF Pro Rounded', 'Segoe UI', system-ui, -apple-system,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --color-cream: #efe9df;
+  --color-sand: #e4ddd0;
+  --color-panel: #ece6db;
+  --color-panel-2: #e2dccf;
+  --color-ink: #2b2a27;
+  --color-ink-soft: #6f6a60;
+  --color-line: #cdc6b7;
+  --color-line-soft: #d9d3c5;
+
+  --color-accent: #ffffff;
+  --color-save: #74c246;
+  --color-save-dark: #5aa833;
+  --color-delete: #e5493d;
+  --color-delete-dark: #c93b30;
+  --color-weekend: #e5493d;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* La UI è pensata per il telefono: contenitore centrato su desktop. */
+#root {
+  display: flex;
+  justify-content: center;
+}
+
+/* Nasconde la scrollbar mantenendo lo scroll (liste verticali). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Contenuto Markdown renderizzato nelle note. */
+.markdown-body {
+  line-height: 1.55;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  font-weight: 700;
+  margin: 0.8em 0 0.35em;
+  line-height: 1.25;
+}
+.markdown-body h1 {
+  font-size: 1.35rem;
+}
+.markdown-body h2 {
+  font-size: 1.18rem;
+}
+.markdown-body h3 {
+  font-size: 1.05rem;
+}
+.markdown-body p {
+  margin: 0 0 0.7em;
+}
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 0.7em;
+  padding-left: 1.3em;
+}
+.markdown-body ul {
+  list-style: disc;
+}
+.markdown-body ol {
+  list-style: decimal;
+}
+.markdown-body a {
+  color: #2f6db0;
+  text-decoration: underline;
+}
+.markdown-body blockquote {
+  margin: 0 0 0.7em;
+  padding-left: 0.8em;
+  border-left: 3px solid var(--color-line);
+  color: var(--color-ink-soft);
+}
+.markdown-body code {
+  background: var(--color-panel-2);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  background: var(--color-panel-2);
+  border-radius: 10px;
+  padding: 0.8em;
+  overflow-x: auto;
+  margin: 0 0 0.7em;
+}
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+}
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--color-line);
+  margin: 1em 0;
+}
+
+/* Thumb dello slider mood. */
+.mood-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: var(--thumb, #fff);
+  border: 3px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.mood-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--thumb, #fff);
+  border: 3px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.mood-range:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.4);
+  outline-offset: 4px;
+  border-radius: 9999px;
+}
+
+/* Transizioni tra i mesi nella vista mensile. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-6%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(6%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
