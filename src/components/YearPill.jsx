@@ -31,13 +31,21 @@ export default function YearPill({
   const years = []
   for (let y = base + 2; y >= base - span; y--) years.push(y)
 
+  // Senza `onChange` la pillola è solo informativa (es. modifica nota: la
+  // data non si cambia).
+  const readOnly = typeof onChange !== 'function'
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        disabled={readOnly}
+        onClick={() => !readOnly && setOpen((v) => !v)}
         style={{ minWidth }}
-        className="flex max-w-full flex-col items-center rounded-full border border-line bg-sand px-4 py-1.5 shadow-sm transition active:scale-95"
+        className={
+          'flex max-w-full flex-col items-center rounded-full border border-line bg-sand px-4 py-1.5 shadow-sm ' +
+          (readOnly ? '' : 'transition active:scale-95')
+        }
       >
         <span className="text-2xl font-extrabold leading-tight text-ink">
           {year}

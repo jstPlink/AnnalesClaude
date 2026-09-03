@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import PhoneShell from '../components/PhoneShell'
@@ -12,21 +8,17 @@ import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
+import Dialog from '../components/Dialog'
 import {
   createNote,
   deleteNote,
   getNote,
   updateNote,
+  checkSavedNote,
   describeError,
-  peopleToText,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
-import {
-  dayKey,
-  dayMonthLabel,
-  parseWall,
-  timeInputValue,
-} from '../lib/dates'
+import { dayKey, dayMonthLabel, parseWall, timeInputValue } from '../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -38,7 +30,6 @@ function emptyForm(dKey) {
     dateKey: dKey,
     timeStart: '09:00',
     timeEnd: '10:00',
-    people: '',
   }
 }
 
@@ -50,7 +41,6 @@ function formFromRecord(rec) {
     dateKey: dayKey(rec.date),
     timeStart: timeInputValue(rec.timeStart) || '09:00',
     timeEnd: timeInputValue(rec.timeEnd) || '10:00',
-    people: peopleToText(rec.people),
   }
 }
 
@@ -62,7 +52,6 @@ const snapshot = (f) =>
     dateKey: f.dateKey,
     timeStart: f.timeStart,
     timeEnd: f.timeEnd,
-    people: f.people,
   })
 
 export default function NoteView() {
@@ -73,20 +62,24 @@ export default function NoteView() {
 
   const dateParam = search.get('date')
   const initialDate =
-    dateParam && DATE_RE.test(dateParam)
-      ? dateParam
-      : dayKey(new Date())
+    dateParam && DATE_RE.test(dateParam) ? dateParam : dayKey(new Date())
 
   const [form, setForm] = useState(() => emptyForm(initialDate))
   const [baseline, setBaseline] = useState(() => snapshot(emptyForm(initialDate)))
   const [existingImages, setExistingImages] = useState([])
   const [record, setRecord] = useState(null)
+  const [createdId, setCreatedId] = useState(null)
   const [newFiles, setNewFiles] = useState([])
   const [removedImages, setRemovedImages] = useState([])
   const [loading, setLoading] = useState(!isNew)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [dialog, setDialog] = useState(null) // { title, lines }
   const fileInputRef = useRef(null)
+  const savingRef = useRef(false) // guardia anti doppio invio
+
+  const effectiveId = id || createdId
+  const existsOnServer = Boolean(effectiveId)
 
   useEffect(() => {
     if (isNew) return
@@ -101,7 +94,7 @@ export default function NoteView() {
         setBaseline(snapshot(f))
         setExistingImages(rec.images || [])
       })
-      .catch((err) => alive && setError(describeError(err)))
+      .catch((err) => alive && setLoadError(describeError(err)))
       .finally(() => alive && setLoading(false))
     return () => {
       alive = false
@@ -119,13 +112,13 @@ export default function NoteView() {
   }, [previews])
 
   const dirty =
-    isNew ||
+    !existsOnServer ||
     snapshot(form) !== baseline ||
     newFiles.length > 0 ||
     removedImages.length > 0
 
   // Verde = salva (nota nuova o modificata). Rosso = elimina (esistente invariata).
-  const mode = isNew || dirty ? 'save' : 'delete'
+  const mode = !existsOnServer || dirty ? 'save' : 'delete'
 
   const parsed = parseWall(form.dateKey)
   const year = parsed?.y ?? new Date().getFullYear()
@@ -144,32 +137,70 @@ export default function NoteView() {
   }, [])
 
   async function handleSave() {
+    if (savingRef.current) return
+    savingRef.current = true
     setBusy(true)
-    setError('')
+    setDialog(null)
+    const creating = !existsOnServer
+    const imageCount = existingImages.length + newFiles.length
     try {
-      if (isNew) {
-        const rec = await createNote(form, newFiles)
-        navigate(`/day/${dayKey(rec.date) || form.dateKey}`, { replace: true })
-      } else {
-        await updateNote(id, form, newFiles, removedImages)
-        navigate(`/day/${form.dateKey}`, { replace: true })
+      const rec = creating
+        ? await createNote(form, newFiles)
+        : await updateNote(effectiveId, form, newFiles, removedImages)
+
+      // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
+      setRecord(rec)
+      setCreatedId(rec.id)
+      setExistingImages(rec.images || [])
+      setNewFiles([])
+      setRemovedImages([])
+      setBaseline(snapshot(form))
+
+      const problems = checkSavedNote(rec, {
+        title: form.title,
+        content: form.content,
+        mood: form.mood,
+        imageCount,
+        dateKey: creating ? form.dateKey : null,
+        timeStart: form.timeStart,
+        timeEnd: form.timeEnd,
+      })
+
+      if (problems.length) {
+        savingRef.current = false
+        setBusy(false)
+        setDialog({
+          title: 'La nota potrebbe non essere stata salvata correttamente',
+          lines: [
+            ...problems,
+            'La nota resta aperta qui: correggi e salva di nuovo, oppure eliminala.',
+          ],
+        })
+        return
       }
+
+      const targetDay = creating ? form.dateKey : dayKey(rec.date) || form.dateKey
+      navigate(`/day/${targetDay}`, { replace: true })
     } catch (err) {
-      setError(describeError(err))
+      savingRef.current = false
       setBusy(false)
+      setDialog({ title: 'Errore nel salvataggio', lines: [describeError(err)] })
     }
   }
 
   async function handleDelete() {
     if (!window.confirm('Eliminare definitivamente questa nota?')) return
     setBusy(true)
-    setError('')
+    setDialog(null)
     try {
-      await deleteNote(id)
+      await deleteNote(effectiveId)
       navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
-      setError(describeError(err))
       setBusy(false)
+      setDialog({
+        title: "Errore nell'eliminazione",
+        lines: [describeError(err)],
+      })
     }
   }
 
@@ -215,7 +246,7 @@ export default function NoteView() {
           <div className="flex min-w-0 justify-center">
             <YearPill
               year={year}
-              onChange={changeYear}
+              onChange={existsOnServer ? undefined : changeYear}
               subtitle={dayMonthLabel(form.dateKey)}
               minWidth={96}
             />
@@ -234,9 +265,9 @@ export default function NoteView() {
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
-        {error && (
+        {loadError && (
           <p className="mb-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
-            {error}
+            {loadError}
           </p>
         )}
 
@@ -268,19 +299,6 @@ export default function NoteView() {
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Persone
-          </label>
-          <input
-            type="text"
-            placeholder="es. Jessica, Marco"
-            value={form.people}
-            onChange={(e) => set({ people: e.target.value })}
-            className="w-full rounded-2xl border border-line bg-panel px-4 py-2.5 text-sm text-ink outline-none focus:border-ink-soft"
-          />
         </div>
 
         <div className="mt-6">
@@ -354,6 +372,13 @@ export default function NoteView() {
         primaryIcon="image-plus"
         primaryTitle="Aggiungi immagini"
         onPrimary={() => fileInputRef.current?.click()}
+      />
+
+      <Dialog
+        open={Boolean(dialog)}
+        title={dialog?.title}
+        lines={dialog?.lines || []}
+        onClose={() => setDialog(null)}
       />
     </PhoneShell>
   )

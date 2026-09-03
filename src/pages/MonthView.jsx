@@ -6,12 +6,7 @@ import YearPill from '../components/YearPill'
 import ImageCarousel from '../components/ImageCarousel'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
-import {
-  listNotesInRange,
-  groupByDay,
-  describeError,
-  parsePeople,
-} from '../lib/notes'
+import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { averageMood, moodColor, MOOD_TITLE_THRESHOLD } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
@@ -111,7 +106,6 @@ export default function MonthView() {
         hasNotes: dayNotes.length > 0,
         avgMood: dayNotes.length ? averageMood(dayNotes) : null,
         titles,
-        people: [...new Set(dayNotes.flatMap((n) => parsePeople(n.people)))],
         images,
       }
     })
@@ -224,16 +218,7 @@ export default function MonthView() {
                           {t}
                         </li>
                       ))}
-                      {d.people.length > 0 && (
-                        <li className="truncate text-xs text-ink-soft">
-                          {d.people.join(', ')}
-                        </li>
-                      )}
                     </ul>
-                  ) : d.people.length > 0 ? (
-                    <span className="text-sm italic text-ink-soft/80">
-                      {d.people.join(', ')}
-                    </span>
                   ) : d.key === todayK ? (
                     <span className="text-sm italic text-ink-soft/70">oggi</span>
                   ) : null}
