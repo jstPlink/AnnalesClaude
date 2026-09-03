@@ -35,6 +35,52 @@ npm run lint      # oxlint
 npm run icons     # rigenera le icone PWA da scripts/icon-source.svg
 ```
 
+## Docker
+
+L'app è statica (build Vite servita da nginx con fallback SPA). Immagine
+multi-stage: `node:22-alpine` per la build, `nginx:1.27-alpine` per servire.
+
+### Build ed esecuzione con compose
+
+```bash
+docker compose up -d --build      # build immagine + avvio
+# app su http://<host>:8080  (porta host modificabile in docker-compose.yml)
+docker compose down               # stop
+```
+
+### Oppure con docker puro
+
+```bash
+docker build -t annales-diario:latest .
+docker run -d --name annales-diario -p 8080:80 --restart unless-stopped annales-diario:latest
+```
+
+### Backend PocketBase
+
+`VITE_PB_URL` viene **inlined a build time** (default
+`https://pocketbase.fplinio.it`). Per puntare altrove va ricostruita l'immagine:
+
+```bash
+docker build --build-arg VITE_PB_URL=https://pocketbase.example.com -t annales-diario:latest .
+# con compose:  VITE_PB_URL=https://pocketbase.example.com docker compose up -d --build
+```
+
+### Deploy sul NAS (immagine pre-buildata)
+
+Modo consigliato: GitHub Actions builda e pubblica l'immagine su GHCR, il NAS
+la scarica ed esegue — nessun sorgente né build sul NAS.
+
+- Workflow: [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)
+  (push su `main` → `ghcr.io/jstplink/annalesclaude:latest`, multi-arch amd64/arm64).
+- Compose per il NAS: [`deploy/docker-compose.yaml`](deploy/docker-compose.yaml).
+- Istruzioni passo-passo: [`deploy/README.md`](deploy/README.md).
+
+Il container espone solo HTTP sulla porta 80: metterlo dietro il reverse proxy
+del NAS (o Cloudflare Tunnel) per HTTPS.
+
+> Se la build su Alpine dovesse fallire per binari nativi (rollup/lightningcss),
+> cambiare `node:22-alpine` in `node:22-slim` nel `Dockerfile`.
+
 ## Configurazione backend
 
 Istanza PocketBase usata di default: `https://pocketbase.fplinio.it`
@@ -102,4 +148,4 @@ scripts/       generate-icons.js (+ icon-source.svg)
 
 ## Non incluso (fasi successive)
 
-Docker, deploy sul NAS, APK nativo.
+APK nativo; HTTPS/reverse proxy (demandato all'infrastruttura del NAS).

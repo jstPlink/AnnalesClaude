@@ -1,0 +1,13 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # URL del backend PocketBase inlined a build time
+        VITE_PB_URL: ${VITE_PB_URL:-https://pocketbase.fplinio.it}
+    image: annales-diario:latest
+    container_name: annales-diario
+    ports:
+      # host:container — cambia la porta host come serve sul NAS
+      - "8080:80"
+    restart: unless-stopped

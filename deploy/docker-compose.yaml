@@ -1,0 +1,18 @@
+# docker-compose per il NAS: scarica ed esegue l'immagine gia' buildata da
+# GitHub Actions (GHCR). Non serve il codice sorgente sul NAS.
+#
+# Aggiornare all'ultima versione:
+#   docker compose pull && docker compose up -d
+#
+# Se l'immagine e' privata, prima:
+#   echo <GITHUB_TOKEN> | docker login ghcr.io -u <utente-github> --password-stdin
+
+services:
+  annales:
+    image: ghcr.io/jstplink/annalesclaude:latest
+    container_name: annales-diario
+    ports:
+      # host:container  — cambia la porta host (8080) se occupata sul NAS
+      - "8080:80"
+    restart: unless-stopped
+    pull_policy: always
