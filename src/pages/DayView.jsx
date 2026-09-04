@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
+import MarqueeText from '../components/MarqueeText'
 import { listNotesInRange, describeError } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
@@ -210,25 +211,22 @@ export default function DayView() {
                         </span>
 
                         <span className="flex min-w-0 flex-1 items-center px-2 py-1">
-                          <span className="line-clamp-3 text-[13px] font-semibold leading-tight text-ink">
+                          <MarqueeText className="text-[13px] font-semibold leading-tight text-ink">
                             {n.title || (
                               <span className="italic text-ink-soft">
                                 Senza titolo
                               </span>
                             )}
-                          </span>
+                          </MarqueeText>
                         </span>
 
-                        {/* Immagine grande, sempre a destra, a tutta altezza della riga */}
+                        {/* Immagine a larghezza fissa, sempre a destra, a tutta altezza */}
                         {img && h >= 40 && (
                           <img
                             src={fileUrl(n, img, { thumb: '400x400' })}
                             alt=""
                             loading="lazy"
-                            className="h-full shrink-0 bg-panel-2 object-cover"
-                            style={{
-                              width: Math.min(Math.max(h, 48), 104),
-                            }}
+                            className="h-full w-20 shrink-0 bg-panel-2 object-cover"
                           />
                         )}
                       </span>

@@ -3,6 +3,7 @@ import PhoneShell from '../components/PhoneShell'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
+import { haptic } from '../lib/haptics'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function Profile() {
   const initial = (name || email || '?').charAt(0).toUpperCase()
 
   function onLogout() {
+    haptic()
     logout()
     navigate('/login', { replace: true })
   }

@@ -11,15 +11,15 @@ export function isNoteworthyMood(value) {
   return v > MOOD_HIGH_THRESHOLD || v < MOOD_LOW_THRESHOLD
 }
 
-// Stop del gradiente, equamente distribuiti da 0 a 1:
-// rosso → arancione → giallo → verde → blu → bianco.
+// Stop del gradiente del mood, coerenti con la palette dell'app:
+// rosso corallo (= delete) → arancio → giallo → verde (= save) → blu → blu-viola.
 const STOPS = [
-  { t: 0.0, c: [226, 59, 46] },
-  { t: 0.2, c: [240, 140, 30] },
-  { t: 0.4, c: [242, 208, 36] },
-  { t: 0.6, c: [87, 192, 74] },
-  { t: 0.8, c: [63, 123, 216] },
-  { t: 1.0, c: [255, 255, 255] },
+  { t: 0.0, c: [224, 101, 94] }, // #e0655e
+  { t: 0.2, c: [231, 154, 77] }, // #e79a4d
+  { t: 0.4, c: [230, 207, 92] }, // #e6cf5c
+  { t: 0.6, c: [166, 208, 110] }, // #a6d06e
+  { t: 0.8, c: [94, 169, 214] }, // #5ea9d6
+  { t: 1.0, c: [139, 143, 214] }, // #8b8fd6
 ]
 
 function clamp01(n) {
@@ -45,7 +45,8 @@ export function moodColor(value) {
       return `rgb(${r}, ${g}, ${b})`
     }
   }
-  return 'rgb(255, 255, 255)'
+  const last = STOPS[STOPS.length - 1].c
+  return `rgb(${last[0]}, ${last[1]}, ${last[2]})`
 }
 
 // Colore del testo (scuro o chiaro) da usare SOPRA un'area colorata col mood,
@@ -77,4 +78,32 @@ export function averageMood(notes) {
     .filter((n) => !Number.isNaN(n))
   if (!vals.length) return 0
   return vals.reduce((a, b) => a + b, 0) / vals.length
+}
+
+// Peso di una nota nel calcolo del mood del giorno.
+// Curva a "valle": peso ~1 ai mood estremi (0 e 1), peso minimo (0.15) a 0.5,
+// con transizione morbida (smoothstep) e code piatte.
+function extremeWeight(m) {
+  const d = Math.min(1, Math.abs(2 * clamp01(m) - 1))
+  const s = d * d * (3 - 2 * d)
+  return 0.15 + 0.85 * s
+}
+
+// Mood del giorno: media delle note pesata con extremeWeight, così le note
+// "neutre" (mood ~0.5) contano poco e quelle marcate contano molto.
+export function dayMood(notes) {
+  const vals = notes
+    .map((n) => Number(n.mood))
+    .filter((n) => !Number.isNaN(n))
+  if (!vals.length) return 0
+  let wsum = 0
+  let acc = 0
+  for (const m of vals) {
+    const w = extremeWeight(m)
+    wsum += w
+    acc += m * w
+  }
+  return wsum > 0
+    ? acc / wsum
+    : vals.reduce((a, b) => a + b, 0) / vals.length
 }

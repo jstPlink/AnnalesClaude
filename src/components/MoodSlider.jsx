@@ -11,7 +11,7 @@ export default function MoodSlider({ value, onChange }) {
         style={{ color: 'var(--color-ink-soft)' }}
       >
         <span>Mood</span>
-        <span className="tabular-nums">{Number(value).toFixed(2)}</span>
+        <span className="tabular-nums">{Math.round(Number(value) * 100)}</span>
       </div>
       <div
         className="relative flex h-9 items-center rounded-full px-1"

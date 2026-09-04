@@ -95,6 +95,16 @@ body {
 .richtext p {
   margin: 0 0 0.6em;
 }
+.richtext ul {
+  list-style: disc;
+  padding-left: 1.4em;
+  margin: 0 0 0.6em;
+}
+.richtext ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+  margin: 0 0 0.6em;
+}
 
 /* Thumb dello slider mood. */
 .mood-range::-webkit-slider-thumb {
@@ -123,13 +133,36 @@ body {
   border-radius: 9999px;
 }
 
-/* Input orario compatto: niente icona orologio nativa. */
+/* Input orario compatto: niente icona orologio nativa, testo centrato. */
 input[type='time'].time-compact::-webkit-calendar-picker-indicator {
   display: none;
 }
 input[type='time'].time-compact {
   -webkit-appearance: none;
   appearance: none;
+  text-align: center;
+}
+input[type='time'].time-compact::-webkit-datetime-edit {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* Testo che scorre avanti e indietro (ping pong) quando non ci sta su una riga. */
+@keyframes pingpong {
+  0%,
+  10% {
+    transform: translateX(0);
+  }
+  48%,
+  60% {
+    transform: translateX(var(--shift, 0));
+  }
+  98%,
+  100% {
+    transform: translateX(0);
+  }
 }
 
 /* Transizioni tra i mesi nella vista mensile. */

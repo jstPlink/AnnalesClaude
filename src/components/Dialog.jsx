@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { haptic } from '../lib/haptics'
 
 // Finestra modale semplice (es. per notificare errori di salvataggio).
 export default function Dialog({ open, title, lines = [], tone = 'error', onClose }) {
@@ -44,7 +45,10 @@ export default function Dialog({ open, title, lines = [], tone = 'error', onClos
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            haptic()
+            onClose?.()
+          }}
           className="mt-5 w-full rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-cream transition active:scale-95"
         >
           Chiudi

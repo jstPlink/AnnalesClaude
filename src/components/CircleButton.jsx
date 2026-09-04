@@ -1,3 +1,5 @@
+import { haptic } from '../lib/haptics'
+
 const VARIANTS = {
   light: 'bg-tag text-ink border border-line hover:brightness-[0.98]',
   sand: 'bg-sand text-ink border border-line hover:brightness-[0.98]',
@@ -18,7 +20,14 @@ export default function CircleButton({
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={
+        onClick
+          ? (e) => {
+              haptic()
+              onClick(e)
+            }
+          : undefined
+      }
       disabled={disabled}
       title={title}
       aria-label={title}

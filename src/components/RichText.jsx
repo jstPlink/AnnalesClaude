@@ -57,12 +57,35 @@ const RichText = forwardRef(function RichText(
     }
   }, [value])
 
-  function handleInput() {
+  function emit() {
     const el = elRef.current
     const html = el.innerHTML
     lastHtml.current = html
     el.dataset.empty = String(isEmpty(el))
     onChange?.(html)
+  }
+
+  function handleInput() {
+    emit()
+  }
+
+  // "-" + spazio a inizio riga -> punto elenco.
+  function handleKeyDown(e) {
+    if (e.key !== ' ' && e.key !== 'Spacebar') return
+    const sel = window.getSelection()
+    if (!sel || !sel.isCollapsed || sel.rangeCount === 0) return
+    const range = sel.getRangeAt(0)
+    const node = range.startContainer
+    if (node.nodeType !== 3) return
+    const before = node.textContent.slice(0, range.startOffset)
+    const lineStart = before.lastIndexOf('\n') + 1
+    if (before.slice(lineStart).trim() !== '-') return
+
+    e.preventDefault()
+    range.setStart(node, range.startOffset - 1)
+    range.deleteContents()
+    document.execCommand('insertUnorderedList', false)
+    emit()
   }
 
   return (
@@ -76,6 +99,7 @@ const RichText = forwardRef(function RichText(
       aria-label={placeholder || 'Contenuto della nota'}
       data-placeholder={placeholder}
       onInput={handleInput}
+      onKeyDown={handleKeyDown}
       onFocus={() => onFocusChange?.(true)}
       onBlur={() => onFocusChange?.(false)}
     />

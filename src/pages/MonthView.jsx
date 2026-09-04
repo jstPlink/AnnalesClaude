@@ -6,13 +6,9 @@ import YearPill from '../components/YearPill'
 import ImageCarousel from '../components/ImageCarousel'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
+import MarqueeText from '../components/MarqueeText'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
-import {
-  averageMood,
-  moodColor,
-  moodTextColor,
-  isNoteworthyMood,
-} from '../lib/mood'
+import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -110,7 +106,7 @@ export default function MonthView() {
         weekday: weekdayShort(key),
         weekend: isWeekend(key),
         hasNotes: dayNotes.length > 0,
-        avgMood: dayNotes.length ? averageMood(dayNotes) : null,
+        avgMood: dayNotes.length ? dayMood(dayNotes) : null,
         titles,
         images,
       }
@@ -172,81 +168,85 @@ export default function MonthView() {
         )}
 
         <ul className="divide-y divide-line-soft">
-          {days.map((d) => (
-            <li key={d.key}>
-              <button
-                type="button"
-                onClick={() => navigate(`/day/${d.key}`)}
-                className={
-                  'flex w-full items-stretch gap-3 px-3 py-2 text-left transition active:bg-panel ' +
-                  (d.hasNotes ? '' : 'opacity-55')
-                }
-              >
-                {/* Targhetta giorno: sfondo = colore del mood medio */}
-                <div
+          {days.map((d) => {
+            const isToday = d.key === todayK
+            return (
+              <li key={d.key}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/day/${d.key}`)}
                   className={
-                    'flex w-14 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
-                    (d.hasNotes ? '' : 'border border-line-soft')
-                  }
-                  style={
-                    d.hasNotes
-                      ? { backgroundColor: moodColor(d.avgMood) }
-                      : undefined
+                    'flex w-full items-stretch gap-3 px-3 py-2 text-left transition active:brightness-95 ' +
+                    (isToday ? 'bg-tag ' : '') +
+                    (d.hasNotes ? '' : 'opacity-55')
                   }
                 >
-                  <span
-                    className="text-2xl font-extrabold leading-none"
-                    style={{
-                      color: d.hasNotes
-                        ? moodTextColor(d.avgMood)
-                        : d.weekend
-                          ? 'var(--color-weekend)'
-                          : 'var(--color-ink)',
-                    }}
+                  {/* Targhetta giorno: sfondo = colore del mood del giorno */}
+                  <div
+                    className={
+                      'flex w-14 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
+                      (d.hasNotes ? '' : 'border border-line-soft ') +
+                      (isToday ? 'ring-2 ring-ink/30' : '')
+                    }
+                    style={
+                      d.hasNotes
+                        ? { backgroundColor: moodColor(d.avgMood) }
+                        : undefined
+                    }
                   >
-                    {d.dayNum}
-                  </span>
-                  {d.weekend ? (
-                    <span className="rounded-full bg-weekend px-1.5 text-[10px] font-bold lowercase text-white">
-                      {d.weekday}
-                    </span>
-                  ) : (
                     <span
-                      className="text-xs font-semibold lowercase"
+                      className="text-2xl font-extrabold leading-none"
                       style={{
                         color: d.hasNotes
                           ? moodTextColor(d.avgMood)
-                          : 'var(--color-ink-soft)',
+                          : d.weekend
+                            ? 'var(--color-weekend)'
+                            : 'var(--color-ink)',
                       }}
                     >
-                      {d.weekday}
+                      {d.dayNum}
                     </span>
-                  )}
-                </div>
+                    {d.weekend ? (
+                      <span className="rounded-full bg-weekend px-1.5 text-[10px] font-bold lowercase text-white">
+                        {d.weekday}
+                      </span>
+                    ) : (
+                      <span
+                        className="text-xs font-semibold lowercase"
+                        style={{
+                          color: d.hasNotes
+                            ? moodTextColor(d.avgMood)
+                            : 'var(--color-ink-soft)',
+                        }}
+                      >
+                        {d.weekday}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="min-w-0 flex-1 self-stretch">
-                  {d.titles.length > 0 ? (
-                    <ul className="space-y-0.5 py-0.5">
-                      {d.titles.map((t, i) => (
-                        <li
-                          key={i}
-                          className="truncate text-[15px] font-medium text-ink"
-                        >
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : d.key === todayK ? (
-                    <span className="text-sm italic text-ink-soft/70">oggi</span>
-                  ) : null}
-                </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
+                    {isToday && (
+                      <span className="w-fit rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cream">
+                        oggi
+                      </span>
+                    )}
+                    {d.titles.map((t, i) => (
+                      <MarqueeText
+                        key={i}
+                        className="text-[15px] font-medium text-ink"
+                      >
+                        {t}
+                      </MarqueeText>
+                    ))}
+                  </div>
 
-                <div className="flex w-[68px] shrink-0 items-center justify-end">
-                  <ImageCarousel images={d.images} size={60} />
-                </div>
-              </button>
-            </li>
-          ))}
+                  <div className="flex w-[88px] shrink-0 items-center justify-end">
+                    <ImageCarousel images={d.images} size={84} />
+                  </div>
+                </button>
+              </li>
+            )
+          })}
         </ul>
 
         {loading && !notes.length && (

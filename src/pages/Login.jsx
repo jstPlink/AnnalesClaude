@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { describeError } from '../lib/notes'
+import { haptic } from '../lib/haptics'
 import PhoneShell from '../components/PhoneShell'
 
 const MIN_PASSWORD = 8
@@ -32,6 +33,7 @@ export default function Login() {
 
   async function onSubmit(e) {
     e.preventDefault()
+    haptic()
     setError('')
 
     if (isSignup) {

@@ -17,6 +17,7 @@ import {
   describeError,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
+import { haptic } from '../lib/haptics'
 import { dayKey, dayMonthLabel, parseWall, timeInputValue } from '../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -206,6 +207,7 @@ export default function NoteView() {
   }
 
   function format(command) {
+    haptic()
     editorRef.current?.exec(command)
   }
 
@@ -246,7 +248,7 @@ export default function NoteView() {
               aria-label="Orario di inizio"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="time-compact w-full max-w-[84px] bg-transparent text-center text-lg font-extrabold text-ink outline-none"
+              className="time-compact w-full bg-transparent text-center text-lg font-extrabold text-ink outline-none"
             />
           </label>
 
@@ -265,7 +267,7 @@ export default function NoteView() {
               aria-label="Orario di fine"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="time-compact w-full max-w-[84px] bg-transparent text-center text-lg font-extrabold text-ink outline-none"
+              className="time-compact w-full bg-transparent text-center text-lg font-extrabold text-ink outline-none"
             />
           </label>
         </div>
@@ -315,8 +317,8 @@ export default function NoteView() {
           )}
         </div>
 
-        {/* Titolo + contenuto in un unico riquadro. */}
-        <div className="mt-1 overflow-hidden rounded-2xl border border-line bg-panel">
+        {/* Titolo + contenuto in un unico riquadro (sfondo = sfondo app). */}
+        <div className="mt-1 overflow-hidden rounded-2xl border border-line bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
