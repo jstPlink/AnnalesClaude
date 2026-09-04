@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
-import YearPill from '../components/YearPill'
+import DatePickerPopover from '../components/DatePickerPopover'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
@@ -13,6 +13,8 @@ import AddImagesSheet from '../components/AddImagesSheet'
 import ImmichPicker from '../components/ImmichPicker'
 import PeoplePickerSheet from '../components/PeoplePickerSheet'
 import PersonAvatar from '../components/PersonAvatar'
+import TagPickerSheet from '../components/TagPickerSheet'
+import AddSongSheet from '../components/AddSongSheet'
 import {
   createNote,
   deleteNote,
@@ -23,10 +25,10 @@ import {
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { listPeople } from '../lib/people'
+import { listTags } from '../lib/tags'
 import { useAuth } from '../context/AuthContext'
 import {
   dayKey,
-  dayMonthLabel,
   nowRoundedTo5,
   parseWall,
   subtractHours,
@@ -41,6 +43,8 @@ function emptyForm(dKey) {
     title: '',
     content: '',
     mood: 0.5,
+    place: '',
+    songs: [],
     dateKey: dKey,
     timeStart: subtractHours(timeEnd, 2),
     timeEnd,
@@ -52,6 +56,8 @@ function formFromRecord(rec) {
     title: rec.title ?? '',
     content: rec.content ?? '',
     mood: Number(rec.mood ?? 0.5),
+    place: rec.place ?? '',
+    songs: Array.isArray(rec.songs) ? rec.songs : [],
     dateKey: dayKey(rec.date),
     timeStart: timeInputValue(rec.timeStart) || '09:00',
     timeEnd: timeInputValue(rec.timeEnd) || '10:00',
@@ -63,6 +69,8 @@ const snapshot = (f) =>
     title: f.title,
     content: f.content,
     mood: Number(f.mood),
+    place: f.place,
+    songs: f.songs,
     dateKey: f.dateKey,
     timeStart: f.timeStart,
     timeEnd: f.timeEnd,
@@ -101,6 +109,11 @@ export default function NoteView() {
   const [peopleIds, setPeopleIds] = useState([])
   const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
   const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
+  const [allTags, setAllTags] = useState([])
+  const [tagIds, setTagIds] = useState([])
+  const [baselineTagIds, setBaselineTagIds] = useState([])
+  const [tagSheetOpen, setTagSheetOpen] = useState(false)
+  const [songSheetOpen, setSongSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -122,6 +135,8 @@ export default function NoteView() {
         setExistingImages(rec.images || [])
         setPeopleIds(rec.people || [])
         setBaselinePeopleIds(rec.people || [])
+        setTagIds(rec.tags || [])
+        setBaselineTagIds(rec.tags || [])
       })
       .catch((err) => alive && setLoadError(describeError(err)))
       .finally(() => alive && setLoading(false))
@@ -133,6 +148,9 @@ export default function NoteView() {
   useEffect(() => {
     listPeople()
       .then(setAllPeople)
+      .catch(() => {})
+    listTags()
+      .then(setAllTags)
       .catch(() => {})
   }, [])
 
@@ -168,28 +186,39 @@ export default function NoteView() {
     )
   }
 
+  const selectedTags = useMemo(
+    () => allTags.filter((t) => tagIds.includes(t.id)),
+    [allTags, tagIds],
+  )
+
+  function toggleTag(id) {
+    setTagIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  function removeSong(index) {
+    setForm((f) => ({ ...f, songs: f.songs.filter((_, i) => i !== index) }))
+  }
+
   const peopleDirty =
     JSON.stringify([...peopleIds].sort()) !== JSON.stringify([...baselinePeopleIds].sort())
+  const tagsDirty =
+    JSON.stringify([...tagIds].sort()) !== JSON.stringify([...baselineTagIds].sort())
 
   const dirty =
     !existsOnServer ||
     snapshot(form) !== baseline ||
     newFiles.length > 0 ||
     removedImages.length > 0 ||
-    peopleDirty
+    peopleDirty ||
+    tagsDirty
 
   // Verde = salva (nota nuova o modificata). Rosso = elimina (esistente invariata).
   const mode = !existsOnServer || dirty ? 'save' : 'delete'
 
   const parsed = parseWall(form.dateKey)
   const year = parsed?.y ?? new Date().getFullYear()
-
-  function changeYear(newYear) {
-    if (!parsed) return
-    const mm = String(parsed.mo).padStart(2, '0')
-    const dd = String(parsed.d).padStart(2, '0')
-    set({ dateKey: `${newYear}-${mm}-${dd}` })
-  }
 
   const onPickFiles = useCallback((e) => {
     const picked = Array.from(e.target.files || [])
@@ -206,8 +235,8 @@ export default function NoteView() {
     const imageCount = existingImages.length + newFiles.length
     try {
       const rec = creating
-        ? await createNote(form, newFiles, peopleIds)
-        : await updateNote(effectiveId, form, newFiles, removedImages, peopleIds)
+        ? await createNote(form, { newFiles, peopleIds, tagIds })
+        : await updateNote(effectiveId, form, { newFiles, removedImages, peopleIds, tagIds })
 
       // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
       setRecord(rec)
@@ -218,6 +247,8 @@ export default function NoteView() {
       setBaseline(snapshot(form))
       setPeopleIds(rec.people || [])
       setBaselinePeopleIds(rec.people || [])
+      setTagIds(rec.tags || [])
+      setBaselineTagIds(rec.tags || [])
 
       const problems = checkSavedNote(rec, {
         title: form.title,
@@ -225,7 +256,8 @@ export default function NoteView() {
         mood: form.mood,
         imageCount,
         peopleCount: peopleIds.length,
-        dateKey: creating ? form.dateKey : null,
+        tagCount: tagIds.length,
+        dateKey: form.dateKey,
         timeStart: form.timeStart,
         timeEnd: form.timeEnd,
       })
@@ -283,10 +315,13 @@ export default function NoteView() {
   return (
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between px-4 pb-2">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 pb-2">
           <CircleButton onClick={() => navigate(-1)} title="Indietro">
             <Icon name="chevron-left" size={22} />
           </CircleButton>
+          <span className="text-center text-base font-semibold text-ink-soft tabular-nums">
+            {year}
+          </span>
           <CircleButton
             variant={mode}
             disabled={busy}
@@ -309,11 +344,9 @@ export default function NoteView() {
           </label>
 
           <div className="flex items-center justify-center">
-            <YearPill
-              year={year}
-              onChange={existsOnServer ? undefined : changeYear}
-              subtitle={dayMonthLabel(form.dateKey)}
-              minWidth={104}
+            <DatePickerPopover
+              dateKey={form.dateKey}
+              onChange={(dateKey) => set({ dateKey })}
             />
           </div>
 
@@ -390,6 +423,93 @@ export default function NoteView() {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Tag
+          </p>
+          {selectedTags.length === 0 ? (
+            <p className="text-sm italic text-ink-soft">Nessun tag</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2"
+                >
+                  <span className="text-sm font-semibold text-ink">{tag.name}</span>
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => toggleTag(tag.id)}
+                    className="text-ink-soft"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Canzoni
+          </p>
+          {form.songs.length === 0 ? (
+            <p className="text-sm italic text-ink-soft">Nessuna canzone</p>
+          ) : (
+            <div className="space-y-2">
+              {form.songs.map((song, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
+                >
+                  {song.thumbnailUrl ? (
+                    <img
+                      src={song.thumbnailUrl}
+                      alt=""
+                      className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
+                      <Icon name="music" size={18} />
+                    </span>
+                  )}
+                  <a
+                    href={song.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                  >
+                    {song.title}
+                  </a>
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => removeSong(i)}
+                    className="shrink-0 text-ink-soft"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Luogo
+          </p>
+          <input
+            type="text"
+            placeholder="Nessun luogo"
+            value={form.place}
+            onChange={(e) => set({ place: e.target.value })}
+            className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none placeholder:italic placeholder:text-ink-soft"
+          />
         </div>
 
         <div className="mt-6">
@@ -478,6 +598,16 @@ export default function NoteView() {
             title: 'Aggiungi persone',
             onClick: () => setPeopleSheetOpen(true),
           },
+          {
+            icon: 'tag',
+            title: 'Aggiungi tag',
+            onClick: () => setTagSheetOpen(true),
+          },
+          {
+            icon: 'music',
+            title: 'Aggiungi canzone',
+            onClick: () => setSongSheetOpen(true),
+          },
         ]}
         primaryIcon="image-plus"
         primaryTitle="Aggiungi immagini"
@@ -528,6 +658,24 @@ export default function NoteView() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+      />
+
+      <TagPickerSheet
+        open={tagSheetOpen}
+        tags={allTags}
+        selectedIds={tagIds}
+        onClose={() => setTagSheetOpen(false)}
+        onToggle={toggleTag}
+        onCreated={(tag) => {
+          setAllTags((prev) => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))
+          setTagIds((prev) => [...prev, tag.id])
+        }}
+      />
+
+      <AddSongSheet
+        open={songSheetOpen}
+        onClose={() => setSongSheetOpen(false)}
+        onAdd={(song) => setForm((f) => ({ ...f, songs: [...f.songs, song] }))}
       />
     </PhoneShell>
   )

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listNotesFiltered, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
+import { listTags } from '../../lib/tags'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel } from '../../lib/dates'
 
@@ -60,18 +61,25 @@ export default function WebFilter() {
     moodMax: 100,
     sort: 'mood-desc',
     limit: '',
+    place: '',
     personIds: [],
+    tagIds: [],
   })
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [people, setPeople] = useState([])
   const [peopleError, setPeopleError] = useState('')
+  const [tags, setTags] = useState([])
+  const [tagsError, setTagsError] = useState('')
 
   useEffect(() => {
     listPeople()
       .then(setPeople)
       .catch((err) => setPeopleError(describeError(err)))
+    listTags()
+      .then(setTags)
+      .catch((err) => setTagsError(describeError(err)))
   }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -81,6 +89,14 @@ export default function WebFilter() {
       personIds: filters.personIds.includes(id)
         ? filters.personIds.filter((x) => x !== id)
         : [...filters.personIds, id],
+    })
+  }
+
+  function toggleTag(id) {
+    set({
+      tagIds: filters.tagIds.includes(id)
+        ? filters.tagIds.filter((x) => x !== id)
+        : [...filters.tagIds, id],
     })
   }
 
@@ -96,7 +112,9 @@ export default function WebFilter() {
         end,
         moodMin,
         moodMax,
+        place: filters.place,
         personIds: filters.personIds,
+        tagIds: filters.tagIds,
       })
       const sorted = sortNotes(list, filters.sort)
       const limit = Number(filters.limit)
@@ -171,6 +189,19 @@ export default function WebFilter() {
             </div>
           </div>
 
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Luogo
+            </p>
+            <input
+              type="text"
+              placeholder="Cerca per luogo…"
+              value={filters.place}
+              onChange={(e) => set({ place: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+
           {peopleError && (
             <div className="rounded-2xl border border-line bg-tag p-4">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
@@ -193,6 +224,34 @@ export default function WebFilter() {
                     onClick={() => togglePerson(p.id)}
                   >
                     {p.name}
+                  </ChipButton>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tagsError && (
+            <div className="rounded-2xl border border-line bg-tag p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Tag
+              </p>
+              <p className="text-xs text-delete-dark">{tagsError}</p>
+            </div>
+          )}
+
+          {tags.length > 0 && (
+            <div className="rounded-2xl border border-line bg-tag p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Tag
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((t) => (
+                  <ChipButton
+                    key={t.id}
+                    active={filters.tagIds.includes(t.id)}
+                    onClick={() => toggleTag(t.id)}
+                  >
+                    {t.name}
                   </ChipButton>
                 ))}
               </div>

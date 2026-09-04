@@ -155,62 +155,65 @@ export default function WebMonth() {
                   (has ? '' : ' opacity-60')
                 }
               >
-                <span
-                  className="flex w-20 shrink-0 flex-col items-center justify-center gap-1"
-                  style={
-                    has
-                      ? { backgroundColor: moodColor(mood), color: moodTextColor(mood) }
-                      : {
-                          color: isWeekend
-                            ? 'var(--color-weekend)'
-                            : 'var(--color-ink-soft)',
-                        }
-                  }
-                >
-                  <span className="font-serif text-2xl font-semibold leading-none">
-                    {dayNum}
+                <span className="flex w-full items-stretch gap-4 px-4 py-3">
+                  <span
+                    className="flex w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl"
+                    style={
+                      has
+                        ? { backgroundColor: moodColor(mood), color: moodTextColor(mood) }
+                        : {
+                            border: '1px solid var(--color-line)',
+                            color: isWeekend
+                              ? 'var(--color-weekend)'
+                              : 'var(--color-ink-soft)',
+                          }
+                    }
+                  >
+                    <span className="font-serif text-2xl font-semibold leading-none">
+                      {dayNum}
+                    </span>
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      {weekdayShort(cell.key)}
+                    </span>
                   </span>
-                  <span className="text-xs font-semibold uppercase tracking-wide">
-                    {weekdayShort(cell.key)}
-                  </span>
-                </span>
 
-                <span className="min-w-0 flex-1 px-5 py-5">
-                  {titles.length ? (
-                    <span className="flex flex-col gap-1">
-                      {titles.map((t, i) => (
-                        <span
+                  <span className="min-w-0 flex-1 py-1">
+                    {titles.length ? (
+                      <span className="flex flex-col gap-1">
+                        {titles.map((t, i) => (
+                          <span
+                            key={i}
+                            className="truncate text-sm font-medium text-ink"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </span>
+                    ) : has ? (
+                      <span className="block text-sm text-ink-soft">
+                        {dayNotes.length} {dayNotes.length === 1 ? 'nota' : 'note'}
+                      </span>
+                    ) : (
+                      <span className="block text-sm text-ink-soft/60">
+                        Nessuna nota
+                      </span>
+                    )}
+                  </span>
+
+                  {imgs.length > 0 && (
+                    <span className="flex shrink-0 gap-2">
+                      {imgs.map((src, i) => (
+                        <img
                           key={i}
-                          className="truncate text-sm font-medium text-ink"
-                        >
-                          {t}
-                        </span>
+                          src={src}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-28 rounded-2xl object-cover"
+                        />
                       ))}
-                    </span>
-                  ) : has ? (
-                    <span className="block text-sm text-ink-soft">
-                      {dayNotes.length} {dayNotes.length === 1 ? 'nota' : 'note'}
-                    </span>
-                  ) : (
-                    <span className="block text-sm text-ink-soft/60">
-                      Nessuna nota
                     </span>
                   )}
                 </span>
-
-                {imgs.length > 0 && (
-                  <span className="flex shrink-0">
-                    {imgs.map((src, i) => (
-                      <img
-                        key={i}
-                        src={src}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-32 object-cover"
-                      />
-                    ))}
-                  </span>
-                )}
               </button>
             )
           })}

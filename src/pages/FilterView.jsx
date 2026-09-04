@@ -7,6 +7,7 @@ import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import { listNotesFiltered, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
+import { listTags } from '../lib/tags'
 import { moodColor, moodTextColor } from '../lib/mood'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel, todayKey } from '../lib/dates'
 import { haptic } from '../lib/haptics'
@@ -57,18 +58,25 @@ export default function FilterView() {
     moodMax: 100,
     sort: 'mood-desc',
     limit: '',
+    place: '',
     personIds: [],
+    tagIds: [],
   })
   const [results, setResults] = useState(null) // null = filtri non ancora applicati
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [people, setPeople] = useState([])
   const [peopleError, setPeopleError] = useState('')
+  const [tags, setTags] = useState([])
+  const [tagsError, setTagsError] = useState('')
 
   useEffect(() => {
     listPeople()
       .then(setPeople)
       .catch((err) => setPeopleError(describeError(err)))
+    listTags()
+      .then(setTags)
+      .catch((err) => setTagsError(describeError(err)))
   }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -79,6 +87,15 @@ export default function FilterView() {
       personIds: filters.personIds.includes(id)
         ? filters.personIds.filter((x) => x !== id)
         : [...filters.personIds, id],
+    })
+  }
+
+  function toggleTag(id) {
+    haptic()
+    set({
+      tagIds: filters.tagIds.includes(id)
+        ? filters.tagIds.filter((x) => x !== id)
+        : [...filters.tagIds, id],
     })
   }
 
@@ -95,7 +112,9 @@ export default function FilterView() {
         end,
         moodMin,
         moodMax,
+        place: filters.place,
         personIds: filters.personIds,
+        tagIds: filters.tagIds,
       })
       const sorted = sortNotes(list, filters.sort)
       const limit = Number(filters.limit)
@@ -170,6 +189,16 @@ export default function FilterView() {
             </div>
           </FilterField>
 
+          <FilterField label="Luogo">
+            <input
+              type="text"
+              placeholder="Cerca per luogo…"
+              value={filters.place}
+              onChange={(e) => set({ place: e.target.value })}
+              className="w-full rounded-xl border border-line bg-cream px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-soft"
+            />
+          </FilterField>
+
           {peopleError && (
             <FilterField label="Persone">
               <p className="text-xs text-delete-dark">{peopleError}</p>
@@ -192,6 +221,34 @@ export default function FilterView() {
                     }
                   >
                     {p.name}
+                  </button>
+                ))}
+              </div>
+            </FilterField>
+          )}
+
+          {tagsError && (
+            <FilterField label="Tag">
+              <p className="text-xs text-delete-dark">{tagsError}</p>
+            </FilterField>
+          )}
+
+          {tags.length > 0 && (
+            <FilterField label="Tag">
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => toggleTag(t.id)}
+                    className={
+                      'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      (filters.tagIds.includes(t.id)
+                        ? 'bg-ink text-cream'
+                        : 'border border-line bg-cream text-ink')
+                    }
+                  >
+                    {t.name}
                   </button>
                 ))}
               </div>

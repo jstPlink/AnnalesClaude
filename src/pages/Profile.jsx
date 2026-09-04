@@ -14,6 +14,7 @@ import {
   describeImmichError,
 } from '../lib/immich'
 import { listPeople, createPersonFromImmich, deletePerson } from '../lib/people'
+import { listTags, createTag, deleteTag } from '../lib/tags'
 import { haptic } from '../lib/haptics'
 
 export default function Profile() {
@@ -36,6 +37,11 @@ export default function Profile() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [tags, setTags] = useState([])
+  const [tagsError, setTagsError] = useState('')
+  const [newTag, setNewTag] = useState('')
+  const [creatingTag, setCreatingTag] = useState(false)
+  const [removingTagId, setRemovingTagId] = useState('')
 
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
@@ -46,7 +52,38 @@ export default function Profile() {
     listPeople()
       .then(setPeople)
       .catch((err) => setPeopleError(describeError(err)))
+    listTags()
+      .then(setTags)
+      .catch((err) => setTagsError(describeError(err)))
   }, [])
+
+  async function addTag() {
+    const name = newTag.trim()
+    if (!name || creatingTag) return
+    setCreatingTag(true)
+    setTagsError('')
+    try {
+      const rec = await createTag(name)
+      setTags((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewTag('')
+    } catch (err) {
+      setTagsError(describeError(err))
+    } finally {
+      setCreatingTag(false)
+    }
+  }
+
+  async function removeTag(id) {
+    setRemovingTagId(id)
+    try {
+      await deleteTag(id)
+      setTags((prev) => prev.filter((t) => t.id !== id))
+    } catch (err) {
+      setTagsError(describeError(err))
+    } finally {
+      setRemovingTagId('')
+    }
+  }
 
   async function addPerson(immichPerson) {
     const rec = await createPersonFromImmich(immichPerson)
@@ -293,6 +330,57 @@ export default function Profile() {
                   {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 space-y-2">
+          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Tag
+          </p>
+          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
+            <p className="text-xs text-ink-soft">
+              Elenco dei tag selezionabili nelle note.
+            </p>
+            {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-1.5 rounded-full border border-line bg-tag py-1 pl-3 pr-1.5 text-sm font-medium text-ink"
+                  >
+                    {tag.name}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingTagId === tag.id}
+                      onClick={() => removeTag(tag.id)}
+                      className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nuovo tag…"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
+              />
+              <button
+                type="button"
+                disabled={!newTag.trim() || creatingTag}
+                onClick={addTag}
+                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {creatingTag ? '…' : 'Crea'}
+              </button>
             </div>
           </div>
         </div>

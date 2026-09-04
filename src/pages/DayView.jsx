@@ -2,7 +2,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
-import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
@@ -120,13 +119,6 @@ export default function DayView() {
     return () => ro.disconnect()
   }, [])
 
-  function changeYear(newYear) {
-    if (!parsed) return
-    const mm = String(parsed.mo).padStart(2, '0')
-    const dd = String(parsed.d).padStart(2, '0')
-    navigate(`/day/${newYear}-${mm}-${dd}`)
-  }
-
   const blocks = useMemo(() => {
     const items = notes.map((n) => {
       const startMin = Math.max(0, Math.min(DAY_MIN, startMinutes(n.timeStart)))
@@ -146,9 +138,9 @@ export default function DayView() {
           <CircleButton onClick={() => navigate('/')} title="Indietro">
             <Icon name="chevron-left" size={22} />
           </CircleButton>
-          <div className="flex justify-center">
-            <YearPill year={year} onChange={changeYear} />
-          </div>
+          <span className="text-center text-base font-semibold text-ink-soft tabular-nums">
+            {year}
+          </span>
           <span />
         </div>
         <h2 className="pb-3 text-center text-2xl font-extrabold text-ink">

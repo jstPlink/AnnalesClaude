@@ -7,6 +7,10 @@ import AddImagesSheet from '../../components/AddImagesSheet'
 import ImmichPicker from '../../components/ImmichPicker'
 import PeoplePickerSheet from '../../components/PeoplePickerSheet'
 import PersonAvatar from '../../components/PersonAvatar'
+import TagPickerSheet from '../../components/TagPickerSheet'
+import AddSongSheet from '../../components/AddSongSheet'
+import DatePickerPopover from '../../components/DatePickerPopover'
+import Icon from '../../components/Icon'
 import {
   createNote,
   deleteNote,
@@ -17,6 +21,7 @@ import {
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
 import { listPeople } from '../../lib/people'
+import { listTags } from '../../lib/tags'
 import { useAuth } from '../../context/AuthContext'
 import {
   dayKey,
@@ -26,13 +31,13 @@ import {
 } from '../../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const nowYear = new Date().getFullYear()
-const YEARS = Array.from({ length: 9 }, (_, i) => nowYear + 2 - i)
 
 const emptyForm = (dKey) => ({
   title: '',
   content: '',
   mood: 0.5,
+  place: '',
+  songs: [],
   dateKey: dKey,
   timeStart: '09:00',
   timeEnd: '10:00',
@@ -42,6 +47,8 @@ const formFromRecord = (rec) => ({
   title: rec.title ?? '',
   content: rec.content ?? '',
   mood: Number(rec.mood ?? 0.5),
+  place: rec.place ?? '',
+  songs: Array.isArray(rec.songs) ? rec.songs : [],
   dateKey: dayKey(rec.date),
   timeStart: timeInputValue(rec.timeStart) || '09:00',
   timeEnd: timeInputValue(rec.timeEnd) || '10:00',
@@ -52,6 +59,8 @@ const snapshot = (f) =>
     title: f.title,
     content: f.content,
     mood: Number(f.mood),
+    place: f.place,
+    songs: f.songs,
     dateKey: f.dateKey,
     timeStart: f.timeStart,
     timeEnd: f.timeEnd,
@@ -92,6 +101,11 @@ export default function WebNote() {
   const [peopleIds, setPeopleIds] = useState([])
   const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
   const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
+  const [allTags, setAllTags] = useState([])
+  const [tagIds, setTagIds] = useState([])
+  const [baselineTagIds, setBaselineTagIds] = useState([])
+  const [tagSheetOpen, setTagSheetOpen] = useState(false)
+  const [songSheetOpen, setSongSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false)
@@ -113,6 +127,8 @@ export default function WebNote() {
         setExistingImages(rec.images || [])
         setPeopleIds(rec.people || [])
         setBaselinePeopleIds(rec.people || [])
+        setTagIds(rec.tags || [])
+        setBaselineTagIds(rec.tags || [])
       })
       .catch((err) => alive && setLoadError(describeError(err)))
       .finally(() => alive && setLoading(false))
@@ -124,6 +140,9 @@ export default function WebNote() {
   useEffect(() => {
     listPeople()
       .then(setAllPeople)
+      .catch(() => {})
+    listTags()
+      .then(setAllTags)
       .catch(() => {})
   }, [])
 
@@ -149,26 +168,34 @@ export default function WebNote() {
     )
   }
 
+  const selectedTags = useMemo(
+    () => allTags.filter((t) => tagIds.includes(t.id)),
+    [allTags, tagIds],
+  )
+
+  function toggleTag(id) {
+    setTagIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  function removeSong(index) {
+    setForm((f) => ({ ...f, songs: f.songs.filter((_, i) => i !== index) }))
+  }
+
   const peopleDirty =
     JSON.stringify([...peopleIds].sort()) !== JSON.stringify([...baselinePeopleIds].sort())
+  const tagsDirty =
+    JSON.stringify([...tagIds].sort()) !== JSON.stringify([...baselineTagIds].sort())
 
   const dirty =
     !existsOnServer ||
     snapshot(form) !== baseline ||
     newFiles.length > 0 ||
     removedImages.length > 0 ||
-    peopleDirty
+    peopleDirty ||
+    tagsDirty
   const mode = !existsOnServer || dirty ? 'save' : 'delete'
-
-  const parsed = parseWall(form.dateKey)
-  const year = parsed?.y ?? nowYear
-
-  function changeYear(newYear) {
-    if (!parsed) return
-    const mm = String(parsed.mo).padStart(2, '0')
-    const dd = String(parsed.d).padStart(2, '0')
-    set({ dateKey: `${newYear}-${mm}-${dd}` })
-  }
 
   const onPickFiles = useCallback((e) => {
     const picked = Array.from(e.target.files || [])
@@ -185,8 +212,8 @@ export default function WebNote() {
     const imageCount = existingImages.length + newFiles.length
     try {
       const rec = creating
-        ? await createNote(form, newFiles, peopleIds)
-        : await updateNote(effectiveId, form, newFiles, removedImages, peopleIds)
+        ? await createNote(form, { newFiles, peopleIds, tagIds })
+        : await updateNote(effectiveId, form, { newFiles, removedImages, peopleIds, tagIds })
 
       setRecord(rec)
       setCreatedId(rec.id)
@@ -196,6 +223,8 @@ export default function WebNote() {
       setBaseline(snapshot(form))
       setPeopleIds(rec.people || [])
       setBaselinePeopleIds(rec.people || [])
+      setTagIds(rec.tags || [])
+      setBaselineTagIds(rec.tags || [])
 
       const problems = checkSavedNote(rec, {
         title: form.title,
@@ -203,7 +232,8 @@ export default function WebNote() {
         mood: form.mood,
         imageCount,
         peopleCount: peopleIds.length,
-        dateKey: creating ? form.dateKey : null,
+        tagCount: tagIds.length,
+        dateKey: form.dateKey,
         timeStart: form.timeStart,
         timeEnd: form.timeEnd,
       })
@@ -299,28 +329,16 @@ export default function WebNote() {
         {/* Colonna meta */}
         <div className="space-y-5">
           <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
               Data
             </p>
-            <p className="mt-1 font-serif text-lg text-ink">
+            <p className="mb-2 font-serif text-lg text-ink">
               {fullDayLabel(form.dateKey)}
             </p>
-            {isNew && !existsOnServer && (
-              <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-ink-soft">
-                Anno
-                <select
-                  value={year}
-                  onChange={(e) => changeYear(Number(e.target.value))}
-                  className="rounded-lg border border-line bg-cream px-2 py-1 text-sm text-ink outline-none"
-                >
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <DatePickerPopover
+              dateKey={form.dateKey}
+              onChange={(dateKey) => set({ dateKey })}
+            />
           </div>
 
           <div className="rounded-2xl border border-line bg-tag p-4">
@@ -456,6 +474,111 @@ export default function WebNote() {
               </div>
             )}
           </div>
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Tag
+              </p>
+              <button
+                type="button"
+                onClick={() => setTagSheetOpen(true)}
+                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {selectedTags.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessun tag</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-3 pr-2"
+                  >
+                    <span className="text-sm font-semibold text-ink">{tag.name}</span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => toggleTag(tag.id)}
+                      className="text-ink-soft"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Canzoni
+              </p>
+              <button
+                type="button"
+                onClick={() => setSongSheetOpen(true)}
+                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {form.songs.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessuna canzone</p>
+            ) : (
+              <div className="space-y-2">
+                {form.songs.map((song, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-xl border border-line bg-cream px-2 py-1.5"
+                  >
+                    {song.thumbnailUrl ? (
+                      <img
+                        src={song.thumbnailUrl}
+                        alt=""
+                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
+                        <Icon name="music" size={16} />
+                      </span>
+                    )}
+                    <a
+                      href={song.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                    >
+                      {song.title}
+                    </a>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => removeSong(i)}
+                      className="shrink-0 text-ink-soft"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Luogo
+            </p>
+            <input
+              type="text"
+              placeholder="Nessun luogo"
+              value={form.place}
+              onChange={(e) => set({ place: e.target.value })}
+              className={inputCls}
+            />
+          </div>
         </div>
 
         {/* Colonna editor */}
@@ -521,6 +644,24 @@ export default function WebNote() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+      />
+
+      <TagPickerSheet
+        open={tagSheetOpen}
+        tags={allTags}
+        selectedIds={tagIds}
+        onClose={() => setTagSheetOpen(false)}
+        onToggle={toggleTag}
+        onCreated={(tag) => {
+          setAllTags((prev) => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))
+          setTagIds((prev) => [...prev, tag.id])
+        }}
+      />
+
+      <AddSongSheet
+        open={songSheetOpen}
+        onClose={() => setSongSheetOpen(false)}
+        onAdd={(song) => setForm((f) => ({ ...f, songs: [...f.songs, song] }))}
       />
     </div>
   )

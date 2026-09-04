@@ -9,6 +9,7 @@ import {
   describeImmichError,
 } from '../../lib/immich'
 import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/people'
+import { listTags, createTag, deleteTag } from '../../lib/tags'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 
@@ -32,6 +33,11 @@ export default function WebProfile() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [tags, setTags] = useState([])
+  const [tagsError, setTagsError] = useState('')
+  const [newTag, setNewTag] = useState('')
+  const [creatingTag, setCreatingTag] = useState(false)
+  const [removingTagId, setRemovingTagId] = useState('')
 
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
@@ -42,7 +48,38 @@ export default function WebProfile() {
     listPeople()
       .then(setPeople)
       .catch((err) => setPeopleError(describeError(err)))
+    listTags()
+      .then(setTags)
+      .catch((err) => setTagsError(describeError(err)))
   }, [])
+
+  async function addTag() {
+    const name = newTag.trim()
+    if (!name || creatingTag) return
+    setCreatingTag(true)
+    setTagsError('')
+    try {
+      const rec = await createTag(name)
+      setTags((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewTag('')
+    } catch (err) {
+      setTagsError(describeError(err))
+    } finally {
+      setCreatingTag(false)
+    }
+  }
+
+  async function removeTag(id) {
+    setRemovingTagId(id)
+    try {
+      await deleteTag(id)
+      setTags((prev) => prev.filter((t) => t.id !== id))
+    } catch (err) {
+      setTagsError(describeError(err))
+    } finally {
+      setRemovingTagId('')
+    }
+  }
 
   async function addPerson(immichPerson) {
     const rec = await createPersonFromImmich(immichPerson)
@@ -279,6 +316,56 @@ export default function WebProfile() {
               {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
             </button>
           )}
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
+        <h2 className="font-serif text-xl font-semibold text-ink">Tag</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Elenco dei tag selezionabili nelle note.
+        </p>
+
+        {tagsError && <p className="mt-3 text-sm text-delete-dark">{tagsError}</p>}
+
+        {tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="flex items-center gap-2 rounded-full border border-line bg-cream py-1.5 pl-4 pr-2 text-sm font-medium text-ink"
+              >
+                {tag.name}
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  disabled={removingTagId === tag.id}
+                  onClick={() => removeTag(tag.id)}
+                  className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 flex gap-3">
+          <input
+            type="text"
+            placeholder="Nuovo tag…"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addTag()}
+            className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+          />
+          <button
+            type="button"
+            disabled={!newTag.trim() || creatingTag}
+            onClick={addTag}
+            className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-sm font-bold text-ink transition disabled:opacity-50"
+          >
+            {creatingTag ? '…' : 'Crea'}
+          </button>
         </div>
       </div>
 

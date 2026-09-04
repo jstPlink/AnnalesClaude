@@ -21,35 +21,52 @@ export async function getNote(id) {
   return pb.collection(COLLECTION).getOne(id)
 }
 
-// Campi comuni a create e update (la data è gestita a parte).
-function commonFields(data, newFiles = [], removedImages = [], peopleIds = []) {
+// Aggiunge al FormData un campo relazione multiplo: sostituisce l'intero
+// elenco con quello passato (vuoto incluso, per svuotarlo esplicitamente).
+function appendMultiRelation(fd, field, ids) {
+  if (ids.length) {
+    for (const id of ids) fd.append(field, id)
+  } else {
+    fd.append(field, '')
+  }
+}
+
+// Campi comuni a create e update, inclusa la data: modificabile anche dopo
+// il primo salvataggio, per correggere note assegnate al giorno sbagliato.
+function commonFields(data, opts) {
+  const { newFiles, removedImages, peopleIds, tagIds } = opts
   const fd = new FormData()
   fd.append('title', data.title ?? '')
   fd.append('content', data.content ?? '')
   fd.append('mood', String(data.mood ?? 0))
+  fd.append('place', data.place ?? '')
+  fd.append('songs', JSON.stringify(data.songs ?? []))
   fd.append('timeStart', toPbTime(data.timeStart))
   fd.append('timeEnd', toPbTime(data.timeEnd))
   for (const file of newFiles) fd.append('images', file)
   for (const name of removedImages) fd.append('images-', name)
-  if (peopleIds.length) {
-    for (const id of peopleIds) fd.append('people', id)
-  } else {
-    fd.append('people', '')
-  }
+  appendMultiRelation(fd, 'people', peopleIds)
+  appendMultiRelation(fd, 'tags', tagIds)
+  const dKey = dayKey(data.dateKey ?? data.date)
+  if (!dKey) throw new Error('Data della nota mancante o non valida.')
+  fd.append('date', dKey)
   return fd
 }
 
-export async function createNote(data, newFiles = [], peopleIds = []) {
-  const dKey = dayKey(data.dateKey ?? data.date)
-  if (!dKey) throw new Error('Data della nota mancante o non valida.')
-  const fd = commonFields(data, newFiles, [], peopleIds)
-  fd.append('date', dKey)
+export async function createNote(
+  data,
+  { newFiles = [], peopleIds = [], tagIds = [] } = {},
+) {
+  const fd = commonFields(data, { newFiles, removedImages: [], peopleIds, tagIds })
   return pb.collection(COLLECTION).create(fd)
 }
 
-// La data della nota NON viene modificata in aggiornamento: resta quella salvata.
-export async function updateNote(id, data, newFiles = [], removedImages = [], peopleIds = []) {
-  const fd = commonFields(data, newFiles, removedImages, peopleIds)
+export async function updateNote(
+  id,
+  data,
+  { newFiles = [], removedImages = [], peopleIds = [], tagIds = [] } = {},
+) {
+  const fd = commonFields(data, { newFiles, removedImages, peopleIds, tagIds })
   return pb.collection(COLLECTION).update(id, fd)
 }
 
@@ -57,15 +74,24 @@ export async function deleteNote(id) {
   return pb.collection(COLLECTION).delete(id)
 }
 
-// Elenco note filtrato per intervallo di date, intervallo di mood e/o
-// persone coinvolte (nota inclusa se coinvolge ALMENO una delle persone).
-// Tutti i parametri sono opzionali: se assenti, nessun vincolo su quel campo.
+// Elenco note filtrato per intervallo di date, intervallo di mood, luogo
+// (sottostringa) e/o persone/tag coinvolti (nota inclusa se coinvolge
+// ALMENO una delle persone/uno dei tag). Tutti i parametri sono opzionali:
+// se assenti, nessun vincolo su quel campo.
 //
-// Il filtro per persone è applicato lato client (dopo il fetch) invece che
-// nella query PocketBase: la sintassi filtro per campi relazione multipli
-// si è rivelata inaffidabile da qui, mentre un controllo diretto
-// sull'array `people` del record è garantito corretto.
-export async function listNotesFiltered({ start, end, moodMin, moodMax, personIds } = {}) {
+// Il filtro per persone/tag è applicato lato client (dopo il fetch) invece
+// che nella query PocketBase: la sintassi filtro per campi relazione
+// multipli si è rivelata inaffidabile da qui, mentre un controllo diretto
+// sugli array del record è garantito corretto.
+export async function listNotesFiltered({
+  start,
+  end,
+  moodMin,
+  moodMax,
+  place,
+  personIds,
+  tagIds,
+} = {}) {
   const clauses = []
   const params = {}
   if (start) {
@@ -84,10 +110,19 @@ export async function listNotesFiltered({ start, end, moodMin, moodMax, personId
     clauses.push('mood <= {:moodMax}')
     params.moodMax = moodMax
   }
+  if (place && place.trim()) {
+    clauses.push('place ~ {:place}')
+    params.place = place.trim()
+  }
   const filter = clauses.length ? pb.filter(clauses.join(' && '), params) : ''
-  const list = await pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })
-  if (!personIds || !personIds.length) return list
-  return list.filter((n) => (n.people || []).some((id) => personIds.includes(id)))
+  let list = await pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })
+  if (personIds && personIds.length) {
+    list = list.filter((n) => (n.people || []).some((id) => personIds.includes(id)))
+  }
+  if (tagIds && tagIds.length) {
+    list = list.filter((n) => (n.tags || []).some((id) => tagIds.includes(id)))
+  }
+  return list
 }
 
 // Raggruppa le note per chiave giorno "YYYY-MM-DD".
@@ -146,6 +181,12 @@ export function checkSavedNote(rec, expected) {
       problems.push(
         `Persone salvate: ${savedPeople} invece di ${expected.peopleCount}.`,
       )
+    }
+  }
+  if (expected.tagCount != null) {
+    const savedTags = (rec.tags || []).length
+    if (savedTags !== expected.tagCount) {
+      problems.push(`Tag salvati: ${savedTags} invece di ${expected.tagCount}.`)
     }
   }
   if (expected.dateKey && dayKey(rec.date) !== expected.dateKey) {
