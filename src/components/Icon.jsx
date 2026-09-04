@@ -77,6 +77,12 @@ const PATHS = {
       <circle cx="12" cy="7" r="4" />
     </>
   ),
+  chart: (
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M7 14l4-5 3 3 5-7" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 24, strokeWidth = 2.2, className = '' }) {

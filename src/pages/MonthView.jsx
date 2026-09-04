@@ -249,6 +249,19 @@ export default function MonthView() {
       </main>
 
       <Footer
+        items={[
+          {
+            icon: 'calendar',
+            title: 'Calendario',
+            active: true,
+            onClick: () => navigate('/'),
+          },
+          {
+            icon: 'chart',
+            title: 'Andamento anno',
+            onClick: () => navigate('/dati'),
+          },
+        ]}
         primaryIcon="plus"
         primaryTitle="Nuova nota (oggi)"
         onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}

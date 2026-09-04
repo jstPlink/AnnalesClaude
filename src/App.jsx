@@ -9,11 +9,13 @@ import MonthView from './pages/MonthView'
 import DayView from './pages/DayView'
 import NoteView from './pages/NoteView'
 import Profile from './pages/Profile'
+import DataView from './pages/DataView'
 import WebLogin from './pages/web/WebLogin'
 import WebMonth from './pages/web/WebMonth'
 import WebDay from './pages/web/WebDay'
 import WebNote from './pages/web/WebNote'
 import WebProfile from './pages/web/WebProfile'
+import WebData from './pages/web/WebData'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
@@ -67,6 +69,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Screen mobile={Profile} desktop={WebProfile} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/dati"
+              element={
+                <RequireAuth>
+                  <Screen mobile={DataView} desktop={WebData} />
                 </RequireAuth>
               }
             />

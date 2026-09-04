@@ -94,6 +94,15 @@ export default function Sidebar() {
         >
           Oggi
         </NavLink>
+        <NavLink
+          to="/dati"
+          className={({ isActive }) =>
+            'rounded-xl px-3 py-2 transition ' +
+            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+          }
+        >
+          Andamento
+        </NavLink>
       </nav>
 
       <div className="mt-auto border-t border-line p-4">

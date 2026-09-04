@@ -1,3 +1,5 @@
+import { parseWall } from './dates'
+
 // Gestione del valore `mood` (0–1) e della sua rappresentazione a colori.
 
 // Nella vista mensile si elencano i titoli delle note "estreme": mood molto
@@ -106,4 +108,100 @@ export function dayMood(notes) {
   return wsum > 0
     ? acc / wsum
     : vals.reduce((a, b) => a + b, 0) / vals.length
+}
+
+// ---- Andamento del mood sull'anno (4 "settimane" per mese) ----
+
+function weekIndexOfDay(day) {
+  if (day <= 7) return 0
+  if (day <= 14) return 1
+  if (day <= 21) return 2
+  return 3
+}
+
+// Riempie i null SOLO tra due valori noti (niente estrapolazione alle estremità).
+function interpolateNulls(arr) {
+  const known = arr
+    .map((v, i) => (v == null ? null : { i, v }))
+    .filter(Boolean)
+  if (!known.length) return null
+  const first = known[0].i
+  const last = known[known.length - 1].i
+  const out = arr.slice()
+  for (let i = first; i <= last; i++) {
+    if (out[i] != null) continue
+    let lo = null
+    let hi = null
+    for (const k of known) {
+      if (k.i <= i) lo = k
+      if (k.i >= i && hi == null) hi = k
+    }
+    const t = (i - lo.i) / (hi.i - lo.i)
+    out[i] = lo.v + (hi.v - lo.v) * t
+  }
+  return out
+}
+
+// Media mobile con finestra ±r (ignora i null; null se la finestra è vuota).
+function movingAvg(arr, r) {
+  return arr.map((v, i) => {
+    if (v == null) return null
+    let sum = 0
+    let n = 0
+    for (let j = Math.max(0, i - r); j <= Math.min(arr.length - 1, i + r); j++) {
+      if (arr[j] == null) continue
+      sum += arr[j]
+      n++
+    }
+    return n ? sum / n : null
+  })
+}
+
+// Per un anno: 48 valori settimanali (12 mesi × 4 settimane) più le versioni
+// interpolata / lisciata / di tendenza, e un riepilogo per mese.
+export function yearWeeklyMood(year, notes) {
+  const buckets = Array.from({ length: 48 }, () => [])
+  for (const n of notes) {
+    const p = parseWall(n.date)
+    if (!p || p.y !== year) continue
+    buckets[(p.mo - 1) * 4 + weekIndexOfDay(p.d)].push(n)
+  }
+
+  const raw = buckets.map((ns) => (ns.length ? dayMood(ns) : null))
+  const counts = buckets.map((ns) => ns.length)
+  const filled = interpolateNulls(raw)
+  const smooth = filled ? movingAvg(filled, 2) : null
+  const trend = smooth ? movingAvg(smooth, 4) : null
+
+  const points = raw.map((mood, i) => ({
+    i,
+    month: Math.floor(i / 4),
+    week: i % 4,
+    t: (i + 0.5) / 48,
+    mood,
+    count: counts[i],
+  }))
+
+  const monthly = Array.from({ length: 12 }, (_, mo) => {
+    const ns = buckets.slice(mo * 4, mo * 4 + 4).flat()
+    return {
+      month: mo,
+      count: ns.length,
+      mood: ns.length ? dayMood(ns) : null,
+      weeks: [0, 1, 2, 3].map((wk) => ({
+        week: wk,
+        mood: raw[mo * 4 + wk],
+        count: counts[mo * 4 + wk],
+      })),
+    }
+  })
+
+  return {
+    points,
+    filled,
+    smooth,
+    trend,
+    monthly,
+    hasData: filled != null,
+  }
 }
