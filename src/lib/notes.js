@@ -22,7 +22,7 @@ export async function getNote(id) {
 }
 
 // Campi comuni a create e update (la data è gestita a parte).
-function commonFields(data, newFiles = [], removedImages = []) {
+function commonFields(data, newFiles = [], removedImages = [], peopleIds = []) {
   const fd = new FormData()
   fd.append('title', data.title ?? '')
   fd.append('content', data.content ?? '')
@@ -31,20 +31,25 @@ function commonFields(data, newFiles = [], removedImages = []) {
   fd.append('timeEnd', toPbTime(data.timeEnd))
   for (const file of newFiles) fd.append('images', file)
   for (const name of removedImages) fd.append('images-', name)
+  if (peopleIds.length) {
+    for (const id of peopleIds) fd.append('people', id)
+  } else {
+    fd.append('people', '')
+  }
   return fd
 }
 
-export async function createNote(data, newFiles = []) {
+export async function createNote(data, newFiles = [], peopleIds = []) {
   const dKey = dayKey(data.dateKey ?? data.date)
   if (!dKey) throw new Error('Data della nota mancante o non valida.')
-  const fd = commonFields(data, newFiles)
+  const fd = commonFields(data, newFiles, [], peopleIds)
   fd.append('date', dKey)
   return pb.collection(COLLECTION).create(fd)
 }
 
 // La data della nota NON viene modificata in aggiornamento: resta quella salvata.
-export async function updateNote(id, data, newFiles = [], removedImages = []) {
-  const fd = commonFields(data, newFiles, removedImages)
+export async function updateNote(id, data, newFiles = [], removedImages = [], peopleIds = []) {
+  const fd = commonFields(data, newFiles, removedImages, peopleIds)
   return pb.collection(COLLECTION).update(id, fd)
 }
 
@@ -126,6 +131,14 @@ export function checkSavedNote(rec, expected) {
     problems.push(
       `Immagini salvate: ${savedImgs} invece di ${expected.imageCount}.`,
     )
+  }
+  if (expected.peopleCount != null) {
+    const savedPeople = (rec.people || []).length
+    if (savedPeople !== expected.peopleCount) {
+      problems.push(
+        `Persone salvate: ${savedPeople} invece di ${expected.peopleCount}.`,
+      )
+    }
   }
   if (expected.dateKey && dayKey(rec.date) !== expected.dateKey) {
     problems.push(

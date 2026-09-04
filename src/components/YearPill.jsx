@@ -47,11 +47,11 @@ export default function YearPill({
           (readOnly ? '' : 'transition active:scale-95')
         }
       >
-        <span className="text-2xl font-extrabold leading-tight text-ink">
+        <span className="text-2xl font-semibold leading-tight text-ink">
           {year}
         </span>
         {subtitle && (
-          <span className="max-w-full truncate text-sm font-semibold text-ink-soft">
+          <span className="max-w-full truncate text-sm font-extrabold text-ink-soft">
             {subtitle}
           </span>
         )}

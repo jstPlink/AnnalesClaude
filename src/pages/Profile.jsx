@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
+import PersonAvatar from '../components/PersonAvatar'
+import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import { useAuth } from '../context/AuthContext'
 import { pb } from '../lib/pocketbase'
 import { describeError } from '../lib/notes'
 import { testImmichConnection, describeImmichError } from '../lib/immich'
+import { listPeople, createPersonFromImmich, deletePerson } from '../lib/people'
 import { haptic } from '../lib/haptics'
 
 export default function Profile() {
@@ -23,10 +26,39 @@ export default function Profile() {
   const [testing, setTesting] = useState(false)
   const [status, setStatus] = useState(null) // { ok, message }
 
+  const immichReady = Boolean(user?.immichUrl && user?.immichApiKey)
+  const [people, setPeople] = useState([])
+  const [peopleError, setPeopleError] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [removingId, setRemovingId] = useState('')
+
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
     setImmichApiKey(user?.immichApiKey || '')
   }, [user])
+
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch((err) => setPeopleError(describeError(err)))
+  }, [])
+
+  async function addPerson(immichPerson) {
+    const rec = await createPersonFromImmich(immichPerson)
+    setPeople((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async function removePerson(id) {
+    setRemovingId(id)
+    try {
+      await deletePerson(id)
+      setPeople((prev) => prev.filter((p) => p.id !== id))
+    } catch (err) {
+      setPeopleError(describeError(err))
+    } finally {
+      setRemovingId('')
+    }
+  }
 
   async function saveImmich() {
     setSaving(true)
@@ -162,6 +194,58 @@ export default function Profile() {
           </div>
         </div>
 
+        <div className="mt-8 space-y-2">
+          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Persone
+          </p>
+          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
+            <p className="text-xs text-ink-soft">
+              Elenco delle persone selezionabili nelle note, pescate dal tuo
+              Immich.
+            </p>
+            {peopleError && (
+              <p className="text-xs text-delete-dark">{peopleError}</p>
+            )}
+            {people.length > 0 && (
+              <div className="space-y-1">
+                {people.map((person) => (
+                  <div
+                    key={person.id}
+                    className="flex items-center gap-3 rounded-xl px-1 py-1"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                    />
+                    <span className="flex-1 text-sm font-medium text-ink">
+                      {person.name}
+                    </span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingId === person.id}
+                      onClick={() => removePerson(person.id)}
+                      className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={!immichReady}
+              onClick={() => setPickerOpen(true)}
+              title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
+              className="w-full rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+            >
+              + Aggiungi da Immich
+            </button>
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={onLogout}
@@ -171,6 +255,17 @@ export default function Profile() {
           Esci
         </button>
       </main>
+
+      {immichReady && (
+        <ImmichPeoplePicker
+          open={pickerOpen}
+          baseUrl={immichUrl}
+          apiKey={immichApiKey}
+          existingIds={new Set(people.map((p) => p.immichPersonId))}
+          onClose={() => setPickerOpen(false)}
+          onPick={addPerson}
+        />
+      )}
     </PhoneShell>
   )
 }

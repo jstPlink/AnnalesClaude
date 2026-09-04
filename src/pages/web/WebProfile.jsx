@@ -4,6 +4,9 @@ import { useAuth } from '../../context/AuthContext'
 import { pb } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
 import { testImmichConnection, describeImmichError } from '../../lib/immich'
+import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/people'
+import PersonAvatar from '../../components/PersonAvatar'
+import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 
 export default function WebProfile() {
   const navigate = useNavigate()
@@ -19,10 +22,39 @@ export default function WebProfile() {
   const [testing, setTesting] = useState(false)
   const [status, setStatus] = useState(null)
 
+  const immichReady = Boolean(user?.immichUrl && user?.immichApiKey)
+  const [people, setPeople] = useState([])
+  const [peopleError, setPeopleError] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [removingId, setRemovingId] = useState('')
+
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
     setImmichApiKey(user?.immichApiKey || '')
   }, [user])
+
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch((err) => setPeopleError(describeError(err)))
+  }, [])
+
+  async function addPerson(immichPerson) {
+    const rec = await createPersonFromImmich(immichPerson)
+    setPeople((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async function removePerson(id) {
+    setRemovingId(id)
+    try {
+      await deletePerson(id)
+      setPeople((prev) => prev.filter((p) => p.id !== id))
+    } catch (err) {
+      setPeopleError(describeError(err))
+    } finally {
+      setRemovingId('')
+    }
+  }
 
   async function saveImmich() {
     setSaving(true)
@@ -159,6 +191,56 @@ export default function WebProfile() {
           </div>
         </div>
       </div>
+
+      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
+        <h2 className="font-serif text-xl font-semibold text-ink">Persone</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Elenco delle persone selezionabili nelle note, pescate dal tuo Immich.
+        </p>
+
+        {peopleError && <p className="mt-3 text-sm text-delete-dark">{peopleError}</p>}
+
+        {people.length > 0 && (
+          <div className="mt-4 space-y-1">
+            {people.map((person) => (
+              <div key={person.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
+                <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
+                <span className="flex-1 text-sm font-medium text-ink">{person.name}</span>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  disabled={removingId === person.id}
+                  onClick={() => removePerson(person.id)}
+                  className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          disabled={!immichReady}
+          onClick={() => setPickerOpen(true)}
+          title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
+          className="mt-4 rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+        >
+          + Aggiungi da Immich
+        </button>
+      </div>
+
+      {immichReady && (
+        <ImmichPeoplePicker
+          open={pickerOpen}
+          baseUrl={immichUrl}
+          apiKey={immichApiKey}
+          existingIds={new Set(people.map((p) => p.immichPersonId))}
+          onClose={() => setPickerOpen(false)}
+          onPick={addPerson}
+        />
+      )}
     </div>
   )
 }

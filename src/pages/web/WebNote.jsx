@@ -5,6 +5,8 @@ import RichText from '../../components/RichText'
 import Dialog from '../../components/Dialog'
 import AddImagesSheet from '../../components/AddImagesSheet'
 import ImmichPicker from '../../components/ImmichPicker'
+import PeoplePickerSheet from '../../components/PeoplePickerSheet'
+import PersonAvatar from '../../components/PersonAvatar'
 import {
   createNote,
   deleteNote,
@@ -14,6 +16,7 @@ import {
   describeError,
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
+import { listPeople } from '../../lib/people'
 import { useAuth } from '../../context/AuthContext'
 import {
   dayKey,
@@ -85,6 +88,10 @@ export default function WebNote() {
   const [dialog, setDialog] = useState(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [immichOpen, setImmichOpen] = useState(false)
+  const [allPeople, setAllPeople] = useState([])
+  const [peopleIds, setPeopleIds] = useState([])
+  const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
+  const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false)
@@ -104,6 +111,8 @@ export default function WebNote() {
         setForm(f)
         setBaseline(snapshot(f))
         setExistingImages(rec.images || [])
+        setPeopleIds(rec.people || [])
+        setBaselinePeopleIds(rec.people || [])
       })
       .catch((err) => alive && setLoadError(describeError(err)))
       .finally(() => alive && setLoading(false))
@@ -111,6 +120,12 @@ export default function WebNote() {
       alive = false
     }
   }, [id, isNew])
+
+  useEffect(() => {
+    listPeople()
+      .then(setAllPeople)
+      .catch(() => {})
+  }, [])
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
 
@@ -123,11 +138,26 @@ export default function WebNote() {
     [previews],
   )
 
+  const selectedPeople = useMemo(
+    () => allPeople.filter((p) => peopleIds.includes(p.id)),
+    [allPeople, peopleIds],
+  )
+
+  function togglePerson(id) {
+    setPeopleIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  const peopleDirty =
+    JSON.stringify([...peopleIds].sort()) !== JSON.stringify([...baselinePeopleIds].sort())
+
   const dirty =
     !existsOnServer ||
     snapshot(form) !== baseline ||
     newFiles.length > 0 ||
-    removedImages.length > 0
+    removedImages.length > 0 ||
+    peopleDirty
   const mode = !existsOnServer || dirty ? 'save' : 'delete'
 
   const parsed = parseWall(form.dateKey)
@@ -155,8 +185,8 @@ export default function WebNote() {
     const imageCount = existingImages.length + newFiles.length
     try {
       const rec = creating
-        ? await createNote(form, newFiles)
-        : await updateNote(effectiveId, form, newFiles, removedImages)
+        ? await createNote(form, newFiles, peopleIds)
+        : await updateNote(effectiveId, form, newFiles, removedImages, peopleIds)
 
       setRecord(rec)
       setCreatedId(rec.id)
@@ -164,12 +194,15 @@ export default function WebNote() {
       setNewFiles([])
       setRemovedImages([])
       setBaseline(snapshot(form))
+      setPeopleIds(rec.people || [])
+      setBaselinePeopleIds(rec.people || [])
 
       const problems = checkSavedNote(rec, {
         title: form.title,
         content: form.content,
         mood: form.mood,
         imageCount,
+        peopleCount: peopleIds.length,
         dateKey: creating ? form.dateKey : null,
         timeStart: form.timeStart,
         timeEnd: form.timeEnd,
@@ -380,6 +413,49 @@ export default function WebNote() {
               </div>
             )}
           </div>
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Persone
+              </p>
+              <button
+                type="button"
+                onClick={() => setPeopleSheetOpen(true)}
+                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {selectedPeople.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessuna persona</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {selectedPeople.map((person) => (
+                  <span
+                    key={person.id}
+                    className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-1 pr-3"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={22}
+                    />
+                    <span className="text-sm font-semibold text-ink">{person.name}</span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => togglePerson(person.id)}
+                      className="text-ink-soft"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Colonna editor */}
@@ -391,11 +467,7 @@ export default function WebNote() {
             onChange={(e) => set({ title: e.target.value })}
             className="w-full bg-transparent px-6 pb-3 pt-5 font-serif text-3xl font-semibold text-ink outline-none placeholder:text-ink-soft/70"
           />
-          <div className="mx-6 flex items-center gap-1.5 border-t border-line-soft py-2">
-            <FmtBtn label="B" cmd="bold" editorRef={editorRef} className="font-extrabold" />
-            <FmtBtn label="I" cmd="italic" editorRef={editorRef} className="font-serif italic" />
-            <FmtBtn label="U" cmd="underline" editorRef={editorRef} className="underline" />
-          </div>
+          <div className="mx-6 border-t border-line-soft" />
           <RichText
             ref={editorRef}
             value={form.content}
@@ -441,23 +513,15 @@ export default function WebNote() {
           }}
         />
       )}
+      <PeoplePickerSheet
+        open={peopleSheetOpen}
+        people={allPeople}
+        selectedIds={peopleIds}
+        immichUrl={immichUrl}
+        immichApiKey={immichApiKey}
+        onClose={() => setPeopleSheetOpen(false)}
+        onToggle={togglePerson}
+      />
     </div>
-  )
-}
-
-function FmtBtn({ label, cmd, editorRef, className = '' }) {
-  return (
-    <button
-      type="button"
-      title={label}
-      onPointerDown={(e) => e.preventDefault()}
-      onClick={() => editorRef.current?.exec(cmd)}
-      className={
-        'h-8 w-9 rounded-lg border border-line bg-tag text-base text-ink transition hover:bg-cream ' +
-        className
-      }
-    >
-      {label}
-    </button>
   )
 }

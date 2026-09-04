@@ -11,6 +11,8 @@ import Dialog from '../components/Dialog'
 import ImageLightbox from '../components/ImageLightbox'
 import AddImagesSheet from '../components/AddImagesSheet'
 import ImmichPicker from '../components/ImmichPicker'
+import PeoplePickerSheet from '../components/PeoplePickerSheet'
+import PersonAvatar from '../components/PersonAvatar'
 import {
   createNote,
   deleteNote,
@@ -20,8 +22,8 @@ import {
   describeError,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
+import { listPeople } from '../lib/people'
 import { useAuth } from '../context/AuthContext'
-import { haptic } from '../lib/haptics'
 import {
   dayKey,
   dayMonthLabel,
@@ -92,10 +94,13 @@ export default function NoteView() {
   const [busy, setBusy] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [dialog, setDialog] = useState(null) // { title, lines }
-  const [contentFocused, setContentFocused] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [immichOpen, setImmichOpen] = useState(false)
+  const [allPeople, setAllPeople] = useState([])
+  const [peopleIds, setPeopleIds] = useState([])
+  const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
+  const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -115,6 +120,8 @@ export default function NoteView() {
         setForm(f)
         setBaseline(snapshot(f))
         setExistingImages(rec.images || [])
+        setPeopleIds(rec.people || [])
+        setBaselinePeopleIds(rec.people || [])
       })
       .catch((err) => alive && setLoadError(describeError(err)))
       .finally(() => alive && setLoading(false))
@@ -122,6 +129,12 @@ export default function NoteView() {
       alive = false
     }
   }, [id, isNew])
+
+  useEffect(() => {
+    listPeople()
+      .then(setAllPeople)
+      .catch(() => {})
+  }, [])
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
 
@@ -144,11 +157,26 @@ export default function NoteView() {
     [existingImages, previews, record],
   )
 
+  const selectedPeople = useMemo(
+    () => allPeople.filter((p) => peopleIds.includes(p.id)),
+    [allPeople, peopleIds],
+  )
+
+  function togglePerson(id) {
+    setPeopleIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  const peopleDirty =
+    JSON.stringify([...peopleIds].sort()) !== JSON.stringify([...baselinePeopleIds].sort())
+
   const dirty =
     !existsOnServer ||
     snapshot(form) !== baseline ||
     newFiles.length > 0 ||
-    removedImages.length > 0
+    removedImages.length > 0 ||
+    peopleDirty
 
   // Verde = salva (nota nuova o modificata). Rosso = elimina (esistente invariata).
   const mode = !existsOnServer || dirty ? 'save' : 'delete'
@@ -178,8 +206,8 @@ export default function NoteView() {
     const imageCount = existingImages.length + newFiles.length
     try {
       const rec = creating
-        ? await createNote(form, newFiles)
-        : await updateNote(effectiveId, form, newFiles, removedImages)
+        ? await createNote(form, newFiles, peopleIds)
+        : await updateNote(effectiveId, form, newFiles, removedImages, peopleIds)
 
       // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
       setRecord(rec)
@@ -188,12 +216,15 @@ export default function NoteView() {
       setNewFiles([])
       setRemovedImages([])
       setBaseline(snapshot(form))
+      setPeopleIds(rec.people || [])
+      setBaselinePeopleIds(rec.people || [])
 
       const problems = checkSavedNote(rec, {
         title: form.title,
         content: form.content,
         mood: form.mood,
         imageCount,
+        peopleCount: peopleIds.length,
         dateKey: creating ? form.dateKey : null,
         timeStart: form.timeStart,
         timeEnd: form.timeEnd,
@@ -237,11 +268,6 @@ export default function NoteView() {
     }
   }
 
-  function format(command) {
-    haptic()
-    editorRef.current?.exec(command)
-  }
-
   if (loading) {
     return (
       <PhoneShell>
@@ -279,7 +305,7 @@ export default function NoteView() {
               aria-label="Orario di inizio"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="time-compact w-[4.5rem] bg-transparent text-center text-lg font-extrabold tabular-nums text-ink outline-none"
+              className="time-compact w-[5rem] bg-transparent text-center text-base font-extrabold tabular-nums text-ink outline-none"
             />
           </label>
 
@@ -298,7 +324,7 @@ export default function NoteView() {
               aria-label="Orario di fine"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="time-compact w-[4.5rem] bg-transparent text-center text-lg font-extrabold tabular-nums text-ink outline-none"
+              className="time-compact w-[5rem] bg-transparent text-center text-base font-extrabold tabular-nums text-ink outline-none"
             />
           </label>
         </div>
@@ -313,44 +339,9 @@ export default function NoteView() {
 
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
-        {/* Toolbar di formattazione: solo mentre si modifica il contenuto. */}
-        <div className="mt-5 flex h-9 items-center gap-1.5">
-          {contentFocused && (
-            <>
-              <button
-                type="button"
-                title="Grassetto"
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => format('bold')}
-                className="h-8 w-9 rounded-lg border border-line bg-tag text-base font-extrabold text-ink active:scale-95"
-              >
-                B
-              </button>
-              <button
-                type="button"
-                title="Corsivo"
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => format('italic')}
-                className="h-8 w-9 rounded-lg border border-line bg-tag font-serif text-base italic text-ink active:scale-95"
-              >
-                I
-              </button>
-              <button
-                type="button"
-                title="Sottolineato"
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => format('underline')}
-                className="h-8 w-9 rounded-lg border border-line bg-tag text-base text-ink underline active:scale-95"
-              >
-                U
-              </button>
-            </>
-          )}
-        </div>
-
         {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
             solo il divisorio tra titolo e contenuto. */}
-        <div className="mt-1 overflow-hidden rounded-2xl bg-cream">
+        <div className="mt-4 overflow-hidden rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
@@ -363,10 +354,43 @@ export default function NoteView() {
             ref={editorRef}
             value={form.content}
             onChange={(html) => set({ content: html })}
-            onFocusChange={setContentFocused}
             placeholder="Scrivi qui la nota…"
             className="min-h-[220px] px-4 py-3 text-[15px] leading-relaxed text-ink"
           />
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Persone
+          </p>
+          {selectedPeople.length === 0 ? (
+            <p className="text-sm italic text-ink-soft">Nessuna persona</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {selectedPeople.map((person) => (
+                <span
+                  key={person.id}
+                  className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
+                >
+                  <PersonAvatar
+                    person={person}
+                    immichUrl={immichUrl}
+                    immichApiKey={immichApiKey}
+                    size={24}
+                  />
+                  <span className="text-sm font-semibold text-ink">{person.name}</span>
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => togglePerson(person.id)}
+                    className="text-ink-soft"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-6">
@@ -449,6 +473,16 @@ export default function NoteView() {
       />
 
       <Footer
+        items={[
+          null,
+          null,
+          {
+            icon: 'user',
+            title: 'Aggiungi persone',
+            active: peopleIds.length > 0,
+            onClick: () => setPeopleSheetOpen(true),
+          },
+        ]}
         primaryIcon="image-plus"
         primaryTitle="Aggiungi immagini"
         onPrimary={() =>
@@ -489,6 +523,16 @@ export default function NoteView() {
           }}
         />
       )}
+
+      <PeoplePickerSheet
+        open={peopleSheetOpen}
+        people={allPeople}
+        selectedIds={peopleIds}
+        immichUrl={immichUrl}
+        immichApiKey={immichApiKey}
+        onClose={() => setPeopleSheetOpen(false)}
+        onToggle={togglePerson}
+      />
     </PhoneShell>
   )
 }

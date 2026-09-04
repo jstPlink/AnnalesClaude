@@ -66,6 +66,20 @@ export async function fetchImmichOriginalAsFile(baseUrl, apiKey, asset) {
   return new File([blob], name, { type: blob.type || 'image/jpeg' })
 }
 
+// Elenco delle persone taggate su Immich con un nome assegnato.
+export async function listImmichPeople(baseUrl, apiKey) {
+  const res = await immichFetch(baseUrl, apiKey, '/api/people?withHidden=false')
+  const data = await res.json()
+  return (data?.people || [])
+    .filter((p) => p.name)
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function fetchImmichPersonThumbnailBlob(baseUrl, apiKey, personId) {
+  const res = await immichFetch(baseUrl, apiKey, `/api/people/${personId}/thumbnail`)
+  return res.blob()
+}
+
 export function describeImmichError(err) {
   if (!err) return 'Errore sconosciuto.'
   if (err.status === 401 || err.status === 403) {
