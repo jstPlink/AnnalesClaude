@@ -142,6 +142,11 @@ export default function DataView() {
             onClick: () => navigate('/'),
           },
           { icon: 'chart', title: 'Andamento anno', active: true },
+          {
+            icon: 'search',
+            title: 'Filtri',
+            onClick: () => navigate('/filtri'),
+          },
         ]}
         primaryIcon="plus"
         primaryTitle="Nuova nota (oggi)"

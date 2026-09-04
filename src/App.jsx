@@ -10,6 +10,7 @@ import DayView from './pages/DayView'
 import NoteView from './pages/NoteView'
 import Profile from './pages/Profile'
 import DataView from './pages/DataView'
+import FilterView from './pages/FilterView'
 import WebLogin from './pages/web/WebLogin'
 import WebMonth from './pages/web/WebMonth'
 import WebDay from './pages/web/WebDay'
@@ -77,6 +78,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Screen mobile={DataView} desktop={WebData} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/filtri"
+              element={
+                <RequireAuth>
+                  <Screen mobile={FilterView} desktop={FilterView} chrome={false} />
                 </RequireAuth>
               }
             />

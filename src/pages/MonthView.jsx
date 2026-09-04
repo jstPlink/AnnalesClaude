@@ -261,6 +261,11 @@ export default function MonthView() {
             title: 'Andamento anno',
             onClick: () => navigate('/dati'),
           },
+          {
+            icon: 'search',
+            title: 'Filtri',
+            onClick: () => navigate('/filtri'),
+          },
         ]}
         primaryIcon="plus"
         primaryTitle="Nuova nota (oggi)"

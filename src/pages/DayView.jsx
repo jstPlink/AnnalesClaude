@@ -26,6 +26,42 @@ function startMinutes(value) {
   return p ? p.h * 60 + p.mi : 0
 }
 
+// Anteprima del contenuto: riempie lo spazio rimasto sotto il titolo e, se il
+// testo non ci sta, sfuma verso il basso terminando con "…".
+function ClampedPreview({ text }) {
+  const ref = useRef(null)
+  const [clamped, setClamped] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [text])
+
+  return (
+    <span className="relative min-h-0 flex-1 overflow-hidden">
+      <span
+        ref={ref}
+        className="block h-full overflow-hidden text-[11px] leading-snug text-ink-soft"
+      >
+        {text}
+      </span>
+      {clamped && (
+        <>
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-panel to-transparent" />
+          <span className="pointer-events-none absolute bottom-0 right-0 text-[11px] leading-snug text-ink-soft">
+            …
+          </span>
+        </>
+      )}
+    </span>
+  )
+}
+
 // Assegna una "corsia" a note che si sovrappongono nel tempo.
 function withLanes(items) {
   const laneEnd = []
@@ -211,19 +247,15 @@ export default function DayView() {
                           <span>{timeLabel(n.timeEnd)}</span>
                         </span>
 
-                        <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2 py-1">
-                          <MarqueeText className="text-[13px] font-semibold leading-tight text-ink">
+                        <span className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
+                          <MarqueeText className="shrink-0 text-[13px] font-semibold leading-tight text-ink">
                             {n.title || (
                               <span className="italic text-ink-soft">
                                 Senza titolo
                               </span>
                             )}
                           </MarqueeText>
-                          {preview && (
-                            <span className="text-[11px] leading-snug text-ink-soft">
-                              {preview}
-                            </span>
-                          )}
+                          {preview && <ClampedPreview text={preview} />}
                         </span>
 
                         {/* Immagine a larghezza fissa, sempre a destra, a tutta altezza */}

@@ -8,6 +8,7 @@ import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
 import RichText from '../components/RichText'
 import Dialog from '../components/Dialog'
+import ImageLightbox from '../components/ImageLightbox'
 import {
   createNote,
   deleteNote,
@@ -18,18 +19,26 @@ import {
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { haptic } from '../lib/haptics'
-import { dayKey, dayMonthLabel, parseWall, timeInputValue } from '../lib/dates'
+import {
+  dayKey,
+  dayMonthLabel,
+  nowRoundedTo5,
+  parseWall,
+  subtractHours,
+  timeInputValue,
+} from '../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 function emptyForm(dKey) {
+  const timeEnd = nowRoundedTo5()
   return {
     title: '',
     content: '',
     mood: 0.5,
     dateKey: dKey,
-    timeStart: '09:00',
-    timeEnd: '10:00',
+    timeStart: subtractHours(timeEnd, 2),
+    timeEnd,
   }
 }
 
@@ -76,6 +85,7 @@ export default function NoteView() {
   const [loadError, setLoadError] = useState('')
   const [dialog, setDialog] = useState(null) // { title, lines }
   const [contentFocused, setContentFocused] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState(null)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -112,6 +122,17 @@ export default function NoteView() {
   useEffect(() => {
     return () => previews.forEach((p) => URL.revokeObjectURL(p.url))
   }, [previews])
+
+  const galleryImages = useMemo(
+    () => [
+      ...existingImages.map((fn) => ({
+        url: record ? fileUrl(record, fn) : '',
+        key: fn,
+      })),
+      ...previews.map((p) => ({ url: p.url, key: p.url })),
+    ],
+    [existingImages, previews, record],
+  )
 
   const dirty =
     !existsOnServer ||
@@ -242,13 +263,13 @@ export default function NoteView() {
         </div>
 
         <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 px-3 pb-3">
-          <label className="flex items-center justify-center rounded-2xl border border-line bg-tag px-1">
+          <label className="flex items-center justify-center rounded-full border border-line bg-tag px-3">
             <input
               type="time"
               aria-label="Orario di inizio"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="time-compact w-full bg-transparent text-center text-lg font-extrabold text-ink outline-none"
+              className="time-compact w-[4.5rem] bg-transparent text-center text-lg font-extrabold tabular-nums text-ink outline-none"
             />
           </label>
 
@@ -261,13 +282,13 @@ export default function NoteView() {
             />
           </div>
 
-          <label className="flex items-center justify-center rounded-2xl border border-line bg-tag px-1">
+          <label className="flex items-center justify-center rounded-full border border-line bg-tag px-3">
             <input
               type="time"
               aria-label="Orario di fine"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="time-compact w-full bg-transparent text-center text-lg font-extrabold text-ink outline-none"
+              className="time-compact w-[4.5rem] bg-transparent text-center text-lg font-extrabold tabular-nums text-ink outline-none"
             />
           </label>
         </div>
@@ -317,8 +338,9 @@ export default function NoteView() {
           )}
         </div>
 
-        {/* Titolo + contenuto in un unico riquadro (sfondo = sfondo app). */}
-        <div className="mt-1 overflow-hidden rounded-2xl border border-line bg-cream">
+        {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
+            solo il divisorio tra titolo e contenuto. */}
+        <div className="mt-1 overflow-hidden rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
@@ -345,16 +367,23 @@ export default function NoteView() {
             <p className="text-sm italic text-ink-soft">Nessuna immagine</p>
           ) : (
             <div className="grid grid-cols-3 gap-2">
-              {existingImages.map((fn) => (
+              {existingImages.map((fn, i) => (
                 <div
                   key={fn}
                   className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
                 >
-                  <img
-                    src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
+                  <button
+                    type="button"
+                    title="Visualizza"
+                    onClick={() => setViewerIndex(i)}
+                    className="block h-full w-full"
+                  >
+                    <img
+                      src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
                   <button
                     type="button"
                     title="Rimuovi"
@@ -373,7 +402,14 @@ export default function NoteView() {
                   key={p.url}
                   className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
                 >
-                  <img src={p.url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    title="Visualizza"
+                    onClick={() => setViewerIndex(existingImages.length + i)}
+                    className="block h-full w-full"
+                  >
+                    <img src={p.url} alt="" className="h-full w-full object-cover" />
+                  </button>
                   <button
                     type="button"
                     title="Rimuovi"
@@ -413,6 +449,13 @@ export default function NoteView() {
         title={dialog?.title}
         lines={dialog?.lines || []}
         onClose={() => setDialog(null)}
+      />
+
+      <ImageLightbox
+        images={galleryImages}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onIndex={setViewerIndex}
       />
     </PhoneShell>
   )

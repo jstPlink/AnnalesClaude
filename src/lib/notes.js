@@ -52,6 +52,31 @@ export async function deleteNote(id) {
   return pb.collection(COLLECTION).delete(id)
 }
 
+// Elenco note filtrato per intervallo di date e/o intervallo di mood.
+// Tutti i parametri sono opzionali: se assenti, nessun vincolo su quel campo.
+export async function listNotesFiltered({ start, end, moodMin, moodMax } = {}) {
+  const clauses = []
+  const params = {}
+  if (start) {
+    clauses.push('date >= {:start}')
+    params.start = start
+  }
+  if (end) {
+    clauses.push('date <= {:end}')
+    params.end = end
+  }
+  if (moodMin != null) {
+    clauses.push('mood >= {:moodMin}')
+    params.moodMin = moodMin
+  }
+  if (moodMax != null) {
+    clauses.push('mood <= {:moodMax}')
+    params.moodMax = moodMax
+  }
+  const filter = clauses.length ? pb.filter(clauses.join(' && '), params) : ''
+  return pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })
+}
+
 // Raggruppa le note per chiave giorno "YYYY-MM-DD".
 export function groupByDay(notes) {
   const map = new Map()

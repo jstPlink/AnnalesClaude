@@ -127,6 +127,35 @@ export function dayRange(dKey) {
   }
 }
 
+// Confini [start, end] da due chiavi giorno "YYYY-MM-DD" (una o entrambe
+// possono mancare: nessun limite su quel lato).
+export function dateRangeBounds(fromKey, toKey) {
+  return {
+    start: fromKey ? `${fromKey} 00:00:00.000Z` : undefined,
+    end: toKey ? `${toKey} 23:59:59.999Z` : undefined,
+  }
+}
+
+// "HH:mm" dell'orario attuale arrotondato ai 5 minuti più vicini.
+export function nowRoundedTo5() {
+  const d = new Date()
+  let h = d.getHours()
+  let mi = Math.round(d.getMinutes() / 5) * 5
+  if (mi === 60) {
+    mi = 0
+    h = (h + 1) % 24
+  }
+  return `${pad(h)}:${pad(mi)}`
+}
+
+// Sottrae `hours` ore a un "HH:mm", avvolgendo sul giorno precedente.
+export function subtractHours(hhmm, hours) {
+  const [h = '0', mi = '0'] = (hhmm || '00:00').split(':')
+  let total = Number(h) * 60 + Number(mi) - hours * 60
+  total = ((total % (24 * 60)) + 24 * 60) % (24 * 60)
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`
+}
+
 // Aggiunge n mesi a { year, month(0–11) }.
 export function addMonths({ year, month }, n) {
   const total = year * 12 + month + n
