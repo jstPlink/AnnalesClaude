@@ -83,6 +83,9 @@ const PATHS = {
       <path d="M7 14l4-5 3 3 5-7" />
     </>
   ),
+  cloud: (
+    <path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-2A5 5 0 0 0 6.5 19h11z" />
+  ),
 }
 
 export default function Icon({ name, size = 24, strokeWidth = 2.2, className = '' }) {

@@ -3,6 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import MoodSlider from '../../components/MoodSlider'
 import RichText from '../../components/RichText'
 import Dialog from '../../components/Dialog'
+import AddImagesSheet from '../../components/AddImagesSheet'
+import ImmichPicker from '../../components/ImmichPicker'
 import {
   createNote,
   deleteNote,
@@ -12,6 +14,7 @@ import {
   describeError,
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
+import { useAuth } from '../../context/AuthContext'
 import {
   dayKey,
   fullDayLabel,
@@ -58,7 +61,12 @@ export default function WebNote() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [search] = useSearchParams()
+  const { user } = useAuth()
   const isNew = !id
+
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
+  const immichReady = Boolean(immichUrl && immichApiKey)
 
   const dateParam = search.get('date')
   const initialDate =
@@ -75,6 +83,8 @@ export default function WebNote() {
   const [busy, setBusy] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [dialog, setDialog] = useState(null)
+  const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [immichOpen, setImmichOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false)
@@ -314,7 +324,9 @@ export default function WebNote() {
               </p>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() =>
+                  immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
+                }
                 className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
               >
                 + Aggiungi
@@ -409,6 +421,26 @@ export default function WebNote() {
         lines={dialog?.lines || []}
         onClose={() => setDialog(null)}
       />
+
+      <AddImagesSheet
+        open={addSheetOpen}
+        onClose={() => setAddSheetOpen(false)}
+        onDevice={() => fileInputRef.current?.click()}
+        onImmich={immichReady ? () => setImmichOpen(true) : null}
+      />
+
+      {immichReady && (
+        <ImmichPicker
+          open={immichOpen}
+          baseUrl={immichUrl}
+          apiKey={immichApiKey}
+          onClose={() => setImmichOpen(false)}
+          onConfirm={(files) => {
+            setNewFiles((prev) => [...prev, ...files])
+            setImmichOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

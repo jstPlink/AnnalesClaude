@@ -9,6 +9,8 @@ import MoodSlider from '../components/MoodSlider'
 import RichText from '../components/RichText'
 import Dialog from '../components/Dialog'
 import ImageLightbox from '../components/ImageLightbox'
+import AddImagesSheet from '../components/AddImagesSheet'
+import ImmichPicker from '../components/ImmichPicker'
 import {
   createNote,
   deleteNote,
@@ -18,6 +20,7 @@ import {
   describeError,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
+import { useAuth } from '../context/AuthContext'
 import { haptic } from '../lib/haptics'
 import {
   dayKey,
@@ -67,7 +70,12 @@ export default function NoteView() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [search] = useSearchParams()
+  const { user } = useAuth()
   const isNew = !id
+
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
+  const immichReady = Boolean(immichUrl && immichApiKey)
 
   const dateParam = search.get('date')
   const initialDate =
@@ -86,6 +94,8 @@ export default function NoteView() {
   const [dialog, setDialog] = useState(null) // { title, lines }
   const [contentFocused, setContentFocused] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(null)
+  const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [immichOpen, setImmichOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -441,7 +451,9 @@ export default function NoteView() {
       <Footer
         primaryIcon="image-plus"
         primaryTitle="Aggiungi immagini"
-        onPrimary={() => fileInputRef.current?.click()}
+        onPrimary={() =>
+          immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
+        }
       />
 
       <Dialog
@@ -457,6 +469,26 @@ export default function NoteView() {
         onClose={() => setViewerIndex(null)}
         onIndex={setViewerIndex}
       />
+
+      <AddImagesSheet
+        open={addSheetOpen}
+        onClose={() => setAddSheetOpen(false)}
+        onDevice={() => fileInputRef.current?.click()}
+        onImmich={immichReady ? () => setImmichOpen(true) : null}
+      />
+
+      {immichReady && (
+        <ImmichPicker
+          open={immichOpen}
+          baseUrl={immichUrl}
+          apiKey={immichApiKey}
+          onClose={() => setImmichOpen(false)}
+          onConfirm={(files) => {
+            setNewFiles((prev) => [...prev, ...files])
+            setImmichOpen(false)
+          }}
+        />
+      )}
     </PhoneShell>
   )
 }
