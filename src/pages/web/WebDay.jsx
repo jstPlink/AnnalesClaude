@@ -91,7 +91,7 @@ export default function WebDay() {
   const pxPerMin = trackH / DAY_MIN
 
   return (
-    <div className="flex h-[calc(100dvh_-_4rem)] flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <header className="mb-4 shrink-0">
         <button
           type="button"

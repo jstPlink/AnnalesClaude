@@ -76,6 +76,21 @@ export default function WebMonth() {
           <div className="flex items-center gap-2">
             <NavArrow
               dir="left"
+              label="Anno precedente"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
+            />
+            <span className="w-14 text-center font-serif text-3xl font-semibold text-ink">
+              {cursor.year}
+            </span>
+            <NavArrow
+              dir="right"
+              label="Anno successivo"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <NavArrow
+              dir="left"
               label="Mese precedente"
               onClick={() => setCursor((c) => addMonths(c, -1))}
             />
@@ -88,28 +103,13 @@ export default function WebMonth() {
               onClick={() => setCursor((c) => addMonths(c, 1))}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <NavArrow
-              dir="left"
-              label="Anno precedente"
-              onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
-            />
-            <span className="w-14 text-center font-serif text-3xl font-semibold text-ink-soft">
-              {cursor.year}
-            </span>
-            <NavArrow
-              dir="right"
-              label="Anno successivo"
-              onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
-            />
-          </div>
           <button
             type="button"
             onClick={() => {
               const t = new Date()
               setCursor({ year: t.getFullYear(), month: t.getMonth() })
             }}
-            className="rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-cream"
+            className="font-serif text-3xl font-semibold text-ink-soft transition hover:text-ink"
           >
             Oggi
           </button>
@@ -150,37 +150,32 @@ export default function WebMonth() {
                 type="button"
                 onClick={() => navigate(`/day/${cell.key}`)}
                 className={
-                  'flex w-full items-center gap-4 px-5 py-6 text-left transition hover:bg-tag ' +
+                  'flex w-full items-stretch text-left transition hover:bg-tag ' +
                   (isToday ? 'bg-tag' : 'bg-cream') +
                   (has ? '' : ' opacity-60')
                 }
               >
                 <span
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-serif text-xl font-semibold leading-none"
+                  className="flex w-20 shrink-0 flex-col items-center justify-center gap-1"
                   style={
                     has
                       ? { backgroundColor: moodColor(mood), color: moodTextColor(mood) }
                       : {
-                          border: '1px solid var(--color-line)',
                           color: isWeekend
                             ? 'var(--color-weekend)'
                             : 'var(--color-ink-soft)',
                         }
                   }
                 >
-                  {dayNum}
+                  <span className="font-serif text-2xl font-semibold leading-none">
+                    {dayNum}
+                  </span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    {weekdayShort(cell.key)}
+                  </span>
                 </span>
 
-                <span
-                  className={
-                    'w-10 shrink-0 text-xs font-semibold uppercase tracking-wide ' +
-                    (isWeekend ? 'text-weekend/80' : 'text-ink-soft')
-                  }
-                >
-                  {weekdayShort(cell.key)}
-                </span>
-
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 flex-1 px-5 py-5">
                   {titles.length ? (
                     <span className="flex flex-col gap-1">
                       {titles.map((t, i) => (
@@ -204,14 +199,14 @@ export default function WebMonth() {
                 </span>
 
                 {imgs.length > 0 && (
-                  <span className="flex shrink-0 gap-2">
+                  <span className="flex shrink-0">
                     {imgs.map((src, i) => (
                       <img
                         key={i}
                         src={src}
                         alt=""
                         loading="lazy"
-                        className="h-24 w-24 rounded-2xl object-cover"
+                        className="h-full w-32 object-cover"
                       />
                     ))}
                   </span>

@@ -60,6 +60,11 @@ export async function deleteNote(id) {
 // Elenco note filtrato per intervallo di date, intervallo di mood e/o
 // persone coinvolte (nota inclusa se coinvolge ALMENO una delle persone).
 // Tutti i parametri sono opzionali: se assenti, nessun vincolo su quel campo.
+//
+// Il filtro per persone è applicato lato client (dopo il fetch) invece che
+// nella query PocketBase: la sintassi filtro per campi relazione multipli
+// si è rivelata inaffidabile da qui, mentre un controllo diretto
+// sull'array `people` del record è garantito corretto.
 export async function listNotesFiltered({ start, end, moodMin, moodMax, personIds } = {}) {
   const clauses = []
   const params = {}
@@ -79,18 +84,10 @@ export async function listNotesFiltered({ start, end, moodMin, moodMax, personId
     clauses.push('mood <= {:moodMax}')
     params.moodMax = moodMax
   }
-  if (personIds && personIds.length) {
-    // "?=" verifica se un ELEMENTO qualsiasi del campo relazione multiplo
-    // corrisponde: l'operatore "=" semplice non lo garantisce.
-    const personClauses = personIds.map((id, i) => {
-      const key = `person${i}`
-      params[key] = id
-      return `people ?= {:${key}}`
-    })
-    clauses.push(`(${personClauses.join(' || ')})`)
-  }
   const filter = clauses.length ? pb.filter(clauses.join(' && '), params) : ''
-  return pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })
+  const list = await pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })
+  if (!personIds || !personIds.length) return list
+  return list.filter((n) => (n.people || []).some((id) => personIds.includes(id)))
 }
 
 // Raggruppa le note per chiave giorno "YYYY-MM-DD".

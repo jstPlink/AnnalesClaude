@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { pb } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
-import { testImmichConnection, describeImmichError } from '../../lib/immich'
+import {
+  testImmichConnection,
+  listImmichPeople,
+  describeImmichError,
+} from '../../lib/immich'
 import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/people'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
@@ -27,6 +31,7 @@ export default function WebProfile() {
   const [peopleError, setPeopleError] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
@@ -53,6 +58,35 @@ export default function WebProfile() {
       setPeopleError(describeError(err))
     } finally {
       setRemovingId('')
+    }
+  }
+
+  // Il nome è salvato come copia locale al momento dell'aggiunta: se viene
+  // rinominata su Immich, qui va risincronizzata a mano.
+  async function refreshNamesFromImmich() {
+    setRefreshing(true)
+    setPeopleError('')
+    try {
+      const immichPeople = await listImmichPeople(immichUrl, immichApiKey)
+      const nameById = new Map(immichPeople.map((p) => [p.id, p.name]))
+      const toUpdate = people.filter(
+        (p) =>
+          p.immichPersonId &&
+          nameById.has(p.immichPersonId) &&
+          nameById.get(p.immichPersonId) !== p.name,
+      )
+      for (const p of toUpdate) {
+        await pb
+          .collection('people')
+          .update(p.id, { name: nameById.get(p.immichPersonId) })
+      }
+      if (toUpdate.length) {
+        setPeople(await listPeople())
+      }
+    } catch (err) {
+      setPeopleError(describeImmichError(err))
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -220,15 +254,32 @@ export default function WebProfile() {
           </div>
         )}
 
-        <button
-          type="button"
-          disabled={!immichReady}
-          onClick={() => setPickerOpen(true)}
-          title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
-          className="mt-4 rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-        >
-          + Aggiungi da Immich
-        </button>
+        <div className="mt-4 flex gap-3">
+          <button
+            type="button"
+            disabled={!immichReady}
+            onClick={() => setPickerOpen(true)}
+            title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
+            className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+          >
+            + Aggiungi da Immich
+          </button>
+          {people.length > 0 && (
+            <button
+              type="button"
+              disabled={!immichReady || refreshing}
+              onClick={refreshNamesFromImmich}
+              title={
+                immichReady
+                  ? 'Aggiorna i nomi se sono cambiati su Immich'
+                  : 'Configura prima Immich qui sopra'
+              }
+              className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+            >
+              {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+            </button>
+          )}
+        </div>
       </div>
 
       {immichReady && (

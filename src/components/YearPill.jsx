@@ -50,13 +50,13 @@ export default function YearPill({
         <span
           className={
             'leading-tight text-ink ' +
-            (subtitle ? 'text-sm font-semibold' : 'text-2xl font-semibold')
+            (subtitle ? 'text-base font-semibold' : 'text-2xl font-semibold')
           }
         >
           {year}
         </span>
         {subtitle && (
-          <span className="max-w-full truncate text-2xl font-extrabold leading-tight text-ink-soft">
+          <span className="max-w-full truncate text-base font-extrabold leading-tight text-ink-soft">
             {subtitle}
           </span>
         )}

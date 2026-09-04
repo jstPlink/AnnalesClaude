@@ -66,11 +66,12 @@ export default function WebFilter() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [people, setPeople] = useState([])
+  const [peopleError, setPeopleError] = useState('')
 
   useEffect(() => {
     listPeople()
       .then(setPeople)
-      .catch(() => {})
+      .catch((err) => setPeopleError(describeError(err)))
   }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -169,6 +170,15 @@ export default function WebFilter() {
               />
             </div>
           </div>
+
+          {peopleError && (
+            <div className="rounded-2xl border border-line bg-tag p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Persone
+              </p>
+              <p className="text-xs text-delete-dark">{peopleError}</p>
+            </div>
+          )}
 
           {people.length > 0 && (
             <div className="rounded-2xl border border-line bg-tag p-4">

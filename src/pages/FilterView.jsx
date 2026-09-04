@@ -63,11 +63,12 @@ export default function FilterView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [people, setPeople] = useState([])
+  const [peopleError, setPeopleError] = useState('')
 
   useEffect(() => {
     listPeople()
       .then(setPeople)
-      .catch(() => {})
+      .catch((err) => setPeopleError(describeError(err)))
   }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -168,6 +169,12 @@ export default function FilterView() {
               />
             </div>
           </FilterField>
+
+          {peopleError && (
+            <FilterField label="Persone">
+              <p className="text-xs text-delete-dark">{peopleError}</p>
+            </FilterField>
+          )}
 
           {people.length > 0 && (
             <FilterField label="Persone">
