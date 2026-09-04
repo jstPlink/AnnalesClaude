@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
+import RichText from '../components/RichText'
 import Dialog from '../components/Dialog'
 import {
   createNote,
@@ -75,7 +74,9 @@ export default function NoteView() {
   const [busy, setBusy] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [dialog, setDialog] = useState(null) // { title, lines }
+  const [contentFocused, setContentFocused] = useState(false)
   const fileInputRef = useRef(null)
+  const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
 
   const effectiveId = id || createdId
@@ -204,6 +205,10 @@ export default function NoteView() {
     }
   }
 
+  function format(command) {
+    editorRef.current?.exec(command)
+  }
+
   if (loading) {
     return (
       <PhoneShell>
@@ -213,6 +218,8 @@ export default function NoteView() {
       </PhoneShell>
     )
   }
+
+  const noImages = existingImages.length === 0 && previews.length === 0
 
   return (
     <PhoneShell>
@@ -232,33 +239,33 @@ export default function NoteView() {
           </CircleButton>
         </div>
 
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-1.5 px-3 pb-3">
-          <label className="flex flex-col items-center rounded-xl border border-line bg-cream px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
-            inizio
+        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 px-3 pb-3">
+          <label className="flex items-center justify-center rounded-2xl border border-line bg-tag px-1">
             <input
               type="time"
+              aria-label="Orario di inizio"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="time-compact w-16 bg-transparent text-center text-sm font-bold text-ink outline-none"
+              className="time-compact w-full max-w-[84px] bg-transparent text-center text-lg font-extrabold text-ink outline-none"
             />
           </label>
 
-          <div className="flex min-w-0 justify-center">
+          <div className="flex items-center justify-center">
             <YearPill
               year={year}
               onChange={existsOnServer ? undefined : changeYear}
               subtitle={dayMonthLabel(form.dateKey)}
-              minWidth={96}
+              minWidth={104}
             />
           </div>
 
-          <label className="flex flex-col items-center rounded-xl border border-line bg-cream px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
-            fine
+          <label className="flex items-center justify-center rounded-2xl border border-line bg-tag px-1">
             <input
               type="time"
+              aria-label="Orario di fine"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="time-compact w-16 bg-transparent text-center text-sm font-bold text-ink outline-none"
+              className="time-compact w-full max-w-[84px] bg-transparent text-center text-lg font-extrabold text-ink outline-none"
             />
           </label>
         </div>
@@ -273,42 +280,67 @@ export default function NoteView() {
 
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
-        <input
-          type="text"
-          placeholder="Titolo della nota"
-          value={form.title}
-          onChange={(e) => set({ title: e.target.value })}
-          className="mt-5 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-lg font-bold text-ink outline-none focus:border-ink-soft"
-        />
-
-        <div className="mt-4">
-          <textarea
-            rows={10}
-            placeholder="Scrivi in Markdown…"
-            value={form.content}
-            onChange={(e) => set({ content: e.target.value })}
-            className="w-full resize-y rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink-soft"
-          />
-          {form.content.trim() && (
-            <div className="mt-2">
-              <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
-                Anteprima
-              </p>
-              <div className="markdown-body rounded-2xl border border-line-soft bg-cream px-4 py-3 text-[15px] text-ink">
-                <Markdown remarkPlugins={[remarkGfm]}>{form.content}</Markdown>
-              </div>
-            </div>
+        {/* Toolbar di formattazione: solo mentre si modifica il contenuto. */}
+        <div className="mt-5 flex h-9 items-center gap-1.5">
+          {contentFocused && (
+            <>
+              <button
+                type="button"
+                title="Grassetto"
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => format('bold')}
+                className="h-8 w-9 rounded-lg border border-line bg-tag text-base font-extrabold text-ink active:scale-95"
+              >
+                B
+              </button>
+              <button
+                type="button"
+                title="Corsivo"
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => format('italic')}
+                className="h-8 w-9 rounded-lg border border-line bg-tag font-serif text-base italic text-ink active:scale-95"
+              >
+                I
+              </button>
+              <button
+                type="button"
+                title="Sottolineato"
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => format('underline')}
+                className="h-8 w-9 rounded-lg border border-line bg-tag text-base text-ink underline active:scale-95"
+              >
+                U
+              </button>
+            </>
           )}
+        </div>
+
+        {/* Titolo + contenuto in un unico riquadro. */}
+        <div className="mt-1 overflow-hidden rounded-2xl border border-line bg-panel">
+          <input
+            type="text"
+            placeholder="Titolo della nota"
+            value={form.title}
+            onChange={(e) => set({ title: e.target.value })}
+            className="w-full bg-transparent px-4 pb-2 pt-3 text-xl font-extrabold text-ink outline-none placeholder:text-ink-soft"
+          />
+          <div className="mx-4 border-t border-line-soft" />
+          <RichText
+            ref={editorRef}
+            value={form.content}
+            onChange={(html) => set({ content: html })}
+            onFocusChange={setContentFocused}
+            placeholder="Scrivi qui la nota…"
+            className="min-h-[220px] px-4 py-3 text-[15px] leading-relaxed text-ink"
+          />
         </div>
 
         <div className="mt-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Immagini
           </p>
-          {existingImages.length === 0 && previews.length === 0 ? (
-            <p className="text-sm italic text-ink-soft">
-              Nessuna immagine. Usa il pulsante in basso a destra per aggiungerne.
-            </p>
+          {noImages ? (
+            <p className="text-sm italic text-ink-soft">Nessuna immagine</p>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {existingImages.map((fn) => (

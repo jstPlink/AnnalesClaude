@@ -7,7 +7,12 @@ import ImageCarousel from '../components/ImageCarousel'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
-import { averageMood, moodColor, MOOD_TITLE_THRESHOLD } from '../lib/mood'
+import {
+  averageMood,
+  moodColor,
+  moodTextColor,
+  isNoteworthyMood,
+} from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -94,8 +99,9 @@ export default function MonthView() {
           alt: n.title || '',
         })),
       )
+      // Titoli delle note "estreme": mood molto alto o molto basso.
       const titles = dayNotes
-        .filter((n) => Number(n.mood) > MOOD_TITLE_THRESHOLD)
+        .filter((n) => isNoteworthyMood(n.mood))
         .map((n) => n.title)
         .filter(Boolean)
       return {
@@ -172,38 +178,49 @@ export default function MonthView() {
                 type="button"
                 onClick={() => navigate(`/day/${d.key}`)}
                 className={
-                  'flex w-full items-center gap-3 px-3 py-2.5 text-left transition active:bg-panel ' +
+                  'flex w-full items-stretch gap-3 px-3 py-2 text-left transition active:bg-panel ' +
                   (d.hasNotes ? '' : 'opacity-55')
                 }
               >
-                <div className="flex w-12 shrink-0 flex-col items-center gap-1">
+                {/* Targhetta giorno: sfondo = colore del mood medio */}
+                <div
+                  className={
+                    'flex w-14 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
+                    (d.hasNotes ? '' : 'border border-line-soft')
+                  }
+                  style={
+                    d.hasNotes
+                      ? { backgroundColor: moodColor(d.avgMood) }
+                      : undefined
+                  }
+                >
                   <span
-                    className={
-                      'text-2xl font-extrabold leading-none ' +
-                      (d.weekend ? 'text-weekend' : 'text-ink')
-                    }
+                    className="text-2xl font-extrabold leading-none"
+                    style={{
+                      color: d.hasNotes
+                        ? moodTextColor(d.avgMood)
+                        : d.weekend
+                          ? 'var(--color-weekend)'
+                          : 'var(--color-ink)',
+                    }}
                   >
                     {d.dayNum}
                   </span>
-                  <span
-                    className={
-                      'text-xs font-semibold lowercase ' +
-                      (d.weekend ? 'text-weekend' : 'text-ink-soft')
-                    }
-                  >
-                    {d.weekday}
-                  </span>
-                  {/* Barra del mood: grande, sotto il giorno */}
-                  {d.hasNotes ? (
-                    <span
-                      className="mt-1 h-3 w-full rounded-full"
-                      style={{
-                        backgroundColor: moodColor(d.avgMood),
-                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
-                      }}
-                    />
+                  {d.weekend ? (
+                    <span className="rounded-full bg-weekend px-1.5 text-[10px] font-bold lowercase text-white">
+                      {d.weekday}
+                    </span>
                   ) : (
-                    <span className="mt-1 h-[3px] w-5 rounded-full bg-line" />
+                    <span
+                      className="text-xs font-semibold lowercase"
+                      style={{
+                        color: d.hasNotes
+                          ? moodTextColor(d.avgMood)
+                          : 'var(--color-ink-soft)',
+                      }}
+                    >
+                      {d.weekday}
+                    </span>
                   )}
                 </div>
 

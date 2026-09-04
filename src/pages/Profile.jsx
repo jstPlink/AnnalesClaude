@@ -55,7 +55,7 @@ export default function Profile() {
         <button
           type="button"
           onClick={onLogout}
-          className="mt-auto flex items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-white shadow-sm transition active:scale-95"
+          className="mt-auto flex items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
         >
           <Icon name="logout" size={18} />
           Esci

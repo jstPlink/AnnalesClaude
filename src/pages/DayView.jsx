@@ -7,7 +7,7 @@ import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import { listNotesInRange, describeError } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
-import { moodColor } from '../lib/mood'
+import { moodColor, moodTextColor } from '../lib/mood'
 import {
   dayMonthLabel,
   dayRange,
@@ -175,10 +175,8 @@ export default function DayView() {
                 const rawH = (endMin - startMin) * pxPerMin
                 const h = Math.max(MIN_BLOCK, rawH)
                 const widthPct = 100 / lanes
-                const tiny = h < 34
-                const short = h < 62
-                const roomy = h > 120 && lanes === 1
-                const thumb = roomy && n.images?.[0]
+                const tiny = h < 30
+                const img = n.images?.[0]
                 return (
                   <button
                     key={n.id}
@@ -198,38 +196,39 @@ export default function DayView() {
                         style={{ backgroundColor: moodColor(n.mood) }}
                       />
                     ) : (
-                      <span className="flex h-full flex-col px-2 py-1">
-                        <span className="text-[11px] font-semibold tabular-nums text-ink-soft">
-                          {timeLabel(n.timeStart)}–{timeLabel(n.timeEnd)}
-                        </span>
-                        {/* Barra mood: sotto l'orario, spessa */}
+                      <span className="flex h-full w-full">
+                        {/* Orario di inizio/fine avvolto dal colore del mood */}
                         <span
-                          className="my-1 h-2 w-full shrink-0 rounded-full"
+                          className="flex w-11 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-bold tabular-nums"
                           style={{
                             backgroundColor: moodColor(n.mood),
-                            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+                            color: moodTextColor(n.mood),
                           }}
-                        />
-                        {!short && (
-                          <span className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-tight text-ink">
+                        >
+                          <span>{timeLabel(n.timeStart)}</span>
+                          <span>{timeLabel(n.timeEnd)}</span>
+                        </span>
+
+                        <span className="flex min-w-0 flex-1 items-center px-2 py-1">
+                          <span className="line-clamp-3 text-[13px] font-semibold leading-tight text-ink">
                             {n.title || (
                               <span className="italic text-ink-soft">
                                 Senza titolo
                               </span>
                             )}
                           </span>
-                        )}
-                        {short && (
-                          <span className="truncate text-[12px] font-semibold text-ink">
-                            {n.title || 'Senza titolo'}
-                          </span>
-                        )}
-                        {thumb && (
+                        </span>
+
+                        {/* Immagine grande, sempre a destra, a tutta altezza della riga */}
+                        {img && h >= 40 && (
                           <img
-                            src={fileUrl(n, n.images[0], { thumb: '300x300' })}
+                            src={fileUrl(n, img, { thumb: '400x400' })}
                             alt=""
                             loading="lazy"
-                            className="mt-auto h-16 w-16 self-end rounded-lg bg-panel-2 object-cover"
+                            className="h-full shrink-0 bg-panel-2 object-cover"
+                            style={{
+                              width: Math.min(Math.max(h, 48), 104),
+                            }}
                           />
                         )}
                       </span>

@@ -43,7 +43,7 @@ export default function YearPill({
         onClick={() => !readOnly && setOpen((v) => !v)}
         style={{ minWidth }}
         className={
-          'flex max-w-full flex-col items-center rounded-full border border-line bg-sand px-4 py-1.5 shadow-sm ' +
+          'flex max-w-full flex-col items-center justify-center rounded-full border border-line bg-tag px-5 py-1.5 shadow-sm ' +
           (readOnly ? '' : 'transition active:scale-95')
         }
       >

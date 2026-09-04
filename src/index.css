@@ -1,28 +1,36 @@
 @import 'tailwindcss';
 
 /*
-  Palette e token del diario. Stile: crema/beige, forme molto arrotondate,
+  Palette del diario. Stile: crema/beige caldo, forme molto arrotondate,
   testo marrone scuro, font tondeggiante (fallback di sistema).
+
+  Ordine dei colori (come da specifica):
+  - neutri, dal piu chiaro al piu scuro: tag / cream (primario) / sand
+    (secondario) / panel / panel-2 / line (terziario)
+  - ink: testo marrone scuro
+  - delete: rosso per esiti negativi / avvertenze / weekend
+  - save: verde per conferme / salvataggio
 */
 @theme {
   --font-sans: 'ui-rounded', 'SF Pro Rounded', 'Segoe UI', system-ui, -apple-system,
     'Helvetica Neue', Arial, sans-serif;
 
-  --color-cream: #efe9df;
-  --color-sand: #e4ddd0;
-  --color-panel: #ece6db;
-  --color-panel-2: #e2dccf;
-  --color-ink: #2b2a27;
-  --color-ink-soft: #6f6a60;
-  --color-line: #cdc6b7;
-  --color-line-soft: #d9d3c5;
+  --color-tag: #f4efe2;
+  --color-cream: #e8e0cf;
+  --color-sand: #dbd1bd;
+  --color-panel: #e2d9c6;
+  --color-panel-2: #d3c8b2;
+  --color-line: #b8ae98;
+  --color-line-soft: #cabfa8;
 
-  --color-accent: #ffffff;
-  --color-save: #74c246;
-  --color-save-dark: #5aa833;
-  --color-delete: #e5493d;
-  --color-delete-dark: #c93b30;
-  --color-weekend: #e5493d;
+  --color-ink: #3a3226;
+  --color-ink-soft: #7a7160;
+
+  --color-save: #a6d06e;
+  --color-save-dark: #89b552;
+  --color-delete: #e06a60;
+  --color-delete-dark: #c8564c;
+  --color-weekend: #d1584d;
 }
 
 html,
@@ -56,96 +64,57 @@ body {
   display: none;
 }
 
-/* Contenuto Markdown renderizzato nelle note. */
-.markdown-body {
-  line-height: 1.55;
+/* ---- Editor rich text della nota (contentEditable) ---- */
+.richtext {
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  position: relative;
 }
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3 {
+.richtext:empty::before,
+.richtext[data-empty='true']::before {
+  content: attr(data-placeholder);
+  color: var(--color-ink-soft);
+  pointer-events: none;
+}
+.richtext b,
+.richtext strong {
   font-weight: 700;
-  margin: 0.8em 0 0.35em;
-  line-height: 1.25;
 }
-.markdown-body h1 {
-  font-size: 1.35rem;
+.richtext i,
+.richtext em {
+  font-style: italic;
 }
-.markdown-body h2 {
-  font-size: 1.18rem;
+.richtext u {
+  text-decoration: underline;
 }
-.markdown-body h3 {
-  font-size: 1.05rem;
-}
-.markdown-body p {
-  margin: 0 0 0.7em;
-}
-.markdown-body ul,
-.markdown-body ol {
-  margin: 0 0 0.7em;
-  padding-left: 1.3em;
-}
-.markdown-body ul {
-  list-style: disc;
-}
-.markdown-body ol {
-  list-style: decimal;
-}
-.markdown-body a {
+.richtext a {
   color: #2f6db0;
   text-decoration: underline;
 }
-.markdown-body blockquote {
-  margin: 0 0 0.7em;
-  padding-left: 0.8em;
-  border-left: 3px solid var(--color-line);
-  color: var(--color-ink-soft);
-}
-.markdown-body code {
-  background: var(--color-panel-2);
-  border-radius: 4px;
-  padding: 0.1em 0.35em;
-  font-size: 0.9em;
-}
-.markdown-body pre {
-  background: var(--color-panel-2);
-  border-radius: 10px;
-  padding: 0.8em;
-  overflow-x: auto;
-  margin: 0 0 0.7em;
-}
-.markdown-body pre code {
-  background: transparent;
-  padding: 0;
-}
-.markdown-body img {
-  max-width: 100%;
-  border-radius: 10px;
-}
-.markdown-body hr {
-  border: none;
-  border-top: 1px solid var(--color-line);
-  margin: 1em 0;
+.richtext p {
+  margin: 0 0 0.6em;
 }
 
 /* Thumb dello slider mood. */
 .mood-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 9999px;
-  background: var(--thumb, #fff);
-  border: 3px solid rgba(0, 0, 0, 0.35);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: #fff;
+  border: 3px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 .mood-range::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 9999px;
-  background: var(--thumb, #fff);
-  border: 3px solid rgba(0, 0, 0, 0.35);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: #fff;
+  border: 3px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 .mood-range:focus-visible {
@@ -154,8 +123,7 @@ body {
   border-radius: 9999px;
 }
 
-/* Input orario compatto: niente icona orologio nativa, così "HH:mm" non viene
-   tagliato negli spazi stretti dell'header della nota. */
+/* Input orario compatto: niente icona orologio nativa. */
 input[type='time'].time-compact::-webkit-calendar-picker-indicator {
   display: none;
 }

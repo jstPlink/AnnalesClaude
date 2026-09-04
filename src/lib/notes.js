@@ -69,11 +69,22 @@ export function groupByDay(notes) {
 export function checkSavedNote(rec, expected) {
   const problems = []
   const norm = (s) => String(s ?? '').replace(/\r\n/g, '\n').trim()
+  // Il contenuto e' HTML (rich text): confronta il testo visibile, non i tag.
+  const plain = (s) =>
+    String(s ?? '')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/\s+/g, ' ')
+      .trim()
 
   if (norm(rec.title) !== norm(expected.title)) {
     problems.push('Il titolo salvato non corrisponde a quello inserito.')
   }
-  if (norm(rec.content) !== norm(expected.content)) {
+  if (plain(rec.content) !== plain(expected.content)) {
     problems.push('Il contenuto salvato non corrisponde a quello inserito.')
   }
   if (Math.abs(Number(rec.mood) - Number(expected.mood)) > 0.005) {

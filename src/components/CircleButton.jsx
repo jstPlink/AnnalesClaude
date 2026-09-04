@@ -1,8 +1,8 @@
 const VARIANTS = {
-  light: 'bg-[#efe9df] text-ink border border-line hover:bg-[#e7e0d3]',
-  sand: 'bg-sand text-ink border border-line hover:bg-[#dcd4c4]',
-  save: 'bg-save text-white border border-save-dark hover:brightness-105',
-  delete: 'bg-delete text-white border border-delete-dark hover:brightness-105',
+  light: 'bg-tag text-ink border border-line hover:brightness-[0.98]',
+  sand: 'bg-sand text-ink border border-line hover:brightness-[0.98]',
+  save: 'bg-save text-ink border border-save-dark hover:brightness-105',
+  delete: 'bg-delete text-ink border border-delete-dark hover:brightness-105',
 }
 
 export default function CircleButton({
