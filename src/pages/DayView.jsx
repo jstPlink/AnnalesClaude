@@ -6,7 +6,7 @@ import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
-import { listNotesInRange, describeError } from '../lib/notes'
+import { listNotesInRange, describeError, plainText } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
 import {
@@ -178,6 +178,7 @@ export default function DayView() {
                 const widthPct = 100 / lanes
                 const tiny = h < 30
                 const img = n.images?.[0]
+                const preview = h >= 58 ? plainText(n.content) : ''
                 return (
                   <button
                     key={n.id}
@@ -210,7 +211,7 @@ export default function DayView() {
                           <span>{timeLabel(n.timeEnd)}</span>
                         </span>
 
-                        <span className="flex min-w-0 flex-1 items-center px-2 py-1">
+                        <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2 py-1">
                           <MarqueeText className="text-[13px] font-semibold leading-tight text-ink">
                             {n.title || (
                               <span className="italic text-ink-soft">
@@ -218,6 +219,11 @@ export default function DayView() {
                               </span>
                             )}
                           </MarqueeText>
+                          {preview && (
+                            <span className="text-[11px] leading-snug text-ink-soft">
+                              {preview}
+                            </span>
+                          )}
                         </span>
 
                         {/* Immagine a larghezza fissa, sempre a destra, a tutta altezza */}

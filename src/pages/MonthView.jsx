@@ -225,11 +225,6 @@ export default function MonthView() {
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
-                    {isToday && (
-                      <span className="w-fit rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cream">
-                        oggi
-                      </span>
-                    )}
                     {d.titles.map((t, i) => (
                       <MarqueeText
                         key={i}

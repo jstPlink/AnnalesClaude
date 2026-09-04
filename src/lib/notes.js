@@ -64,22 +64,26 @@ export function groupByDay(notes) {
   return map
 }
 
+// Testo semplice dal contenuto HTML della nota (per anteprime e confronti).
+export function plainText(s) {
+  return String(s ?? '')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 // Confronta la nota salvata sul server con quanto inserito nell'editor.
 // Ritorna un elenco di problemi (vuoto = tutto ok).
 export function checkSavedNote(rec, expected) {
   const problems = []
   const norm = (s) => String(s ?? '').replace(/\r\n/g, '\n').trim()
-  // Il contenuto e' HTML (rich text): confronta il testo visibile, non i tag.
-  const plain = (s) =>
-    String(s ?? '')
-      .replace(/<br\s*\/?>/gi, ' ')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
-      .replace(/\s+/g, ' ')
-      .trim()
+  const plain = plainText
 
   if (norm(rec.title) !== norm(expected.title)) {
     problems.push('Il titolo salvato non corrisponde a quello inserito.')
