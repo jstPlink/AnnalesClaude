@@ -20,7 +20,7 @@ export default function WebLogin() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const from = location.state?.from?.pathname || '/web'
+  const from = location.state?.from?.pathname || '/'
   const isSignup = mode === 'signup'
 
   if (ready && isAuthed) return <Navigate to={from} replace />

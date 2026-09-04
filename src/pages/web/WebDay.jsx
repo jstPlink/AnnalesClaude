@@ -87,7 +87,7 @@ export default function WebDay() {
       <header className="mb-6">
         <button
           type="button"
-          onClick={() => navigate('/web')}
+          onClick={() => navigate('/')}
           className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-ink"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -101,7 +101,7 @@ export default function WebDay() {
           </h1>
           <button
             type="button"
-            onClick={() => navigate(`/web/note/new?date=${date}`)}
+            onClick={() => navigate(`/note/new?date=${date}`)}
             className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
           >
             + Nuova nota
@@ -122,7 +122,7 @@ export default function WebDay() {
           <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
           <button
             type="button"
-            onClick={() => navigate(`/web/note/new?date=${date}`)}
+            onClick={() => navigate(`/note/new?date=${date}`)}
             className="mt-4 rounded-full border border-line bg-tag px-5 py-2.5 text-sm font-bold text-ink transition hover:bg-cream"
           >
             Crea la prima nota
@@ -166,7 +166,7 @@ export default function WebDay() {
                   <button
                     key={n.id}
                     type="button"
-                    onClick={() => navigate(`/web/note/${n.id}`)}
+                    onClick={() => navigate(`/note/${n.id}`)}
                     className="absolute flex overflow-hidden rounded-2xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
                     style={{
                       top,

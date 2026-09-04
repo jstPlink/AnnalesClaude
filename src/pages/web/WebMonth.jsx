@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useNav } from '../../context/NavContext'
 import {
   listNotesInRange,
   groupByDay,
@@ -14,7 +15,7 @@ const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
 export default function WebMonth() {
   const navigate = useNavigate()
-  const { cursor } = useOutletContext()
+  const { cursor } = useNav()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -97,7 +98,7 @@ export default function WebMonth() {
             <button
               key={cell.key}
               type="button"
-              onClick={() => navigate(`/web/day/${cell.key}`)}
+              onClick={() => navigate(`/day/${cell.key}`)}
               className={
                 'group relative flex min-h-[128px] flex-col gap-1.5 p-2.5 text-left transition ' +
                 (cell.inMonth ? 'bg-cream' : 'bg-cream/40') +

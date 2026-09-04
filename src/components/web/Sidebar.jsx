@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useNav } from '../../context/NavContext'
 import { MONTHS_IT, addMonths, todayKey } from '../../lib/dates'
 
 function NavArrow({ dir, onClick, label }) {
@@ -17,9 +18,10 @@ function NavArrow({ dir, onClick, label }) {
   )
 }
 
-export default function Sidebar({ cursor, setCursor }) {
+export default function Sidebar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { cursor, setCursor } = useNav()
 
   const name = user?.name?.trim() || user?.email || 'Utente'
   const initial = name.charAt(0).toUpperCase()
@@ -29,7 +31,7 @@ export default function Sidebar({ cursor, setCursor }) {
       if (part === 'year') return { ...c, year: c.year + delta }
       return addMonths(c, delta)
     })
-    navigate('/web')
+    navigate('/')
   }
 
   return (
@@ -51,7 +53,7 @@ export default function Sidebar({ cursor, setCursor }) {
           <NavArrow dir="left" label="Mese precedente" onClick={() => move('month', -1)} />
           <button
             type="button"
-            onClick={() => navigate('/web')}
+            onClick={() => navigate('/')}
             className="font-serif text-lg text-ink-soft transition hover:text-ink"
           >
             {MONTHS_IT[cursor.month]}
@@ -62,7 +64,7 @@ export default function Sidebar({ cursor, setCursor }) {
 
       <button
         type="button"
-        onClick={() => navigate(`/web/note/new?date=${todayKey()}`)}
+        onClick={() => navigate(`/note/new?date=${todayKey()}`)}
         className="mx-4 mt-5 flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-cream transition hover:brightness-110"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
@@ -74,7 +76,7 @@ export default function Sidebar({ cursor, setCursor }) {
 
       <nav className="mt-6 flex flex-col gap-1 px-4 text-sm font-semibold">
         <NavLink
-          to="/web"
+          to="/"
           end
           className={({ isActive }) =>
             'rounded-xl px-3 py-2 transition ' +
@@ -84,7 +86,7 @@ export default function Sidebar({ cursor, setCursor }) {
           Calendario
         </NavLink>
         <NavLink
-          to={`/web/day/${todayKey()}`}
+          to={`/day/${todayKey()}`}
           className={({ isActive }) =>
             'rounded-xl px-3 py-2 transition ' +
             (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
@@ -98,7 +100,7 @@ export default function Sidebar({ cursor, setCursor }) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/web/profilo')}
+            onClick={() => navigate('/profilo')}
             className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-cream/60"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-cream font-serif text-lg font-semibold text-ink">
@@ -119,7 +121,7 @@ export default function Sidebar({ cursor, setCursor }) {
             title="Esci"
             onClick={() => {
               logout()
-              navigate('/web/login', { replace: true })
+              navigate('/login', { replace: true })
             }}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-cream"
           >

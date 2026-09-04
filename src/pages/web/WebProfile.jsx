@@ -43,7 +43,7 @@ export default function WebProfile() {
           type="button"
           onClick={() => {
             logout()
-            navigate('/web/login', { replace: true })
+            navigate('/login', { replace: true })
           }}
           className="mt-8 w-full rounded-full border border-delete-dark bg-delete px-6 py-3 text-sm font-bold text-ink transition hover:brightness-105"
         >

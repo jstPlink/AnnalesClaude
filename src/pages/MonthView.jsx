@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useNav } from '../context/NavContext'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
@@ -25,11 +26,7 @@ const SWIPE_THRESHOLD = 55
 
 export default function MonthView() {
   const navigate = useNavigate()
-  const today = new Date()
-  const [cursor, setCursor] = useState({
-    year: today.getFullYear(),
-    month: today.getMonth(),
-  })
+  const { cursor, setCursor } = useNav()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

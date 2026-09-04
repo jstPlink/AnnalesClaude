@@ -179,7 +179,7 @@ export default function WebNote() {
       }
 
       navigate(
-        `/web/day/${creating ? form.dateKey : dayKey(rec.date) || form.dateKey}`,
+        `/day/${creating ? form.dateKey : dayKey(rec.date) || form.dateKey}`,
         { replace: true },
       )
     } catch (err) {
@@ -195,7 +195,7 @@ export default function WebNote() {
     setDialog(null)
     try {
       await deleteNote(effectiveId)
-      navigate(`/web/day/${form.dateKey}`, { replace: true })
+      navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
       setBusy(false)
       setDialog({
