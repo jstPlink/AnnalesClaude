@@ -142,9 +142,9 @@ export default function DayView() {
   return (
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[3rem_1fr_3rem] items-center px-4 pb-3">
-          <CircleButton size={40} onClick={() => navigate('/')} title="Indietro">
-            <Icon name="chevron-left" size={20} />
+        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center px-4 pb-3">
+          <CircleButton onClick={() => navigate('/')} title="Indietro">
+            <Icon name="chevron-left" size={22} />
           </CircleButton>
           <div className="flex justify-center">
             <YearPill year={year} onChange={changeYear} />
@@ -248,13 +248,21 @@ export default function DayView() {
                         </span>
 
                         <span className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
-                          <MarqueeText className="shrink-0 text-[13px] font-semibold leading-tight text-ink">
-                            {n.title || (
-                              <span className="italic text-ink-soft">
-                                Senza titolo
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <MarqueeText className="min-w-0 flex-1 shrink text-[13px] font-semibold leading-tight text-ink">
+                              {n.title || (
+                                <span className="italic text-ink-soft">
+                                  Senza titolo
+                                </span>
+                              )}
+                            </MarqueeText>
+                            {n.people?.length > 0 && (
+                              <span className="flex shrink-0 items-center gap-1 rounded-full bg-panel-2 px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
+                                <Icon name="user" size={10} />
+                                {n.people.length}
                               </span>
                             )}
-                          </MarqueeText>
+                          </span>
                           {preview && <ClampedPreview text={preview} />}
                         </span>
 

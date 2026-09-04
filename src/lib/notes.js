@@ -80,10 +80,12 @@ export async function listNotesFiltered({ start, end, moodMin, moodMax, personId
     params.moodMax = moodMax
   }
   if (personIds && personIds.length) {
+    // "?=" verifica se un ELEMENTO qualsiasi del campo relazione multiplo
+    // corrisponde: l'operatore "=" semplice non lo garantisce.
     const personClauses = personIds.map((id, i) => {
       const key = `person${i}`
       params[key] = id
-      return `people = {:${key}}`
+      return `people ?= {:${key}}`
     })
     clauses.push(`(${personClauses.join(' || ')})`)
   }

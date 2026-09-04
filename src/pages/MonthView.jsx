@@ -181,8 +181,7 @@ export default function MonthView() {
                   <div
                     className={
                       'flex w-14 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
-                      (d.hasNotes ? '' : 'border border-line-soft ') +
-                      (isToday ? 'ring-2 ring-ink/30' : '')
+                      (d.hasNotes ? '' : 'border border-line-soft')
                     }
                     style={
                       d.hasNotes

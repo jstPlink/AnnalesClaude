@@ -283,22 +283,21 @@ export default function NoteView() {
   return (
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex items-start justify-between px-4 pb-2">
-          <CircleButton size={40} onClick={() => navigate(-1)} title="Indietro">
-            <Icon name="chevron-left" size={20} />
+        <div className="flex items-center justify-between px-4 pb-2">
+          <CircleButton onClick={() => navigate(-1)} title="Indietro">
+            <Icon name="chevron-left" size={22} />
           </CircleButton>
           <CircleButton
-            size={44}
             variant={mode}
             disabled={busy}
             onClick={mode === 'save' ? handleSave : handleDelete}
             title={mode === 'save' ? 'Salva' : 'Elimina nota'}
           >
-            <Icon name={mode === 'save' ? 'check' : 'trash'} size={20} />
+            <Icon name={mode === 'save' ? 'check' : 'trash'} size={22} />
           </CircleButton>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 px-3 pb-3">
+        <div className="grid grid-cols-[auto_1fr_auto] items-stretch gap-2 px-3 pb-3">
           <label className="flex items-center justify-center rounded-full border border-line bg-tag px-3">
             <input
               type="time"
@@ -477,7 +476,6 @@ export default function NoteView() {
           {
             icon: 'user',
             title: 'Aggiungi persone',
-            active: peopleIds.length > 0,
             onClick: () => setPeopleSheetOpen(true),
           },
         ]}

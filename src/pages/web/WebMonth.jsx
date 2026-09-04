@@ -9,11 +9,33 @@ import {
 } from '../../lib/notes'
 import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
-import { MONTHS_IT, calendarGrid, parseWall, todayKey, weekdayShort } from '../../lib/dates'
+import {
+  MONTHS_IT,
+  addMonths,
+  calendarGrid,
+  parseWall,
+  todayKey,
+  weekdayShort,
+} from '../../lib/dates'
+
+function NavArrow({ dir, onClick, label }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {dir === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
+      </svg>
+    </button>
+  )
+}
 
 export default function WebMonth() {
   const navigate = useNavigate()
-  const { cursor } = useNav()
+  const { cursor, setCursor } = useNav()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -49,11 +71,49 @@ export default function WebMonth() {
 
   return (
     <div>
-      <header className="mb-6 flex items-end justify-between">
-        <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-          {MONTHS_IT[cursor.month]}{' '}
-          <span className="text-ink-soft">{cursor.year}</span>
-        </h1>
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2">
+            <NavArrow
+              dir="left"
+              label="Mese precedente"
+              onClick={() => setCursor((c) => addMonths(c, -1))}
+            />
+            <h1 className="w-40 text-center font-serif text-3xl font-semibold tracking-tight text-ink">
+              {MONTHS_IT[cursor.month]}
+            </h1>
+            <NavArrow
+              dir="right"
+              label="Mese successivo"
+              onClick={() => setCursor((c) => addMonths(c, 1))}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <NavArrow
+              dir="left"
+              label="Anno precedente"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
+            />
+            <span className="w-14 text-center font-serif text-3xl font-semibold text-ink-soft">
+              {cursor.year}
+            </span>
+            <NavArrow
+              dir="right"
+              label="Anno successivo"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const t = new Date()
+              setCursor({ year: t.getFullYear(), month: t.getMonth() })
+            }}
+            className="rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-cream"
+          >
+            Oggi
+          </button>
+        </div>
         {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
       </header>
 
@@ -78,9 +138,11 @@ export default function WebMonth() {
               .filter((n) => isNoteworthyMood(n.mood))
               .map((n) => n.title || plainText(n.content).slice(0, 80))
               .filter(Boolean)
-            const img = dayNotes.flatMap((n) =>
-              (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '100x100' })),
-            )[0]
+            const imgs = dayNotes
+              .flatMap((n) =>
+                (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '200x200' })),
+              )
+              .slice(0, 2)
 
             return (
               <button
@@ -88,13 +150,13 @@ export default function WebMonth() {
                 type="button"
                 onClick={() => navigate(`/day/${cell.key}`)}
                 className={
-                  'flex w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-tag ' +
+                  'flex w-full items-center gap-4 px-5 py-6 text-left transition hover:bg-tag ' +
                   (isToday ? 'bg-tag' : 'bg-cream') +
                   (has ? '' : ' opacity-60')
                 }
               >
                 <span
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-serif text-lg font-semibold leading-none"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-serif text-xl font-semibold leading-none"
                   style={
                     has
                       ? { backgroundColor: moodColor(mood), color: moodTextColor(mood) }
@@ -120,8 +182,15 @@ export default function WebMonth() {
 
                 <span className="min-w-0 flex-1">
                   {titles.length ? (
-                    <span className="block truncate text-sm font-medium text-ink">
-                      {titles.join(' · ')}
+                    <span className="flex flex-col gap-1">
+                      {titles.map((t, i) => (
+                        <span
+                          key={i}
+                          className="truncate text-sm font-medium text-ink"
+                        >
+                          {t}
+                        </span>
+                      ))}
                     </span>
                   ) : has ? (
                     <span className="block text-sm text-ink-soft">
@@ -134,13 +203,18 @@ export default function WebMonth() {
                   )}
                 </span>
 
-                {img && (
-                  <img
-                    src={img}
-                    alt=""
-                    loading="lazy"
-                    className="h-10 w-10 shrink-0 rounded-xl object-cover"
-                  />
+                {imgs.length > 0 && (
+                  <span className="flex shrink-0 gap-2">
+                    {imgs.map((src, i) => (
+                      <img
+                        key={i}
+                        src={src}
+                        alt=""
+                        loading="lazy"
+                        className="h-24 w-24 rounded-2xl object-cover"
+                      />
+                    ))}
+                  </span>
                 )}
               </button>
             )

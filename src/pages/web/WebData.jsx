@@ -6,6 +6,21 @@ import { listNotesInRange, describeError } from '../../lib/notes'
 import { yearWeeklyMood, moodColor, moodTextColor } from '../../lib/mood'
 import { MONTHS_IT } from '../../lib/dates'
 
+function NavArrow({ dir, onClick, label }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {dir === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
+      </svg>
+    </button>
+  )
+}
+
 function WeekBars({ weeks }) {
   return (
     <div className="flex h-14 items-end gap-1.5">
@@ -61,10 +76,25 @@ export default function WebData() {
 
   return (
     <div>
-      <header className="mb-6 flex items-end justify-between">
-        <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-          Andamento <span className="text-ink-soft">{year}</span>
-        </h1>
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
+            Andamento
+          </h1>
+          <NavArrow
+            dir="left"
+            label="Anno precedente"
+            onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
+          />
+          <span className="w-14 text-center font-serif text-2xl font-semibold text-ink-soft">
+            {year}
+          </span>
+          <NavArrow
+            dir="right"
+            label="Anno successivo"
+            onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
+          />
+        </div>
         {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
       </header>
 

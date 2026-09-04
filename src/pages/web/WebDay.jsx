@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Icon from '../../components/Icon'
 import {
   listNotesInRange,
   describeError,
@@ -90,7 +91,7 @@ export default function WebDay() {
   const pxPerMin = trackH / DAY_MIN
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] flex-col">
+    <div className="flex h-[calc(100dvh_-_4rem)] flex-col">
       <header className="mb-4 shrink-0">
         <button
           type="button"
@@ -182,8 +183,16 @@ export default function WebDay() {
                         style={{ backgroundColor: moodColor(n.mood) }}
                       />
                       <span className="flex min-w-0 flex-1 flex-col gap-1 p-3">
-                        <span className="text-xs font-semibold tabular-nums text-ink-soft">
-                          {timeLabel(n.timeStart)} – {timeLabel(n.timeEnd)}
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold tabular-nums text-ink-soft">
+                            {timeLabel(n.timeStart)} – {timeLabel(n.timeEnd)}
+                          </span>
+                          {n.people?.length > 0 && (
+                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
+                              <Icon name="user" size={10} />
+                              {n.people.length}
+                            </span>
+                          )}
                         </span>
                         <span className="truncate font-serif text-[17px] font-semibold text-ink">
                           {n.title || 'Senza titolo'}
@@ -199,7 +208,7 @@ export default function WebDay() {
                           src={fileUrl(n, img, { thumb: '200x200' })}
                           alt=""
                           loading="lazy"
-                          className="m-2 h-[calc(100%-1rem)] w-24 shrink-0 self-center rounded-xl object-cover"
+                          className="m-2 h-[calc(100%_-_1rem)] w-24 shrink-0 self-center rounded-xl object-cover"
                         />
                       )}
                     </button>
