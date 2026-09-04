@@ -1,12 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
+import { dayKey, fullDayLabel } from '../lib/dates'
 import {
   searchImmichPhotos,
   fetchImmichThumbnailBlob,
   fetchImmichOriginalAsFile,
   describeImmichError,
 } from '../lib/immich'
+
+// Raggruppa gli asset (già ordinati dal più recente) in sezioni per giorno.
+function groupByDay(items) {
+  const sections = []
+  let current = null
+  for (const asset of items) {
+    const key = dayKey(asset.localDateTime || asset.fileCreatedAt || asset.fileModifiedAt)
+    if (!current || current.key !== key) {
+      current = { key, label: key ? fullDayLabel(key) : 'Data sconosciuta', assets: [] }
+      sections.push(current)
+    }
+    current.assets.push(asset)
+  }
+  return sections
+}
 
 function ImmichThumb({ baseUrl, apiKey, asset, selected, onToggle }) {
   const [url, setUrl] = useState('')
@@ -96,6 +112,8 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
     }
   }
 
+  const sections = useMemo(() => groupByDay(items), [items])
+
   function toggle(asset) {
     haptic()
     setSelected((prev) =>
@@ -153,18 +171,25 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
             <p className="py-10 text-center text-ink-soft">Nessuna foto trovata.</p>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {items.map((asset) => (
-                  <ImmichThumb
-                    key={asset.id}
-                    baseUrl={baseUrl}
-                    apiKey={apiKey}
-                    asset={asset}
-                    selected={selected.some((a) => a.id === asset.id)}
-                    onToggle={toggle}
-                  />
-                ))}
-              </div>
+              {sections.map((section) => (
+                <div key={section.key || section.label} className="mb-5 last:mb-0">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                    {section.label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {section.assets.map((asset) => (
+                      <ImmichThumb
+                        key={asset.id}
+                        baseUrl={baseUrl}
+                        apiKey={apiKey}
+                        asset={asset}
+                        selected={selected.some((a) => a.id === asset.id)}
+                        onToggle={toggle}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
               {nextPage != null && (
                 <button
                   type="button"
