@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
@@ -6,6 +6,7 @@ import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import { listNotesFiltered, describeError } from '../lib/notes'
+import { listPeople } from '../lib/people'
 import { moodColor, moodTextColor } from '../lib/mood'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel, todayKey } from '../lib/dates'
 import { haptic } from '../lib/haptics'
@@ -56,12 +57,29 @@ export default function FilterView() {
     moodMax: 100,
     sort: 'mood-desc',
     limit: '',
+    personIds: [],
   })
   const [results, setResults] = useState(null) // null = filtri non ancora applicati
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [people, setPeople] = useState([])
+
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch(() => {})
+  }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
+
+  function togglePerson(id) {
+    haptic()
+    set({
+      personIds: filters.personIds.includes(id)
+        ? filters.personIds.filter((x) => x !== id)
+        : [...filters.personIds, id],
+    })
+  }
 
   async function applyFilters() {
     haptic()
@@ -71,7 +89,13 @@ export default function FilterView() {
       const { start, end } = dateRangeBounds(filters.from, filters.to)
       const moodMin = filters.moodMin > 0 ? filters.moodMin / 100 : undefined
       const moodMax = filters.moodMax < 100 ? filters.moodMax / 100 : undefined
-      const list = await listNotesFiltered({ start, end, moodMin, moodMax })
+      const list = await listNotesFiltered({
+        start,
+        end,
+        moodMin,
+        moodMax,
+        personIds: filters.personIds,
+      })
       const sorted = sortNotes(list, filters.sort)
       const limit = Number(filters.limit)
       setResults(limit > 0 ? sorted.slice(0, limit) : sorted)
@@ -144,6 +168,28 @@ export default function FilterView() {
               />
             </div>
           </FilterField>
+
+          {people.length > 0 && (
+            <FilterField label="Persone">
+              <div className="flex flex-wrap gap-1.5">
+                {people.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => togglePerson(p.id)}
+                    className={
+                      'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      (filters.personIds.includes(p.id)
+                        ? 'bg-ink text-cream'
+                        : 'border border-line bg-cream text-ink')
+                    }
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </FilterField>
+          )}
 
           <FilterField label="Ordina per">
             <div className="flex flex-wrap gap-1.5">

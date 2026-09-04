@@ -9,9 +9,7 @@ import {
 } from '../../lib/notes'
 import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
-import { MONTHS_IT, calendarGrid, parseWall, todayKey } from '../../lib/dates'
-
-const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
+import { MONTHS_IT, calendarGrid, parseWall, todayKey, weekdayShort } from '../../lib/dates'
 
 export default function WebMonth() {
   const navigate = useNavigate()
@@ -65,98 +63,88 @@ export default function WebMonth() {
         </p>
       )}
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-3xl border border-line bg-line">
-        {WEEKDAY_LABELS.map((w, i) => (
-          <div
-            key={w}
-            className={
-              'bg-sand py-2.5 text-center text-xs font-bold uppercase tracking-wider ' +
-              (i >= 5 ? 'text-weekend/80' : 'text-ink-soft')
-            }
-          >
-            {w}
-          </div>
-        ))}
+      <div className="divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
+        {grid
+          .filter((cell) => cell.inMonth)
+          .map((cell) => {
+            const dayNotes = byDay.get(cell.key) || []
+            const has = dayNotes.length > 0
+            const mood = has ? dayMood(dayNotes) : null
+            const isToday = cell.key === todayK
+            const isWeekend = cell.weekday === 0 || cell.weekday === 6
+            const dayNum = parseWall(cell.key)?.d ?? ''
 
-        {grid.map((cell) => {
-          const dayNotes = byDay.get(cell.key) || []
-          const has = dayNotes.length > 0
-          const mood = has ? dayMood(dayNotes) : null
-          const isToday = cell.key === todayK
-          const isWeekend = cell.weekday === 0 || cell.weekday === 6
-          const dayNum = parseWall(cell.key)?.d ?? ''
+            const titles = dayNotes
+              .filter((n) => isNoteworthyMood(n.mood))
+              .map((n) => n.title || plainText(n.content).slice(0, 80))
+              .filter(Boolean)
+            const img = dayNotes.flatMap((n) =>
+              (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '100x100' })),
+            )[0]
 
-          const titles = dayNotes
-            .filter((n) => isNoteworthyMood(n.mood))
-            .map((n) => n.title || plainText(n.content).slice(0, 60))
-            .filter(Boolean)
-          const img = dayNotes.flatMap((n) =>
-            (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '80x80' })),
-          )[0]
-
-          return (
-            <button
-              key={cell.key}
-              type="button"
-              onClick={() => navigate(`/day/${cell.key}`)}
-              className={
-                'group relative flex min-h-[128px] flex-col gap-1.5 p-2.5 text-left transition ' +
-                (cell.inMonth ? 'bg-cream' : 'bg-cream/40') +
-                (isToday ? ' ring-2 ring-inset ring-ink/40' : '') +
-                ' hover:bg-tag'
-              }
-            >
-              <div className="flex items-center justify-between">
+            return (
+              <button
+                key={cell.key}
+                type="button"
+                onClick={() => navigate(`/day/${cell.key}`)}
+                className={
+                  'flex w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-tag ' +
+                  (isToday ? 'bg-tag' : 'bg-cream') +
+                  (has ? '' : ' opacity-60')
+                }
+              >
                 <span
-                  className="flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 font-serif text-base font-semibold leading-none"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-serif text-lg font-semibold leading-none"
                   style={
                     has
                       ? { backgroundColor: moodColor(mood), color: moodTextColor(mood) }
                       : {
+                          border: '1px solid var(--color-line)',
                           color: isWeekend
                             ? 'var(--color-weekend)'
-                            : cell.inMonth
-                              ? 'var(--color-ink)'
-                              : 'var(--color-ink-soft)',
+                            : 'var(--color-ink-soft)',
                         }
                   }
                 >
                   {dayNum}
                 </span>
+
+                <span
+                  className={
+                    'w-10 shrink-0 text-xs font-semibold uppercase tracking-wide ' +
+                    (isWeekend ? 'text-weekend/80' : 'text-ink-soft')
+                  }
+                >
+                  {weekdayShort(cell.key)}
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  {titles.length ? (
+                    <span className="block truncate text-sm font-medium text-ink">
+                      {titles.join(' · ')}
+                    </span>
+                  ) : has ? (
+                    <span className="block text-sm text-ink-soft">
+                      {dayNotes.length} {dayNotes.length === 1 ? 'nota' : 'note'}
+                    </span>
+                  ) : (
+                    <span className="block text-sm text-ink-soft/60">
+                      Nessuna nota
+                    </span>
+                  )}
+                </span>
+
                 {img && (
                   <img
                     src={img}
                     alt=""
                     loading="lazy"
-                    className="h-7 w-7 rounded-md object-cover"
+                    className="h-10 w-10 shrink-0 rounded-xl object-cover"
                   />
                 )}
-              </div>
-
-              <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
-                {titles.slice(0, 3).map((t, i) => (
-                  <p
-                    key={i}
-                    className="truncate text-[12px] font-medium leading-tight text-ink"
-                  >
-                    {t}
-                  </p>
-                ))}
-                {titles.length > 3 && (
-                  <p className="text-[11px] text-ink-soft">
-                    +{titles.length - 3}
-                  </p>
-                )}
-              </div>
-
-              {has && !titles.length && (
-                <span className="text-[11px] text-ink-soft">
-                  {dayNotes.length} {dayNotes.length === 1 ? 'nota' : 'note'}
-                </span>
-              )}
-            </button>
-          )
-        })}
+              </button>
+            )
+          })}
       </div>
     </div>
   )

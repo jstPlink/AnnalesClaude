@@ -57,9 +57,10 @@ export async function deleteNote(id) {
   return pb.collection(COLLECTION).delete(id)
 }
 
-// Elenco note filtrato per intervallo di date e/o intervallo di mood.
+// Elenco note filtrato per intervallo di date, intervallo di mood e/o
+// persone coinvolte (nota inclusa se coinvolge ALMENO una delle persone).
 // Tutti i parametri sono opzionali: se assenti, nessun vincolo su quel campo.
-export async function listNotesFiltered({ start, end, moodMin, moodMax } = {}) {
+export async function listNotesFiltered({ start, end, moodMin, moodMax, personIds } = {}) {
   const clauses = []
   const params = {}
   if (start) {
@@ -77,6 +78,14 @@ export async function listNotesFiltered({ start, end, moodMin, moodMax } = {}) {
   if (moodMax != null) {
     clauses.push('mood <= {:moodMax}')
     params.moodMax = moodMax
+  }
+  if (personIds && personIds.length) {
+    const personClauses = personIds.map((id, i) => {
+      const key = `person${i}`
+      params[key] = id
+      return `people = {:${key}}`
+    })
+    clauses.push(`(${personClauses.join(' || ')})`)
   }
   const filter = clauses.length ? pb.filter(clauses.join(' && '), params) : ''
   return pb.collection(COLLECTION).getFullList({ filter, sort: 'date' })

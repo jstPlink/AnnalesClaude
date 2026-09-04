@@ -103,6 +103,15 @@ export default function Sidebar() {
         >
           Andamento
         </NavLink>
+        <NavLink
+          to="/filtri"
+          className={({ isActive }) =>
+            'rounded-xl px-3 py-2 transition ' +
+            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+          }
+        >
+          Cerca
+        </NavLink>
       </nav>
 
       <div className="mt-auto border-t border-line p-4">

@@ -474,8 +474,6 @@ export default function NoteView() {
 
       <Footer
         items={[
-          null,
-          null,
           {
             icon: 'user',
             title: 'Aggiungi persone',

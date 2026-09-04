@@ -17,6 +17,7 @@ import WebDay from './pages/web/WebDay'
 import WebNote from './pages/web/WebNote'
 import WebProfile from './pages/web/WebProfile'
 import WebData from './pages/web/WebData'
+import WebFilter from './pages/web/WebFilter'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
@@ -85,7 +86,7 @@ export default function App() {
               path="/filtri"
               element={
                 <RequireAuth>
-                  <Screen mobile={FilterView} desktop={FilterView} chrome={false} />
+                  <Screen mobile={FilterView} desktop={WebFilter} />
                 </RequireAuth>
               }
             />

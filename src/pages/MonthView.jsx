@@ -113,7 +113,7 @@ export default function MonthView() {
   return (
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[3rem_1fr_3rem] items-center px-4 pb-3">
+        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center px-4 pb-3">
           <span />
           <div className="flex justify-center">
             <YearPill
@@ -126,12 +126,11 @@ export default function MonthView() {
           </div>
           <div className="flex justify-end">
             <CircleButton
-              size={40}
               variant="light"
               onClick={() => navigate('/profilo')}
               title="Profilo"
             >
-              <Icon name="user" size={18} />
+              <Icon name="user" size={22} />
             </CircleButton>
           </div>
         </div>
