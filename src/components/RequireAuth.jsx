@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 // Protegge le rotte: se non autenticati, redirect al login.
-export default function RequireAuth({ children }) {
+export default function RequireAuth({ children, redirectTo = '/login' }) {
   const { isAuthed, ready } = useAuth()
   const location = useLocation()
 
@@ -15,7 +15,7 @@ export default function RequireAuth({ children }) {
   }
 
   if (!isAuthed) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    return <Navigate to={redirectTo} replace state={{ from: location }} />
   }
 
   return children

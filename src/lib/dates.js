@@ -139,3 +139,40 @@ export function monthDayKeys(year, month) {
   const mm = pad(month + 1)
   return Array.from({ length: last }, (_, i) => `${year}-${mm}-${pad(i + 1)}`)
 }
+
+// Griglia calendario di 6 settimane (42 celle) che copre il mese, da lunedì.
+// Ogni cella: { key: "YYYY-MM-DD", inMonth, weekday (0=dom..6=sab) }.
+export function calendarGrid(year, month) {
+  const first = new Date(year, month, 1)
+  const offset = (first.getDay() + 6) % 7 // lunedì = primo giorno
+  const start = new Date(year, month, 1 - offset)
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate() + i,
+    )
+    return {
+      key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      inMonth: d.getMonth() === month,
+      weekday: d.getDay(),
+    }
+  })
+}
+
+// "Martedì 1 Settembre 2026"
+const WEEKDAYS_FULL_IT = [
+  'Domenica',
+  'Lunedì',
+  'Martedì',
+  'Mercoledì',
+  'Giovedì',
+  'Venerdì',
+  'Sabato',
+]
+export function fullDayLabel(dKey) {
+  const p = parseWall(dKey)
+  if (!p) return ''
+  const dt = new Date(p.y, p.mo - 1, p.d)
+  return `${WEEKDAYS_FULL_IT[dt.getDay()]} ${p.d} ${MONTHS_IT[p.mo - 1]} ${p.y}`
+}

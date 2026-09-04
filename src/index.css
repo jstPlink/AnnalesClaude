@@ -14,6 +14,8 @@
 @theme {
   --font-sans: 'ui-rounded', 'SF Pro Rounded', 'Segoe UI', system-ui, -apple-system,
     'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+    Georgia, 'Times New Roman', serif;
 
   --color-tag: #f4efe2;
   --color-cream: #e8e0cf;
