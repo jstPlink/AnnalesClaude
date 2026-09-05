@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
+import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
@@ -138,14 +139,11 @@ export default function DayView() {
           <CircleButton onClick={() => navigate('/')} title="Indietro">
             <Icon name="chevron-left" size={22} />
           </CircleButton>
-          <span className="text-center text-base font-semibold text-ink-soft tabular-nums">
-            {year}
-          </span>
+          <div className="flex justify-center">
+            <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" />
+          </div>
           <span />
         </div>
-        <h2 className="pb-3 text-center text-2xl font-extrabold text-ink">
-          {dayMonthLabel(date)}
-        </h2>
       </header>
 
       <main className="relative flex-1 overflow-hidden px-3 py-3">
@@ -249,8 +247,8 @@ export default function DayView() {
                               )}
                             </MarqueeText>
                             {n.people?.length > 0 && (
-                              <span className="flex shrink-0 items-center gap-1 rounded-full bg-panel-2 px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
-                                <Icon name="user" size={10} />
+                              <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">
+                                <Icon name="user" size={11} strokeWidth={3} />
                                 {n.people.length}
                               </span>
                             )}

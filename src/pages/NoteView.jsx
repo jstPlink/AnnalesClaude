@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
-import Footer from '../components/Footer'
 import DatePickerPopover from '../components/DatePickerPopover'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
@@ -15,6 +14,7 @@ import PeoplePickerSheet from '../components/PeoplePickerSheet'
 import PersonAvatar from '../components/PersonAvatar'
 import TagPickerSheet from '../components/TagPickerSheet'
 import AddSongSheet from '../components/AddSongSheet'
+import PlacePickerSheet from '../components/PlacePickerSheet'
 import {
   createNote,
   deleteNote,
@@ -86,6 +86,8 @@ export default function NoteView() {
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
   const immichReady = Boolean(immichUrl && immichApiKey)
+  const spotifyClientId = user?.spotifyClientId?.trim()
+  const spotifyClientSecret = user?.spotifyClientSecret?.trim()
 
   const dateParam = search.get('date')
   const initialDate =
@@ -114,6 +116,7 @@ export default function NoteView() {
   const [baselineTagIds, setBaselineTagIds] = useState([])
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [songSheetOpen, setSongSheetOpen] = useState(false)
+  const [placeSheetOpen, setPlaceSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -319,7 +322,7 @@ export default function NoteView() {
           <CircleButton onClick={() => navigate(-1)} title="Indietro">
             <Icon name="chevron-left" size={22} />
           </CircleButton>
-          <span className="text-center text-base font-semibold text-ink-soft tabular-nums">
+          <span className="text-center text-[1.3rem] font-bold text-ink-soft tabular-nums">
             {year}
           </span>
           <CircleButton
@@ -347,6 +350,7 @@ export default function NoteView() {
             <DatePickerPopover
               dateKey={form.dateKey}
               onChange={(dateKey) => set({ dateKey })}
+              textClassName="text-base font-bold"
             />
           </div>
 
@@ -391,134 +395,114 @@ export default function NoteView() {
           />
         </div>
 
-        <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Persone
-          </p>
-          {selectedPeople.length === 0 ? (
-            <p className="text-sm italic text-ink-soft">Nessuna persona</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {selectedPeople.map((person) => (
-                <span
-                  key={person.id}
-                  className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
+        {selectedPeople.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedPeople.map((person) => (
+              <span
+                key={person.id}
+                className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
+              >
+                <PersonAvatar
+                  person={person}
+                  immichUrl={immichUrl}
+                  immichApiKey={immichApiKey}
+                  size={24}
+                />
+                <span className="text-sm font-semibold text-ink">{person.name}</span>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  onClick={() => togglePerson(person.id)}
+                  className="text-ink-soft"
                 >
-                  <PersonAvatar
-                    person={person}
-                    immichUrl={immichUrl}
-                    immichApiKey={immichApiKey}
-                    size={24}
+                  <Icon name="x" size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {selectedTags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2"
+              >
+                <span className="text-sm font-semibold text-ink">{tag.name}</span>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  onClick={() => toggleTag(tag.id)}
+                  className="text-ink-soft"
+                >
+                  <Icon name="x" size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {form.songs.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {form.songs.map((song, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
+              >
+                {song.thumbnailUrl ? (
+                  <img
+                    src={song.thumbnailUrl}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
                   />
-                  <span className="text-sm font-semibold text-ink">{person.name}</span>
-                  <button
-                    type="button"
-                    title="Rimuovi"
-                    onClick={() => togglePerson(person.id)}
-                    className="text-ink-soft"
-                  >
-                    <Icon name="x" size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Tag
-          </p>
-          {selectedTags.length === 0 ? (
-            <p className="text-sm italic text-ink-soft">Nessun tag</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2"
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
+                    <Icon name="music" size={18} />
+                  </span>
+                )}
+                <a
+                  href={song.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
                 >
-                  <span className="text-sm font-semibold text-ink">{tag.name}</span>
-                  <button
-                    type="button"
-                    title="Rimuovi"
-                    onClick={() => toggleTag(tag.id)}
-                    className="text-ink-soft"
-                  >
-                    <Icon name="x" size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Canzoni
-          </p>
-          {form.songs.length === 0 ? (
-            <p className="text-sm italic text-ink-soft">Nessuna canzone</p>
-          ) : (
-            <div className="space-y-2">
-              {form.songs.map((song, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
+                  {song.title}
+                </a>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  onClick={() => removeSong(i)}
+                  className="shrink-0 text-ink-soft"
                 >
-                  {song.thumbnailUrl ? (
-                    <img
-                      src={song.thumbnailUrl}
-                      alt=""
-                      className="h-10 w-10 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
-                      <Icon name="music" size={18} />
-                    </span>
-                  )}
-                  <a
-                    href={song.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
-                  >
-                    {song.title}
-                  </a>
-                  <button
-                    type="button"
-                    title="Rimuovi"
-                    onClick={() => removeSong(i)}
-                    className="shrink-0 text-ink-soft"
-                  >
-                    <Icon name="x" size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                  <Icon name="x" size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Luogo
-          </p>
-          <input
-            type="text"
-            placeholder="Nessun luogo"
-            value={form.place}
-            onChange={(e) => set({ place: e.target.value })}
-            className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none placeholder:italic placeholder:text-ink-soft"
-          />
-        </div>
+        {form.place && (
+          <div className="mt-4">
+            <span className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2">
+              <Icon name="map-pin" size={14} className="shrink-0 text-ink-soft" />
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                {form.place}
+              </span>
+              <button
+                type="button"
+                title="Rimuovi"
+                onClick={() => set({ place: '' })}
+                className="shrink-0 text-ink-soft"
+              >
+                <Icon name="x" size={14} />
+              </button>
+            </span>
+          </div>
+        )}
 
-        <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Immagini
-          </p>
-          {noImages ? (
-            <p className="text-sm italic text-ink-soft">Nessuna immagine</p>
-          ) : (
+        {!noImages && (
+          <div className="mt-4">
             <div className="grid grid-cols-3 gap-2">
               {existingImages.map((fn, i) => (
                 <div
@@ -576,8 +560,8 @@ export default function NoteView() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="h-6" />
       </main>
@@ -591,30 +575,27 @@ export default function NoteView() {
         onChange={onPickFiles}
       />
 
-      <Footer
-        items={[
-          {
-            icon: 'user',
-            title: 'Aggiungi persone',
-            onClick: () => setPeopleSheetOpen(true),
-          },
-          {
-            icon: 'tag',
-            title: 'Aggiungi tag',
-            onClick: () => setTagSheetOpen(true),
-          },
-          {
-            icon: 'music',
-            title: 'Aggiungi canzone',
-            onClick: () => setSongSheetOpen(true),
-          },
-        ]}
-        primaryIcon="image-plus"
-        primaryTitle="Aggiungi immagini"
-        onPrimary={() =>
-          immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
-        }
-      />
+      <div className="sticky bottom-0 z-20 flex items-center justify-end gap-2 border-t border-line bg-sand px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+        <CircleButton size={52} onClick={() => setPeopleSheetOpen(true)} title="Aggiungi persone">
+          <Icon name="user" size={20} />
+        </CircleButton>
+        <CircleButton size={52} onClick={() => setTagSheetOpen(true)} title="Aggiungi tag">
+          <Icon name="tag" size={20} />
+        </CircleButton>
+        <CircleButton size={52} onClick={() => setSongSheetOpen(true)} title="Aggiungi canzone">
+          <Icon name="music" size={20} />
+        </CircleButton>
+        <CircleButton size={52} onClick={() => setPlaceSheetOpen(true)} title="Aggiungi luogo">
+          <Icon name="map-pin" size={20} />
+        </CircleButton>
+        <CircleButton
+          size={52}
+          onClick={() => (immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click())}
+          title="Aggiungi immagini"
+        >
+          <Icon name="image-plus" size={22} />
+        </CircleButton>
+      </div>
 
       <Dialog
         open={Boolean(dialog)}
@@ -676,6 +657,14 @@ export default function NoteView() {
         open={songSheetOpen}
         onClose={() => setSongSheetOpen(false)}
         onAdd={(song) => setForm((f) => ({ ...f, songs: [...f.songs, song] }))}
+        spotifyClientId={spotifyClientId}
+        spotifyClientSecret={spotifyClientSecret}
+      />
+
+      <PlacePickerSheet
+        open={placeSheetOpen}
+        onClose={() => setPlaceSheetOpen(false)}
+        onAdd={(place) => set({ place })}
       />
     </PhoneShell>
   )

@@ -361,12 +361,8 @@ export default function FilterView() {
 
       <Footer
         items={[
+          { icon: 'settings', title: 'Opzioni', onClick: () => navigate('/profilo') },
           { icon: 'calendar', title: 'Calendario', onClick: () => navigate('/') },
-          {
-            icon: 'chart',
-            title: 'Andamento anno',
-            onClick: () => navigate('/dati'),
-          },
           { icon: 'search', title: 'Filtri', active: true },
         ]}
         primaryIcon="plus"

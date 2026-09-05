@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useNav } from '../context/NavContext'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
+import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import ImageCarousel from '../components/ImageCarousel'
-import CircleButton from '../components/CircleButton'
-import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../lib/mood'
@@ -113,37 +112,21 @@ export default function MonthView() {
   return (
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center px-4 pb-3">
-          <span />
-          <div className="flex justify-center">
-            <YearPill
-              year={cursor.year}
-              onChange={(year) => {
-                setDir(0)
-                setCursor((c) => ({ ...c, year }))
-              }}
-            />
-          </div>
-          <div className="flex justify-end">
-            <CircleButton
-              variant="light"
-              onClick={() => navigate('/profilo')}
-              title="Profilo"
-            >
-              <Icon name="user" size={22} />
-            </CircleButton>
-          </div>
-        </div>
-
         <div
-          className="select-none pb-3 text-center"
+          className="flex select-none justify-center px-4 pb-3"
           style={{ touchAction: 'pan-y' }}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
         >
-          <h2 className="text-2xl font-extrabold text-ink">
-            {MONTHS_IT[cursor.month]}
-          </h2>
+          <YearPill
+            year={cursor.year}
+            subtitle={MONTHS_IT[cursor.month]}
+            layout="row"
+            onChange={(year) => {
+              setDir(0)
+              setCursor((c) => ({ ...c, year }))
+            }}
+          />
         </div>
       </header>
 
@@ -180,7 +163,7 @@ export default function MonthView() {
                   {/* Targhetta giorno: sfondo = colore del mood del giorno */}
                   <div
                     className={
-                      'flex w-14 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
+                      'flex w-[2.8rem] shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
                       (d.hasNotes ? '' : 'border border-line-soft')
                     }
                     style={
@@ -190,7 +173,7 @@ export default function MonthView() {
                     }
                   >
                     <span
-                      className="text-2xl font-extrabold leading-none"
+                      className="text-[1.35rem] font-extrabold leading-none"
                       style={{
                         color: d.hasNotes
                           ? moodTextColor(d.avgMood)
@@ -246,29 +229,27 @@ export default function MonthView() {
         <div className="h-4" />
       </main>
 
-      <Footer
-        items={[
-          {
-            icon: 'calendar',
-            title: 'Calendario',
-            active: true,
-            onClick: () => navigate('/'),
-          },
-          {
-            icon: 'chart',
-            title: 'Andamento anno',
-            onClick: () => navigate('/dati'),
-          },
-          {
-            icon: 'search',
-            title: 'Filtri',
-            onClick: () => navigate('/filtri'),
-          },
-        ]}
-        primaryIcon="plus"
-        primaryTitle="Nuova nota (oggi)"
-        onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
-      />
+      <div className="sticky bottom-0 z-20">
+        <ViewTabs active="calendar" />
+        <Footer
+          sticky={false}
+          items={[
+            {
+              icon: 'settings',
+              title: 'Opzioni',
+              onClick: () => navigate('/profilo'),
+            },
+            {
+              icon: 'search',
+              title: 'Filtri',
+              onClick: () => navigate('/filtri'),
+            },
+          ]}
+          primaryIcon="plus"
+          primaryTitle="Nuova nota (oggi)"
+          onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
+        />
+      </div>
     </PhoneShell>
   )
 }

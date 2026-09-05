@@ -1,5 +1,7 @@
-// Recupero titolo e copertina di un brano Spotify a partire dal link,
-// tramite l'endpoint pubblico oEmbed (nessuna API key/credenziale necessaria).
+// Integrazione Spotify: ricerca brani (richiede Client ID/Secret configurati
+// in Profilo — Client Credentials flow, nessun login personale necessario)
+// e lettura titolo/copertina da un link incollato a mano (oEmbed pubblico,
+// nessuna credenziale richiesta, usato come fallback).
 
 const TRACK_RE = /open\.spotify\.com\/(?:intl-[a-z]+\/)?track\/([a-zA-Z0-9]+)/
 
@@ -25,4 +27,54 @@ export async function fetchSpotifyTrack(url) {
     title: data.title || 'Brano Spotify',
     thumbnailUrl: data.thumbnail_url || '',
   }
+}
+
+// Client Credentials flow: token valido solo per il catalogo pubblico,
+// nessun accesso ai dati personali dell'account.
+export async function getSpotifyToken(clientId, clientSecret) {
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+    },
+    body: 'grant_type=client_credentials',
+  })
+  if (!res.ok) {
+    const err = new Error('Client ID/Secret Spotify non validi.')
+    err.status = res.status
+    throw err
+  }
+  const data = await res.json()
+  return data.access_token
+}
+
+// [{ url, title, artist, thumbnailUrl }]
+export async function searchSpotifyTracks(token, query) {
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?type=track&limit=12&q=${encodeURIComponent(query)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+  if (!res.ok) {
+    const err = new Error('Ricerca Spotify non riuscita.')
+    err.status = res.status
+    throw err
+  }
+  const data = await res.json()
+  return (data?.tracks?.items || []).map((t) => ({
+    url: t.external_urls?.spotify || '',
+    title: t.name,
+    artist: (t.artists || []).map((a) => a.name).join(', '),
+    thumbnailUrl: t.album?.images?.[t.album.images.length > 1 ? 1 : 0]?.url || '',
+  }))
+}
+
+export function describeSpotifyError(err) {
+  if (!err) return 'Errore sconosciuto.'
+  if (err.status === 400 || err.status === 401) {
+    return 'Client ID/Secret Spotify non validi.'
+  }
+  if (err.status) return `Errore Spotify (${err.status}).`
+  if (err.name === 'TypeError') return 'Impossibile raggiungere Spotify (rete).'
+  return err.message || String(err)
 }

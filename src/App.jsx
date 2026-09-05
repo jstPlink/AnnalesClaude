@@ -24,8 +24,8 @@ function DesktopShell({ children }) {
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-cream text-ink">
       <Sidebar />
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col px-8 py-8 xl:px-12">
+      <main className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-[1180px] px-8 py-8 xl:px-12">
           {children}
         </div>
       </main>

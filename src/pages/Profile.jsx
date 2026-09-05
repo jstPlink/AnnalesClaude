@@ -5,6 +5,7 @@ import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
+import CollapsibleSection from '../components/CollapsibleSection'
 import { useAuth } from '../context/AuthContext'
 import { pb } from '../lib/pocketbase'
 import { describeError } from '../lib/notes'
@@ -15,6 +16,7 @@ import {
 } from '../lib/immich'
 import { listPeople, createPersonFromImmich, deletePerson } from '../lib/people'
 import { listTags, createTag, deleteTag } from '../lib/tags'
+import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
 import { haptic } from '../lib/haptics'
 
 export default function Profile() {
@@ -43,10 +45,49 @@ export default function Profile() {
   const [creatingTag, setCreatingTag] = useState(false)
   const [removingTagId, setRemovingTagId] = useState('')
 
+  const [spotifyClientId, setSpotifyClientId] = useState(user?.spotifyClientId || '')
+  const [spotifyClientSecret, setSpotifyClientSecret] = useState(
+    user?.spotifyClientSecret || '',
+  )
+  const [savingSpotify, setSavingSpotify] = useState(false)
+  const [testingSpotify, setTestingSpotify] = useState(false)
+  const [spotifyStatus, setSpotifyStatus] = useState(null)
+
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
     setImmichApiKey(user?.immichApiKey || '')
+    setSpotifyClientId(user?.spotifyClientId || '')
+    setSpotifyClientSecret(user?.spotifyClientSecret || '')
   }, [user])
+
+  async function saveSpotify() {
+    setSavingSpotify(true)
+    setSpotifyStatus(null)
+    try {
+      await pb.collection('users').update(user.id, {
+        spotifyClientId: spotifyClientId.trim(),
+        spotifyClientSecret: spotifyClientSecret.trim(),
+      })
+      setSpotifyStatus({ ok: true, message: 'Salvato.' })
+    } catch (err) {
+      setSpotifyStatus({ ok: false, message: describeError(err) })
+    } finally {
+      setSavingSpotify(false)
+    }
+  }
+
+  async function testSpotify() {
+    setTestingSpotify(true)
+    setSpotifyStatus(null)
+    try {
+      await getSpotifyToken(spotifyClientId.trim(), spotifyClientSecret.trim())
+      setSpotifyStatus({ ok: true, message: 'Connessione riuscita.' })
+    } catch (err) {
+      setSpotifyStatus({ ok: false, message: describeSpotifyError(err) })
+    } finally {
+      setTestingSpotify(false)
+    }
+  }
 
   useEffect(() => {
     listPeople()
@@ -187,24 +228,8 @@ export default function Profile() {
           <p className="text-ink-soft">{email}</p>
         </div>
 
-        <div className="mt-10 space-y-2">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Account
-          </p>
-          <div className="rounded-2xl border border-line bg-panel">
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-ink-soft">Email</span>
-              <span className="max-w-[60%] truncate text-sm font-medium text-ink">
-                {email}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 space-y-2">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Immich
-          </p>
+        <div className="mt-10">
+          <CollapsibleSection title="Immich">
           <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
@@ -263,12 +288,11 @@ export default function Profile() {
               </button>
             </div>
           </div>
+          </CollapsibleSection>
         </div>
 
-        <div className="mt-8 space-y-2">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Persone
-          </p>
+        <div className="mt-6">
+          <CollapsibleSection title="Persone">
           <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Elenco delle persone selezionabili nelle note, pescate dal tuo
@@ -332,12 +356,11 @@ export default function Profile() {
               )}
             </div>
           </div>
+          </CollapsibleSection>
         </div>
 
-        <div className="mt-8 space-y-2">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Tag
-          </p>
+        <div className="mt-6">
+          <CollapsibleSection title="Tag">
           <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Elenco dei tag selezionabili nelle note.
@@ -383,6 +406,71 @@ export default function Profile() {
               </button>
             </div>
           </div>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Spotify">
+          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
+            <p className="text-xs text-ink-soft">
+              Client ID/Secret di un'app Spotify (Client Credentials) per
+              cercare canzoni da aggiungere alle note, senza incollare link a
+              mano.
+            </p>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-ink-soft">
+                Client ID
+              </span>
+              <input
+                type="text"
+                value={spotifyClientId}
+                onChange={(e) => setSpotifyClientId(e.target.value)}
+                className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-ink-soft">
+                Client Secret
+              </span>
+              <input
+                type="password"
+                value={spotifyClientSecret}
+                onChange={(e) => setSpotifyClientSecret(e.target.value)}
+                className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+              />
+            </label>
+            {spotifyStatus && (
+              <p
+                className={
+                  'text-xs ' +
+                  (spotifyStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+                }
+              >
+                {spotifyStatus.message}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={testSpotify}
+                disabled={
+                  testingSpotify || !spotifyClientId.trim() || !spotifyClientSecret.trim()
+                }
+                className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {testingSpotify ? 'Verifico…' : 'Testa connessione'}
+              </button>
+              <button
+                type="button"
+                onClick={saveSpotify}
+                disabled={savingSpotify}
+                className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {savingSpotify ? 'Salvo…' : 'Salva'}
+              </button>
+            </div>
+          </div>
+          </CollapsibleSection>
         </div>
 
         <button

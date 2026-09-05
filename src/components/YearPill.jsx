@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Pillola arrotondata con l'anno. Tap → selezione rapida di un altro anno.
-// Se `subtitle` è presente (es. "20 Settembre") viene mostrato sotto l'anno.
+// Se `subtitle` è presente (es. "20 Settembre") viene mostrato accanto
+// (layout="row") o sotto (layout="column", default) l'anno.
 export default function YearPill({
   year,
   onChange,
   subtitle = null,
   span = 8,
   minWidth = 128,
+  layout = 'column',
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -43,20 +45,31 @@ export default function YearPill({
         onClick={() => !readOnly && setOpen((v) => !v)}
         style={{ minWidth }}
         className={
-          'flex max-w-full flex-col items-center justify-center rounded-full border border-line bg-tag px-5 py-1.5 shadow-sm ' +
+          'flex max-w-full items-center justify-center rounded-full border border-line bg-tag px-5 py-1.5 shadow-sm ' +
+          (layout === 'row' ? 'flex-row gap-2' : 'flex-col') +
+          ' ' +
           (readOnly ? '' : 'transition active:scale-95')
         }
       >
         <span
           className={
             'leading-tight text-ink ' +
-            (subtitle ? 'text-base font-semibold' : 'text-2xl font-semibold')
+            (layout === 'row'
+              ? 'text-xl font-bold'
+              : subtitle
+                ? 'text-base font-semibold'
+                : 'text-2xl font-semibold')
           }
         >
           {year}
         </span>
         {subtitle && (
-          <span className="max-w-full truncate text-base font-extrabold leading-tight text-ink-soft">
+          <span
+            className={
+              'max-w-full truncate leading-tight text-ink-soft ' +
+              (layout === 'row' ? 'text-base font-semibold' : 'text-base font-extrabold')
+            }
+          >
             {subtitle}
           </span>
         )}

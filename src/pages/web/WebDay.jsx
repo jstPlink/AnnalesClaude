@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Icon from '../../components/Icon'
 import {
@@ -16,8 +16,8 @@ import {
   timeLabel,
 } from '../../lib/dates'
 
-const DAY_MIN = 24 * 60
-const MIN_BLOCK = 52
+const PX_PER_MIN = 1.5
+const MIN_CARD = 78
 
 function startMinutes(v) {
   const p = parseWall(v)
@@ -45,8 +45,6 @@ export default function WebDay() {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const trackRef = useRef(null)
-  const [trackH, setTrackH] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -67,32 +65,27 @@ export default function WebDay() {
     load()
   }, [load])
 
-  // Misura l'altezza disponibile per la fascia oraria: tutto il giorno deve
-  // stare in una schermata, senza scorrimento della pagina.
-  useLayoutEffect(() => {
-    const el = trackRef.current
-    if (!el) return
-    const update = () => setTrackH(el.clientHeight)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  const blocks = useMemo(() => {
+  const { blocks, fromH, toH } = useMemo(() => {
+    if (!notes.length) return { blocks: [], fromH: 8, toH: 20 }
     const items = notes.map((n) => {
-      const s = Math.max(0, Math.min(DAY_MIN, startMinutes(n.timeStart)))
+      const s = Math.max(0, Math.min(1440, startMinutes(n.timeStart)))
       const dur = durationMinutes(n.timeStart, n.timeEnd) || 30
-      return { note: n, startMin: s, endMin: Math.min(DAY_MIN, s + dur) }
+      return { note: n, startMin: s, endMin: Math.min(1440, s + dur) }
     })
-    return withLanes(items)
+    let lo = Math.floor(Math.min(...items.map((i) => i.startMin)) / 60) - 1
+    let hi = Math.ceil(Math.max(...items.map((i) => i.endMin)) / 60) + 1
+    lo = Math.max(0, lo)
+    hi = Math.min(24, hi)
+    if (hi - lo < 6) hi = Math.min(24, lo + 6)
+    return { blocks: withLanes(items), fromH: lo, toH: hi }
   }, [notes])
 
-  const pxPerMin = trackH / DAY_MIN
+  const originMin = fromH * 60
+  const trackH = (toH - fromH) * 60 * PX_PER_MIN
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="mb-4 shrink-0">
+    <div>
+      <header className="mb-6">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -118,15 +111,15 @@ export default function WebDay() {
       </header>
 
       {error && (
-        <p className="mb-4 shrink-0 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
+        <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
           {error}
         </p>
       )}
 
       {loading ? (
-        <p className="flex-1 py-16 text-center text-ink-soft">Carico…</p>
+        <p className="py-16 text-center text-ink-soft">Carico…</p>
       ) : !notes.length ? (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-3xl border border-dashed border-line text-center">
+        <div className="rounded-3xl border border-dashed border-line py-20 text-center">
           <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
           <button
             type="button"
@@ -137,11 +130,14 @@ export default function WebDay() {
           </button>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-sand/40 p-4">
-          <div ref={trackRef} className="relative h-full">
+        <div
+          className="relative rounded-3xl border border-line bg-sand/40 p-4"
+          style={{ minHeight: trackH + 32 }}
+        >
+          <div className="relative" style={{ height: trackH }}>
             {/* Righe e ore */}
-            {Array.from({ length: 25 }, (_, i) => {
-              const top = i * 60 * pxPerMin
+            {Array.from({ length: toH - fromH + 1 }, (_, i) => {
+              const top = i * 60 * PX_PER_MIN
               return (
                 <div
                   key={i}
@@ -149,7 +145,7 @@ export default function WebDay() {
                   style={{ top }}
                 >
                   <span className="w-14 shrink-0 -translate-y-2 text-right text-xs font-semibold tabular-nums text-ink-soft">
-                    {String(i).padStart(2, '0')}:00
+                    {String(fromH + i).padStart(2, '0')}:00
                   </span>
                   <span className="mt-[1px] h-px flex-1 bg-line/70" />
                 </div>
@@ -158,62 +154,64 @@ export default function WebDay() {
 
             {/* Note */}
             <div className="absolute inset-y-0" style={{ left: 64, right: 8 }}>
-              {trackH > 0 &&
-                blocks.map(({ note: n, startMin, endMin, lane, lanes }) => {
-                  const top = startMin * pxPerMin
-                  const height = Math.max(MIN_BLOCK, (endMin - startMin) * pxPerMin)
-                  const widthPct = 100 / lanes
-                  const img = n.images?.[0]
-                  const preview = height >= 70 ? plainText(n.content) : ''
-                  return (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => navigate(`/note/${n.id}`)}
-                      className="absolute flex overflow-hidden rounded-2xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
-                      style={{
-                        top,
-                        height,
-                        left: `calc(${lane * widthPct}% + ${lane ? 6 : 0}px)`,
-                        width: `calc(${widthPct}% - ${lanes > 1 ? 6 : 0}px)`,
-                      }}
-                    >
-                      <span
-                        className="w-1.5 shrink-0"
-                        style={{ backgroundColor: moodColor(n.mood) }}
-                      />
-                      <span className="flex min-w-0 flex-1 flex-col gap-1 p-3">
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold tabular-nums text-ink-soft">
-                            {timeLabel(n.timeStart)} – {timeLabel(n.timeEnd)}
-                          </span>
-                          {n.people?.length > 0 && (
-                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
-                              <Icon name="user" size={10} />
-                              {n.people.length}
-                            </span>
-                          )}
+              {blocks.map(({ note: n, startMin, endMin, lane, lanes }) => {
+                const top = (startMin - originMin) * PX_PER_MIN
+                const height = Math.max(
+                  MIN_CARD,
+                  (endMin - startMin) * PX_PER_MIN,
+                )
+                const widthPct = 100 / lanes
+                const img = n.images?.[0]
+                const preview = plainText(n.content)
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => navigate(`/note/${n.id}`)}
+                    className="absolute flex overflow-hidden rounded-2xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
+                    style={{
+                      top,
+                      height,
+                      left: `calc(${lane * widthPct}% + ${lane ? 6 : 0}px)`,
+                      width: `calc(${widthPct}% - ${lanes > 1 ? 6 : 0}px)`,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 shrink-0"
+                      style={{ backgroundColor: moodColor(n.mood) }}
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col gap-1 p-3">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold tabular-nums text-ink-soft">
+                          {timeLabel(n.timeStart)} – {timeLabel(n.timeEnd)}
                         </span>
-                        <span className="truncate font-serif text-[17px] font-semibold text-ink">
-                          {n.title || 'Senza titolo'}
-                        </span>
-                        {preview && (
-                          <span className="line-clamp-3 text-[13px] leading-snug text-ink-soft">
-                            {preview}
+                        {n.people?.length > 0 && (
+                          <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
+                            <Icon name="user" size={10} />
+                            {n.people.length}
                           </span>
                         )}
                       </span>
-                      {img && (
-                        <img
-                          src={fileUrl(n, img, { thumb: '200x200' })}
-                          alt=""
-                          loading="lazy"
-                          className="m-2 h-[calc(100%_-_1rem)] w-24 shrink-0 self-center rounded-xl object-cover"
-                        />
+                      <span className="truncate font-serif text-[17px] font-semibold text-ink">
+                        {n.title || 'Senza titolo'}
+                      </span>
+                      {preview && (
+                        <span className="line-clamp-3 text-[13px] leading-snug text-ink-soft">
+                          {preview}
+                        </span>
                       )}
-                    </button>
-                  )
-                })}
+                    </span>
+                    {img && (
+                      <img
+                        src={fileUrl(n, img, { thumb: '200x200' })}
+                        alt=""
+                        loading="lazy"
+                        className="m-2 h-[calc(100%_-_1rem)] w-24 shrink-0 self-center rounded-xl object-cover"
+                      />
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>

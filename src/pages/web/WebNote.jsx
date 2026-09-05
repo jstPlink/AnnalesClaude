@@ -9,6 +9,7 @@ import PeoplePickerSheet from '../../components/PeoplePickerSheet'
 import PersonAvatar from '../../components/PersonAvatar'
 import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
+import PlacePickerSheet from '../../components/PlacePickerSheet'
 import DatePickerPopover from '../../components/DatePickerPopover'
 import Icon from '../../components/Icon'
 import {
@@ -79,6 +80,8 @@ export default function WebNote() {
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
   const immichReady = Boolean(immichUrl && immichApiKey)
+  const spotifyClientId = user?.spotifyClientId?.trim()
+  const spotifyClientSecret = user?.spotifyClientSecret?.trim()
 
   const dateParam = search.get('date')
   const initialDate =
@@ -106,6 +109,7 @@ export default function WebNote() {
   const [baselineTagIds, setBaselineTagIds] = useState([])
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [songSheetOpen, setSongSheetOpen] = useState(false)
+  const [placeSheetOpen, setPlaceSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false)
@@ -568,16 +572,36 @@ export default function WebNote() {
           </div>
 
           <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Luogo
-            </p>
-            <input
-              type="text"
-              placeholder="Nessun luogo"
-              value={form.place}
-              onChange={(e) => set({ place: e.target.value })}
-              className={inputCls}
-            />
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Luogo
+              </p>
+              <button
+                type="button"
+                onClick={() => setPlaceSheetOpen(true)}
+                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
+              >
+                {form.place ? 'Cambia' : '+ Aggiungi'}
+              </button>
+            </div>
+            {form.place ? (
+              <span className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-3 pr-2">
+                <Icon name="map-pin" size={14} className="shrink-0 text-ink-soft" />
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                  {form.place}
+                </span>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  onClick={() => set({ place: '' })}
+                  className="shrink-0 text-ink-soft"
+                >
+                  ×
+                </button>
+              </span>
+            ) : (
+              <p className="text-sm italic text-ink-soft">Nessun luogo</p>
+            )}
           </div>
         </div>
 
@@ -662,6 +686,14 @@ export default function WebNote() {
         open={songSheetOpen}
         onClose={() => setSongSheetOpen(false)}
         onAdd={(song) => setForm((f) => ({ ...f, songs: [...f.songs, song] }))}
+        spotifyClientId={spotifyClientId}
+        spotifyClientSecret={spotifyClientSecret}
+      />
+
+      <PlacePickerSheet
+        open={placeSheetOpen}
+        onClose={() => setPlaceSheetOpen(false)}
+        onAdd={(place) => set({ place })}
       />
     </div>
   )

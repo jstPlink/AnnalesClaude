@@ -25,7 +25,12 @@ function NavArrow({ dir, onClick, label }) {
 // Pulsante "20 Settembre" che apre un calendario a comparsa per scegliere
 // mese e giorno (l'anno si può attraversare navigando i mesi, ma non è
 // esposto come controllo separato: quello vive altrove nella pagina).
-export default function DatePickerPopover({ dateKey, onChange, className = '' }) {
+export default function DatePickerPopover({
+  dateKey,
+  onChange,
+  className = '',
+  textClassName = 'text-sm font-semibold',
+}) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(null)
   const ref = useRef(null)
@@ -59,7 +64,10 @@ export default function DatePickerPopover({ dateKey, onChange, className = '' })
       <button
         type="button"
         onClick={openPicker}
-        className="max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-sm font-semibold text-ink transition active:scale-95"
+        className={
+          'max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-ink transition active:scale-95 ' +
+          textClassName
+        }
       >
         {dayMonthLabel(dateKey)}
       </button>

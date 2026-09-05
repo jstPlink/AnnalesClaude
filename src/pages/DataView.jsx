@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
+import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import YearMoodChart from '../components/YearMoodChart'
 import { useNav } from '../context/NavContext'
@@ -134,24 +135,27 @@ export default function DataView() {
         )}
       </main>
 
-      <Footer
-        items={[
-          {
-            icon: 'calendar',
-            title: 'Calendario',
-            onClick: () => navigate('/'),
-          },
-          { icon: 'chart', title: 'Andamento anno', active: true },
-          {
-            icon: 'search',
-            title: 'Filtri',
-            onClick: () => navigate('/filtri'),
-          },
-        ]}
-        primaryIcon="plus"
-        primaryTitle="Nuova nota (oggi)"
-        onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
-      />
+      <div className="sticky bottom-0 z-20">
+        <ViewTabs active="data" />
+        <Footer
+          sticky={false}
+          items={[
+            {
+              icon: 'settings',
+              title: 'Opzioni',
+              onClick: () => navigate('/profilo'),
+            },
+            {
+              icon: 'search',
+              title: 'Filtri',
+              onClick: () => navigate('/filtri'),
+            },
+          ]}
+          primaryIcon="plus"
+          primaryTitle="Nuova nota (oggi)"
+          onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
+        />
+      </div>
     </PhoneShell>
   )
 }

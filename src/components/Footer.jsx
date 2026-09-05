@@ -9,10 +9,16 @@ export default function Footer({
   onPrimary,
   primaryIcon = 'plus',
   primaryTitle,
+  sticky = true,
 }) {
   const visible = items.filter(Boolean)
   return (
-    <footer className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-line bg-sand px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+    <footer
+      className={
+        (sticky ? 'sticky bottom-0 z-20 ' : '') +
+        'flex items-center justify-between gap-3 border-t border-line bg-sand px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3'
+      }
+    >
       <div className="flex items-center gap-3">
         {visible.map((it, i) => (
           <CircleButton

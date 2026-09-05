@@ -10,6 +10,7 @@ import {
 } from '../../lib/immich'
 import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/people'
 import { listTags, createTag, deleteTag } from '../../lib/tags'
+import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 
@@ -39,10 +40,49 @@ export default function WebProfile() {
   const [creatingTag, setCreatingTag] = useState(false)
   const [removingTagId, setRemovingTagId] = useState('')
 
+  const [spotifyClientId, setSpotifyClientId] = useState(user?.spotifyClientId || '')
+  const [spotifyClientSecret, setSpotifyClientSecret] = useState(
+    user?.spotifyClientSecret || '',
+  )
+  const [savingSpotify, setSavingSpotify] = useState(false)
+  const [testingSpotify, setTestingSpotify] = useState(false)
+  const [spotifyStatus, setSpotifyStatus] = useState(null)
+
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
     setImmichApiKey(user?.immichApiKey || '')
+    setSpotifyClientId(user?.spotifyClientId || '')
+    setSpotifyClientSecret(user?.spotifyClientSecret || '')
   }, [user])
+
+  async function saveSpotify() {
+    setSavingSpotify(true)
+    setSpotifyStatus(null)
+    try {
+      await pb.collection('users').update(user.id, {
+        spotifyClientId: spotifyClientId.trim(),
+        spotifyClientSecret: spotifyClientSecret.trim(),
+      })
+      setSpotifyStatus({ ok: true, message: 'Salvato.' })
+    } catch (err) {
+      setSpotifyStatus({ ok: false, message: describeError(err) })
+    } finally {
+      setSavingSpotify(false)
+    }
+  }
+
+  async function testSpotify() {
+    setTestingSpotify(true)
+    setSpotifyStatus(null)
+    try {
+      await getSpotifyToken(spotifyClientId.trim(), spotifyClientSecret.trim())
+      setSpotifyStatus({ ok: true, message: 'Connessione riuscita.' })
+    } catch (err) {
+      setSpotifyStatus({ ok: false, message: describeSpotifyError(err) })
+    } finally {
+      setTestingSpotify(false)
+    }
+  }
 
   useEffect(() => {
     listPeople()
@@ -366,6 +406,71 @@ export default function WebProfile() {
           >
             {creatingTag ? '…' : 'Crea'}
           </button>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
+        <h2 className="font-serif text-xl font-semibold text-ink">Spotify</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Client ID/Secret di un'app Spotify (Client Credentials) per cercare
+          canzoni da aggiungere alle note, senza incollare link a mano.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Client ID
+            </span>
+            <input
+              type="text"
+              value={spotifyClientId}
+              onChange={(e) => setSpotifyClientId(e.target.value)}
+              className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Client Secret
+            </span>
+            <input
+              type="password"
+              value={spotifyClientSecret}
+              onChange={(e) => setSpotifyClientSecret(e.target.value)}
+              className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+            />
+          </label>
+
+          {spotifyStatus && (
+            <p
+              className={
+                'text-sm ' +
+                (spotifyStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+              }
+            >
+              {spotifyStatus.message}
+            </p>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={testSpotify}
+              disabled={
+                testingSpotify || !spotifyClientId.trim() || !spotifyClientSecret.trim()
+              }
+              className="flex-1 rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+            >
+              {testingSpotify ? 'Verifico…' : 'Testa connessione'}
+            </button>
+            <button
+              type="button"
+              onClick={saveSpotify}
+              disabled={savingSpotify}
+              className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+            >
+              {savingSpotify ? 'Salvo…' : 'Salva'}
+            </button>
+          </div>
         </div>
       </div>
 
