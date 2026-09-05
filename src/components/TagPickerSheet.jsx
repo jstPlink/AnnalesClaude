@@ -96,12 +96,13 @@ export default function TagPickerSheet({
                       onToggle(tag.id)
                     }}
                     className={
-                      'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
                       (active
                         ? 'bg-ink text-cream'
                         : 'border border-line bg-tag text-ink')
                     }
                   >
+                    <Icon name="tag" size={12} className={active ? 'text-cream' : 'text-ink-soft'} />
                     {tag.name}
                   </button>
                 )

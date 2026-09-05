@@ -501,8 +501,9 @@ export default function WebNote() {
                 {selectedTags.map((tag) => (
                   <span
                     key={tag.id}
-                    className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-3 pr-2"
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-panel py-1 pl-2 pr-2"
                   >
+                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
                     <span className="text-sm font-semibold text-ink">{tag.name}</span>
                     <button
                       type="button"

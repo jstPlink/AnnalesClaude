@@ -13,6 +13,7 @@ import { listTags, createTag, deleteTag } from '../../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
+import Icon from '../../components/Icon'
 
 export default function WebProfile() {
   const navigate = useNavigate()
@@ -372,8 +373,9 @@ export default function WebProfile() {
             {tags.map((tag) => (
               <span
                 key={tag.id}
-                className="flex items-center gap-2 rounded-full border border-line bg-cream py-1.5 pl-4 pr-2 text-sm font-medium text-ink"
+                className="flex items-center gap-2 rounded-lg border border-line bg-cream py-1.5 pl-3 pr-2 text-sm font-medium text-ink"
               >
+                <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
                 {tag.name}
                 <button
                   type="button"

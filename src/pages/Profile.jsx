@@ -366,8 +366,9 @@ export default function Profile() {
                 {tags.map((tag) => (
                   <span
                     key={tag.id}
-                    className="flex items-center gap-1.5 rounded-full border border-line bg-tag py-1 pl-3 pr-1.5 text-sm font-medium text-ink"
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
                   >
+                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
                     {tag.name}
                     <button
                       type="button"

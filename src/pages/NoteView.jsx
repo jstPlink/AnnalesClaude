@@ -398,8 +398,8 @@ export default function NoteView() {
           />
         </div>
 
-        {selectedPeople.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+        {(selectedPeople.length > 0 || selectedTags.length > 0 || form.place) && (
+          <div className="mt-4 flex flex-wrap items-start gap-2">
             {selectedPeople.map((person) => (
               <span
                 key={person.id}
@@ -422,16 +422,13 @@ export default function NoteView() {
                 </button>
               </span>
             ))}
-          </div>
-        )}
 
-        {selectedTags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
             {selectedTags.map((tag) => (
               <span
                 key={tag.id}
-                className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2"
+                className="flex items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
               >
+                <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
                 <span className="text-sm font-semibold text-ink">{tag.name}</span>
                 <button
                   type="button"
@@ -443,6 +440,10 @@ export default function NoteView() {
                 </button>
               </span>
             ))}
+
+            {form.place && (
+              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
+            )}
           </div>
         )}
 
@@ -483,10 +484,6 @@ export default function NoteView() {
               </div>
             ))}
           </div>
-        )}
-
-        {form.place && (
-          <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
         )}
 
         {!noImages && (

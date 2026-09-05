@@ -167,7 +167,7 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           </div>
         )}
 
-        <div className="relative mt-2 min-h-0 flex-1">
+        <div className="isolate relative mt-2 min-h-0 flex-1">
           <div ref={mapElRef} className="h-full w-full" />
           {locating && (
             <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">

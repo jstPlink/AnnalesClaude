@@ -33,21 +33,9 @@ function lerp(a, b, k) {
   return Math.round(a + (b - a) * k)
 }
 
-// Esalta lo scostamento dal centro (0.5) prima di mappare il colore: stessa
-// distanza dal centro produce un cambio di colore molto più marcato vicino
-// a 0.5 (dove serve più "risalto"), via via più attenuato avvicinandosi
-// agli estremi (già ai margini della scala, non serve spingerli oltre).
-// Il valore numerico mostrato in UI resta quello reale: solo il colore usa
-// questa versione "esagerata".
-function boostForColor(v) {
-  const d = 2 * (v - 0.5) // -1..1
-  const boosted = Math.sign(d) * Math.pow(Math.abs(d), 0.55)
-  return clamp01(0.5 + boosted / 2)
-}
-
 // Colore CSS per un singolo valore di mood.
 export function moodColor(value) {
-  const v = boostForColor(clamp01(Number(value)))
+  const v = clamp01(Number(value))
   for (let i = 0; i < STOPS.length - 1; i++) {
     const lo = STOPS[i]
     const hi = STOPS[i + 1]
@@ -66,7 +54,7 @@ export function moodColor(value) {
 // Colore del testo (scuro o chiaro) da usare SOPRA un'area colorata col mood,
 // per mantenere il contrasto leggibile.
 export function moodTextColor(value) {
-  const v = boostForColor(clamp01(Number(value)))
+  const v = clamp01(Number(value))
   let rgb = [255, 255, 255]
   for (let i = 0; i < STOPS.length - 1; i++) {
     const lo = STOPS[i]

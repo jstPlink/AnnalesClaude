@@ -61,6 +61,8 @@ export default function FilterView() {
     place: '',
     personIds: [],
     tagIds: [],
+    hasSongs: false,
+    hasPlace: false,
   })
   const [results, setResults] = useState(null) // null = filtri non ancora applicati
   const [loading, setLoading] = useState(false)
@@ -115,6 +117,8 @@ export default function FilterView() {
         place: filters.place,
         personIds: filters.personIds,
         tagIds: filters.tagIds,
+        hasSongs: filters.hasSongs,
+        hasPlace: filters.hasPlace,
       })
       const sorted = sortNotes(list, filters.sort)
       const limit = Number(filters.limit)
@@ -242,18 +246,68 @@ export default function FilterView() {
                     type="button"
                     onClick={() => toggleTag(t.id)}
                     className={
-                      'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
                       (filters.tagIds.includes(t.id)
                         ? 'bg-ink text-cream'
                         : 'border border-line bg-cream text-ink')
                     }
                   >
+                    <Icon
+                      name="tag"
+                      size={12}
+                      className={filters.tagIds.includes(t.id) ? 'text-cream' : 'text-ink-soft'}
+                    />
                     {t.name}
                   </button>
                 ))}
               </div>
             </FilterField>
           )}
+
+          <FilterField label="Contenuto">
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic()
+                  set({ hasSongs: !filters.hasSongs })
+                }}
+                className={
+                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                  (filters.hasSongs
+                    ? 'bg-ink text-cream'
+                    : 'border border-line bg-cream text-ink')
+                }
+              >
+                <Icon
+                  name="music"
+                  size={13}
+                  className={filters.hasSongs ? 'text-cream' : 'text-ink-soft'}
+                />
+                Note con canzoni
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic()
+                  set({ hasPlace: !filters.hasPlace })
+                }}
+                className={
+                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                  (filters.hasPlace
+                    ? 'bg-ink text-cream'
+                    : 'border border-line bg-cream text-ink')
+                }
+              >
+                <Icon
+                  name="map-pin"
+                  size={13}
+                  className={filters.hasPlace ? 'text-cream' : 'text-ink-soft'}
+                />
+                Note con luoghi
+              </button>
+            </div>
+          </FilterField>
 
           <FilterField label="Ordina per">
             <div className="flex flex-wrap gap-1.5">

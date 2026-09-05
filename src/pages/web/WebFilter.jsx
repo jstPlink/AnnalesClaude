@@ -4,6 +4,7 @@ import { listNotesFiltered, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { moodColor, moodTextColor } from '../../lib/mood'
+import Icon from '../../components/Icon'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel } from '../../lib/dates'
 
 const SORTS = [
@@ -35,18 +36,22 @@ function sortNotes(list, sort) {
 const inputCls =
   'w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none transition focus:border-ink-soft'
 
-function ChipButton({ active, onClick, children }) {
+function ChipButton({ active, onClick, icon, square, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={
-        'rounded-full px-3 py-1.5 text-xs font-semibold transition ' +
+        'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition ' +
+        (square ? 'rounded-lg ' : 'rounded-full ') +
         (active
           ? 'bg-ink text-cream'
           : 'border border-line bg-cream text-ink hover:bg-cream/70')
       }
     >
+      {icon && (
+        <Icon name={icon} size={12} className={active ? 'text-cream' : 'text-ink-soft'} />
+      )}
       {children}
     </button>
   )
@@ -64,6 +69,8 @@ export default function WebFilter() {
     place: '',
     personIds: [],
     tagIds: [],
+    hasSongs: false,
+    hasPlace: false,
   })
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -115,6 +122,8 @@ export default function WebFilter() {
         place: filters.place,
         personIds: filters.personIds,
         tagIds: filters.tagIds,
+        hasSongs: filters.hasSongs,
+        hasPlace: filters.hasPlace,
       })
       const sorted = sortNotes(list, filters.sort)
       const limit = Number(filters.limit)
@@ -248,6 +257,8 @@ export default function WebFilter() {
                 {tags.map((t) => (
                   <ChipButton
                     key={t.id}
+                    square
+                    icon="tag"
                     active={filters.tagIds.includes(t.id)}
                     onClick={() => toggleTag(t.id)}
                   >
@@ -257,6 +268,28 @@ export default function WebFilter() {
               </div>
             </div>
           )}
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Contenuto
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <ChipButton
+                icon="music"
+                active={filters.hasSongs}
+                onClick={() => set({ hasSongs: !filters.hasSongs })}
+              >
+                Note con canzoni
+              </ChipButton>
+              <ChipButton
+                icon="map-pin"
+                active={filters.hasPlace}
+                onClick={() => set({ hasPlace: !filters.hasPlace })}
+              >
+                Note con luoghi
+              </ChipButton>
+            </div>
+          </div>
 
           <div className="rounded-2xl border border-line bg-tag p-4">
             <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">

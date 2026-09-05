@@ -110,6 +110,8 @@ export async function listNotesFiltered({
   place,
   personIds,
   tagIds,
+  hasSongs,
+  hasPlace,
 } = {}) {
   const clauses = []
   const params = {}
@@ -140,6 +142,12 @@ export async function listNotesFiltered({
   }
   if (tagIds && tagIds.length) {
     list = list.filter((n) => (n.tags || []).some((id) => tagIds.includes(id)))
+  }
+  if (hasSongs) {
+    list = list.filter((n) => Array.isArray(n.songs) && n.songs.length > 0)
+  }
+  if (hasPlace) {
+    list = list.filter((n) => Boolean(n.place))
   }
   return list
 }
