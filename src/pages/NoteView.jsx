@@ -15,6 +15,7 @@ import PersonAvatar from '../components/PersonAvatar'
 import TagPickerSheet from '../components/TagPickerSheet'
 import AddSongSheet from '../components/AddSongSheet'
 import PlacePickerSheet from '../components/PlacePickerSheet'
+import PlaceCard from '../components/PlaceCard'
 import {
   createNote,
   deleteNote,
@@ -22,6 +23,7 @@ import {
   updateNote,
   checkSavedNote,
   describeError,
+  parsePlace,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { listPeople } from '../lib/people'
@@ -43,7 +45,7 @@ function emptyForm(dKey) {
     title: '',
     content: '',
     mood: 0.5,
-    place: '',
+    place: null,
     songs: [],
     dateKey: dKey,
     timeStart: subtractHours(timeEnd, 2),
@@ -56,7 +58,7 @@ function formFromRecord(rec) {
     title: rec.title ?? '',
     content: rec.content ?? '',
     mood: Number(rec.mood ?? 0.5),
-    place: rec.place ?? '',
+    place: parsePlace(rec.place),
     songs: Array.isArray(rec.songs) ? rec.songs : [],
     dateKey: dayKey(rec.date),
     timeStart: timeInputValue(rec.timeStart) || '09:00',
@@ -366,7 +368,7 @@ export default function NoteView() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
         {loadError && (
           <p className="mb-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
             {loadError}
@@ -376,22 +378,23 @@ export default function NoteView() {
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
         {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
-            solo il divisorio tra titolo e contenuto. */}
-        <div className="mt-4 overflow-hidden rounded-2xl bg-cream">
+            solo il divisorio tra titolo e contenuto. Il contenuto si estende
+            fino in fondo, niente spazio vuoto sotto su note brevi. */}
+        <div className="mt-4 flex flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
             value={form.title}
             onChange={(e) => set({ title: e.target.value })}
-            className="w-full bg-transparent px-4 pb-2 pt-3 text-xl font-extrabold text-ink outline-none placeholder:text-ink-soft"
+            className="w-full shrink-0 bg-transparent px-4 pb-2 pt-3 text-xl font-extrabold text-ink outline-none placeholder:text-ink-soft"
           />
-          <div className="mx-4 border-t border-line-soft" />
+          <div className="mx-4 shrink-0 border-t border-line-soft" />
           <RichText
             ref={editorRef}
             value={form.content}
             onChange={(html) => set({ content: html })}
             placeholder="Scrivi qui la nota…"
-            className="min-h-[220px] px-4 py-3 text-[15px] leading-relaxed text-ink"
+            className="flex-1 px-4 py-3 text-[15px] leading-relaxed text-ink"
           />
         </div>
 
@@ -483,22 +486,7 @@ export default function NoteView() {
         )}
 
         {form.place && (
-          <div className="mt-4">
-            <span className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-3 pr-2">
-              <Icon name="map-pin" size={14} className="shrink-0 text-ink-soft" />
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                {form.place}
-              </span>
-              <button
-                type="button"
-                title="Rimuovi"
-                onClick={() => set({ place: '' })}
-                className="shrink-0 text-ink-soft"
-              >
-                <Icon name="x" size={14} />
-              </button>
-            </span>
-          </div>
+          <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
         )}
 
         {!noImages && (

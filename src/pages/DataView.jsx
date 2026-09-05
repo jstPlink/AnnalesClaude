@@ -10,19 +10,21 @@ import { listNotesInRange, describeError } from '../lib/notes'
 import { yearWeeklyMood, moodColor, moodTextColor } from '../lib/mood'
 import { MONTHS_IT, todayKey } from '../lib/dates'
 
-function WeekBars({ weeks }) {
+// Una colonna per coppia di giorni del mese (fino a 16): barrette più
+// sottili e numerose, andamento più morbido di quando erano 4 a settimana.
+function WeekBars({ groups }) {
   return (
-    <div className="flex h-10 w-24 shrink-0 items-end gap-1">
-      {weeks.map((w) => (
-        <div key={w.week} className="flex h-full flex-1 items-end">
-          {w.mood == null ? (
+    <div className="flex h-10 w-24 shrink-0 items-end gap-[1.5px]">
+      {groups.map((g, i) => (
+        <div key={i} className="flex h-full flex-1 items-end">
+          {g.mood == null ? (
             <div className="h-[3px] w-full rounded-full bg-line" />
           ) : (
             <div
-              className="w-full rounded-t-[3px]"
+              className="w-full rounded-t-[2px]"
               style={{
-                height: `${Math.max(8, w.mood * 100)}%`,
-                backgroundColor: moodColor(w.mood),
+                height: `${Math.max(8, g.mood * 100)}%`,
+                backgroundColor: moodColor(g.mood),
               }}
             />
           )}
@@ -90,9 +92,9 @@ export default function DataView() {
           <>
             <YearMoodChart data={data} />
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11px] text-ink-soft">
-              <span>● settimane</span>
-              <span className="text-[#4f8fbf]">▬ lisciata</span>
-              <span className="text-ink">▬ tendenza</span>
+              <span>▬ giorno</span>
+              <span className="text-[#4f8fbf]">▬ settimana</span>
+              <span className="text-ink">▬ mese</span>
             </div>
 
             <ul className="mt-5 divide-y divide-line-soft">
@@ -109,7 +111,7 @@ export default function DataView() {
                     <span className="w-16 shrink-0 text-sm font-semibold text-ink">
                       {MONTHS_IT[m.month].slice(0, 3)}
                     </span>
-                    <WeekBars weeks={m.weeks} />
+                    <WeekBars groups={m.groups} />
                     <span className="flex-1" />
                     <span
                       className="min-w-[2.75rem] rounded-full px-2 py-1 text-center text-sm font-bold tabular-nums"

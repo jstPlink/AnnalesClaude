@@ -230,7 +230,6 @@ export default function Profile() {
 
         <div className="mt-10">
           <CollapsibleSection title="Immich">
-          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
               aggiungi immagini a una nota.
@@ -287,13 +286,11 @@ export default function Profile() {
                 {saving ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-          </div>
           </CollapsibleSection>
         </div>
 
         <div className="mt-6">
           <CollapsibleSection title="Persone">
-          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Elenco delle persone selezionabili nelle note, pescate dal tuo
               Immich.
@@ -355,13 +352,11 @@ export default function Profile() {
                 </button>
               )}
             </div>
-          </div>
           </CollapsibleSection>
         </div>
 
         <div className="mt-6">
           <CollapsibleSection title="Tag">
-          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Elenco dei tag selezionabili nelle note.
             </p>
@@ -405,13 +400,11 @@ export default function Profile() {
                 {creatingTag ? '…' : 'Crea'}
               </button>
             </div>
-          </div>
           </CollapsibleSection>
         </div>
 
         <div className="mt-6">
           <CollapsibleSection title="Spotify">
-          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
             <p className="text-xs text-ink-soft">
               Client ID/Secret di un'app Spotify (Client Credentials) per
               cercare canzoni da aggiungere alle note, senza incollare link a
@@ -469,7 +462,6 @@ export default function Profile() {
                 {savingSpotify ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-          </div>
           </CollapsibleSection>
         </div>
 

@@ -33,9 +33,21 @@ function lerp(a, b, k) {
   return Math.round(a + (b - a) * k)
 }
 
+// Esalta lo scostamento dal centro (0.5) prima di mappare il colore: stessa
+// distanza dal centro produce un cambio di colore molto più marcato vicino
+// a 0.5 (dove serve più "risalto"), via via più attenuato avvicinandosi
+// agli estremi (già ai margini della scala, non serve spingerli oltre).
+// Il valore numerico mostrato in UI resta quello reale: solo il colore usa
+// questa versione "esagerata".
+function boostForColor(v) {
+  const d = 2 * (v - 0.5) // -1..1
+  const boosted = Math.sign(d) * Math.pow(Math.abs(d), 0.55)
+  return clamp01(0.5 + boosted / 2)
+}
+
 // Colore CSS per un singolo valore di mood.
 export function moodColor(value) {
-  const v = clamp01(Number(value))
+  const v = boostForColor(clamp01(Number(value)))
   for (let i = 0; i < STOPS.length - 1; i++) {
     const lo = STOPS[i]
     const hi = STOPS[i + 1]
@@ -54,7 +66,7 @@ export function moodColor(value) {
 // Colore del testo (scuro o chiaro) da usare SOPRA un'area colorata col mood,
 // per mantenere il contrasto leggibile.
 export function moodTextColor(value) {
-  const v = clamp01(Number(value))
+  const v = boostForColor(clamp01(Number(value)))
   let rgb = [255, 255, 255]
   for (let i = 0; i < STOPS.length - 1; i++) {
     const lo = STOPS[i]
@@ -110,98 +122,77 @@ export function dayMood(notes) {
     : vals.reduce((a, b) => a + b, 0) / vals.length
 }
 
-// ---- Andamento del mood sull'anno (4 "settimane" per mese) ----
+// ---- Andamento del mood sull'anno ----
+// Tre serie a granularità diversa (giorno / settimana / mese) per il
+// grafico, più un riepilogo per mese con i giorni raggruppati a coppie
+// (al massimo 16 per mese) per le barrette.
 
-function weekIndexOfDay(day) {
-  if (day <= 7) return 0
-  if (day <= 14) return 1
-  if (day <= 21) return 2
-  return 3
+function isLeapYear(y) {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
 }
 
-// Riempie i null SOLO tra due valori noti (niente estrapolazione alle estremità).
-function interpolateNulls(arr) {
-  const known = arr
-    .map((v, i) => (v == null ? null : { i, v }))
-    .filter(Boolean)
-  if (!known.length) return null
-  const first = known[0].i
-  const last = known[known.length - 1].i
-  const out = arr.slice()
-  for (let i = first; i <= last; i++) {
-    if (out[i] != null) continue
-    let lo = null
-    let hi = null
-    for (const k of known) {
-      if (k.i <= i) lo = k
-      if (k.i >= i && hi == null) hi = k
-    }
-    const t = (i - lo.i) / (hi.i - lo.i)
-    out[i] = lo.v + (hi.v - lo.v) * t
-  }
-  return out
+function daysInMonthOf(year, month /* 0–11 */) {
+  return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][
+    month
+  ]
 }
 
-// Media mobile con finestra ±r (ignora i null; null se la finestra è vuota).
-function movingAvg(arr, r) {
-  return arr.map((v, i) => {
-    if (v == null) return null
-    let sum = 0
-    let n = 0
-    for (let j = Math.max(0, i - r); j <= Math.min(arr.length - 1, i + r); j++) {
-      if (arr[j] == null) continue
-      sum += arr[j]
-      n++
-    }
-    return n ? sum / n : null
-  })
+// Media semplice ignorando i null; null se non c'è alcun valore noto.
+function meanIgnoringNulls(vals) {
+  const known = vals.filter((v) => v != null)
+  return known.length ? known.reduce((a, b) => a + b, 0) / known.length : null
 }
 
-// Per un anno: 48 valori settimanali (12 mesi × 4 settimane) più le versioni
-// interpolata / lisciata / di tendenza, e un riepilogo per mese.
 export function yearWeeklyMood(year, notes) {
-  const buckets = Array.from({ length: 48 }, () => [])
+  const byDay = new Map() // "mese-giorno" (1-based) -> note[]
   for (const n of notes) {
     const p = parseWall(n.date)
     if (!p || p.y !== year) continue
-    buckets[(p.mo - 1) * 4 + weekIndexOfDay(p.d)].push(n)
+    const key = `${p.mo}-${p.d}`
+    if (!byDay.has(key)) byDay.set(key, [])
+    byDay.get(key).push(n)
   }
 
-  const raw = buckets.map((ns) => (ns.length ? dayMood(ns) : null))
-  const counts = buckets.map((ns) => ns.length)
-  const filled = interpolateNulls(raw)
-  const smooth = filled ? movingAvg(filled, 2) : null
-  const trend = smooth ? movingAvg(smooth, 4) : null
-
-  const points = raw.map((mood, i) => ({
-    i,
-    month: Math.floor(i / 4),
-    week: i % 4,
-    t: (i + 0.5) / 48,
-    mood,
-    count: counts[i],
-  }))
-
-  const monthly = Array.from({ length: 12 }, (_, mo) => {
-    const ns = buckets.slice(mo * 4, mo * 4 + 4).flat()
-    return {
-      month: mo,
-      count: ns.length,
-      mood: ns.length ? dayMood(ns) : null,
-      weeks: [0, 1, 2, 3].map((wk) => ({
-        week: wk,
-        mood: raw[mo * 4 + wk],
-        count: counts[mo * 4 + wk],
-      })),
+  const daily = []
+  const monthly = []
+  for (let mo = 1; mo <= 12; mo++) {
+    const dim = daysInMonthOf(year, mo - 1)
+    const monthNotes = []
+    const groups = [] // coppie di giorni consecutivi: fino a 16 per mese
+    for (let d = 1; d <= dim; d += 2) {
+      const ns1 = byDay.get(`${mo}-${d}`) || []
+      const hasSecond = d + 1 <= dim
+      const ns2 = hasSecond ? byDay.get(`${mo}-${d + 1}`) || [] : []
+      daily.push(ns1.length ? dayMood(ns1) : null)
+      if (hasSecond) daily.push(ns2.length ? dayMood(ns2) : null)
+      const pairNotes = [...ns1, ...ns2]
+      monthNotes.push(...pairNotes)
+      groups.push({
+        mood: pairNotes.length ? dayMood(pairNotes) : null,
+        count: pairNotes.length,
+      })
     }
-  })
+    monthly.push({
+      month: mo - 1,
+      count: monthNotes.length,
+      mood: monthNotes.length ? dayMood(monthNotes) : null,
+      groups,
+    })
+  }
+
+  // Settimanale: media dei valori giornalieri a blocchi di 7 dal 1° gennaio.
+  const weekly = []
+  for (let i = 0; i < daily.length; i += 7) {
+    weekly.push(meanIgnoringNulls(daily.slice(i, i + 7)))
+  }
+
+  const monthlySeries = monthly.map((m) => m.mood)
 
   return {
-    points,
-    filled,
-    smooth,
-    trend,
+    daily,
+    weekly,
+    monthlySeries,
     monthly,
-    hasData: filled != null,
+    hasData: daily.some((v) => v != null),
   }
 }

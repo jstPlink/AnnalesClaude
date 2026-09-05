@@ -1,15 +1,16 @@
 import { MONTHS_IT } from '../lib/dates'
-import { moodColor } from '../lib/mood'
 
-// Grafico dell'andamento del mood su un anno.
-// data = risultato di yearWeeklyMood(): { points, filled, smooth, trend, hasData }
+// Grafico dell'andamento del mood su un anno: tre linee a granularità
+// diversa (giorno/settimana/mese), niente gradiente, etichette leggibili
+// anche su schermi stretti.
+// data = risultato di yearWeeklyMood(): { daily, weekly, monthlySeries, hasData }
 export default function YearMoodChart({ data }) {
   const W = 1000
-  const H = 380
-  const padL = 40
+  const H = 420
+  const padL = 56
   const padR = 12
-  const padT = 14
-  const padB = 26
+  const padT = 16
+  const padB = 34
   const innerW = W - padL - padR
   const innerH = H - padT - padB
 
@@ -33,18 +34,6 @@ export default function YearMoodChart({ data }) {
     return d.trim()
   }
 
-  const area = (arr) => {
-    if (!arr) return ''
-    const pts = arr
-      .map((v, i) => (v == null ? null : [x((i + 0.5) / arr.length), y(v)]))
-      .filter(Boolean)
-    if (pts.length < 2) return ''
-    const top = pts
-      .map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`)
-      .join(' ')
-    return `${top} L${pts.at(-1)[0].toFixed(1)} ${y(0).toFixed(1)} L${pts[0][0].toFixed(1)} ${y(0).toFixed(1)} Z`
-  }
-
   if (!data?.hasData) {
     return (
       <div className="flex items-center justify-center rounded-2xl border border-line bg-tag px-4 py-16 text-sm text-ink-soft">
@@ -59,17 +48,6 @@ export default function YearMoodChart({ data }) {
       style={{ width: '100%', height: 'auto', display: 'block' }}
       className="rounded-2xl border border-line bg-tag"
     >
-      <defs>
-        <linearGradient id="ymc-grad" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#e0655e" />
-          <stop offset="0.2" stopColor="#e79a4d" />
-          <stop offset="0.4" stopColor="#e6cf5c" />
-          <stop offset="0.6" stopColor="#a6d06e" />
-          <stop offset="0.8" stopColor="#5ea9d6" />
-          <stop offset="1" stopColor="#8b8fd6" />
-        </linearGradient>
-      </defs>
-
       {/* Griglia orizzontale + etichette 0..100 */}
       {[0, 0.25, 0.5, 0.75, 1].map((m) => (
         <g key={m}>
@@ -84,10 +62,11 @@ export default function YearMoodChart({ data }) {
             opacity={m === 0.5 ? 0.9 : 0.5}
           />
           <text
-            x={padL - 6}
-            y={y(m) + 3}
+            x={padL - 10}
+            y={y(m) + 8}
             textAnchor="end"
-            fontSize="11"
+            fontSize="24"
+            fontWeight="600"
             fill="var(--color-ink-soft)"
           >
             {Math.round(m * 100)}
@@ -95,63 +74,53 @@ export default function YearMoodChart({ data }) {
         </g>
       ))}
 
-      {/* Etichette mesi */}
-      {MONTHS_IT.map((mo, i) => (
-        <text
-          key={mo}
-          x={x((i + 0.5) / 12)}
-          y={H - 8}
-          textAnchor="middle"
-          fontSize="11"
-          fill="var(--color-ink-soft)"
-        >
-          {mo.slice(0, 3)}
-        </text>
-      ))}
-
-      {/* Area sotto la tendenza, colorata come la scala mood */}
-      <path d={area(data.trend)} fill="url(#ymc-grad)" opacity="0.16" />
-
-      {/* Settimane grezze: spezzata sottile + puntini */}
-      <path
-        d={line(data.points.map((p) => p.mood))}
-        fill="none"
-        stroke="var(--color-ink-soft)"
-        strokeWidth="1.2"
-        opacity="0.4"
-      />
-      {data.points.map(
-        (p) =>
-          p.mood != null && (
-            <circle
-              key={p.i}
-              cx={x((p.i + 0.5) / 48)}
-              cy={y(p.mood)}
-              r="2.6"
-              fill={moodColor(p.mood)}
-              stroke="var(--color-tag)"
-              strokeWidth="1"
-            />
+      {/* Etichette mesi: a mesi alterni, per restare leggibili su schermi stretti */}
+      {MONTHS_IT.map(
+        (mo, i) =>
+          i % 2 === 0 && (
+            <text
+              key={mo}
+              x={x((i + 0.5) / 12)}
+              y={H - 10}
+              textAnchor="middle"
+              fontSize="22"
+              fontWeight="600"
+              fill="var(--color-ink-soft)"
+            >
+              {mo.slice(0, 3)}
+            </text>
           ),
       )}
 
-      {/* Lisciata */}
+      {/* Giorno: linea sottile */}
       <path
-        d={line(data.smooth)}
+        d={line(data.daily)}
         fill="none"
-        stroke="#4f8fbf"
-        strokeWidth="2"
+        stroke="var(--color-ink-soft)"
+        strokeWidth="1.2"
         strokeLinecap="round"
-        opacity="0.85"
+        opacity="0.55"
       />
 
-      {/* Tendenza */}
+      {/* Settimana: linea media */}
       <path
-        d={line(data.trend)}
+        d={line(data.weekly)}
+        fill="none"
+        stroke="#4f8fbf"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.9"
+      />
+
+      {/* Mese: linea spessa */}
+      <path
+        d={line(data.monthlySeries)}
         fill="none"
         stroke="var(--color-ink)"
-        strokeWidth="3.2"
+        strokeWidth="4.6"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )

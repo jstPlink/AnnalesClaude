@@ -21,19 +21,21 @@ function NavArrow({ dir, onClick, label }) {
   )
 }
 
-function WeekBars({ weeks }) {
+// Una colonna per coppia di giorni del mese (fino a 16): barrette più
+// sottili e numerose, andamento più morbido di quando erano 4 a settimana.
+function WeekBars({ groups }) {
   return (
-    <div className="flex h-14 items-end gap-1.5">
-      {weeks.map((w) => (
-        <div key={w.week} className="flex h-full flex-1 items-end">
-          {w.mood == null ? (
+    <div className="flex h-14 items-end gap-[1.5px]">
+      {groups.map((g, i) => (
+        <div key={i} className="flex h-full flex-1 items-end">
+          {g.mood == null ? (
             <div className="h-1 w-full rounded-full bg-line" />
           ) : (
             <div
               className="w-full rounded-t"
               style={{
-                height: `${Math.max(8, w.mood * 100)}%`,
-                backgroundColor: moodColor(w.mood),
+                height: `${Math.max(8, g.mood * 100)}%`,
+                backgroundColor: moodColor(g.mood),
               }}
             />
           )}
@@ -106,9 +108,9 @@ export default function WebData() {
 
       <YearMoodChart data={data} />
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 px-1 text-xs text-ink-soft">
-        <span>● mood settimanale</span>
-        <span className="text-[#4f8fbf]">▬ media mobile</span>
-        <span className="text-ink">▬ tendenza</span>
+        <span>▬ giorno</span>
+        <span className="text-[#4f8fbf]">▬ settimana</span>
+        <span className="text-ink">▬ mese</span>
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -144,7 +146,7 @@ export default function WebData() {
               </span>
             </div>
             <div className="mt-3">
-              <WeekBars weeks={m.weeks} />
+              <WeekBars groups={m.groups} />
             </div>
             <p className="mt-2 text-xs text-ink-soft">
               {m.count} {m.count === 1 ? 'nota' : 'note'}

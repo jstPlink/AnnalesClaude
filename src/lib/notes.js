@@ -21,6 +21,25 @@ export async function getNote(id) {
   return pb.collection(COLLECTION).getOne(id)
 }
 
+// Il luogo è salvato come JSON { name, lat, lon } dentro il campo testo
+// `place` (retrocompatibile: un valore pre-esistente, semplice stringa col
+// nome, viene letto come luogo senza coordinate note).
+export function parsePlace(raw) {
+  if (!raw) return null
+  try {
+    const p = JSON.parse(raw)
+    if (p && typeof p === 'object' && p.name) return p
+  } catch {
+    // valore pre-esistente: stringa semplice col nome del luogo
+  }
+  return { name: raw, lat: null, lon: null }
+}
+
+function serializePlace(place) {
+  if (!place || !place.name) return ''
+  return JSON.stringify(place)
+}
+
 // Aggiunge al FormData un campo relazione multiplo: sostituisce l'intero
 // elenco con quello passato (vuoto incluso, per svuotarlo esplicitamente).
 function appendMultiRelation(fd, field, ids) {
@@ -39,7 +58,7 @@ function commonFields(data, opts) {
   fd.append('title', data.title ?? '')
   fd.append('content', data.content ?? '')
   fd.append('mood', String(data.mood ?? 0))
-  fd.append('place', data.place ?? '')
+  fd.append('place', serializePlace(data.place))
   fd.append('songs', JSON.stringify(data.songs ?? []))
   fd.append('timeStart', toPbTime(data.timeStart))
   fd.append('timeEnd', toPbTime(data.timeEnd))

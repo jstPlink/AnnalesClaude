@@ -177,13 +177,13 @@ export default function WebMonth() {
                     </span>
                   </span>
 
-                  <span className="min-w-0 flex-1 py-1">
+                  <span className="min-w-0 flex-1 py-1 text-center">
                     {titles.length ? (
-                      <span className="flex flex-col gap-1">
+                      <span className="flex flex-col items-center gap-1">
                         {titles.map((t, i) => (
                           <span
                             key={i}
-                            className="truncate text-sm font-medium text-ink"
+                            className="max-w-full truncate text-sm font-medium text-ink"
                           >
                             {t}
                           </span>

@@ -45,10 +45,12 @@ export default function YearPill({
         onClick={() => !readOnly && setOpen((v) => !v)}
         style={{ minWidth }}
         className={
-          'flex max-w-full items-center justify-center rounded-full border border-line bg-tag px-5 py-1.5 shadow-sm ' +
+          'flex max-w-full items-center justify-center px-5 py-1.5 ' +
           (layout === 'row' ? 'flex-row gap-2' : 'flex-col') +
           ' ' +
-          (readOnly ? '' : 'transition active:scale-95')
+          (readOnly
+            ? ''
+            : 'rounded-full border border-line bg-tag shadow-sm transition active:scale-95')
         }
       >
         <span
@@ -66,8 +68,10 @@ export default function YearPill({
         {subtitle && (
           <span
             className={
-              'max-w-full truncate leading-tight text-ink-soft ' +
-              (layout === 'row' ? 'text-base font-semibold' : 'text-base font-extrabold')
+              'max-w-full truncate leading-tight ' +
+              (layout === 'row'
+                ? 'text-xl font-bold text-ink'
+                : 'text-base font-extrabold text-ink-soft')
             }
           >
             {subtitle}

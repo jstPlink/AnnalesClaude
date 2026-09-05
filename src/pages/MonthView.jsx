@@ -113,7 +113,7 @@ export default function MonthView() {
     <PhoneShell>
       <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div
-          className="flex select-none justify-center px-4 pb-3"
+          className="flex min-h-14 select-none items-center justify-center px-4 pb-3"
           style={{ touchAction: 'pan-y' }}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}

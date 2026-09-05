@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
-import { loadLeaflet, searchPlaces } from '../lib/leaflet'
+import { loadLeaflet, searchPlaces, reverseGeocode } from '../lib/leaflet'
 
 const DEFAULT_CENTER = [41.9, 12.5] // Italia, vista d'insieme
 const DEFAULT_ZOOM = 5
 
-// Dialog per scegliere un luogo cercandolo su una mappa reale (Leaflet +
-// OpenStreetMap, nessuna chiave API necessaria).
+// Dialog per scegliere un luogo su una mappa reale (Leaflet + OpenStreetMap,
+// nessuna chiave API): si cerca per nome, oppure si tocca direttamente un
+// punto/locale sulla mappa (come su Google Maps) per riconoscerlo.
 export default function PlacePickerSheet({ open, onClose, onAdd }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
+  const [locating, setLocating] = useState(false)
 
   const mapElRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
 
-  // Crea la mappa una volta sola all'apertura.
+  // Crea la mappa una volta sola all'apertura, con tocco per selezionare un punto.
   useEffect(() => {
     if (!open) return
     let cancelled = false
@@ -30,6 +32,18 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           attribution: '© OpenStreetMap',
           maxZoom: 19,
         }).addTo(map)
+        map.on('click', async (e) => {
+          setLocating(true)
+          setError('')
+          try {
+            const place = await reverseGeocode(e.latlng.lat, e.latlng.lng)
+            placeMarker(map, L, place)
+          } catch (err) {
+            setError(err.message)
+          } finally {
+            setLocating(false)
+          }
+        })
         mapRef.current = map
       })
       .catch((err) => setError(err.message))
@@ -54,6 +68,13 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
 
   if (!open) return null
 
+  function placeMarker(map, L, place) {
+    setSelected(place)
+    map.setView([place.lat, place.lon], Math.max(map.getZoom(), 15))
+    if (markerRef.current) markerRef.current.remove()
+    markerRef.current = L.marker([place.lat, place.lon]).addTo(map)
+  }
+
   async function runSearch() {
     if (!query.trim() || searching) return
     setSearching(true)
@@ -69,17 +90,14 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
   }
 
   function pickResult(place) {
-    setSelected(place)
     const map = mapRef.current
     if (!map || !window.L) return
-    map.setView([place.lat, place.lon], 14)
-    if (markerRef.current) markerRef.current.remove()
-    markerRef.current = window.L.marker([place.lat, place.lon]).addTo(map)
+    placeMarker(map, window.L, place)
   }
 
   function confirm() {
     if (!selected) return
-    onAdd(selected.shortName)
+    onAdd({ name: selected.shortName, lat: selected.lat, lon: selected.lon })
     onClose()
   }
 
@@ -123,10 +141,13 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           </button>
         </div>
 
-        {error && <p className="px-5 pt-2 text-xs text-delete-dark">{error}</p>}
+        <p className="px-5 pt-2 text-xs text-ink-soft">
+          Oppure tocca direttamente un punto o un locale sulla mappa.
+        </p>
+        {error && <p className="px-5 pt-1 text-xs text-delete-dark">{error}</p>}
 
         {results.length > 0 && (
-          <div className="max-h-32 overflow-y-auto border-b border-line px-3 py-2">
+          <div className="max-h-32 overflow-y-auto px-3 pt-2">
             {results.map((r) => (
               <button
                 key={r.id}
@@ -146,7 +167,16 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           </div>
         )}
 
-        <div ref={mapElRef} className="min-h-0 flex-1" />
+        <div className="relative mt-2 min-h-0 flex-1">
+          <div ref={mapElRef} className="h-full w-full" />
+          {locating && (
+            <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
+              <span className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream shadow">
+                Riconosco il punto…
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="border-t border-line px-5 py-4">
           <button
@@ -155,7 +185,7 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
             onClick={confirm}
             className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95 disabled:opacity-50"
           >
-            {selected ? `Aggiungi "${selected.shortName}"` : 'Cerca e scegli un luogo'}
+            {selected ? `Aggiungi "${selected.shortName}"` : 'Cerca o tocca un punto sulla mappa'}
           </button>
         </div>
       </div>

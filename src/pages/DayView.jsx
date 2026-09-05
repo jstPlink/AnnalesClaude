@@ -247,7 +247,7 @@ export default function DayView() {
                               )}
                             </MarqueeText>
                             {n.people?.length > 0 && (
-                              <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">
+                              <span className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">
                                 <Icon name="user" size={11} strokeWidth={3} />
                                 {n.people.length}
                               </span>

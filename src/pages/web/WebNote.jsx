@@ -10,6 +10,7 @@ import PersonAvatar from '../../components/PersonAvatar'
 import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
+import PlaceCard from '../../components/PlaceCard'
 import DatePickerPopover from '../../components/DatePickerPopover'
 import Icon from '../../components/Icon'
 import {
@@ -19,6 +20,7 @@ import {
   updateNote,
   checkSavedNote,
   describeError,
+  parsePlace,
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
 import { listPeople } from '../../lib/people'
@@ -37,7 +39,7 @@ const emptyForm = (dKey) => ({
   title: '',
   content: '',
   mood: 0.5,
-  place: '',
+  place: null,
   songs: [],
   dateKey: dKey,
   timeStart: '09:00',
@@ -48,7 +50,7 @@ const formFromRecord = (rec) => ({
   title: rec.title ?? '',
   content: rec.content ?? '',
   mood: Number(rec.mood ?? 0.5),
-  place: rec.place ?? '',
+  place: parsePlace(rec.place),
   songs: Array.isArray(rec.songs) ? rec.songs : [],
   dateKey: dayKey(rec.date),
   timeStart: timeInputValue(rec.timeStart) || '09:00',
@@ -585,20 +587,7 @@ export default function WebNote() {
               </button>
             </div>
             {form.place ? (
-              <span className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-3 pr-2">
-                <Icon name="map-pin" size={14} className="shrink-0 text-ink-soft" />
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                  {form.place}
-                </span>
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  onClick={() => set({ place: '' })}
-                  className="shrink-0 text-ink-soft"
-                >
-                  ×
-                </button>
-              </span>
+              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
             ) : (
               <p className="text-sm italic text-ink-soft">Nessun luogo</p>
             )}
