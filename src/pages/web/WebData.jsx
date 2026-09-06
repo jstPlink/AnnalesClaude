@@ -105,7 +105,13 @@ export default function WebData() {
         </p>
       )}
 
-      <YearMoodChart data={data} />
+      <YearMoodChart
+        data={data}
+        aspectRatio={0.451}
+        monthFontSize={17.6}
+        alternateMonths={false}
+        showAxisValues
+      />
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 px-1 text-xs text-ink-soft">
         <span>▬ giorno</span>
         <span className="text-[#4f8fbf]">▬ settimana</span>

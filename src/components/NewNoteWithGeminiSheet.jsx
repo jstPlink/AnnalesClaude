@@ -64,7 +64,16 @@ export default function NewNoteWithGeminiSheet({
         }
       }
 
-      onGenerated({ title: draft.title, content: draft.content, tagIds, peopleIds, place })
+      onGenerated({
+        title: draft.title,
+        content: draft.content,
+        tagIds,
+        peopleIds,
+        place,
+        mood: draft.mood,
+        timeStart: draft.timeStart,
+        timeEnd: draft.timeEnd,
+      })
       onClose()
     } catch (err) {
       setError(describeGeminiError(err))

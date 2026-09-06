@@ -103,6 +103,9 @@ export default function WebNote() {
       title: aiDraft.title || '',
       content: aiDraft.content || '',
       place: aiDraft.place || null,
+      mood: aiDraft.mood ?? base.mood,
+      timeStart: aiDraft.timeStart || base.timeStart,
+      timeEnd: aiDraft.timeEnd || base.timeEnd,
     }
   }
 

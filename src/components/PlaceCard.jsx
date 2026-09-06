@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import Icon from './Icon'
 import { loadLeaflet, boundsForDiameterKm } from '../lib/leaflet'
 
-// Targhetta quadrata per il luogo salvato: mappa a tutta altezza (bloccata,
-// sola visualizzazione, ~4km di diametro), nome in una fascia in basso (come
+// Targhetta per il luogo salvato: mappa a tutta altezza (bloccata, sola
+// visualizzazione, ~4km di diametro, alta il 65% della larghezza — ridotta
+// del 35% rispetto al quadrato iniziale), nome in una fascia in basso (come
 // la didascalia di una foto, per lasciare più spazio alla mappa).
 // `isolate` sul contenitore evita che i pannelli interni di Leaflet (z-index
 // alti, 400-700) sfondino sopra ad altri dialog/sheet dell'app (z-50).
@@ -52,7 +53,7 @@ export default function PlaceCard({ place, onRemove }) {
   if (!place) return null
 
   return (
-    <div className="isolate relative aspect-square w-full overflow-hidden rounded-xl border border-line bg-panel-2">
+    <div className="isolate relative aspect-[1/0.65] w-full overflow-hidden rounded-xl border border-line bg-panel-2">
       {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
       {/* z-index esplicito: i pannelli interni di Leaflet arrivano a 700 e,
           pur isolati dal resto della pagina, coprirebbero questa fascia

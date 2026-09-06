@@ -78,9 +78,17 @@ export async function analyzePeopleInText(apiKey, text, peopleNames) {
   }
 }
 
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
+
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + m
+}
+
 // Genera una nota intera (titolo, contenuto, tag/persone tra quelli
-// disponibili, luogo) a partire da un prompt libero. La nota risultante va
-// sempre rivista dall'utente prima di salvare: qui si crea solo una bozza.
+// disponibili, luogo, mood e orario stimati) a partire da un prompt libero.
+// La nota risultante va sempre rivista dall'utente prima di salvare: qui si
+// crea solo una bozza.
 export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], tagNames = [] } = {}) {
   const instruction =
     'Da queste indicazioni scritte da un utente, prepara la bozza di una nota personale di diario in italiano, in prima persona. ' +
@@ -89,7 +97,10 @@ export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], ta
     '"content": string (il testo della nota, ripulito e scorrevole, più lungo e articolato delle indicazioni), ' +
     `"tags": array di stringhe prese ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinenti, altrimenti [], ` +
     `"people": array di stringhe prese ESATTAMENTE dall'elenco ${JSON.stringify(peopleNames)} se pertinenti, altrimenti [], ` +
-    '"place": string col nome del luogo se le indicazioni ne citano uno, altrimenti stringa vuota}\n\n' +
+    '"place": string col nome del luogo se le indicazioni ne citano uno, altrimenti stringa vuota, ' +
+    '"mood": numero tra 0 e 1 che stimi l\'umore raccontato (0 = pessima giornata, 0.5 = neutra, 1 = ottima giornata), dedotto dal tono e dai fatti del testo, ' +
+    '"timeStart": stringa "HH:MM" (24 ore) con l\'orario di inizio più plausibile in base alle indicazioni (es. "colazione" ~ mattina presto, "cena" ~ sera); se non è deducibile usa "09:00", ' +
+    '"timeEnd": stringa "HH:MM" con l\'orario di fine plausibile, successivo a timeStart di una durata ragionevole per quanto descritto; se non è deducibile usa "10:00"}\n\n' +
     `Indicazioni dell'utente:\n${prompt}`
   const raw = await callGemini(apiKey, instruction)
   const match = raw.match(/\{[\s\S]*\}/)
@@ -100,6 +111,17 @@ export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], ta
   } catch {
     throw new Error('Gemini non ha restituito un risultato valido.')
   }
+
+  const mood = Number(data.mood)
+  let timeStart = TIME_RE.test(data.timeStart) ? data.timeStart : '09:00'
+  let timeEnd = TIME_RE.test(data.timeEnd) ? data.timeEnd : '10:00'
+  // Se Gemini restituisce un intervallo invertito o nullo, non fidarsi:
+  // meglio l'intervallo di default che uno privo di senso.
+  if (toMinutes(timeEnd) <= toMinutes(timeStart)) {
+    timeStart = '09:00'
+    timeEnd = '10:00'
+  }
+
   return {
     title: typeof data.title === 'string' ? data.title.trim() : '',
     content: typeof data.content === 'string' ? data.content.trim() : '',
@@ -108,6 +130,9 @@ export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], ta
       ? data.people.filter((x) => typeof x === 'string')
       : [],
     place: typeof data.place === 'string' ? data.place.trim() : '',
+    mood: Number.isFinite(mood) ? Math.min(1, Math.max(0, mood)) : 0.5,
+    timeStart,
+    timeEnd,
   }
 }
 

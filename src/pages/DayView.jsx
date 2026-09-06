@@ -18,7 +18,7 @@ import {
 } from '../lib/dates'
 
 const DAY_MIN = 24 * 60
-const RAIL_W = 46 // px, larghezza della barra oraria a sinistra
+const RAIL_W = 37 // px, larghezza della barra oraria a sinistra (-20%)
 const MIN_BLOCK = 24 // px, altezza minima di un blocco nota
 
 function startMinutes(value) {
@@ -171,7 +171,7 @@ export default function DayView() {
                   )}
                   {label && (
                     <span
-                      className="absolute right-3 text-[10px] font-semibold tabular-nums text-ink-soft"
+                      className="absolute right-1.5 text-[10px] font-semibold tabular-nums text-ink-soft"
                       style={{
                         top: Math.min(Math.max(top - 6, 0), trackH - 12),
                       }}

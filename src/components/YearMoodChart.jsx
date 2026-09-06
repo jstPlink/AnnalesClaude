@@ -1,14 +1,20 @@
 import { MONTHS_IT } from '../lib/dates'
 
 // Grafico dell'andamento del mood su un anno: tre linee a granularità
-// diversa (giorno/settimana/mese), niente gradiente, niente valori sull'asse
-// verticale (solo linee guida) per lasciare più spazio orizzontale al
-// grafico; molto più alto delle proporzioni "larghe" originali.
+// diversa (giorno/settimana/mese), niente gradiente. Aspetto regolabile per
+// adattarsi a mobile (alto, senza valori sull'asse, mesi alterni) e web
+// (più basso, con valori sull'asse, tutti i mesi) tramite le props.
 // data = risultato di yearWeeklyMood(): { daily, weekly, monthlySeries, hasData }
-export default function YearMoodChart({ data }) {
+export default function YearMoodChart({
+  data,
+  aspectRatio = 0.82, // altezza / larghezza del grafico
+  monthFontSize = 22,
+  alternateMonths = true, // true = un mese sì e uno no (schermi stretti)
+  showAxisValues = false,
+}) {
   const W = 1000
-  const H = 820
-  const padL = 14
+  const H = Math.round(W * aspectRatio)
+  const padL = showAxisValues ? 56 : 14
   const padR = 12
   const padT = 16
   const padB = 34
@@ -49,31 +55,44 @@ export default function YearMoodChart({ data }) {
       style={{ width: '100%', height: 'auto', display: 'block' }}
       className="rounded-2xl border border-line bg-tag"
     >
-      {/* Griglia orizzontale (nessun valore numerico: più spazio al grafico) */}
+      {/* Griglia orizzontale, con valori numerici a sinistra solo se richiesti */}
       {[0, 0.25, 0.5, 0.75, 1].map((m) => (
-        <line
-          key={m}
-          x1={padL}
-          x2={W - padR}
-          y1={y(m)}
-          y2={y(m)}
-          stroke="var(--color-line)"
-          strokeWidth="1"
-          strokeDasharray={m === 0.5 ? '' : '3 4'}
-          opacity={m === 0.5 ? 0.9 : 0.5}
-        />
+        <g key={m}>
+          <line
+            x1={padL}
+            x2={W - padR}
+            y1={y(m)}
+            y2={y(m)}
+            stroke="var(--color-line)"
+            strokeWidth="1"
+            strokeDasharray={m === 0.5 ? '' : '3 4'}
+            opacity={m === 0.5 ? 0.9 : 0.5}
+          />
+          {showAxisValues && (
+            <text
+              x={padL - 10}
+              y={y(m) + 8}
+              textAnchor="end"
+              fontSize="24"
+              fontWeight="600"
+              fill="var(--color-ink-soft)"
+            >
+              {Math.round(m * 100)}
+            </text>
+          )}
+        </g>
       ))}
 
-      {/* Etichette mesi: a mesi alterni, per restare leggibili su schermi stretti */}
+      {/* Etichette mesi: tutti, oppure alterni sugli schermi stretti */}
       {MONTHS_IT.map(
         (mo, i) =>
-          i % 2 === 0 && (
+          (!alternateMonths || i % 2 === 0) && (
             <text
               key={mo}
               x={x((i + 0.5) / 12)}
               y={H - 10}
               textAnchor="middle"
-              fontSize="22"
+              fontSize={monthFontSize}
               fontWeight="600"
               fill="var(--color-ink-soft)"
             >

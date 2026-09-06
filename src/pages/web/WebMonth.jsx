@@ -145,10 +145,12 @@ export default function WebMonth() {
               .slice(0, 2)
             // Riga più alta quante più note ci sono in quel giorno (le
             // immagini, a larghezza fissa, si limitano a essere ritagliate
-            // in più se la riga cresce: va bene così).
-            const rowMinH = has
-              ? Math.min(64 + (dayNotes.length - 1) * 18, 200)
-              : 64
+            // in più se la riga cresce: va bene così). La base (92px) è
+            // già poco sopra l'altezza naturale della targhetta giorno, così
+            // l'aumento è visibile fin dalla seconda nota (sotto, un
+            // min-height minore del contenuto naturale non avrebbe alcun
+            // effetto visivo).
+            const rowMinH = Math.min(92 + Math.max(0, dayNotes.length - 1) * 22, 280)
 
             return (
               <button

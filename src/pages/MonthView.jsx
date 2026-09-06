@@ -138,10 +138,15 @@ export default function MonthView() {
           <YearPill
             year={cursor.year}
             subtitle={MONTHS_IT[cursor.month]}
+            month={cursor.month}
             layout="row"
             onChange={(year) => {
               setDir(0)
               setCursor((c) => ({ ...c, year }))
+            }}
+            onMonthChange={(month) => {
+              setDir(0)
+              setCursor((c) => ({ ...c, month }))
             }}
           />
         </div>

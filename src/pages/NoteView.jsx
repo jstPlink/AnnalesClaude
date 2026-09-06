@@ -122,6 +122,9 @@ export default function NoteView() {
       title: aiDraft.title || '',
       content: aiDraft.content || '',
       place: aiDraft.place || null,
+      mood: aiDraft.mood ?? base.mood,
+      timeStart: aiDraft.timeStart || base.timeStart,
+      timeEnd: aiDraft.timeEnd || base.timeEnd,
     }
   }
 
@@ -438,29 +441,12 @@ export default function NoteView() {
 
         {hasExtras && (
           <div className="mt-4 space-y-3 rounded-2xl bg-panel p-3">
-            {(selectedTags.length > 0 || selectedPeople.length > 0 || form.place) && (
+            {(selectedPeople.length > 0 ||
+              selectedTags.length > 0 ||
+              form.place ||
+              form.songs.length > 0) && (
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1.5">
-                  {selectedTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
-                    >
-                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                        {tag.name}
-                      </span>
-                      <button
-                        type="button"
-                        title="Rimuovi"
-                        onClick={() => toggleTag(tag.id)}
-                        className="shrink-0 text-ink-soft"
-                      >
-                        <Icon name="x" size={14} />
-                      </button>
-                    </span>
-                  ))}
-
                   {selectedPeople.map((person) => (
                     <span
                       key={person.id}
@@ -487,50 +473,66 @@ export default function NoteView() {
                   ))}
                 </div>
 
-                <div>
+                <div className="flex flex-col gap-1.5">
                   {form.place && (
                     <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
                   )}
-                </div>
-              </div>
-            )}
 
-            {form.songs.length > 0 && (
-              <div className="space-y-2">
-                {form.songs.map((song, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
-                  >
-                    {song.thumbnailUrl ? (
-                      <img
-                        src={song.thumbnailUrl}
-                        alt=""
-                        className="h-10 w-10 shrink-0 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
-                        <Icon name="music" size={18} />
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
+                    >
+                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                        {tag.name}
                       </span>
-                    )}
-                    <a
-                      href={song.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => toggleTag(tag.id)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </span>
+                  ))}
+
+                  {form.songs.map((song, i) => (
+                    <div
+                      key={i}
+                      className="flex w-full items-center gap-2 rounded-lg border border-[#1db954]/35 bg-[#e7f8ec] px-2 py-1.5"
                     >
-                      {song.title}
-                    </a>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => removeSong(i)}
-                      className="shrink-0 text-ink-soft"
-                    >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </div>
-                ))}
+                      {song.thumbnailUrl ? (
+                        <img
+                          src={song.thumbnailUrl}
+                          alt=""
+                          className="h-8 w-8 shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#1db954]/15 text-[#178a41]">
+                          <Icon name="music" size={14} />
+                        </span>
+                      )}
+                      <a
+                        href={song.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                      >
+                        {song.title}
+                      </a>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => removeSong(i)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
