@@ -35,6 +35,51 @@ npm run lint      # oxlint
 npm run icons     # rigenera le icone PWA da scripts/icon-source.svg
 ```
 
+## Fai girare la TUA istanza (il tuo diario, il tuo database)
+
+Chiunque può avere il proprio Annales privato, con dati suoi e non condivisi
+con nessun altro: **un solo comando** avvia sia il backend PocketBase (con lo
+schema — collection `note`/`people`/`tags` e i campi delle integrazioni su
+`users` — creato automaticamente al primo avvio dalle migration in
+[`pb_migrations/`](pb_migrations)) sia il frontend.
+
+```bash
+docker compose -f docker-compose.selfhost.yml up -d --build
+```
+
+Poi apri `http://localhost:8973` e usa **"Crea il tuo diario personale"**
+nella schermata di login: è una registrazione normale, non serve toccare
+PocketBase a mano. Il primo account che crei è il tuo, isolato in questa
+istanza (un'istanza = un database SQLite tutto suo, nel volume Docker
+`pb_data`).
+
+Per metterla online con un dominio tuo (Cloudflare Tunnel, reverse proxy...),
+rifai la build puntando `VITE_PB_URL` all'indirizzo **pubblico** con cui si
+raggiungerà PocketBase (il frontend gira nel browser di chi usa l'app, quindi
+non può usare un nome host interno a Docker):
+
+```bash
+VITE_PB_URL=https://pb.tuodominio.it docker compose -f docker-compose.selfhost.yml up -d --build
+```
+
+> La versione di PocketBase è pinnata (`PB_VERSION` in
+> [`pocketbase.Dockerfile`](pocketbase.Dockerfile)) alla stessa serie 0.28.x
+> del pacchetto `pocketbase` in `package.json`. Aggiornandone uno, aggiorna
+> anche l'altro.
+
+Questo è distinto dal flusso sotto (`docker-compose.yml`): quello presume un
+PocketBase **già esistente altrove** (com'è per l'istanza dell'autore, su
+`pocketbase.fplinio.it`) e builda solo il frontend.
+
+Per accedere all'**admin UI di PocketBase** (`http://localhost:8090/_/`, utile
+per ispezionare i dati o intervenire a mano) serve un account superuser, che
+l'app stessa non crea mai: va creato una volta sola da riga di comando:
+
+```bash
+docker compose -f docker-compose.selfhost.yml exec pocketbase \
+  /pb/pocketbase superuser upsert admin@tuodominio.it "una-password-lunga"
+```
+
 ## Docker
 
 L'app è statica (build Vite servita da nginx con fallback SPA). Immagine
@@ -91,19 +136,26 @@ imposta `VITE_PB_URL`.
 
 ### Collection `note`
 
-| Campo       | Tipo              | Note                                  |
-| ----------- | ----------------- | ------------------------------------- |
-| `title`     | testo             | titolo della nota                     |
-| `content`   | testo             | corpo in **Markdown**                 |
-| `mood`      | numero (0–1)      | umore                                 |
-| `date`      | data              | giorno a cui è assegnata la nota      |
-| `timeStart` | data/ora          | inizio attività                       |
-| `timeEnd`   | data/ora          | fine attività                         |
-| `images`    | file (multipli)   | immagini allegate                     |
-| `people`    | testo             | persone coinvolte (inviato come testo)|
+Schema definito come codice in [`pb_migrations/`](pb_migrations) — quella è la
+fonte di verità; qui un riepilogo:
 
-> **Nota su `people`:** l'app lo tratta come campo **testo**. Se sul backend
-> fosse una `relation`, il salvataggio va adattato.
+| Campo       | Tipo               | Note                                          |
+| ----------- | ------------------ | ---------------------------------------------- |
+| `title`     | testo               | titolo della nota                              |
+| `content`   | testo               | corpo (HTML dall'editor rich text)             |
+| `mood`      | numero (0–1)        | umore                                          |
+| `date`      | data                | giorno a cui è assegnata la nota               |
+| `timeStart` | data                | solo l'orario è significativo (vedi `lib/dates.js`) |
+| `timeEnd`   | data                | solo l'orario è significativo                  |
+| `place`     | testo               | JSON `{name, lat, lon}` (vedi `parsePlace`)     |
+| `songs`     | json                | array `{url, title, thumbnailUrl}`             |
+| `images`    | file (multipli)     | immagini allegate                              |
+| `people`    | relation (multipla) | → collection `people`                          |
+| `tags`      | relation (multipla) | → collection `tags`                            |
+
+`people` e `tags` sono collection separate (`name`, più `immichPersonId` su
+`people`); `users` ha in più `immichUrl`, `immichApiKey`, `spotifyClientId`,
+`spotifyClientSecret`, `geminiApiKey` (tutte opzionali, impostabili da Profilo).
 
 ### CORS / Cloudflare Access
 

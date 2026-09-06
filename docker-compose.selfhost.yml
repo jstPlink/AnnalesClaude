@@ -1,0 +1,45 @@
+# Tutto-in-uno per una NUOVA istanza personale di Annales: PocketBase (con lo
+# schema in pb_migrations/ applicato automaticamente al primo avvio) + il
+# frontend, pronti con un solo comando e un database tutto tuo.
+#
+# Uso:
+#   docker compose -f docker-compose.selfhost.yml up -d --build
+#   apri http://localhost:8973, poi "Crea il tuo diario personale" per
+#   registrare il tuo account (il primo che crei diventa il proprietario
+#   dei tuoi dati: non c'è nient'altro da configurare su PocketBase).
+#
+# Per esporlo online (dominio proprio, Cloudflare Tunnel, reverse proxy...)
+# rifai la build del frontend con VITE_PB_URL puntato all'URL PUBBLICO con
+# cui si raggiungerà PocketBase — mai un hostname interno Docker: gira nel
+# browser di chi usa l'app, non dentro la rete Docker:
+#   VITE_PB_URL=https://pb.tuodominio.it docker compose -f docker-compose.selfhost.yml up -d --build
+
+services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: pocketbase.Dockerfile
+    container_name: annales-pocketbase
+    volumes:
+      - pb_data:/pb/pb_data
+    ports:
+      # host:container — deve restare raggiungibile dal browser di chi usa
+      # l'app (il frontend gira lato client, non dentro la rete Docker)
+      - "8090:8090"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:8090}
+    image: annales-diario:latest
+    container_name: annales-diario
+    depends_on:
+      - pocketbase
+    ports:
+      - "8973:80"
+    restart: unless-stopped
+
+volumes:
+  pb_data:
