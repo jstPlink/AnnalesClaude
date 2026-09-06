@@ -46,7 +46,7 @@ export default function Sidebar() {
             (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
           }
         >
-          Andamento
+          Statistiche
         </NavLink>
         <NavLink
           to="/filtri"

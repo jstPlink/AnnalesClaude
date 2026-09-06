@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import CircleButton from '../components/CircleButton'
@@ -7,7 +7,7 @@ import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import CollapsibleSection from '../components/CollapsibleSection'
 import { useAuth } from '../context/AuthContext'
-import { pb } from '../lib/pocketbase'
+import { pb, fileUrl } from '../lib/pocketbase'
 import { describeError } from '../lib/notes'
 import {
   testImmichConnection,
@@ -17,6 +17,7 @@ import {
 import { listPeople, createPersonFromImmich, deletePerson } from '../lib/people'
 import { listTags, createTag, deleteTag } from '../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
+import { testGeminiKey, describeGeminiError } from '../lib/gemini'
 import { haptic } from '../lib/haptics'
 
 export default function Profile() {
@@ -26,6 +27,28 @@ export default function Profile() {
   const name = user?.name?.trim()
   const email = user?.email || '—'
   const initial = (name || email || '?').charAt(0).toUpperCase()
+  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
+
+  const avatarInputRef = useRef(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+
+  async function handleAvatarPick(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setAvatarUploading(true)
+    setAvatarError('')
+    try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+      await pb.collection('users').update(user.id, formData)
+    } catch (err) {
+      setAvatarError(describeError(err))
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   const [immichUrl, setImmichUrl] = useState(user?.immichUrl || '')
   const [immichApiKey, setImmichApiKey] = useState(user?.immichApiKey || '')
@@ -53,12 +76,46 @@ export default function Profile() {
   const [testingSpotify, setTestingSpotify] = useState(false)
   const [spotifyStatus, setSpotifyStatus] = useState(null)
 
+  const [geminiApiKey, setGeminiApiKey] = useState(user?.geminiApiKey || '')
+  const [savingGemini, setSavingGemini] = useState(false)
+  const [testingGemini, setTestingGemini] = useState(false)
+  const [geminiStatus, setGeminiStatus] = useState(null)
+
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
     setImmichApiKey(user?.immichApiKey || '')
     setSpotifyClientId(user?.spotifyClientId || '')
     setSpotifyClientSecret(user?.spotifyClientSecret || '')
+    setGeminiApiKey(user?.geminiApiKey || '')
   }, [user])
+
+  async function saveGemini() {
+    setSavingGemini(true)
+    setGeminiStatus(null)
+    try {
+      await pb.collection('users').update(user.id, {
+        geminiApiKey: geminiApiKey.trim(),
+      })
+      setGeminiStatus({ ok: true, message: 'Salvato.' })
+    } catch (err) {
+      setGeminiStatus({ ok: false, message: describeError(err) })
+    } finally {
+      setSavingGemini(false)
+    }
+  }
+
+  async function testGemini() {
+    setTestingGemini(true)
+    setGeminiStatus(null)
+    try {
+      await testGeminiKey(geminiApiKey.trim())
+      setGeminiStatus({ ok: true, message: 'Connessione riuscita.' })
+    } catch (err) {
+      setGeminiStatus({ ok: false, message: describeGeminiError(err) })
+    } finally {
+      setTestingGemini(false)
+    }
+  }
 
   async function saveSpotify() {
     setSavingSpotify(true)
@@ -220,12 +277,42 @@ export default function Profile() {
       </header>
 
       <main className="flex flex-1 flex-col overflow-y-auto no-scrollbar px-6 py-8">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-line bg-sand text-3xl font-extrabold text-ink">
-            {initial}
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            title="Cambia immagine profilo"
+            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-line bg-sand text-3xl font-extrabold text-ink"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center">
+                {initial}
+              </span>
+            )}
+            <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-ink/70 py-1 text-cream">
+              {avatarUploading ? (
+                <span className="text-[10px] font-semibold">…</span>
+              ) : (
+                <Icon name="edit" size={12} />
+              )}
+            </span>
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleAvatarPick}
+          />
+          <div className="min-w-0 flex-1">
+            {name && <p className="truncate text-xl font-bold text-ink">{name}</p>}
+            <p className="truncate text-ink-soft">{email}</p>
+            {avatarError && (
+              <p className="mt-1 text-xs text-delete-dark">{avatarError}</p>
+            )}
           </div>
-          {name && <p className="text-xl font-bold text-ink">{name}</p>}
-          <p className="text-ink-soft">{email}</p>
         </div>
 
         <div className="mt-10">
@@ -461,6 +548,53 @@ export default function Profile() {
                 className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
               >
                 {savingSpotify ? 'Salvo…' : 'Salva'}
+              </button>
+            </div>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Gemini (IA)">
+            <p className="text-xs text-ink-soft">
+              Chiave API di Google AI Studio per ripulire il testo delle note,
+              riconoscere le persone citate e scrivere contenuti con l'IA.
+            </p>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-ink-soft">
+                API key
+              </span>
+              <input
+                type="password"
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+                className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+              />
+            </label>
+            {geminiStatus && (
+              <p
+                className={
+                  'text-xs ' + (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+                }
+              >
+                {geminiStatus.message}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={testGemini}
+                disabled={testingGemini || !geminiApiKey.trim()}
+                className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {testingGemini ? 'Verifico…' : 'Testa connessione'}
+              </button>
+              <button
+                type="button"
+                onClick={saveGemini}
+                disabled={savingGemini}
+                className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {savingGemini ? 'Salvo…' : 'Salva'}
               </button>
             </div>
           </CollapsibleSection>

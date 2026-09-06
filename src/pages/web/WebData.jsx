@@ -81,7 +81,7 @@ export default function WebData() {
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-            Andamento
+            Statistiche
           </h1>
           <NavArrow
             dir="left"

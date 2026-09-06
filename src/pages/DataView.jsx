@@ -14,7 +14,7 @@ import { MONTHS_IT, todayKey } from '../lib/dates'
 // sottili e numerose, andamento più morbido di quando erano 4 a settimana.
 function WeekBars({ groups }) {
   return (
-    <div className="flex h-10 w-24 shrink-0 items-end gap-[1.5px]">
+    <div className="flex h-10 min-w-0 flex-1 items-end gap-[1.5px]">
       {groups.map((g, i) => (
         <div key={i} className="flex h-full flex-1 items-end">
           {g.mood == null ? (
@@ -74,9 +74,6 @@ export default function DataView() {
             onChange={(y) => setCursor((c) => ({ ...c, year: y }))}
           />
         </div>
-        <h2 className="pb-3 text-center text-2xl font-extrabold text-ink">
-          Andamento
-        </h2>
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
@@ -112,7 +109,6 @@ export default function DataView() {
                       {MONTHS_IT[m.month].slice(0, 3)}
                     </span>
                     <WeekBars groups={m.groups} />
-                    <span className="flex-1" />
                     <span
                       className="min-w-[2.75rem] rounded-full px-2 py-1 text-center text-sm font-bold tabular-nums"
                       style={

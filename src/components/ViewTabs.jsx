@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { haptic } from '../lib/haptics'
 
-// Selettore di vista (Calendario / Andamento): tab switcher, esteticamente
+// Selettore di vista (Calendario / Statistiche): tab switcher, esteticamente
 // distinto dai pulsanti solo-cliccabili del footer sottostante.
 export default function ViewTabs({ active }) {
   const navigate = useNavigate()
@@ -34,7 +34,7 @@ export default function ViewTabs({ active }) {
             (active === 'data' ? 'bg-ink text-cream shadow-sm' : 'text-ink-soft')
           }
         >
-          Andamento
+          Statistiche
         </button>
       </div>
     </div>

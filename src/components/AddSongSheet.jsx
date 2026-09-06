@@ -44,8 +44,21 @@ export default function AddSongSheet({ open, onClose, onAdd, spotifyClientId, sp
         tok = await getSpotifyToken(spotifyClientId, spotifyClientSecret)
         setToken(tok)
       }
-      const tracks = await searchSpotifyTracks(tok, query.trim())
-      setResults(tracks)
+      try {
+        const tracks = await searchSpotifyTracks(tok, query.trim())
+        setResults(tracks)
+      } catch (err) {
+        // Token scaduto o rifiutato: ne prendiamo uno nuovo e riproviamo una
+        // volta sola, invece di mostrare subito un errore fuorviante.
+        if (err.status === 401) {
+          tok = await getSpotifyToken(spotifyClientId, spotifyClientSecret)
+          setToken(tok)
+          const tracks = await searchSpotifyTracks(tok, query.trim())
+          setResults(tracks)
+        } else {
+          throw err
+        }
+      }
     } catch (err) {
       setError(describeSpotifyError(err))
     } finally {

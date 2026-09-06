@@ -5,6 +5,17 @@
 
 const TRACK_RE = /open\.spotify\.com\/(?:intl-[a-z]+\/)?track\/([a-zA-Z0-9]+)/
 
+// Legge il messaggio d'errore reale dalla risposta Spotify (quando presente),
+// per mostrare all'utente il motivo vero invece di una diagnosi indovinata.
+async function readSpotifyErrorDetail(res) {
+  try {
+    const data = await res.json()
+    return data?.error?.message || data?.error_description || ''
+  } catch {
+    return ''
+  }
+}
+
 export function isSpotifyTrackUrl(url) {
   return TRACK_RE.test(String(url || ''))
 }
@@ -41,8 +52,10 @@ export async function getSpotifyToken(clientId, clientSecret) {
     body: 'grant_type=client_credentials',
   })
   if (!res.ok) {
-    const err = new Error('Client ID/Secret Spotify non validi.')
+    const detail = await readSpotifyErrorDetail(res)
+    const err = new Error(detail || 'Client ID/Secret Spotify non validi.')
     err.status = res.status
+    err.detail = detail
     throw err
   }
   const data = await res.json()
@@ -56,8 +69,10 @@ export async function searchSpotifyTracks(token, query) {
     { headers: { Authorization: `Bearer ${token}` } },
   )
   if (!res.ok) {
-    const err = new Error('Ricerca Spotify non riuscita.')
+    const detail = await readSpotifyErrorDetail(res)
+    const err = new Error(detail || 'Ricerca Spotify non riuscita.')
     err.status = res.status
+    err.detail = detail
     throw err
   }
   const data = await res.json()
@@ -71,6 +86,7 @@ export async function searchSpotifyTracks(token, query) {
 
 export function describeSpotifyError(err) {
   if (!err) return 'Errore sconosciuto.'
+  if (err.detail) return `Spotify: ${err.detail}`
   if (err.status === 400 || err.status === 401) {
     return 'Client ID/Secret Spotify non validi.'
   }

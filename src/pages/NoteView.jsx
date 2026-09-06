@@ -16,6 +16,7 @@ import TagPickerSheet from '../components/TagPickerSheet'
 import AddSongSheet from '../components/AddSongSheet'
 import PlacePickerSheet from '../components/PlacePickerSheet'
 import PlaceCard from '../components/PlaceCard'
+import GeminiSheet from '../components/GeminiSheet'
 import {
   createNote,
   deleteNote,
@@ -38,6 +39,17 @@ import {
 } from '../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+// Pallino con conteggio sopra un pulsante di aggiunta contenuto: rende
+// visibile a colpo d'occhio che c'è già almeno un elemento di quel tipo.
+function CountBadge({ count }) {
+  if (!count) return null
+  return (
+    <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-sand bg-save px-1 text-[10px] font-extrabold text-ink">
+      {count}
+    </span>
+  )
+}
 
 function emptyForm(dKey) {
   const timeEnd = nowRoundedTo5()
@@ -90,6 +102,7 @@ export default function NoteView() {
   const immichReady = Boolean(immichUrl && immichApiKey)
   const spotifyClientId = user?.spotifyClientId?.trim()
   const spotifyClientSecret = user?.spotifyClientSecret?.trim()
+  const geminiApiKey = user?.geminiApiKey?.trim()
 
   const dateParam = search.get('date')
   const initialDate =
@@ -119,6 +132,7 @@ export default function NoteView() {
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [songSheetOpen, setSongSheetOpen] = useState(false)
   const [placeSheetOpen, setPlaceSheetOpen] = useState(false)
+  const [geminiSheetOpen, setGeminiSheetOpen] = useState(false)
   const fileInputRef = useRef(null)
   const editorRef = useRef(null)
   const savingRef = useRef(false) // guardia anti doppio invio
@@ -316,6 +330,12 @@ export default function NoteView() {
   }
 
   const noImages = existingImages.length === 0 && previews.length === 0
+  const hasExtras =
+    selectedPeople.length > 0 ||
+    selectedTags.length > 0 ||
+    Boolean(form.place) ||
+    form.songs.length > 0 ||
+    !noImages
 
   return (
     <PhoneShell>
@@ -398,153 +418,155 @@ export default function NoteView() {
           />
         </div>
 
-        {(selectedPeople.length > 0 || selectedTags.length > 0 || form.place) && (
-          <div className="mt-4 flex flex-wrap items-start gap-2">
-            {selectedPeople.map((person) => (
-              <span
-                key={person.id}
-                className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
-              >
-                <PersonAvatar
-                  person={person}
-                  immichUrl={immichUrl}
-                  immichApiKey={immichApiKey}
-                  size={24}
-                />
-                <span className="text-sm font-semibold text-ink">{person.name}</span>
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  onClick={() => togglePerson(person.id)}
-                  className="text-ink-soft"
-                >
-                  <Icon name="x" size={14} />
-                </button>
-              </span>
-            ))}
-
-            {selectedTags.map((tag) => (
-              <span
-                key={tag.id}
-                className="flex items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
-              >
-                <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                <span className="text-sm font-semibold text-ink">{tag.name}</span>
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  onClick={() => toggleTag(tag.id)}
-                  className="text-ink-soft"
-                >
-                  <Icon name="x" size={14} />
-                </button>
-              </span>
-            ))}
-
-            {form.place && (
-              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
-            )}
-          </div>
-        )}
-
-        {form.songs.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {form.songs.map((song, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
-              >
-                {song.thumbnailUrl ? (
-                  <img
-                    src={song.thumbnailUrl}
-                    alt=""
-                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
-                  />
-                ) : (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
-                    <Icon name="music" size={18} />
-                  </span>
-                )}
-                <a
-                  href={song.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
-                >
-                  {song.title}
-                </a>
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  onClick={() => removeSong(i)}
-                  className="shrink-0 text-ink-soft"
-                >
-                  <Icon name="x" size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!noImages && (
-          <div className="mt-4">
-            <div className="grid grid-cols-3 gap-2">
-              {existingImages.map((fn, i) => (
-                <div
-                  key={fn}
-                  className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
-                >
-                  <button
-                    type="button"
-                    title="Visualizza"
-                    onClick={() => setViewerIndex(i)}
-                    className="block h-full w-full"
+        {hasExtras && (
+          <div className="mt-4 space-y-3 rounded-2xl bg-cream p-3">
+            {(selectedPeople.length > 0 || selectedTags.length > 0 || form.place) && (
+              <div className="flex flex-wrap items-start gap-2">
+                {selectedPeople.map((person) => (
+                  <span
+                    key={person.id}
+                    className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
                   >
-                    <img
-                      src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
-                      alt=""
-                      className="h-full w-full object-cover"
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={24}
                     />
-                  </button>
-                  <button
-                    type="button"
-                    title="Rimuovi"
-                    onClick={() => {
-                      setExistingImages((prev) => prev.filter((x) => x !== fn))
-                      setRemovedImages((prev) => [...prev, fn])
-                    }}
-                    className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                    <span className="text-sm font-semibold text-ink">{person.name}</span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => togglePerson(person.id)}
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
+
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-2"
                   >
-                    <Icon name="x" size={14} />
-                  </button>
-                </div>
-              ))}
-              {previews.map((p, i) => (
-                <div
-                  key={p.url}
-                  className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
-                >
-                  <button
-                    type="button"
-                    title="Visualizza"
-                    onClick={() => setViewerIndex(existingImages.length + i)}
-                    className="block h-full w-full"
+                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                    <span className="text-sm font-semibold text-ink">{tag.name}</span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => toggleTag(tag.id)}
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
+
+                {form.place && (
+                  <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
+                )}
+              </div>
+            )}
+
+            {form.songs.length > 0 && (
+              <div className="space-y-2">
+                {form.songs.map((song, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-2xl border border-line bg-tag px-3 py-2"
                   >
-                    <img src={p.url} alt="" className="h-full w-full object-cover" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Rimuovi"
-                    onClick={() =>
-                      setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                    {song.thumbnailUrl ? (
+                      <img
+                        src={song.thumbnailUrl}
+                        alt=""
+                        className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
+                        <Icon name="music" size={18} />
+                      </span>
+                    )}
+                    <a
+                      href={song.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                    >
+                      {song.title}
+                    </a>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => removeSong(i)}
+                      className="shrink-0 text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!noImages && (
+              <div className="grid grid-cols-3 gap-2">
+                {existingImages.map((fn, i) => (
+                  <div
+                    key={fn}
+                    className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
                   >
-                    <Icon name="x" size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <button
+                      type="button"
+                      title="Visualizza"
+                      onClick={() => setViewerIndex(i)}
+                      className="block h-full w-full"
+                    >
+                      <img
+                        src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => {
+                        setExistingImages((prev) => prev.filter((x) => x !== fn))
+                        setRemovedImages((prev) => [...prev, fn])
+                      }}
+                      className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
+                ))}
+                {previews.map((p, i) => (
+                  <div
+                    key={p.url}
+                    className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
+                  >
+                    <button
+                      type="button"
+                      title="Visualizza"
+                      onClick={() => setViewerIndex(existingImages.length + i)}
+                      className="block h-full w-full"
+                    >
+                      <img src={p.url} alt="" className="h-full w-full object-cover" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() =>
+                        setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
+                      }
+                      className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -560,26 +582,52 @@ export default function NoteView() {
         onChange={onPickFiles}
       />
 
-      <div className="sticky bottom-0 z-20 flex items-center justify-end gap-2 border-t border-line bg-sand px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-        <CircleButton size={52} onClick={() => setPeopleSheetOpen(true)} title="Aggiungi persone">
-          <Icon name="user" size={20} />
-        </CircleButton>
-        <CircleButton size={52} onClick={() => setTagSheetOpen(true)} title="Aggiungi tag">
-          <Icon name="tag" size={20} />
-        </CircleButton>
-        <CircleButton size={52} onClick={() => setSongSheetOpen(true)} title="Aggiungi canzone">
-          <Icon name="music" size={20} />
-        </CircleButton>
-        <CircleButton size={52} onClick={() => setPlaceSheetOpen(true)} title="Aggiungi luogo">
-          <Icon name="map-pin" size={20} />
-        </CircleButton>
+      <div className="sticky bottom-0 z-20 flex items-center justify-between gap-2 border-t border-line bg-sand px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         <CircleButton
           size={52}
-          onClick={() => (immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click())}
-          title="Aggiungi immagini"
+          variant="active"
+          onClick={() => setGeminiSheetOpen(true)}
+          title="Gemini"
         >
-          <Icon name="image-plus" size={22} />
+          <Icon name="sparkles" size={20} />
         </CircleButton>
+
+        <div className="flex items-center gap-2">
+        <div className="relative">
+          <CircleButton size={52} onClick={() => setPeopleSheetOpen(true)} title="Aggiungi persone">
+            <Icon name="user" size={20} />
+          </CircleButton>
+          <CountBadge count={selectedPeople.length} />
+        </div>
+        <div className="relative">
+          <CircleButton size={52} onClick={() => setTagSheetOpen(true)} title="Aggiungi tag">
+            <Icon name="tag" size={20} />
+          </CircleButton>
+          <CountBadge count={selectedTags.length} />
+        </div>
+        <div className="relative">
+          <CircleButton size={52} onClick={() => setSongSheetOpen(true)} title="Aggiungi canzone">
+            <Icon name="music" size={20} />
+          </CircleButton>
+          <CountBadge count={form.songs.length} />
+        </div>
+        <div className="relative">
+          <CircleButton size={52} onClick={() => setPlaceSheetOpen(true)} title="Aggiungi luogo">
+            <Icon name="map-pin" size={20} />
+          </CircleButton>
+          <CountBadge count={form.place ? 1 : 0} />
+        </div>
+        <div className="relative">
+          <CircleButton
+            size={52}
+            onClick={() => (immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click())}
+            title="Aggiungi immagini"
+          >
+            <Icon name="image-plus" size={22} />
+          </CircleButton>
+          <CountBadge count={existingImages.length + previews.length} />
+        </div>
+        </div>
       </div>
 
       <Dialog
@@ -650,6 +698,17 @@ export default function NoteView() {
         open={placeSheetOpen}
         onClose={() => setPlaceSheetOpen(false)}
         onAdd={(place) => set({ place })}
+      />
+
+      <GeminiSheet
+        open={geminiSheetOpen}
+        onClose={() => setGeminiSheetOpen(false)}
+        apiKey={geminiApiKey}
+        content={form.content}
+        onReplaceContent={(text) => set({ content: text })}
+        allPeople={allPeople}
+        selectedPeopleIds={peopleIds}
+        onTogglePerson={togglePerson}
       />
     </PhoneShell>
   )
