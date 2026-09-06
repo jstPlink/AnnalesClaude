@@ -64,8 +64,10 @@ export async function getSpotifyToken(clientId, clientSecret) {
 
 // [{ url, title, artist, thumbnailUrl }]
 export async function searchSpotifyTracks(token, query) {
+  // Le app in Development Mode sembrano ora limitate a un `limit` massimo
+  // più basso di 50 sull'endpoint search: 12 dava "invalid limit" (2026-09-06).
   const res = await fetch(
-    `https://api.spotify.com/v1/search?type=track&limit=12&q=${encodeURIComponent(query)}`,
+    `https://api.spotify.com/v1/search?type=track&limit=10&q=${encodeURIComponent(query)}`,
     { headers: { Authorization: `Bearer ${token}` } },
   )
   if (!res.ok) {

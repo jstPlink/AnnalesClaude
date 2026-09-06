@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import Icon from './Icon'
 import { loadLeaflet, boundsForDiameterKm } from '../lib/leaflet'
 
-// Targhetta quadrata per il luogo salvato: barra col nome in alto, mappa
-// (bloccata, sola visualizzazione) sotto, inquadrata su ~7km di diametro.
+// Targhetta quadrata per il luogo salvato: mappa a tutta altezza (bloccata,
+// sola visualizzazione, ~4km di diametro), nome in una fascia in basso (come
+// la didascalia di una foto, per lasciare più spazio alla mappa).
 // `isolate` sul contenitore evita che i pannelli interni di Leaflet (z-index
 // alti, 400-700) sfondino sopra ad altri dialog/sheet dell'app (z-50).
 export default function PlaceCard({ place, onRemove }) {
@@ -28,8 +29,19 @@ export default function PlaceCard({ place, onRemove }) {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
       }).addTo(map)
-      map.fitBounds(boundsForDiameterKm(place.lat, place.lon, 7))
-      L.marker([place.lat, place.lon]).addTo(map)
+      map.fitBounds(boundsForDiameterKm(place.lat, place.lon, 4))
+      // Segnalino ridotto del 30% rispetto alla dimensione predefinita di
+      // Leaflet (25×41 → 17×29), per pesare meno su una targhetta piccola.
+      const icon = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [17, 28],
+        iconAnchor: [8, 28],
+        popupAnchor: [1, -24],
+        shadowSize: [28, 28],
+      })
+      L.marker([place.lat, place.lon], { icon }).addTo(map)
     })
     return () => {
       cancelled = true
@@ -40,22 +52,20 @@ export default function PlaceCard({ place, onRemove }) {
   if (!place) return null
 
   return (
-    <div className="isolate w-32 shrink-0 overflow-hidden rounded-2xl border border-line bg-cream">
-      <div className="flex items-center gap-1.5 bg-tag px-2.5 py-1.5">
-        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">
+    <div className="isolate relative aspect-square w-full overflow-hidden rounded-xl border border-line bg-panel-2">
+      {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-ink/70 px-2 py-1">
+        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-cream">
           {place.name}
         </span>
         <button
           type="button"
           title="Rimuovi"
           onClick={onRemove}
-          className="shrink-0 text-ink-soft"
+          className="shrink-0 text-cream"
         >
           <Icon name="x" size={12} />
         </button>
-      </div>
-      <div className="aspect-square w-full bg-panel-2">
-        {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
       </div>
     </div>
   )

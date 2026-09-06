@@ -1,13 +1,14 @@
 import { MONTHS_IT } from '../lib/dates'
 
 // Grafico dell'andamento del mood su un anno: tre linee a granularità
-// diversa (giorno/settimana/mese), niente gradiente, etichette leggibili
-// anche su schermi stretti.
+// diversa (giorno/settimana/mese), niente gradiente, niente valori sull'asse
+// verticale (solo linee guida) per lasciare più spazio orizzontale al
+// grafico; molto più alto delle proporzioni "larghe" originali.
 // data = risultato di yearWeeklyMood(): { daily, weekly, monthlySeries, hasData }
 export default function YearMoodChart({ data }) {
   const W = 1000
-  const H = 420
-  const padL = 56
+  const H = 820
+  const padL = 14
   const padR = 12
   const padT = 16
   const padB = 34
@@ -48,30 +49,19 @@ export default function YearMoodChart({ data }) {
       style={{ width: '100%', height: 'auto', display: 'block' }}
       className="rounded-2xl border border-line bg-tag"
     >
-      {/* Griglia orizzontale + etichette 0..100 */}
+      {/* Griglia orizzontale (nessun valore numerico: più spazio al grafico) */}
       {[0, 0.25, 0.5, 0.75, 1].map((m) => (
-        <g key={m}>
-          <line
-            x1={padL}
-            x2={W - padR}
-            y1={y(m)}
-            y2={y(m)}
-            stroke="var(--color-line)"
-            strokeWidth="1"
-            strokeDasharray={m === 0.5 ? '' : '3 4'}
-            opacity={m === 0.5 ? 0.9 : 0.5}
-          />
-          <text
-            x={padL - 10}
-            y={y(m) + 8}
-            textAnchor="end"
-            fontSize="24"
-            fontWeight="600"
-            fill="var(--color-ink-soft)"
-          >
-            {Math.round(m * 100)}
-          </text>
-        </g>
+        <line
+          key={m}
+          x1={padL}
+          x2={W - padR}
+          y1={y(m)}
+          y2={y(m)}
+          stroke="var(--color-line)"
+          strokeWidth="1"
+          strokeDasharray={m === 0.5 ? '' : '3 4'}
+          opacity={m === 0.5 ? 0.9 : 0.5}
+        />
       ))}
 
       {/* Etichette mesi: a mesi alterni, per restare leggibili su schermi stretti */}

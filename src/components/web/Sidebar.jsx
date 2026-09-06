@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { fileUrl } from '../../lib/pocketbase'
 import { todayKey } from '../../lib/dates'
 
 export default function Sidebar() {
@@ -8,6 +9,7 @@ export default function Sidebar() {
 
   const name = user?.name?.trim() || user?.email || 'Utente'
   const initial = name.charAt(0).toUpperCase()
+  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '80x80' }) : ''
 
   return (
     <aside className="flex w-[264px] shrink-0 flex-col border-r border-line bg-sand">
@@ -46,6 +48,15 @@ export default function Sidebar() {
             (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
           }
         >
+          Andamento
+        </NavLink>
+        <NavLink
+          to="/statistiche"
+          className={({ isActive }) =>
+            'rounded-xl px-3 py-2 transition ' +
+            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+          }
+        >
           Statistiche
         </NavLink>
         <NavLink
@@ -66,8 +77,12 @@ export default function Sidebar() {
             onClick={() => navigate('/profilo')}
             className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-cream/60"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-cream font-serif text-lg font-semibold text-ink">
-              {initial}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-cream font-serif text-lg font-semibold text-ink">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-ink">

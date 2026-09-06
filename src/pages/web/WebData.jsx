@@ -21,11 +21,10 @@ function NavArrow({ dir, onClick, label }) {
   )
 }
 
-// Una colonna per coppia di giorni del mese (fino a 16): barrette più
-// sottili e numerose, andamento più morbido di quando erano 4 a settimana.
+// Una barretta per ogni giorno del mese.
 function WeekBars({ groups }) {
   return (
-    <div className="flex h-14 items-end gap-[1.5px]">
+    <div className="flex h-14 min-w-0 flex-1 items-end gap-[1.5px]">
       {groups.map((g, i) => (
         <div key={i} className="flex h-full flex-1 items-end">
           {g.mood == null ? (
@@ -81,7 +80,7 @@ export default function WebData() {
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-            Statistiche
+            Andamento
           </h1>
           <NavArrow
             dir="left"
@@ -113,23 +112,23 @@ export default function WebData() {
         <span className="text-ink">▬ mese</span>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-8 divide-y divide-line-soft rounded-3xl border border-line bg-tag px-5">
         {data.monthly.map((m) => (
-          <button
-            key={m.month}
-            type="button"
-            onClick={() => {
-              setCursor({ year, month: m.month })
-              navigate('/')
-            }}
-            className="rounded-2xl border border-line bg-tag p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-serif text-lg font-semibold text-ink">
-                {MONTHS_IT[m.month]}
+          <li key={m.month}>
+            <button
+              type="button"
+              onClick={() => {
+                setCursor({ year, month: m.month })
+                navigate('/')
+              }}
+              className="flex w-full items-center gap-4 py-3.5 text-left transition hover:brightness-95"
+            >
+              <span className="w-20 shrink-0 font-serif text-lg font-semibold text-ink">
+                {MONTHS_IT[m.month].slice(0, 3)}
               </span>
+              <WeekBars groups={m.groups} />
               <span
-                className="min-w-[2.5rem] rounded-full px-2 py-0.5 text-center text-sm font-bold tabular-nums"
+                className="min-w-[2.75rem] shrink-0 rounded-full px-2 py-1 text-center text-sm font-bold tabular-nums"
                 style={
                   m.mood == null
                     ? {
@@ -144,16 +143,10 @@ export default function WebData() {
               >
                 {m.mood == null ? '—' : Math.round(m.mood * 100)}
               </span>
-            </div>
-            <div className="mt-3">
-              <WeekBars groups={m.groups} />
-            </div>
-            <p className="mt-2 text-xs text-ink-soft">
-              {m.count} {m.count === 1 ? 'nota' : 'note'}
-            </p>
-          </button>
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }

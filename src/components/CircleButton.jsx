@@ -2,6 +2,7 @@ import { haptic } from '../lib/haptics'
 
 const VARIANTS = {
   light: 'bg-tag text-ink border border-line hover:brightness-[0.98]',
+  filled: 'bg-panel text-ink border border-line hover:brightness-[0.97]',
   sand: 'bg-sand text-ink border border-line hover:brightness-[0.98]',
   active: 'bg-ink text-cream border border-ink',
   save: 'bg-save text-ink border border-save-dark hover:brightness-105',

@@ -3,7 +3,10 @@
 // Serve solo una API key (Profilo) — nessun OAuth, chiamata REST diretta,
 // nessuna libreria necessaria.
 
-const MODEL = 'gemini-2.5-flash'
+// gemini-2.5-flash è stato ritirato per i nuovi utenti (l'API risponde 404
+// indicando questo modello come sostituto): vedi errore riportato dall'utente
+// il 2026-09-06.
+const MODEL = 'gemini-3.6-flash'
 
 async function callGemini(apiKey, prompt) {
   const res = await fetch(

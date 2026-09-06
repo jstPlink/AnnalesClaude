@@ -21,6 +21,13 @@ export async function getNote(id) {
   return pb.collection(COLLECTION).getOne(id)
 }
 
+// Conteggio di tutte le note mai scritte (nessun filtro sull'anno): una
+// pagina da 1 elemento basta, serve solo `totalItems`.
+export async function countAllNotes() {
+  const res = await pb.collection(COLLECTION).getList(1, 1, { fields: 'id' })
+  return res.totalItems
+}
+
 // Il luogo è salvato come JSON { name, lat, lon } dentro il campo testo
 // `place` (retrocompatibile: un valore pre-esistente, semplice stringa col
 // nome, viene letto come luogo senza coordinate note).

@@ -112,8 +112,7 @@ export function dayMood(notes) {
 
 // ---- Andamento del mood sull'anno ----
 // Tre serie a granularità diversa (giorno / settimana / mese) per il
-// grafico, più un riepilogo per mese con i giorni raggruppati a coppie
-// (al massimo 16 per mese) per le barrette.
+// grafico, più un riepilogo per mese con una barretta per ogni giorno.
 
 function isLeapYear(y) {
   return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
@@ -146,18 +145,14 @@ export function yearWeeklyMood(year, notes) {
   for (let mo = 1; mo <= 12; mo++) {
     const dim = daysInMonthOf(year, mo - 1)
     const monthNotes = []
-    const groups = [] // coppie di giorni consecutivi: fino a 16 per mese
-    for (let d = 1; d <= dim; d += 2) {
-      const ns1 = byDay.get(`${mo}-${d}`) || []
-      const hasSecond = d + 1 <= dim
-      const ns2 = hasSecond ? byDay.get(`${mo}-${d + 1}`) || [] : []
-      daily.push(ns1.length ? dayMood(ns1) : null)
-      if (hasSecond) daily.push(ns2.length ? dayMood(ns2) : null)
-      const pairNotes = [...ns1, ...ns2]
-      monthNotes.push(...pairNotes)
+    const groups = [] // una barretta per ogni giorno del mese
+    for (let d = 1; d <= dim; d++) {
+      const ns = byDay.get(`${mo}-${d}`) || []
+      daily.push(ns.length ? dayMood(ns) : null)
+      monthNotes.push(...ns)
       groups.push({
-        mood: pairNotes.length ? dayMood(pairNotes) : null,
-        count: pairNotes.length,
+        mood: ns.length ? dayMood(ns) : null,
+        count: ns.length,
       })
     }
     monthly.push({

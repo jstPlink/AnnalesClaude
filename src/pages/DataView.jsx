@@ -10,8 +10,7 @@ import { listNotesInRange, describeError } from '../lib/notes'
 import { yearWeeklyMood, moodColor, moodTextColor } from '../lib/mood'
 import { MONTHS_IT, todayKey } from '../lib/dates'
 
-// Una colonna per coppia di giorni del mese (fino a 16): barrette più
-// sottili e numerose, andamento più morbido di quando erano 4 a settimana.
+// Una barretta per ogni giorno del mese.
 function WeekBars({ groups }) {
   return (
     <div className="flex h-10 min-w-0 flex-1 items-end gap-[1.5px]">

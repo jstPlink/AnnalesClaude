@@ -398,9 +398,10 @@ export default function NoteView() {
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
         {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
-            solo il divisorio tra titolo e contenuto. Il contenuto si estende
-            fino in fondo, niente spazio vuoto sotto su note brevi. */}
-        <div className="mt-4 flex flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
+            solo il divisorio tra titolo e contenuto. Almeno il 40% dello
+            schermo anche vuoto: se le altre informazioni sotto sforano, è
+            la pagina intera (main) a scorrere, non questo riquadro. */}
+        <div className="mt-4 flex min-h-[40dvh] flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
@@ -419,53 +420,61 @@ export default function NoteView() {
         </div>
 
         {hasExtras && (
-          <div className="mt-4 space-y-3 rounded-2xl bg-cream p-3">
-            {(selectedPeople.length > 0 || selectedTags.length > 0 || form.place) && (
-              <div className="flex flex-wrap items-start gap-2">
-                {selectedPeople.map((person) => (
-                  <span
-                    key={person.id}
-                    className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-3"
-                  >
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                      size={24}
-                    />
-                    <span className="text-sm font-semibold text-ink">{person.name}</span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => togglePerson(person.id)}
-                      className="text-ink-soft"
+          <div className="mt-4 space-y-3 rounded-2xl bg-panel p-3">
+            {(selectedTags.length > 0 || selectedPeople.length > 0 || form.place) && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1.5">
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
                     >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </span>
-                ))}
+                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                        {tag.name}
+                      </span>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => toggleTag(tag.id)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </span>
+                  ))}
 
-                {selectedTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-2"
-                  >
-                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                    <span className="text-sm font-semibold text-ink">{tag.name}</span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => toggleTag(tag.id)}
-                      className="text-ink-soft"
+                  {selectedPeople.map((person) => (
+                    <span
+                      key={person.id}
+                      className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
                     >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </span>
-                ))}
+                      <PersonAvatar
+                        person={person}
+                        immichUrl={immichUrl}
+                        immichApiKey={immichApiKey}
+                        size={24}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                        {person.name}
+                      </span>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => togglePerson(person.id)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
 
-                {form.place && (
-                  <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
-                )}
+                <div>
+                  {form.place && (
+                    <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
+                  )}
+                </div>
               </div>
             )}
 
@@ -594,25 +603,45 @@ export default function NoteView() {
 
         <div className="flex items-center gap-2">
         <div className="relative">
-          <CircleButton size={52} onClick={() => setPeopleSheetOpen(true)} title="Aggiungi persone">
+          <CircleButton
+            size={52}
+            variant={selectedPeople.length ? 'filled' : 'light'}
+            onClick={() => setPeopleSheetOpen(true)}
+            title="Aggiungi persone"
+          >
             <Icon name="user" size={20} />
           </CircleButton>
           <CountBadge count={selectedPeople.length} />
         </div>
         <div className="relative">
-          <CircleButton size={52} onClick={() => setTagSheetOpen(true)} title="Aggiungi tag">
+          <CircleButton
+            size={52}
+            variant={selectedTags.length ? 'filled' : 'light'}
+            onClick={() => setTagSheetOpen(true)}
+            title="Aggiungi tag"
+          >
             <Icon name="tag" size={20} />
           </CircleButton>
           <CountBadge count={selectedTags.length} />
         </div>
         <div className="relative">
-          <CircleButton size={52} onClick={() => setSongSheetOpen(true)} title="Aggiungi canzone">
+          <CircleButton
+            size={52}
+            variant={form.songs.length ? 'filled' : 'light'}
+            onClick={() => setSongSheetOpen(true)}
+            title="Aggiungi canzone"
+          >
             <Icon name="music" size={20} />
           </CircleButton>
           <CountBadge count={form.songs.length} />
         </div>
         <div className="relative">
-          <CircleButton size={52} onClick={() => setPlaceSheetOpen(true)} title="Aggiungi luogo">
+          <CircleButton
+            size={52}
+            variant={form.place ? 'filled' : 'light'}
+            onClick={() => setPlaceSheetOpen(true)}
+            title="Aggiungi luogo"
+          >
             <Icon name="map-pin" size={20} />
           </CircleButton>
           <CountBadge count={form.place ? 1 : 0} />
@@ -620,6 +649,7 @@ export default function NoteView() {
         <div className="relative">
           <CircleButton
             size={52}
+            variant={existingImages.length + previews.length ? 'filled' : 'light'}
             onClick={() => (immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click())}
             title="Aggiungi immagini"
           >

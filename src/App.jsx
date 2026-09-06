@@ -10,6 +10,7 @@ import DayView from './pages/DayView'
 import NoteView from './pages/NoteView'
 import Profile from './pages/Profile'
 import DataView from './pages/DataView'
+import StatsView from './pages/StatsView'
 import FilterView from './pages/FilterView'
 import WebLogin from './pages/web/WebLogin'
 import WebMonth from './pages/web/WebMonth'
@@ -17,6 +18,7 @@ import WebDay from './pages/web/WebDay'
 import WebNote from './pages/web/WebNote'
 import WebProfile from './pages/web/WebProfile'
 import WebData from './pages/web/WebData'
+import WebStats from './pages/web/WebStats'
 import WebFilter from './pages/web/WebFilter'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
@@ -79,6 +81,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Screen mobile={DataView} desktop={WebData} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/statistiche"
+              element={
+                <RequireAuth>
+                  <Screen mobile={StatsView} desktop={WebStats} />
                 </RequireAuth>
               }
             />
