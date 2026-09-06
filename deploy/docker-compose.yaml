@@ -18,7 +18,9 @@ services:
       # <porta-sul-NAS>:8090 — deve restare raggiungibile pubblicamente
       # (dietro il reverse proxy/tunnel), non solo dagli altri container:
       # il frontend gira nel browser di chi usa l'app, non dentro Docker.
-      - "8090:8090"
+      # 28090 sulla sinistra: porta "strana" apposta, per non collidere con
+      # altri servizi sul NAS (8090 è un default molto comune).
+      - "28090:8090"
     restart: unless-stopped
     pull_policy: always
 

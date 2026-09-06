@@ -67,7 +67,7 @@ VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build
 > del pacchetto `pocketbase` in `package.json`. Aggiornandone uno, aggiorna
 > anche l'altro.
 
-Per accedere all'**admin UI di PocketBase** (`http://localhost:8090/_/`, utile
+Per accedere all'**admin UI di PocketBase** (`http://localhost:28090/_/`, utile
 per ispezionare i dati o intervenire a mano) serve un account superuser, che
 l'app stessa non crea mai: va creato una volta sola da riga di comando:
 
@@ -81,7 +81,7 @@ docker compose exec pocketbase /pb/pocketbase superuser upsert admin@tuodominio.
 docker build -t annales-diario:latest .
 docker build -f pocketbase.Dockerfile -t annales-pocketbase:latest .
 docker network create annales 2>/dev/null || true
-docker run -d --name annales-pocketbase --network annales -p 8090:8090 -v pb_data:/pb/pb_data --restart unless-stopped annales-pocketbase:latest
+docker run -d --name annales-pocketbase --network annales -p 28090:8090 -v pb_data:/pb/pb_data --restart unless-stopped annales-pocketbase:latest
 docker run -d --name annales-diario --network annales -p 8973:80 --restart unless-stopped annales-diario:latest
 ```
 
@@ -105,7 +105,7 @@ Cloudflare Tunnel) per HTTPS.
 ## Configurazione backend
 
 Istanza PocketBase usata di default: quella **bundled**, avviata insieme al
-frontend (vedi sopra) su `http://localhost:8090`
+frontend (vedi sopra) su `http://localhost:28090`
 (endpoint note: `/api/collections/note/records`).
 
 Per puntare a un'altra istanza in locale, copia `.env.example` in `.env` e

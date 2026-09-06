@@ -21,8 +21,10 @@ services:
       - pb_data:/pb/pb_data
     ports:
       # host:container — deve restare raggiungibile dal browser di chi usa
-      # l'app (il frontend gira lato client, non dentro la rete Docker)
-      - "8090:8090"
+      # l'app (il frontend gira lato client, non dentro la rete Docker).
+      # Porta host volutamente "strana" (non 8090, molto comune) per non
+      # collidere con altri servizi sulla stessa macchina.
+      - "28090:8090"
     restart: unless-stopped
 
   web:
@@ -30,7 +32,7 @@ services:
       context: .
       args:
         # URL del backend PocketBase inlined a build time
-        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:8090}
+        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:28090}
     image: annales-diario:latest
     container_name: annales-diario
     depends_on:

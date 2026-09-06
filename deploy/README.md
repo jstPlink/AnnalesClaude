@@ -60,7 +60,7 @@ Su Synology: *Container Manager → Progetto → Azione → Ricostruisci* (fa pu
 
 ## 4. Esporre su Internet con Cloudflare
 
-Le porte del compose (`8973:80` per il frontend, `8090:8090` per PocketBase)
+Le porte del compose (`8973:80` per il frontend, `28090:8090` per PocketBase)
 restano **sulla LAN**. Cloudflare non si collega mai a quelle porte
 direttamente: parla con il NAS su 443/HTTPS, e qualcosa sul NAS inoltra al
 container giusto. Vanno esposti **entrambi** i servizi, con hostname diversi:
@@ -70,7 +70,7 @@ il frontend (es. `diario.fplinio.it`) e PocketBase (es. `pb-nuovo.fplinio.it`
 **Opzione A — Cloudflare Tunnel** (come già fai per `pocketbase.fplinio.it`):
 nello stesso tunnel aggiungi **due** *public hostname*:
 - `diario.fplinio.it` → **Service = `http://localhost:8973`** (frontend)
-- `pb-nuovo.fplinio.it` → **Service = `http://localhost:8090`** (PocketBase bundled)
+- `pb-nuovo.fplinio.it` → **Service = `http://localhost:28090`** (PocketBase bundled)
 
 (oppure `http://<ip-nas>:PORTA` se preferisci; se `cloudflared` gira come
 container sulla stessa rete Docker puoi anche usare i nomi dei container:
@@ -84,7 +84,7 @@ due record DNS proxied (arancioni) e due regole del reverse proxy, una per
 porta.
 
 In entrambi i casi: **quello che colleghi sono le porte host del NAS**
-(`8973` e `8090`), mai le porte interne dei container.
+(`8973` e `28090`), mai le porte interne dei container.
 
 ## Note
 
