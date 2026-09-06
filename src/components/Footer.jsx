@@ -9,6 +9,9 @@ export default function Footer({
   onPrimary,
   primaryIcon = 'plus',
   primaryTitle,
+  onSecondary,
+  secondaryIcon,
+  secondaryTitle,
   sticky = true,
 }) {
   const visible = items.filter(Boolean)
@@ -31,9 +34,16 @@ export default function Footer({
           </CircleButton>
         ))}
       </div>
-      <CircleButton variant="light" onClick={onPrimary} title={primaryTitle}>
-        <Icon name={primaryIcon} size={26} />
-      </CircleButton>
+      <div className="flex items-center gap-2">
+        {onSecondary && (
+          <CircleButton variant="active" onClick={onSecondary} title={secondaryTitle}>
+            <Icon name={secondaryIcon} size={20} />
+          </CircleButton>
+        )}
+        <CircleButton variant="light" onClick={onPrimary} title={primaryTitle}>
+          <Icon name={primaryIcon} size={26} />
+        </CircleButton>
+      </div>
     </footer>
   )
 }

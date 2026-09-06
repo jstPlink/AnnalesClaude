@@ -1,7 +1,12 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fileUrl } from '../../lib/pocketbase'
 import { todayKey } from '../../lib/dates'
+import { listPeople } from '../../lib/people'
+import { listTags } from '../../lib/tags'
+import Icon from '../Icon'
+import NewNoteWithGeminiSheet from '../NewNoteWithGeminiSheet'
 
 export default function Sidebar() {
   const navigate = useNavigate()
@@ -11,6 +16,19 @@ export default function Sidebar() {
   const initial = name.charAt(0).toUpperCase()
   const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '80x80' }) : ''
 
+  const [geminiNoteOpen, setGeminiNoteOpen] = useState(false)
+  const [allPeople, setAllPeople] = useState([])
+  const [allTags, setAllTags] = useState([])
+
+  useEffect(() => {
+    listPeople()
+      .then(setAllPeople)
+      .catch(() => {})
+    listTags()
+      .then(setAllTags)
+      .catch(() => {})
+  }, [])
+
   return (
     <aside className="flex w-[264px] shrink-0 flex-col border-r border-line bg-sand">
       <div className="flex items-center gap-2.5 px-6 pb-5 pt-7">
@@ -18,25 +36,48 @@ export default function Sidebar() {
         <span className="font-serif text-2xl font-semibold text-ink">Annales</span>
       </div>
 
-      <button
-        type="button"
-        onClick={() => navigate(`/note/new?date=${todayKey()}`)}
-        className="mx-4 flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-cream transition hover:brightness-110"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Nuova nota
-      </button>
+      <div className="mx-4 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate(`/note/new?date=${todayKey()}`)}
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-cream transition hover:brightness-110"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Nuova nota
+        </button>
+        <button
+          type="button"
+          onClick={() => setGeminiNoteOpen(true)}
+          title="Nuova nota con Gemini"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-cream text-ink transition hover:brightness-95"
+        >
+          <Icon name="sparkles" size={18} />
+        </button>
+      </div>
+
+      <NewNoteWithGeminiSheet
+        open={geminiNoteOpen}
+        onClose={() => setGeminiNoteOpen(false)}
+        apiKey={user?.geminiApiKey?.trim()}
+        allPeople={allPeople}
+        allTags={allTags}
+        onGenerated={(draft) =>
+          navigate(`/note/new?date=${todayKey()}`, { state: { aiDraft: draft } })
+        }
+      />
 
       <nav className="mt-6 flex flex-col gap-1 px-4 text-sm font-semibold">
         <NavLink
           to="/"
           end
           className={({ isActive }) =>
-            'rounded-xl px-3 py-2 transition ' +
-            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+            'rounded-xl border px-3 py-2 transition ' +
+            (isActive
+              ? 'border-line bg-cream text-ink'
+              : 'border-line text-ink-soft hover:bg-cream/60')
           }
         >
           Calendario
@@ -44,8 +85,10 @@ export default function Sidebar() {
         <NavLink
           to="/dati"
           className={({ isActive }) =>
-            'rounded-xl px-3 py-2 transition ' +
-            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+            'rounded-xl border px-3 py-2 transition ' +
+            (isActive
+              ? 'border-line bg-cream text-ink'
+              : 'border-line text-ink-soft hover:bg-cream/60')
           }
         >
           Andamento
@@ -53,8 +96,10 @@ export default function Sidebar() {
         <NavLink
           to="/statistiche"
           className={({ isActive }) =>
-            'rounded-xl px-3 py-2 transition ' +
-            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+            'rounded-xl border px-3 py-2 transition ' +
+            (isActive
+              ? 'border-line bg-cream text-ink'
+              : 'border-line text-ink-soft hover:bg-cream/60')
           }
         >
           Statistiche
@@ -62,8 +107,10 @@ export default function Sidebar() {
         <NavLink
           to="/filtri"
           className={({ isActive }) =>
-            'rounded-xl px-3 py-2 transition ' +
-            (isActive ? 'bg-cream text-ink' : 'text-ink-soft hover:bg-cream/60')
+            'rounded-xl border px-3 py-2 transition ' +
+            (isActive
+              ? 'border-line bg-cream text-ink'
+              : 'border-line text-ink-soft hover:bg-cream/60')
           }
         >
           Cerca

@@ -197,6 +197,19 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
 }
 
+/* Barra di caricamento indeterminata (in loop) durante le chiamate a Gemini. */
+@keyframes gemini-loop {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(220%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

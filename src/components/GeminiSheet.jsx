@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
+import GeminiWait from './GeminiWait'
 import {
   cleanupNoteText,
   writeNoteText,
@@ -240,9 +241,7 @@ export default function GeminiSheet({
               </button>
             </div>
           ) : (mode === 'clean' || mode === 'write') && loading ? (
-            <p className="py-10 text-center text-sm text-ink-soft">
-              Chiedo a Gemini…
-            </p>
+            <GeminiWait />
           ) : (mode === 'clean' || mode === 'write') && preview ? (
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -260,9 +259,7 @@ export default function GeminiSheet({
               </button>
             </div>
           ) : mode === 'people' && loading ? (
-            <p className="py-10 text-center text-sm text-ink-soft">
-              Analizzo il testo…
-            </p>
+            <GeminiWait label="Analizzo il testo…" />
           ) : mode === 'people' && matches?.length > 0 ? (
             <div className="space-y-3">
               <p className="text-xs text-ink-soft">

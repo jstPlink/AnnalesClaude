@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../context/NavContext'
+import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import ImageCarousel from '../components/ImageCarousel'
 import MarqueeText from '../components/MarqueeText'
+import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
+import { listPeople } from '../lib/people'
+import { listTags } from '../lib/tags'
 import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
@@ -26,10 +30,23 @@ const SWIPE_THRESHOLD = 55
 export default function MonthView() {
   const navigate = useNavigate()
   const { cursor, setCursor } = useNav()
+  const { user } = useAuth()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [dir, setDir] = useState(0) // -1 / 1: direzione ultima transizione
+  const [geminiNoteOpen, setGeminiNoteOpen] = useState(false)
+  const [allPeople, setAllPeople] = useState([])
+  const [allTags, setAllTags] = useState([])
+
+  useEffect(() => {
+    listPeople()
+      .then(setAllPeople)
+      .catch(() => {})
+    listTags()
+      .then(setAllTags)
+      .catch(() => {})
+  }, [])
 
   const load = useCallback(async ({ year, month }) => {
     setLoading(true)
@@ -248,8 +265,22 @@ export default function MonthView() {
           primaryIcon="plus"
           primaryTitle="Nuova nota (oggi)"
           onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
+          secondaryIcon="sparkles"
+          secondaryTitle="Nuova nota con Gemini"
+          onSecondary={() => setGeminiNoteOpen(true)}
         />
       </div>
+
+      <NewNoteWithGeminiSheet
+        open={geminiNoteOpen}
+        onClose={() => setGeminiNoteOpen(false)}
+        apiKey={user?.geminiApiKey?.trim()}
+        allPeople={allPeople}
+        allTags={allTags}
+        onGenerated={(draft) =>
+          navigate(`/note/new?date=${todayKey()}`, { state: { aiDraft: draft } })
+        }
+      />
     </PhoneShell>
   )
 }

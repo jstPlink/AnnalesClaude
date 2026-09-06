@@ -54,7 +54,10 @@ export default function PlaceCard({ place, onRemove }) {
   return (
     <div className="isolate relative aspect-square w-full overflow-hidden rounded-xl border border-line bg-panel-2">
       {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
-      <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-ink/70 px-2 py-1">
+      {/* z-index esplicito: i pannelli interni di Leaflet arrivano a 700 e,
+          pur isolati dal resto della pagina, coprirebbero questa fascia
+          (impedendo di premere "Rimuovi") se non stesse sopra di loro. */}
+      <div className="absolute inset-x-0 bottom-0 z-[1000] flex items-center gap-1.5 bg-ink/70 px-2 py-1">
         <span className="min-w-0 flex-1 truncate text-xs font-semibold text-cream">
           {place.name}
         </span>

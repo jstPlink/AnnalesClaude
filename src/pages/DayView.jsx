@@ -154,24 +154,21 @@ export default function DayView() {
         )}
 
         <div ref={trackRef} className="relative h-full w-full">
-          {/* Barra oraria: tacchetta ogni ora, etichetta ogni 3 ore */}
-          <div
-            className="absolute inset-y-0 left-0 border-r border-line"
-            style={{ width: RAIL_W }}
-          >
+          {/* Barra oraria: solo linee orizzontali alle ore senza etichetta
+              (nessuna linea verticale, nessuna tacchetta alle ore con testo:
+              lo scritto stesso ne marca la posizione). Etichetta ogni 3 ore. */}
+          <div className="absolute inset-y-0 left-0" style={{ width: RAIL_W }}>
             {Array.from({ length: 25 }, (_, h) => {
               const top = h * 60 * pxPerMin
               const label = h % 3 === 0 && h < 24
               return (
                 <div key={h}>
-                  <span
-                    className="absolute right-0 bg-line"
-                    style={{
-                      top,
-                      height: 1,
-                      width: label ? 10 : 5,
-                    }}
-                  />
+                  {!label && (
+                    <span
+                      className="absolute right-0 bg-line"
+                      style={{ top, height: 1, width: RAIL_W }}
+                    />
+                  )}
                   {label && (
                     <span
                       className="absolute right-3 text-[10px] font-semibold tabular-nums text-ink-soft"

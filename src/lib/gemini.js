@@ -78,6 +78,39 @@ export async function analyzePeopleInText(apiKey, text, peopleNames) {
   }
 }
 
+// Genera una nota intera (titolo, contenuto, tag/persone tra quelli
+// disponibili, luogo) a partire da un prompt libero. La nota risultante va
+// sempre rivista dall'utente prima di salvare: qui si crea solo una bozza.
+export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], tagNames = [] } = {}) {
+  const instruction =
+    'Da queste indicazioni scritte da un utente, prepara la bozza di una nota personale di diario in italiano, in prima persona. ' +
+    'Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, con esattamente questa forma:\n' +
+    '{"title": string (breve, poche parole), ' +
+    '"content": string (il testo della nota, ripulito e scorrevole, più lungo e articolato delle indicazioni), ' +
+    `"tags": array di stringhe prese ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinenti, altrimenti [], ` +
+    `"people": array di stringhe prese ESATTAMENTE dall'elenco ${JSON.stringify(peopleNames)} se pertinenti, altrimenti [], ` +
+    '"place": string col nome del luogo se le indicazioni ne citano uno, altrimenti stringa vuota}\n\n' +
+    `Indicazioni dell'utente:\n${prompt}`
+  const raw = await callGemini(apiKey, instruction)
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
+  let data
+  try {
+    data = JSON.parse(match[0])
+  } catch {
+    throw new Error('Gemini non ha restituito un risultato valido.')
+  }
+  return {
+    title: typeof data.title === 'string' ? data.title.trim() : '',
+    content: typeof data.content === 'string' ? data.content.trim() : '',
+    tags: Array.isArray(data.tags) ? data.tags.filter((x) => typeof x === 'string') : [],
+    people: Array.isArray(data.people)
+      ? data.people.filter((x) => typeof x === 'string')
+      : [],
+    place: typeof data.place === 'string' ? data.place.trim() : '',
+  }
+}
+
 export function describeGeminiError(err) {
   if (!err) return 'Errore sconosciuto.'
   if (err.status === 400 || err.status === 403) return 'Chiave API Gemini non valida.'

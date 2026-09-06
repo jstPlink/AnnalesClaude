@@ -143,6 +143,12 @@ export default function WebMonth() {
                 (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '200x200' })),
               )
               .slice(0, 2)
+            // Riga più alta quante più note ci sono in quel giorno (le
+            // immagini, a larghezza fissa, si limitano a essere ritagliate
+            // in più se la riga cresce: va bene così).
+            const rowMinH = has
+              ? Math.min(64 + (dayNotes.length - 1) * 18, 200)
+              : 64
 
             return (
               <button
@@ -155,7 +161,10 @@ export default function WebMonth() {
                   (has ? '' : ' opacity-60')
                 }
               >
-                <span className="flex w-full items-stretch gap-4 px-4 py-3">
+                <span
+                  className="flex w-full items-stretch gap-4 px-4 py-3"
+                  style={{ minHeight: rowMinH }}
+                >
                   <span
                     className="flex w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl"
                     style={

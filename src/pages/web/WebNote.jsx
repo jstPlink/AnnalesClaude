@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import MoodSlider from '../../components/MoodSlider'
 import RichText from '../../components/RichText'
 import Dialog from '../../components/Dialog'
@@ -75,9 +75,15 @@ const inputCls =
 export default function WebNote() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [search] = useSearchParams()
   const { user } = useAuth()
   const isNew = !id
+
+  // Bozza arrivata da "Nuova nota con Gemini" (Sidebar): titolo, contenuto,
+  // tag/persone e luogo pre-compilati, tutti da rivedere qui prima di
+  // salvare — non è mai stato scritto nulla sul server.
+  const aiDraft = isNew ? location.state?.aiDraft : null
 
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
@@ -89,8 +95,19 @@ export default function WebNote() {
   const initialDate =
     dateParam && DATE_RE.test(dateParam) ? dateParam : dayKey(new Date())
 
-  const [form, setForm] = useState(() => emptyForm(initialDate))
-  const [baseline, setBaseline] = useState(() => snapshot(emptyForm(initialDate)))
+  const initialForm = () => {
+    const base = emptyForm(initialDate)
+    if (!aiDraft) return base
+    return {
+      ...base,
+      title: aiDraft.title || '',
+      content: aiDraft.content || '',
+      place: aiDraft.place || null,
+    }
+  }
+
+  const [form, setForm] = useState(initialForm)
+  const [baseline, setBaseline] = useState(() => snapshot(initialForm()))
   const [existingImages, setExistingImages] = useState([])
   const [record, setRecord] = useState(null)
   const [createdId, setCreatedId] = useState(null)
@@ -103,11 +120,11 @@ export default function WebNote() {
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [immichOpen, setImmichOpen] = useState(false)
   const [allPeople, setAllPeople] = useState([])
-  const [peopleIds, setPeopleIds] = useState([])
+  const [peopleIds, setPeopleIds] = useState(() => aiDraft?.peopleIds || [])
   const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
   const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
   const [allTags, setAllTags] = useState([])
-  const [tagIds, setTagIds] = useState([])
+  const [tagIds, setTagIds] = useState(() => aiDraft?.tagIds || [])
   const [baselineTagIds, setBaselineTagIds] = useState([])
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [songSheetOpen, setSongSheetOpen] = useState(false)
