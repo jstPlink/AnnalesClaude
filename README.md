@@ -37,14 +37,14 @@ npm run icons     # rigenera le icone PWA da scripts/icon-source.svg
 
 ## Fai girare la TUA istanza (il tuo diario, il tuo database)
 
-Chiunque può avere il proprio Annales privato, con dati suoi e non condivisi
-con nessun altro: **un solo comando** avvia sia il backend PocketBase (con lo
-schema — collection `note`/`people`/`tags` e i campi delle integrazioni su
-`users` — creato automaticamente al primo avvio dalle migration in
-[`pb_migrations/`](pb_migrations)) sia il frontend.
+Ogni installazione di Annales è **autosufficiente**: `docker compose up` avvia
+sia il backend PocketBase (con lo schema — collection `note`/`people`/`tags` e
+i campi delle integrazioni su `users` — creato automaticamente al primo avvio
+dalle migration in [`pb_migrations/`](pb_migrations)) sia il frontend. Non
+serve nessun PocketBase esterno da configurare a mano.
 
 ```bash
-docker compose -f docker-compose.selfhost.yml up -d --build
+docker compose up -d --build
 ```
 
 Poi apri `http://localhost:8973` e usa **"Crea il tuo diario personale"**
@@ -59,7 +59,7 @@ raggiungerà PocketBase (il frontend gira nel browser di chi usa l'app, quindi
 non può usare un nome host interno a Docker):
 
 ```bash
-VITE_PB_URL=https://pb.tuodominio.it docker compose -f docker-compose.selfhost.yml up -d --build
+VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build
 ```
 
 > La versione di PocketBase è pinnata (`PB_VERSION` in
@@ -67,68 +67,45 @@ VITE_PB_URL=https://pb.tuodominio.it docker compose -f docker-compose.selfhost.y
 > del pacchetto `pocketbase` in `package.json`. Aggiornandone uno, aggiorna
 > anche l'altro.
 
-Questo è distinto dal flusso sotto (`docker-compose.yml`): quello presume un
-PocketBase **già esistente altrove** (com'è per l'istanza dell'autore, su
-`pocketbase.fplinio.it`) e builda solo il frontend.
-
 Per accedere all'**admin UI di PocketBase** (`http://localhost:8090/_/`, utile
 per ispezionare i dati o intervenire a mano) serve un account superuser, che
 l'app stessa non crea mai: va creato una volta sola da riga di comando:
 
 ```bash
-docker compose -f docker-compose.selfhost.yml exec pocketbase \
-  /pb/pocketbase superuser upsert admin@tuodominio.it "una-password-lunga"
-```
-
-## Docker
-
-L'app è statica (build Vite servita da nginx con fallback SPA). Immagine
-multi-stage: `node:22-alpine` per la build, `nginx:1.27-alpine` per servire.
-
-### Build ed esecuzione con compose
-
-```bash
-docker compose up -d --build      # build immagine + avvio
-# app su http://<host>:8973  (porta host modificabile in docker-compose.yml)
-docker compose down               # stop
+docker compose exec pocketbase /pb/pocketbase superuser upsert admin@tuodominio.it "una-password-lunga"
 ```
 
 ### Oppure con docker puro
 
 ```bash
 docker build -t annales-diario:latest .
-docker run -d --name annales-diario -p 8973:80 --restart unless-stopped annales-diario:latest
+docker build -f pocketbase.Dockerfile -t annales-pocketbase:latest .
+docker network create annales 2>/dev/null || true
+docker run -d --name annales-pocketbase --network annales -p 8090:8090 -v pb_data:/pb/pb_data --restart unless-stopped annales-pocketbase:latest
+docker run -d --name annales-diario --network annales -p 8973:80 --restart unless-stopped annales-diario:latest
 ```
 
-### Backend PocketBase
+### Deploy sul NAS (immagini pre-buildate)
 
-`VITE_PB_URL` viene **inlined a build time** (default
-`https://pocketbase.fplinio.it`). Per puntare altrove va ricostruita l'immagine:
-
-```bash
-docker build --build-arg VITE_PB_URL=https://pocketbase.example.com -t annales-diario:latest .
-# con compose:  VITE_PB_URL=https://pocketbase.example.com docker compose up -d --build
-```
-
-### Deploy sul NAS (immagine pre-buildata)
-
-Modo consigliato: GitHub Actions builda e pubblica l'immagine su GHCR, il NAS
-la scarica ed esegue — nessun sorgente né build sul NAS.
+Modo consigliato: GitHub Actions builda e pubblica **entrambe** le immagini su
+GHCR, il NAS le scarica ed esegue — nessun sorgente né build sul NAS.
 
 - Workflow: [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)
-  (push su `main` → `ghcr.io/jstplink/annalesclaude:latest`, multi-arch amd64/arm64).
+  (push su `main` → `ghcr.io/jstplink/annalesclaude:latest` +
+  `ghcr.io/jstplink/annalesclaude-pocketbase:latest`, multi-arch amd64/arm64).
 - Compose per il NAS: [`deploy/docker-compose.yaml`](deploy/docker-compose.yaml).
 - Istruzioni passo-passo: [`deploy/README.md`](deploy/README.md).
 
-Il container espone solo HTTP sulla porta 80: metterlo dietro il reverse proxy
-del NAS (o Cloudflare Tunnel) per HTTPS.
+I container espongono solo HTTP: metterli dietro il reverse proxy del NAS (o
+Cloudflare Tunnel) per HTTPS.
 
 > Se la build su Alpine dovesse fallire per binari nativi (rollup/lightningcss),
 > cambiare `node:22-alpine` in `node:22-slim` nel `Dockerfile`.
 
 ## Configurazione backend
 
-Istanza PocketBase usata di default: `https://pocketbase.fplinio.it`
+Istanza PocketBase usata di default: quella **bundled**, avviata insieme al
+frontend (vedi sopra) su `http://localhost:8090`
 (endpoint note: `/api/collections/note/records`).
 
 Per puntare a un'altra istanza in locale, copia `.env.example` in `.env` e
@@ -159,11 +136,14 @@ fonte di verità; qui un riepilogo:
 
 ### CORS / Cloudflare Access
 
-Il browser deve poter chiamare `https://pocketbase.fplinio.it` da
-`http://localhost:5173`. Se in sviluppo compaiono errori di rete sulle chiamate
-API (status 0, CORS, o challenge di Cloudflare Access), **è una configurazione
-lato server** (CORS di PocketBase / policy Cloudflare), non un problema del
-codice dell'app. L'app in quel caso mostra un messaggio d'errore esplicito.
+Il browser deve poter chiamare l'URL in `VITE_PB_URL` (PocketBase gestisce da
+solo gli header CORS necessari, anche verso porte/origin diverse in locale).
+Se in produzione metti PocketBase dietro Cloudflare Access o un WAF, ricordati
+che è **il frontend stesso** (il browser di chi usa l'app) a chiamarlo
+direttamente: un challenge o una policy troppo restrittiva bloccherebbero
+l'app, non solo l'accesso umano diretto. Se compaiono errori di rete sulle
+chiamate API (status 0, CORS), **è una configurazione lato server**, non un
+problema del codice — l'app mostra comunque un messaggio d'errore esplicito.
 
 ## Comportamento delle schermate
 

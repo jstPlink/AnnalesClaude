@@ -1,16 +1,32 @@
-# docker-compose per il NAS: scarica ed esegue l'immagine gia' buildata da
-# GitHub Actions (GHCR). Non serve il codice sorgente sul NAS.
+# docker-compose per il NAS: scarica ed esegue le immagini gia' buildate da
+# GitHub Actions (GHCR) — frontend + PocketBase bundled. Non serve il codice
+# sorgente sul NAS, ne' build locali.
 #
 # Aggiornare all'ultima versione:
 #   docker compose pull && docker compose up -d
 #
-# Se l'immagine e' privata, prima:
+# Se le immagini sono private, prima:
 #   echo <GITHUB_TOKEN> | docker login ghcr.io -u <utente-github> --password-stdin
 
 services:
+  pocketbase:
+    image: ghcr.io/jstplink/annalesclaude-pocketbase:latest
+    container_name: annales-pocketbase
+    volumes:
+      - pb_data:/pb/pb_data
+    ports:
+      # <porta-sul-NAS>:8090 — deve restare raggiungibile pubblicamente
+      # (dietro il reverse proxy/tunnel), non solo dagli altri container:
+      # il frontend gira nel browser di chi usa l'app, non dentro Docker.
+      - "8090:8090"
+    restart: unless-stopped
+    pull_policy: always
+
   annales:
     image: ghcr.io/jstplink/annalesclaude:latest
     container_name: annales-diario
+    depends_on:
+      - pocketbase
     ports:
       # <porta-sul-NAS>:<porta-nel-container>
       # La 80 a destra e' INTERNA al container: non cambiarla, non e' esposta
@@ -20,3 +36,6 @@ services:
       - "8973:80"
     restart: unless-stopped
     pull_policy: always
+
+volumes:
+  pb_data:

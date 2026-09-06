@@ -7,7 +7,8 @@ WORKDIR /app
 
 # Le variabili VITE_* sono inlined a build time: si possono sovrascrivere con
 #   docker build --build-arg VITE_PB_URL=https://...
-ARG VITE_PB_URL=https://pocketbase.fplinio.it
+# Default: il PocketBase bundled avviato da docker-compose.yml.
+ARG VITE_PB_URL=http://localhost:8090
 ENV VITE_PB_URL=$VITE_PB_URL
 
 # Installa le dipendenze sfruttando la cache dei layer

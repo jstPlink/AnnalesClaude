@@ -1,7 +1,8 @@
 name: Publish Docker image
 
-# Builda l'immagine e la pubblica su GitHub Container Registry (GHCR).
-# Il NAS poi scarica ed esegue quell'immagine (vedi deploy/docker-compose.yaml).
+# Builda le immagini (frontend + PocketBase bundled) e le pubblica su GitHub
+# Container Registry (GHCR). Il NAS poi scarica ed esegue entrambe (vedi
+# deploy/docker-compose.yaml) — nessuna build sul NAS.
 
 on:
   push:
@@ -12,8 +13,10 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  # URL del backend PocketBase: inlined nel bundle a build time.
-  VITE_PB_URL: https://pocketbase.fplinio.it
+  # URL PUBBLICO del PocketBase bundled: inlined nel bundle frontend a build
+  # time (gira nel browser, quindi deve essere raggiungibile da fuori, non un
+  # hostname interno Docker). Il vecchio pocketbase.fplinio.it non c'entra più.
+  VITE_PB_URL: https://pb-nuovo.fplinio.it
 
 jobs:
   build-and-push:
@@ -58,5 +61,49 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_PB_URL=${{ env.VITE_PB_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push-pocketbase:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-pocketbase
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=sha,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: pocketbase.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

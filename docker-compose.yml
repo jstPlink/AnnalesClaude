@@ -1,13 +1,44 @@
+# Avvia PocketBase (bundled, con lo schema in pb_migrations/ applicato al
+# primo avvio) + il frontend insieme: un solo comando, un database tutto tuo.
+#
+#   docker compose up -d --build
+#   apri http://localhost:8973, poi "Crea il tuo diario personale"
+#
+# Per esporlo online (dominio proprio, Cloudflare Tunnel, reverse proxy...)
+# rifai la build del frontend con VITE_PB_URL puntato all'URL PUBBLICO con
+# cui si raggiungerà PocketBase — mai un hostname interno Docker: gira nel
+# browser di chi usa l'app, non dentro la rete Docker:
+#
+#   VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build
+
 services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: pocketbase.Dockerfile
+    container_name: annales-pocketbase
+    volumes:
+      - pb_data:/pb/pb_data
+    ports:
+      # host:container — deve restare raggiungibile dal browser di chi usa
+      # l'app (il frontend gira lato client, non dentro la rete Docker)
+      - "8090:8090"
+    restart: unless-stopped
+
   web:
     build:
       context: .
       args:
         # URL del backend PocketBase inlined a build time
-        VITE_PB_URL: ${VITE_PB_URL:-https://pocketbase.fplinio.it}
+        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:8090}
     image: annales-diario:latest
     container_name: annales-diario
+    depends_on:
+      - pocketbase
     ports:
       # host:container — cambia la porta host come serve
       - "8973:80"
     restart: unless-stopped
+
+volumes:
+  pb_data:
