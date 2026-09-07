@@ -125,11 +125,11 @@ export default function GeminiSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-t-3xl bg-cream sm:rounded-3xl"
+        className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-cream"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">

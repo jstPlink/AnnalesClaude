@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import Icon from './Icon'
 import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
+import { createPerson } from '../lib/people'
 
-// Dialog per selezionare, tra le persone già aggiunte in Profilo, quelle
-// coinvolte in questa nota.
+// Dialog per selezionare le persone coinvolte in questa nota: tra quelle già
+// in elenco (Profilo / Immich), o creandone una nuova al volo (solo nome).
 export default function PeoplePickerSheet({
   open,
   people,
@@ -12,8 +14,30 @@ export default function PeoplePickerSheet({
   immichApiKey,
   onClose,
   onToggle,
+  onCreated,
 }) {
+  const [newName, setNewName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState('')
+
   if (!open) return null
+
+  async function handleCreate() {
+    const name = newName.trim()
+    if (!name || creating) return
+    haptic()
+    setCreating(true)
+    setError('')
+    try {
+      const rec = await createPerson(name)
+      onCreated?.(rec)
+      setNewName('')
+    } catch (err) {
+      setError(err?.message || 'Errore nella creazione della persona.')
+    } finally {
+      setCreating(false)
+    }
+  }
 
   return (
     <div
@@ -36,11 +60,31 @@ export default function PeoplePickerSheet({
           </button>
         </div>
 
+        <div className="flex gap-2 border-b border-line px-5 py-3">
+          <input
+            type="text"
+            placeholder="Nuova persona…"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            className="min-w-0 flex-1 rounded-xl border border-line bg-tag px-3 py-2 text-sm text-ink outline-none"
+          />
+          <button
+            type="button"
+            disabled={!newName.trim() || creating}
+            onClick={handleCreate}
+            className="shrink-0 rounded-xl border border-save-dark bg-save px-3 py-2 text-sm font-bold text-ink transition disabled:opacity-50"
+          >
+            {creating ? '…' : 'Crea'}
+          </button>
+        </div>
+        {error && <p className="px-5 pt-2 text-xs text-delete-dark">{error}</p>}
+
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!people.length ? (
             <p className="py-6 text-center text-sm text-ink-soft">
-              Non hai ancora aggiunto nessuna persona. Vai in Profilo → Persone
-              per aggiungerne dal tuo Immich.
+              Nessuna persona ancora. Creane una qui sopra, oppure aggiungine
+              dal tuo Immich in Profilo → Persone.
             </p>
           ) : (
             <div className="space-y-1">

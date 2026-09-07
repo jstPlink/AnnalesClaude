@@ -419,10 +419,11 @@ export default function NoteView() {
 
         {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
             solo il divisorio tra titolo e contenuto. Almeno il 35% dello
-            schermo anche vuoto, ma si estende (flex-1) se il contenuto è più
-            grande: se le altre informazioni sotto sforano, è la pagina intera
-            (main) a scorrere, non questo riquadro. */}
-        <div className="mt-4 flex min-h-[35dvh] flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
+            schermo anche da vuoto, ma NON si comprime mai (flex-none) e non
+            ha scroll interno (niente overflow-hidden): cresce quanto serve a
+            mostrare tutto il contenuto ed è la pagina intera (main) a
+            scorrere. */}
+        <div className="mt-4 flex min-h-[35dvh] flex-none flex-col rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"
@@ -441,101 +442,45 @@ export default function NoteView() {
         </div>
 
         {hasExtras && (
-          <div className="mt-4 space-y-3 rounded-2xl bg-panel p-3">
-            {(selectedPeople.length > 0 ||
-              selectedTags.length > 0 ||
-              form.place ||
-              form.songs.length > 0) && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1.5">
-                  {selectedPeople.map((person) => (
-                    <span
-                      key={person.id}
-                      className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
-                    >
-                      <PersonAvatar
-                        person={person}
-                        immichUrl={immichUrl}
-                        immichApiKey={immichApiKey}
-                        size={24}
-                      />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                        {person.name}
-                      </span>
-                      <button
-                        type="button"
-                        title="Rimuovi"
-                        onClick={() => togglePerson(person.id)}
-                        className="shrink-0 text-ink-soft"
-                      >
-                        <Icon name="x" size={14} />
-                      </button>
+          // Un'unica colonna, ordine fisso: persone → divisore → foto →
+          // luogo → tag → canzone.
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-panel p-3">
+            {selectedPeople.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {selectedPeople.map((person) => (
+                  <span
+                    key={person.id}
+                    className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={24}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                      {person.name}
                     </span>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  {form.place && (
-                    <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
-                  )}
-
-                  {selectedTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => togglePerson(person.id)}
+                      className="shrink-0 text-ink-soft"
                     >
-                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                        {tag.name}
-                      </span>
-                      <button
-                        type="button"
-                        title="Rimuovi"
-                        onClick={() => toggleTag(tag.id)}
-                        className="shrink-0 text-ink-soft"
-                      >
-                        <Icon name="x" size={14} />
-                      </button>
-                    </span>
-                  ))}
-
-                  {form.songs.map((song, i) => (
-                    <div
-                      key={i}
-                      className="flex w-full items-center gap-2 rounded-lg border border-[#1db954]/35 bg-[#e7f8ec] px-2 py-1.5"
-                    >
-                      {song.thumbnailUrl ? (
-                        <img
-                          src={song.thumbnailUrl}
-                          alt=""
-                          className="h-8 w-8 shrink-0 rounded object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#1db954]/15 text-[#178a41]">
-                          <Icon name="music" size={14} />
-                        </span>
-                      )}
-                      <a
-                        href={song.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
-                      >
-                        {song.title}
-                      </a>
-                      <button
-                        type="button"
-                        title="Rimuovi"
-                        onClick={() => removeSong(i)}
-                        className="shrink-0 text-ink-soft"
-                      >
-                        <Icon name="x" size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
               </div>
             )}
+
+            {selectedPeople.length > 0 &&
+              (!noImages ||
+                form.place ||
+                selectedTags.length > 0 ||
+                form.songs.length > 0) && (
+                <div className="border-t border-line-soft" />
+              )}
 
             {!noImages && (
               <div className="grid grid-cols-3 gap-2">
@@ -589,6 +534,73 @@ export default function NoteView() {
                         setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
                       }
                       className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {form.place && (
+              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
+            )}
+
+            {selectedTags.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
+                  >
+                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                      {tag.name}
+                    </span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => toggleTag(tag.id)}
+                      className="shrink-0 text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {form.songs.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {form.songs.map((song, i) => (
+                  <div
+                    key={i}
+                    className="flex w-full items-center gap-2 rounded-lg border border-[#1db954]/35 bg-[#e7f8ec] px-2 py-1.5"
+                  >
+                    {song.thumbnailUrl ? (
+                      <img
+                        src={song.thumbnailUrl}
+                        alt=""
+                        className="h-8 w-8 shrink-0 rounded object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#1db954]/15 text-[#178a41]">
+                        <Icon name="music" size={14} />
+                      </span>
+                    )}
+                    <a
+                      href={song.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                    >
+                      {song.title}
+                    </a>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => removeSong(i)}
+                      className="shrink-0 text-ink-soft"
                     >
                       <Icon name="x" size={14} />
                     </button>
@@ -722,6 +734,12 @@ export default function NoteView() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+        onCreated={(person) => {
+          setAllPeople((prev) =>
+            [...prev, person].sort((a, b) => a.name.localeCompare(b.name)),
+          )
+          setPeopleIds((prev) => [...prev, person.id])
+        }}
       />
 
       <TagPickerSheet

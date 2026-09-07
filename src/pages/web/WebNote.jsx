@@ -678,6 +678,12 @@ export default function WebNote() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+        onCreated={(person) => {
+          setAllPeople((prev) =>
+            [...prev, person].sort((a, b) => a.name.localeCompare(b.name)),
+          )
+          setPeopleIds((prev) => [...prev, person.id])
+        }}
       />
 
       <TagPickerSheet

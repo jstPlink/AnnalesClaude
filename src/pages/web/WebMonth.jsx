@@ -143,14 +143,13 @@ export default function WebMonth() {
                 (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '200x200' })),
               )
               .slice(0, 2)
-            // Riga più alta quante più note ci sono in quel giorno (le
-            // immagini, a larghezza fissa, si limitano a essere ritagliate
-            // in più se la riga cresce: va bene così). La base (92px) è
-            // già poco sopra l'altezza naturale della targhetta giorno, così
-            // l'aumento è visibile fin dalla seconda nota (sotto, un
-            // min-height minore del contenuto naturale non avrebbe alcun
-            // effetto visivo).
-            const rowMinH = Math.min(92 + Math.max(0, dayNotes.length - 1) * 22, 280)
+            // L'altezza della riga dipende SOLO dal numero di note del giorno:
+            // è un valore fisso (height, non min-height) e la riga è
+            // overflow-hidden, così le immagini all'interno vengono ritagliate
+            // e non allungano più la riga. La base (92px) è poco sopra
+            // l'altezza della targhetta giorno, così l'aumento è visibile fin
+            // dalla seconda nota.
+            const rowH = Math.min(92 + Math.max(0, dayNotes.length - 1) * 22, 280)
 
             return (
               <button
@@ -164,8 +163,8 @@ export default function WebMonth() {
                 }
               >
                 <span
-                  className="flex w-full items-stretch gap-4 px-4 py-3"
-                  style={{ minHeight: rowMinH }}
+                  className="flex w-full items-stretch gap-4 overflow-hidden px-4 py-3"
+                  style={{ height: rowH }}
                 >
                   <span
                     className="flex w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl"
@@ -212,14 +211,14 @@ export default function WebMonth() {
                   </span>
 
                   {imgs.length > 0 && (
-                    <span className="flex shrink-0 gap-2">
+                    <span className="flex h-full shrink-0 gap-2 overflow-hidden">
                       {imgs.map((src, i) => (
                         <img
                           key={i}
                           src={src}
                           alt=""
                           loading="lazy"
-                          className="h-full w-28 rounded-2xl object-cover"
+                          className="h-full w-28 shrink-0 rounded-2xl object-cover"
                         />
                       ))}
                     </span>

@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react'
 
 // Carosello automatico in loop. Se non ci sono immagini non renderizza nulla
 // (lo spazio resta vuoto, come da specifica).
+// `size` imposta un riquadro quadrato; in alternativa `width`/`height`
+// permettono un rettangolo (es. immagine a tutta altezza di una riga).
 export default function ImageCarousel({
   images = [],
   size = 72,
+  width,
+  height,
   interval = 2600,
+  rounded = 'rounded-2xl',
   className = '',
 }) {
   const [index, setIndex] = useState(0)
@@ -23,8 +28,10 @@ export default function ImageCarousel({
 
   return (
     <div
-      className={'relative shrink-0 overflow-hidden rounded-2xl bg-panel-2 ' + className}
-      style={{ width: size, height: size }}
+      className={
+        'relative shrink-0 overflow-hidden bg-panel-2 ' + rounded + ' ' + className
+      }
+      style={{ width: width ?? size, height: height ?? size }}
     >
       {images.map((img, i) => (
         <img

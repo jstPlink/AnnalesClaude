@@ -6,6 +6,7 @@ import YearPill from '../components/YearPill'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
+import ImageCarousel from '../components/ImageCarousel'
 import { listNotesInRange, describeError, plainText } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
@@ -126,7 +127,12 @@ export default function DayView() {
       const startMin = Math.max(0, Math.min(DAY_MIN, startMinutes(n.timeStart)))
       const dur = durationMinutes(n.timeStart, n.timeEnd)
       const endMin = Math.min(DAY_MIN, startMin + (dur || 0))
-      return { note: n, startMin, endMin }
+      // URL immagini precalcolati (riferimento stabile: il carosello non si
+      // resetta a ogni render della vista).
+      const images = (n.images || []).map((fn) => ({
+        url: fileUrl(n, fn, { thumb: '400x400' }),
+      }))
+      return { note: n, startMin, endMin, images }
     })
     return withLanes(items)
   }, [notes])
@@ -172,9 +178,10 @@ export default function DayView() {
                   )}
                   {label && (
                     <span
-                      className="absolute right-1.5 text-[10px] font-semibold tabular-nums text-ink-soft"
+                      className="absolute left-0 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
                       style={{
                         top: Math.min(Math.max(top - 6, 0), trackH - 12),
+                        width: RAIL_W,
                       }}
                     >
                       {String(h).padStart(2, '0')}:00
@@ -195,13 +202,13 @@ export default function DayView() {
             )}
 
             {trackH > 0 &&
-              blocks.map(({ note: n, startMin, endMin, lane, lanes }) => {
+              blocks.map(({ note: n, startMin, endMin, lane, lanes, images }) => {
                 const top = startMin * pxPerMin
                 const rawH = (endMin - startMin) * pxPerMin
                 const h = Math.max(MIN_BLOCK, rawH)
                 const widthPct = 100 / lanes
                 const tiny = h < 30
-                const img = n.images?.[0]
+                const img = images[0]
                 const preview = h >= 58 ? plainText(n.content) : ''
                 return (
                   <button
@@ -254,14 +261,24 @@ export default function DayView() {
                           {preview && <ClampedPreview text={preview} />}
                         </span>
 
-                        {/* Immagine a larghezza fissa, sempre a destra, a tutta altezza */}
+                        {/* Immagine a larghezza fissa, sempre a destra, a tutta
+                            altezza. Con più foto: carosello in dissolvenza. */}
                         {img && h >= 40 && (
-                          <img
-                            src={fileUrl(n, img, { thumb: '400x400' })}
-                            alt=""
-                            loading="lazy"
-                            className="h-full w-20 shrink-0 bg-panel-2 object-cover"
-                          />
+                          images.length > 1 ? (
+                            <ImageCarousel
+                              images={images}
+                              width={80}
+                              height={h}
+                              rounded=""
+                            />
+                          ) : (
+                            <img
+                              src={img.url}
+                              alt=""
+                              loading="lazy"
+                              className="h-full w-20 shrink-0 bg-panel-2 object-cover"
+                            />
+                          )
                         )}
                       </span>
                     )}

@@ -17,6 +17,12 @@ export async function createPersonFromImmich(immichPerson) {
   })
 }
 
+// Persona "locale": solo il nome, nessun collegamento a Immich. Usata quando
+// si aggiunge al volo una persona mentre si scrive una nota.
+export async function createPerson(name) {
+  return pb.collection(COLLECTION).create({ name: name.trim() })
+}
+
 export async function deletePerson(id) {
   return pb.collection(COLLECTION).delete(id)
 }
