@@ -5,6 +5,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.9',
+    date: '2026-09-07 22:41',
+    changes: [
+      'Ricerca (web): filtro persone collassabile con foto/iniziale sulle targhette (come su mobile), risultati mostrati una riga sotto l\'altra invece che su due colonne.',
+      'Aggiungi luogo: sezione "Luoghi già usati" per riscegliere un posto già inserito in altre note, invece di ricercarlo da capo.',
+      'Selettore persone: "Frequenti" mostra sempre il 50% più usato (per numero di note), non solo chi è stato usato almeno una volta.',
+    ],
+  },
+  {
     version: '0.10.8',
     date: '2026-09-07 22:07',
     changes: [

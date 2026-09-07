@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { listNotesFiltered, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import Icon from '../../components/Icon'
+import PersonAvatar from '../../components/PersonAvatar'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel } from '../../lib/dates'
 
 const SORTS = [
@@ -59,6 +61,10 @@ function ChipButton({ active, onClick, icon, square, children }) {
 
 export default function WebFilter() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
+  const [peopleOpen, setPeopleOpen] = useState(false)
   const [filters, setFilters] = useState({
     from: '',
     to: '',
@@ -237,20 +243,56 @@ export default function WebFilter() {
 
           {people.length > 0 && (
             <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-                Persone
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {people.map((p) => (
-                  <ChipButton
-                    key={p.id}
-                    active={filters.personIds.includes(p.id)}
-                    onClick={() => togglePerson(p.id)}
-                  >
-                    {p.name}
-                  </ChipButton>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setPeopleOpen((v) => !v)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                  Persone
+                </span>
+                {filters.personIds.length > 0 && (
+                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
+                    {filters.personIds.length}
+                  </span>
+                )}
+                <Icon
+                  name="chevron-right"
+                  size={14}
+                  className={
+                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    (peopleOpen ? 'rotate-90' : '')
+                  }
+                />
+              </button>
+              {peopleOpen && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {people.map((p) => {
+                    const active = filters.personIds.includes(p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => togglePerson(p.id)}
+                        className={
+                          'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition ' +
+                          (active
+                            ? 'bg-ink text-cream'
+                            : 'border border-line bg-cream text-ink hover:bg-cream/70')
+                        }
+                      >
+                        <PersonAvatar
+                          person={p}
+                          immichUrl={immichUrl}
+                          immichApiKey={immichApiKey}
+                          size={20}
+                        />
+                        {p.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -368,7 +410,7 @@ export default function WebFilter() {
                 {results.length} nota{results.length === 1 ? '' : 'e'} trovat
                 {results.length === 1 ? 'a' : 'e'}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-3">
                 {results.map((n) => (
                   <button
                     key={n.id}

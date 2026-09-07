@@ -30,10 +30,10 @@ function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
 
 // Dialog per selezionare le persone coinvolte in questa nota: tra quelle già
 // in elenco (Profilo / Immich), o creandone una nuova al volo (solo nome).
-// Con `usageCounts` ({ personId: n° note }) le persone già usate almeno una
-// volta salgono in cima (ordinate per uso, poi alfabetico) e sono separate
-// visivamente ("Frequenti" / "Altre persone") dal resto, ordinato solo
-// alfabeticamente.
+// Con `usageCounts` ({ personId: n° note }) il 50% più usato (per numero di
+// note, non solo "usate almeno una volta") sale in cima sotto "Frequenti"
+// (ordinate per uso, poi alfabetico), separato visivamente dall'altro 50%
+// sotto "Altre persone" (ordinato solo alfabeticamente).
 export default function PeoplePickerSheet({
   open,
   people,
@@ -49,21 +49,19 @@ export default function PeoplePickerSheet({
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
-  // Separa chi ha già almeno una nota (ordinate per uso, poi alfabetico) dal
-  // resto (solo alfabetico), così le più frequenti in cima non si confondono
-  // con le altre.
+  // Divide a metà per numero di note (non per "usata almeno una volta"): il
+  // 50% più usato in cima (ordinate per uso, poi alfabetico), il resto sotto
+  // (solo alfabetico) — così le più frequenti in cima non si confondono con
+  // le altre.
   const { frequentPeople, otherPeople } = useMemo(() => {
     if (!usageCounts) return { frequentPeople: people, otherPeople: [] }
-    const frequent = []
-    const other = []
-    for (const person of people) {
-      ;(usageCounts[person.id] ? frequent : other).push(person)
-    }
-    frequent.sort((a, b) => {
+    const byUsage = [...people].sort((a, b) => {
       const diff = (usageCounts[b.id] || 0) - (usageCounts[a.id] || 0)
       return diff !== 0 ? diff : a.name.localeCompare(b.name)
     })
-    other.sort((a, b) => a.name.localeCompare(b.name))
+    const splitAt = Math.ceil(byUsage.length / 2)
+    const frequent = byUsage.slice(0, splitAt)
+    const other = byUsage.slice(splitAt).sort((a, b) => a.name.localeCompare(b.name))
     return { frequentPeople: frequent, otherPeople: other }
   }, [people, usageCounts])
 

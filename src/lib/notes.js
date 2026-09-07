@@ -223,6 +223,31 @@ export async function peopleUsageCounts() {
   return counts
 }
 
+// Luoghi già usati in altre note (nome + coordinate), dal più recente,
+// deduplicati per nome — per riproporli quando si aggiunge un luogo a una
+// nuova nota invece di dover ricercare/ridigitare da capo. Non serve una
+// collection dedicata: il luogo vive già dentro ogni nota (campo `place`,
+// JSON {name,lat,lon}); si legge solo quel campo (proiezione leggera, come
+// `peopleUsageCounts` sopra) e si deduplica lato client.
+export async function listRecentPlaces() {
+  const records = await pb.collection(COLLECTION).getFullList({
+    filter: 'place != ""',
+    fields: 'place',
+    sort: '-date',
+  })
+  const seen = new Set()
+  const places = []
+  for (const r of records) {
+    const p = parsePlace(r.place)
+    if (!p?.name) continue
+    const key = p.name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    places.push(p)
+  }
+  return places
+}
+
 // Note che coinvolgono una data persona (record completi di `people`, così
 // da poter riscrivere la relazione senza perdere le altre persone).
 export async function listNotesWithPerson(personId) {

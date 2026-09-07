@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 import { loadLeaflet, searchPlaces, reverseGeocode } from '../lib/leaflet'
+import { listRecentPlaces } from '../lib/notes'
 
 const DEFAULT_CENTER = [41.9, 12.5] // Italia, vista d'insieme
 const DEFAULT_ZOOM = 5
@@ -33,10 +34,24 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
   const [selected, setSelected] = useState(null)
   const [nameOverride, setNameOverride] = useState('')
   const [locating, setLocating] = useState(false)
+  const [recentPlaces, setRecentPlaces] = useState([])
 
   const mapElRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
+
+  // Luoghi già usati in altre note, per riproporli invece di dover
+  // ricercare/ridigitare da capo un posto in cui si è già stati.
+  useEffect(() => {
+    if (!open) return
+    let alive = true
+    listRecentPlaces()
+      .then((places) => alive && setRecentPlaces(places))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [open])
 
   // Crea la mappa una volta sola all'apertura, con tocco per selezionare un punto.
   useEffect(() => {
@@ -92,6 +107,7 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
     setSelected(null)
     setNameOverride('')
     setError('')
+    setRecentPlaces([])
   }, [open])
 
   if (!open) return null
@@ -171,6 +187,30 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
             {searching ? '…' : 'Cerca'}
           </button>
         </div>
+
+        {!results.length && recentPlaces.length > 0 && (
+          <div className="border-b border-line px-5 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Luoghi già usati
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {recentPlaces.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  onClick={() => {
+                    onAdd(p)
+                    onClose()
+                  }}
+                  className="flex items-center gap-1.5 rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-cream"
+                >
+                  <Icon name="map-pin" size={12} className="text-ink-soft" />
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <p className="px-5 pt-2 text-xs text-ink-soft">
           Oppure tocca direttamente un punto sulla mappa: puoi scegliere
