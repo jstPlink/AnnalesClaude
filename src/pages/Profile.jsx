@@ -18,7 +18,12 @@ import {
   listImmichPeople,
   describeImmichError,
 } from '../lib/immich'
-import { listPeople, createPersonFromImmich, deletePerson } from '../lib/people'
+import {
+  listPeople,
+  createPerson,
+  createPersonFromImmich,
+  deletePerson,
+} from '../lib/people'
 import { listTags, createTag, deleteTag } from '../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../lib/gemini'
@@ -66,6 +71,8 @@ export default function Profile() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [newPersonName, setNewPersonName] = useState('')
+  const [creatingPerson, setCreatingPerson] = useState(false)
   // Persona collegata a delle note per cui si è chiesta la rimozione:
   // { person, notes }. Finché è impostato, mostra il dialog di scelta.
   const [personToDelete, setPersonToDelete] = useState(null)
@@ -195,6 +202,25 @@ export default function Profile() {
   async function addPerson(immichPerson) {
     const rec = await createPersonFromImmich(immichPerson)
     setPeople((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  // Persona "locale" (solo nome), senza passare da Immich.
+  async function addLocalPerson() {
+    const nm = newPersonName.trim()
+    if (!nm || creatingPerson) return
+    setCreatingPerson(true)
+    setPeopleError('')
+    try {
+      const rec = await createPerson(nm)
+      setPeople((prev) =>
+        [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)),
+      )
+      setNewPersonName('')
+    } catch (err) {
+      setPeopleError(describeError(err))
+    } finally {
+      setCreatingPerson(false)
+    }
   }
 
   async function removePerson(id) {
@@ -354,7 +380,8 @@ export default function Profile() {
         </div>
 
         <div className="mt-10">
-          <CollapsibleSection title="Immich">
+          <CollapsibleSection title="Integrazioni" icon="link">
+            <CollapsibleSection title="Immich" icon="image">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
               aggiungi immagini a una nota.
@@ -411,126 +438,55 @@ export default function Profile() {
                 {saving ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-          </CollapsibleSection>
-        </div>
+            </CollapsibleSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Persone">
-            <p className="text-xs text-ink-soft">
-              Elenco delle persone selezionabili nelle note, pescate dal tuo
-              Immich.
-            </p>
-            {peopleError && (
-              <p className="text-xs text-delete-dark">{peopleError}</p>
-            )}
-            {people.length > 0 && (
-              <div className="space-y-1">
-                {people.map((person) => (
-                  <div
-                    key={person.id}
-                    className="flex items-center gap-3 rounded-xl px-1 py-1"
-                  >
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                    />
-                    <span className="flex-1 text-sm font-medium text-ink">
-                      {person.name}
-                    </span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingId === person.id}
-                      onClick={() => removePerson(person.id)}
-                      className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={!immichReady}
-                onClick={() => setPickerOpen(true)}
-                title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
-                className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-              >
-                + Aggiungi da Immich
-              </button>
-              {people.length > 0 && (
+            <CollapsibleSection title="Gemini (IA)" icon="sparkles">
+              <p className="text-xs text-ink-soft">
+                Chiave API di Google AI Studio per ripulire il testo delle note,
+                riconoscere le persone citate e scrivere contenuti con l'IA.
+              </p>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-ink-soft">
+                  API key
+                </span>
+                <input
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                />
+              </label>
+              {geminiStatus && (
+                <p
+                  className={
+                    'text-xs ' +
+                    (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+                  }
+                >
+                  {geminiStatus.message}
+                </p>
+              )}
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  disabled={!immichReady || refreshing}
-                  onClick={refreshNamesFromImmich}
-                  title={
-                    immichReady
-                      ? 'Aggiorna i nomi se sono cambiati su Immich'
-                      : 'Configura prima Immich qui sopra'
-                  }
+                  onClick={testGemini}
+                  disabled={testingGemini || !geminiApiKey.trim()}
                   className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
                 >
-                  {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+                  {testingGemini ? 'Verifico…' : 'Testa connessione'}
                 </button>
-              )}
-            </div>
-          </CollapsibleSection>
-        </div>
-
-        <div className="mt-6">
-          <CollapsibleSection title="Tag">
-            <p className="text-xs text-ink-soft">
-              Elenco dei tag selezionabili nelle note.
-            </p>
-            {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
-                  >
-                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
-                    {tag.name}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingTagId === tag.id}
-                      onClick={() => removeTag(tag.id)}
-                      className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={12} />
-                    </button>
-                  </span>
-                ))}
+                <button
+                  type="button"
+                  onClick={saveGemini}
+                  disabled={savingGemini}
+                  className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {savingGemini ? 'Salvo…' : 'Salva'}
+                </button>
               </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nuovo tag…"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
-              />
-              <button
-                type="button"
-                disabled={!newTag.trim() || creatingTag}
-                onClick={addTag}
-                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-              >
-                {creatingTag ? '…' : 'Crea'}
-              </button>
-            </div>
-          </CollapsibleSection>
-        </div>
+            </CollapsibleSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Spotify">
+            <CollapsibleSection title="Spotify" icon="music">
             <p className="text-xs text-ink-soft">
               Client ID/Secret di un'app Spotify (Client Credentials) per
               cercare canzoni da aggiungere alle note, senza incollare link a
@@ -589,57 +545,144 @@ export default function Profile() {
               </button>
             </div>
           </CollapsibleSection>
+          </CollapsibleSection>
         </div>
 
         <div className="mt-6">
-          <CollapsibleSection title="Gemini (IA)">
+          <CollapsibleSection title="Persone" icon="user">
             <p className="text-xs text-ink-soft">
-              Chiave API di Google AI Studio per ripulire il testo delle note,
-              riconoscere le persone citate e scrivere contenuti con l'IA.
+              Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
+              Immich o creane una nuova qui.
             </p>
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-ink-soft">
-                API key
-              </span>
-              <input
-                type="password"
-                value={geminiApiKey}
-                onChange={(e) => setGeminiApiKey(e.target.value)}
-                className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
-              />
-            </label>
-            {geminiStatus && (
-              <p
-                className={
-                  'text-xs ' + (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
-                }
-              >
-                {geminiStatus.message}
-              </p>
+            {peopleError && (
+              <p className="text-xs text-delete-dark">{peopleError}</p>
             )}
+            {people.length > 0 && (
+              <div className="space-y-1">
+                {people.map((person) => (
+                  <div
+                    key={person.id}
+                    className="flex items-center gap-3 rounded-xl px-1 py-1"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                    />
+                    <span className="flex-1 text-sm font-medium text-ink">
+                      {person.name}
+                    </span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingId === person.id}
+                      onClick={() => removePerson(person.id)}
+                      className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nuova persona…"
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addLocalPerson()}
+                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
+              />
+              <button
+                type="button"
+                disabled={!newPersonName.trim() || creatingPerson}
+                onClick={addLocalPerson}
+                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {creatingPerson ? '…' : 'Crea'}
+              </button>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={testGemini}
-                disabled={testingGemini || !geminiApiKey.trim()}
+                disabled={!immichReady}
+                onClick={() => setPickerOpen(true)}
+                title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
                 className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
               >
-                {testingGemini ? 'Verifico…' : 'Testa connessione'}
+                + Aggiungi da Immich
               </button>
+              {people.length > 0 && (
+                <button
+                  type="button"
+                  disabled={!immichReady || refreshing}
+                  onClick={refreshNamesFromImmich}
+                  title={
+                    immichReady
+                      ? 'Aggiorna i nomi se sono cambiati su Immich'
+                      : 'Configura prima Immich qui sopra'
+                  }
+                  className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+                </button>
+              )}
+            </div>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Tag" icon="tag">
+            <p className="text-xs text-ink-soft">
+              Elenco dei tag selezionabili nelle note.
+            </p>
+            {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
+                  >
+                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
+                    {tag.name}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingTagId === tag.id}
+                      onClick={() => removeTag(tag.id)}
+                      className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nuovo tag…"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
+              />
               <button
                 type="button"
-                onClick={saveGemini}
-                disabled={savingGemini}
-                className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                disabled={!newTag.trim() || creatingTag}
+                onClick={addTag}
+                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
               >
-                {savingGemini ? 'Salvo…' : 'Salva'}
+                {creatingTag ? '…' : 'Crea'}
               </button>
             </div>
           </CollapsibleSection>
         </div>
 
         <div className="mt-6">
-          <CollapsibleSection title="Supporto">
+          <CollapsibleSection title="Supporto" icon="mail">
             <p className="text-xs text-ink-soft">
               Domande, problemi o suggerimenti su Annales? Scrivimi pure.
             </p>
@@ -665,7 +708,7 @@ export default function Profile() {
         </div>
 
         <div className="mt-6">
-          <CollapsibleSection title="Offrimi un caffè">
+          <CollapsibleSection title="Offrimi un caffè" icon="heart">
             <p className="text-xs text-ink-soft">
               Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
               farlo da qui.

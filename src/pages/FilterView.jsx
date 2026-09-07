@@ -5,6 +5,8 @@ import Footer from '../components/Footer'
 import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
+import PersonAvatar from '../components/PersonAvatar'
+import { useAuth } from '../context/AuthContext'
 import { listNotesFiltered, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
@@ -51,6 +53,10 @@ function FilterField({ label, children }) {
 
 export default function FilterView() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
+  const [peopleOpen, setPeopleOpen] = useState(false)
   const [filters, setFilters] = useState({
     from: '',
     to: '',
@@ -210,25 +216,58 @@ export default function FilterView() {
           )}
 
           {people.length > 0 && (
-            <FilterField label="Persone">
-              <div className="flex flex-wrap gap-1.5">
-                {people.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => togglePerson(p.id)}
-                    className={
-                      'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                      (filters.personIds.includes(p.id)
-                        ? 'bg-ink text-cream'
-                        : 'border border-line bg-cream text-ink')
-                    }
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            </FilterField>
+            <div>
+              <button
+                type="button"
+                onClick={() => setPeopleOpen((v) => !v)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Persone
+                </span>
+                {filters.personIds.length > 0 && (
+                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
+                    {filters.personIds.length}
+                  </span>
+                )}
+                <Icon
+                  name="chevron-right"
+                  size={14}
+                  className={
+                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    (peopleOpen ? 'rotate-90' : '')
+                  }
+                />
+              </button>
+              {peopleOpen && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {people.map((p) => {
+                    const active = filters.personIds.includes(p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => togglePerson(p.id)}
+                        className={
+                          'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition active:scale-95 ' +
+                          (active
+                            ? 'bg-ink text-cream'
+                            : 'border border-line bg-cream text-ink')
+                        }
+                      >
+                        <PersonAvatar
+                          person={p}
+                          immichUrl={immichUrl}
+                          immichApiKey={immichApiKey}
+                          size={20}
+                        />
+                        {p.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           {tagsError && (

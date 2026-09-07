@@ -4,8 +4,14 @@ import { haptic } from '../lib/haptics'
 
 // Sezione a fisarmonica per organizzare pagine lunghe (es. Profilo).
 // L'intera sezione (anche da chiusa) è un riquadro visibile con bordo, così
-// è chiaro dove toccare per espanderla.
-export default function CollapsibleSection({ title, defaultOpen = false, children }) {
+// è chiaro dove toccare per espanderla. `icon` (nome da <Icon>) aggiunge
+// un'icona a sinistra del titolo per riconoscere la voce a colpo d'occhio.
+export default function CollapsibleSection({
+  title,
+  icon,
+  defaultOpen = false,
+  children,
+}) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -16,9 +22,12 @@ export default function CollapsibleSection({ title, defaultOpen = false, childre
           haptic()
           setOpen((v) => !v)
         }}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition active:bg-tag/40"
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition active:bg-tag/40"
       >
-        <span className="text-sm font-bold text-ink">{title}</span>
+        {icon && (
+          <Icon name={icon} size={16} className="shrink-0 text-ink-soft" />
+        )}
+        <span className="flex-1 text-sm font-bold text-ink">{title}</span>
         <Icon
           name="chevron-right"
           size={16}
