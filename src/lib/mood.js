@@ -65,12 +65,15 @@ export function moodTextColor(value) {
 // Opacità del titolo di una nota in base a quanto il mood si allontana dal
 // centro scala (0.5, neutro): più il mood è marcato (vicino a 0 o 1), più il
 // titolo è leggibile; più è neutro, più sfuma — al posto di nasconderlo del
-// tutto sopra/sotto una soglia. Interpolazione lineare tra i punti indicati
-// (in "distanza da 0.5"): 0 → 0.3, 0.1 → 0.5, 0.2 → 0.75, 0.3+ → 1.
+// tutto sopra/sotto una soglia. Simmetrica per costruzione (si lavora sulla
+// distanza assoluta da 0.5, non sul segno). Interpolazione lineare tra i
+// punti indicati (in "distanza da 0.5"): 0 → 0.2, 0.1 → 0.4, 0.2 → 0.7,
+// 0.3+ → 1 — divario più marcato di prima per rendere la differenza più
+// visibile a colpo d'occhio.
 const TITLE_OPACITY_STOPS = [
-  { d: 0, o: 0.3 },
-  { d: 0.1, o: 0.5 },
-  { d: 0.2, o: 0.75 },
+  { d: 0, o: 0.2 },
+  { d: 0.1, o: 0.4 },
+  { d: 0.2, o: 0.7 },
   { d: 0.3, o: 1 },
 ]
 

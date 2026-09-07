@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.7',
+    date: '2026-09-07 21:42',
+    changes: [
+      'Vista mese (mobile e web): divario di opacità dei titoli in base al mood più marcato (0.2 a mood neutro invece di 0.3), per notare la differenza più a colpo d\'occhio.',
+    ],
+  },
+  {
     version: '0.10.6',
     date: '2026-09-07 21:39',
     changes: [
