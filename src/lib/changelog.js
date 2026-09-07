@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.3',
+    date: '2026-09-07 20:45',
+    changes: [
+      'Vista mese (web): anno e mese ora sono un\'unica placchetta con le frecce inglobate agli estremi; cliccando nel mezzo si apre un menu per saltare a un anno o mese non adiacente. Anche "Oggi" è diventato una placchetta.',
+    ],
+  },
+  {
     version: '0.10.2',
     date: '2026-09-07 20:35',
     changes: [
