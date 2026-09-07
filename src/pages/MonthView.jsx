@@ -12,7 +12,7 @@ import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
-import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../lib/mood'
+import { dayMood, moodColor, moodTextColor } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -108,11 +108,8 @@ export default function MonthView() {
           alt: n.title || '',
         })),
       )
-      // Titoli delle note "estreme": mood molto alto o molto basso.
-      const titles = dayNotes
-        .filter((n) => isNoteworthyMood(n.mood))
-        .map((n) => n.title)
-        .filter(Boolean)
+      // Titoli di tutte le note del giorno (nessun filtro sul mood).
+      const titles = dayNotes.map((n) => n.title).filter(Boolean)
       return {
         key,
         dayNum: parseWall(key)?.d ?? '',

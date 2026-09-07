@@ -7,7 +7,7 @@ import {
   describeError,
   plainText,
 } from '../../lib/notes'
-import { dayMood, moodColor, moodTextColor, isNoteworthyMood } from '../../lib/mood'
+import { dayMood, moodColor, moodTextColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -135,7 +135,6 @@ export default function WebMonth() {
             const dayNum = parseWall(cell.key)?.d ?? ''
 
             const titles = dayNotes
-              .filter((n) => isNoteworthyMood(n.mood))
               .map((n) => n.title || plainText(n.content).slice(0, 80))
               .filter(Boolean)
             const imgs = dayNotes
