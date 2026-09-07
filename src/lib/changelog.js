@@ -5,6 +5,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.6',
+    date: '2026-09-07 21:39',
+    changes: [
+      'Vista mese/giorno (web): righe centrate (non più appiccicate a sinistra) e ridotte di un altro 20% (dal 75% al 60% della larghezza).',
+      'Vista giorno (web e mobile): sfondo del pannello cambiato, righe orarie estese a tutta larghezza (anche dietro alle note) invece dei trattini corti.',
+      'Vista giorno (web): pulsante "Torna al mese" ingrandito, era troppo piccolo.',
+    ],
+  },
+  {
     version: '0.10.5',
     date: '2026-09-07 21:17',
     changes: [

@@ -242,7 +242,7 @@ export default function WebMonth() {
 
       <OnThisDay className="mb-5 max-w-md" />
 
-      <div className="w-3/4 divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
+      <div className="mx-auto w-3/5 divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
         {grid
           .filter((cell) => cell.inMonth)
           .map((cell) => {

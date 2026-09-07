@@ -22,7 +22,6 @@ import {
 const DAY_MIN = 24 * 60
 const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
 const RAIL_W = 31 // px, larghezza della barra oraria a sinistra (-20%, poi -15%)
-const HOUR_LINE_W = Math.round(RAIL_W / 2) // trattini alle ore: metà della colonna
 const MIN_BLOCK = 24 // px, altezza minima di un blocco nota
 
 function startMinutes(value) {
@@ -56,7 +55,7 @@ function ClampedPreview({ text }) {
       </span>
       {clamped && (
         <>
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-panel to-transparent" />
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-tag to-transparent" />
           <span className="pointer-events-none absolute bottom-0 right-0 text-[11px] leading-snug text-ink-soft">
             …
           </span>
@@ -183,7 +182,7 @@ export default function DayView() {
       </header>
 
       <main
-        className="relative flex-1 overflow-hidden px-3 py-3"
+        className="relative flex-1 overflow-hidden bg-panel px-3 py-3"
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -195,32 +194,26 @@ export default function DayView() {
         )}
 
         <div ref={trackRef} className="relative h-full w-full">
-          {/* Barra oraria: solo linee orizzontali alle ore senza etichetta
-              (nessuna linea verticale, nessuna tacchetta alle ore con testo:
-              lo scritto stesso ne marca la posizione). Etichetta ogni 3 ore. */}
-          <div className="absolute inset-y-0 left-0" style={{ width: RAIL_W }}>
+          {/* Barra oraria: una riga per ogni ora, estesa da qui fino al
+              bordo opposto dello schermo (dietro alle note, quando ce ne
+              sono). Etichetta ogni 3 ore. */}
+          <div className="absolute inset-0">
             {Array.from({ length: 25 }, (_, h) => {
               const top = h * 60 * pxPerMin
               const label = h % 3 === 0 && h < 24
               return (
-                <div key={h}>
-                  {!label && (
-                    <span
-                      className="absolute right-0 bg-line"
-                      style={{ top, height: 1, width: HOUR_LINE_W }}
-                    />
-                  )}
-                  {label && (
-                    <span
-                      className="absolute left-0 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
-                      style={{
-                        top: Math.min(Math.max(top - 6, 0), trackH - 12),
-                        width: RAIL_W,
-                      }}
-                    >
-                      {String(h).padStart(2, '0')}:00
-                    </span>
-                  )}
+                <div
+                  key={h}
+                  className="absolute left-0 right-0 flex items-start"
+                  style={{ top }}
+                >
+                  <span
+                    className="shrink-0 -translate-y-1.5 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
+                    style={{ width: RAIL_W }}
+                  >
+                    {label ? `${String(h).padStart(2, '0')}:00` : ''}
+                  </span>
+                  <span className="mt-[1px] h-px flex-1 bg-line/70" />
                 </div>
               )
             })}
@@ -249,7 +242,7 @@ export default function DayView() {
                     key={n.id}
                     type="button"
                     onClick={() => navigate(`/note/${n.id}`)}
-                    className="absolute overflow-hidden rounded-xl border border-line bg-panel text-left shadow-sm transition active:scale-[0.99]"
+                    className="absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
                     style={{
                       top,
                       height: h,

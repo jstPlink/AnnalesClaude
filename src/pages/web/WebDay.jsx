@@ -22,11 +22,10 @@ import {
 // Stessa logica della vista giorno mobile (src/pages/DayView.jsx): l'intera
 // giornata (24h) viene compressa per stare tutta nell'altezza disponibile
 // sullo schermo, senza dover scorrere la pagina per vedere le note più
-// tarde. La larghezza della colonna (w-3/4 sul wrapper più sotto) è la
-// stessa delle righe della vista mese (WebMonth), per coerenza visiva.
+// tarde. La larghezza della colonna (sul wrapper più sotto) è la stessa
+// delle righe della vista mese (WebMonth), centrata nella pagina.
 const DAY_MIN = 24 * 60
 const RAIL_W = 48 // px, larghezza della barra oraria a sinistra
-const HOUR_LINE_W = Math.round(RAIL_W / 2)
 const MIN_BLOCK = 30 // px, altezza minima di un blocco nota
 
 function startMinutes(value) {
@@ -158,14 +157,14 @@ export default function WebDay() {
   const pxPerMin = trackH / DAY_MIN
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] w-3/4 flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-4rem)] w-3/5 flex-col">
       <header className="mb-4 shrink-0">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-ink"
+          className="mb-3 flex items-center gap-2 text-base font-bold text-ink-soft transition hover:text-ink"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Torna al mese
@@ -208,7 +207,7 @@ export default function WebDay() {
         </p>
       )}
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-sand/40 p-4">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
         {loading ? (
           <p className="flex h-full items-center justify-center text-ink-soft">Carico…</p>
         ) : !notes.length ? (
@@ -224,31 +223,26 @@ export default function WebDay() {
           </div>
         ) : (
           <div ref={trackRef} className="relative h-full">
-            {/* Barra oraria: solo trattini alle ore (nessuna riga a tutta
-                larghezza), etichetta ogni 3 ore — come su mobile. */}
-            <div className="absolute inset-y-0 left-0" style={{ width: RAIL_W }}>
+            {/* Barra oraria: una riga per ogni ora, estesa da qui fino al
+                bordo opposto della pagina (dietro alle note, quando ce ne
+                sono), etichetta ogni 3 ore. */}
+            <div className="absolute inset-0">
               {Array.from({ length: 25 }, (_, h) => {
                 const top = h * 60 * pxPerMin
                 const label = h % 3 === 0 && h < 24
                 return (
-                  <div key={h}>
-                    {!label && (
-                      <span
-                        className="absolute right-0 bg-line"
-                        style={{ top, height: 1, width: HOUR_LINE_W }}
-                      />
-                    )}
-                    {label && (
-                      <span
-                        className="absolute left-0 text-right text-xs font-semibold tabular-nums text-ink-soft"
-                        style={{
-                          top: Math.min(Math.max(top - 7, 0), trackH - 14),
-                          width: RAIL_W,
-                        }}
-                      >
-                        {String(h).padStart(2, '0')}:00
-                      </span>
-                    )}
+                  <div
+                    key={h}
+                    className="absolute left-0 right-0 flex items-start"
+                    style={{ top }}
+                  >
+                    <span
+                      className="shrink-0 -translate-y-2 text-right text-xs font-semibold tabular-nums text-ink-soft"
+                      style={{ width: RAIL_W }}
+                    >
+                      {label ? `${String(h).padStart(2, '0')}:00` : ''}
+                    </span>
+                    <span className="mt-[1px] h-px flex-1 bg-line/70" />
                   </div>
                 )
               })}
