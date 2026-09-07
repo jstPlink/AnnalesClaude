@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Icon from '../../components/Icon'
+import MarqueeText from '../../components/MarqueeText'
+import ImageCarousel from '../../components/ImageCarousel'
 import {
   listNotesInRange,
   describeError,
   plainText,
 } from '../../lib/notes'
-import { moodColor } from '../../lib/mood'
+import { moodColor, moodTextColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
 import {
   addDaysKey,
@@ -17,18 +19,63 @@ import {
   timeLabel,
 } from '../../lib/dates'
 
-const PX_PER_MIN = 1.5
-const MIN_CARD = 78
+// Stessa logica della vista giorno mobile (src/pages/DayView.jsx): l'intera
+// giornata (24h) viene compressa per stare tutta nell'altezza disponibile
+// sullo schermo, senza dover scorrere la pagina per vedere le note più
+// tarde. La larghezza della colonna (w-3/4 sul wrapper più sotto) è la
+// stessa delle righe della vista mese (WebMonth), per coerenza visiva.
+const DAY_MIN = 24 * 60
+const RAIL_W = 48 // px, larghezza della barra oraria a sinistra
+const HOUR_LINE_W = Math.round(RAIL_W / 2)
+const MIN_BLOCK = 30 // px, altezza minima di un blocco nota
 
-function startMinutes(v) {
-  const p = parseWall(v)
+function startMinutes(value) {
+  const p = parseWall(value)
   return p ? p.h * 60 + p.mi : 0
 }
 
+// Anteprima del contenuto: riempie lo spazio rimasto sotto il titolo e, se il
+// testo non ci sta, sfuma verso il basso terminando con "…" (stessa logica
+// della vista giorno mobile).
+function ClampedPreview({ text }) {
+  const ref = useRef(null)
+  const [clamped, setClamped] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [text])
+
+  return (
+    <span className="relative min-h-0 flex-1 overflow-hidden">
+      <span
+        ref={ref}
+        className="block h-full overflow-hidden text-[13px] leading-snug text-ink-soft"
+      >
+        {text}
+      </span>
+      {clamped && (
+        <>
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-tag to-transparent" />
+          <span className="pointer-events-none absolute bottom-0 right-0 text-[13px] leading-snug text-ink-soft">
+            …
+          </span>
+        </>
+      )}
+    </span>
+  )
+}
+
+// Assegna una "corsia" a note che si sovrappongono nel tempo.
 function withLanes(items) {
   const laneEnd = []
   const placed = items.map((it) => {
-    let lane = laneEnd.findIndex((e) => e <= it.startMin)
+    let lane = laneEnd.findIndex((end) => end <= it.startMin)
     if (lane === -1) {
       lane = laneEnd.length
       laneEnd.push(it.endMin)
@@ -46,6 +93,8 @@ export default function WebDay() {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const trackRef = useRef(null)
+  const [trackH, setTrackH] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -79,27 +128,38 @@ export default function WebDay() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  const { blocks, fromH, toH } = useMemo(() => {
-    if (!notes.length) return { blocks: [], fromH: 8, toH: 20 }
+  // Misura l'altezza disponibile per la fascia oraria (deve stare tutta in
+  // una schermata, come su mobile).
+  useLayoutEffect(() => {
+    const el = trackRef.current
+    if (!el) return
+    const update = () => setTrackH(el.clientHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [loading, notes.length])
+
+  const blocks = useMemo(() => {
     const items = notes.map((n) => {
-      const s = Math.max(0, Math.min(1440, startMinutes(n.timeStart)))
-      const dur = durationMinutes(n.timeStart, n.timeEnd) || 30
-      return { note: n, startMin: s, endMin: Math.min(1440, s + dur) }
+      const startMin = Math.max(0, Math.min(DAY_MIN, startMinutes(n.timeStart)))
+      const dur = durationMinutes(n.timeStart, n.timeEnd)
+      const endMin = Math.min(DAY_MIN, startMin + (dur || 0))
+      // URL immagini precalcolati (riferimento stabile: il carosello non si
+      // resetta a ogni render della vista).
+      const images = (n.images || []).map((fn) => ({
+        url: fileUrl(n, fn, { thumb: '400x400' }),
+      }))
+      return { note: n, startMin, endMin, images }
     })
-    let lo = Math.floor(Math.min(...items.map((i) => i.startMin)) / 60) - 1
-    let hi = Math.ceil(Math.max(...items.map((i) => i.endMin)) / 60) + 1
-    lo = Math.max(0, lo)
-    hi = Math.min(24, hi)
-    if (hi - lo < 6) hi = Math.min(24, lo + 6)
-    return { blocks: withLanes(items), fromH: lo, toH: hi }
+    return withLanes(items)
   }, [notes])
 
-  const originMin = fromH * 60
-  const trackH = (toH - fromH) * 60 * PX_PER_MIN
+  const pxPerMin = trackH / DAY_MIN
 
   return (
-    <div>
-      <header className="mb-6">
+    <div className="flex h-[calc(100dvh-4rem)] w-3/4 flex-col">
+      <header className="mb-4 shrink-0">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -120,7 +180,7 @@ export default function WebDay() {
             >
               <Icon name="chevron-left" size={18} />
             </button>
-            <h1 className="min-w-0 font-serif text-4xl font-semibold tracking-tight text-ink">
+            <h1 className="min-w-0 truncate font-serif text-3xl font-semibold tracking-tight text-ink">
               {fullDayLabel(date)}
             </h1>
             <button
@@ -143,111 +203,145 @@ export default function WebDay() {
       </header>
 
       {error && (
-        <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
+        <p className="mb-3 shrink-0 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
           {error}
         </p>
       )}
 
-      {loading ? (
-        <p className="py-16 text-center text-ink-soft">Carico…</p>
-      ) : !notes.length ? (
-        <div className="rounded-3xl border border-dashed border-line py-20 text-center">
-          <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
-          <button
-            type="button"
-            onClick={() => navigate(`/note/new?date=${date}`)}
-            className="mt-4 rounded-full border border-line bg-tag px-5 py-2.5 text-sm font-bold text-ink transition hover:bg-cream"
-          >
-            Crea la prima nota
-          </button>
-        </div>
-      ) : (
-        <div
-          className="relative rounded-3xl border border-line bg-sand/40 p-4"
-          style={{ minHeight: trackH + 32 }}
-        >
-          <div className="relative" style={{ height: trackH }}>
-            {/* Righe e ore */}
-            {Array.from({ length: toH - fromH + 1 }, (_, i) => {
-              const top = i * 60 * PX_PER_MIN
-              return (
-                <div
-                  key={i}
-                  className="absolute left-0 right-0 flex items-start"
-                  style={{ top }}
-                >
-                  <span className="w-14 shrink-0 -translate-y-2 text-right text-xs font-semibold tabular-nums text-ink-soft">
-                    {String(fromH + i).padStart(2, '0')}:00
-                  </span>
-                  <span className="mt-[1px] h-px flex-1 bg-line/70" />
-                </div>
-              )
-            })}
-
-            {/* Note */}
-            <div className="absolute inset-y-0" style={{ left: 64, right: 8 }}>
-              {blocks.map(({ note: n, startMin, endMin, lane, lanes }) => {
-                const top = (startMin - originMin) * PX_PER_MIN
-                const height = Math.max(
-                  MIN_CARD,
-                  (endMin - startMin) * PX_PER_MIN,
-                )
-                const widthPct = 100 / lanes
-                const img = n.images?.[0]
-                const preview = plainText(n.content)
+      <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-sand/40 p-4">
+        {loading ? (
+          <p className="flex h-full items-center justify-center text-ink-soft">Carico…</p>
+        ) : !notes.length ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
+            <button
+              type="button"
+              onClick={() => navigate(`/note/new?date=${date}`)}
+              className="rounded-full border border-line bg-tag px-5 py-2.5 text-sm font-bold text-ink transition hover:bg-cream"
+            >
+              Crea la prima nota
+            </button>
+          </div>
+        ) : (
+          <div ref={trackRef} className="relative h-full">
+            {/* Barra oraria: solo trattini alle ore (nessuna riga a tutta
+                larghezza), etichetta ogni 3 ore — come su mobile. */}
+            <div className="absolute inset-y-0 left-0" style={{ width: RAIL_W }}>
+              {Array.from({ length: 25 }, (_, h) => {
+                const top = h * 60 * pxPerMin
+                const label = h % 3 === 0 && h < 24
                 return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => navigate(`/note/${n.id}`)}
-                    className="absolute flex overflow-hidden rounded-2xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
-                    style={{
-                      top,
-                      height,
-                      left: `calc(${lane * widthPct}% + ${lane ? 6 : 0}px)`,
-                      width: `calc(${widthPct}% - ${lanes > 1 ? 6 : 0}px)`,
-                    }}
-                  >
-                    <span
-                      className="w-1.5 shrink-0"
-                      style={{ backgroundColor: moodColor(n.mood) }}
-                    />
-                    <span className="flex min-w-0 flex-1 flex-col gap-1 p-3">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold tabular-nums text-ink-soft">
-                          {timeLabel(n.timeStart)} – {timeLabel(n.timeEnd)}
-                        </span>
-                        {n.people?.length > 0 && (
-                          <span className="flex shrink-0 items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink-soft">
-                            <Icon name="user" size={10} />
-                            {n.people.length}
-                          </span>
-                        )}
-                      </span>
-                      <span className="truncate font-serif text-[17px] font-semibold text-ink">
-                        {n.title || 'Senza titolo'}
-                      </span>
-                      {preview && (
-                        <span className="line-clamp-3 text-[13px] leading-snug text-ink-soft">
-                          {preview}
-                        </span>
-                      )}
-                    </span>
-                    {img && (
-                      <img
-                        src={fileUrl(n, img, { thumb: '200x200' })}
-                        alt=""
-                        loading="lazy"
-                        className="m-2 h-[calc(100%_-_1rem)] w-24 shrink-0 self-center rounded-xl object-cover"
+                  <div key={h}>
+                    {!label && (
+                      <span
+                        className="absolute right-0 bg-line"
+                        style={{ top, height: 1, width: HOUR_LINE_W }}
                       />
                     )}
-                  </button>
+                    {label && (
+                      <span
+                        className="absolute left-0 text-right text-xs font-semibold tabular-nums text-ink-soft"
+                        style={{
+                          top: Math.min(Math.max(top - 7, 0), trackH - 14),
+                          width: RAIL_W,
+                        }}
+                      >
+                        {String(h).padStart(2, '0')}:00
+                      </span>
+                    )}
+                  </div>
                 )
               })}
             </div>
+
+            {/* Note posizionate sull'asse temporale */}
+            <div className="absolute inset-y-0 right-0" style={{ left: RAIL_W + 14 }}>
+              {trackH > 0 &&
+                blocks.map(({ note: n, startMin, endMin, lane, lanes, images }) => {
+                  const top = startMin * pxPerMin
+                  const rawH = (endMin - startMin) * pxPerMin
+                  const h = Math.max(MIN_BLOCK, rawH)
+                  const widthPct = 100 / lanes
+                  const tiny = h < 40
+                  const img = images[0]
+                  const preview = h >= 70 ? plainText(n.content) : ''
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => navigate(`/note/${n.id}`)}
+                      className="absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
+                      style={{
+                        top,
+                        height: h,
+                        left: `calc(${lane * widthPct}% + ${lane ? 6 : 0}px)`,
+                        width: `calc(${widthPct}% - ${lanes > 1 ? 6 : 0}px)`,
+                      }}
+                    >
+                      {tiny ? (
+                        <span
+                          className="block h-full w-full"
+                          style={{ backgroundColor: moodColor(n.mood) }}
+                        />
+                      ) : (
+                        <span className="flex h-full w-full">
+                          {/* Orario di inizio/fine avvolto dal colore del mood */}
+                          <span
+                            className="flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-xs font-bold tabular-nums"
+                            style={{
+                              backgroundColor: moodColor(n.mood),
+                              color: moodTextColor(n.mood),
+                            }}
+                          >
+                            <span>{timeLabel(n.timeStart)}</span>
+                            <span>{timeLabel(n.timeEnd)}</span>
+                          </span>
+
+                          <span className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-2">
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              <MarqueeText className="min-w-0 flex-1 shrink font-serif text-[15px] font-semibold leading-tight text-ink">
+                                {n.title || (
+                                  <span className="italic text-ink-soft">Senza titolo</span>
+                                )}
+                              </MarqueeText>
+                              {n.people?.length > 0 && (
+                                <span className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">
+                                  <Icon name="user" size={11} strokeWidth={3} />
+                                  {n.people.length}
+                                </span>
+                              )}
+                            </span>
+                            {preview && <ClampedPreview text={preview} />}
+                          </span>
+
+                          {/* Immagine a larghezza fissa, sempre a destra, a
+                              tutta altezza. Con più foto: carosello. */}
+                          {img && h >= 52 && (
+                            images.length > 1 ? (
+                              <ImageCarousel
+                                images={images}
+                                width={96}
+                                height={h}
+                                rounded=""
+                              />
+                            ) : (
+                              <img
+                                src={img.url}
+                                alt=""
+                                loading="lazy"
+                                className="h-full w-24 shrink-0 bg-panel-2 object-cover"
+                              />
+                            )
+                          )}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

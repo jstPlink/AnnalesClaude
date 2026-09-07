@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 // Testo su una singola riga: se eccede la larghezza disponibile, scorre
 // avanti e indietro (ping pong). Altrimenti resta fermo.
-export default function MarqueeText({ children, className = '' }) {
+export default function MarqueeText({ children, className = '', style }) {
   const wrapRef = useRef(null)
   const textRef = useRef(null)
   const [overflow, setOverflow] = useState(0)
@@ -28,6 +28,7 @@ export default function MarqueeText({ children, className = '' }) {
     <span
       ref={wrapRef}
       className={'block overflow-hidden whitespace-nowrap ' + className}
+      style={style}
     >
       <span
         ref={textRef}

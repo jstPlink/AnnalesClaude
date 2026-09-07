@@ -13,7 +13,7 @@ import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
-import { dayMood, moodColor, moodTextColor } from '../lib/mood'
+import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../lib/mood'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -109,8 +109,12 @@ export default function MonthView() {
           alt: n.title || '',
         })),
       )
-      // Titoli di tutte le note del giorno (nessun filtro sul mood).
-      const titles = dayNotes.map((n) => n.title).filter(Boolean)
+      // Titoli di tutte le note del giorno (nessun filtro sul mood: quelle
+      // vicine al centro scala sfumano invece di sparire, vedi
+      // moodTitleOpacity).
+      const titles = dayNotes
+        .filter((n) => n.title)
+        .map((n) => ({ text: n.title, mood: n.mood }))
       return {
         key,
         dayNum: parseWall(key)?.d ?? '',
@@ -229,8 +233,9 @@ export default function MonthView() {
                       <MarqueeText
                         key={i}
                         className="text-[15px] font-medium text-ink"
+                        style={{ opacity: moodTitleOpacity(t.mood) }}
                       >
-                        {t}
+                        {t.text}
                       </MarqueeText>
                     ))}
                   </div>

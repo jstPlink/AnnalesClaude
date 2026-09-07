@@ -7,7 +7,7 @@ import {
   describeError,
   plainText,
 } from '../../lib/notes'
-import { dayMood, moodColor, moodTextColor } from '../../lib/mood'
+import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
 import OnThisDay from '../../components/OnThisDay'
 import {
@@ -34,35 +34,41 @@ function ArrowIcon({ dir }) {
 // più comodo dello scorrere un passo alla volta con le frecce.
 function PillNav({ label, ariaLabel, prevLabel, nextLabel, onPrev, onNext, open, onToggle, widthClass, dropdown }) {
   return (
-    <div className="relative flex h-11 items-stretch overflow-hidden rounded-full border border-line bg-tag shadow-sm">
-      <button
-        type="button"
-        aria-label={prevLabel}
-        onClick={onPrev}
-        className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
-      >
-        <ArrowIcon dir="left" />
-      </button>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        aria-expanded={open}
-        onClick={onToggle}
-        className={
-          widthClass +
-          ' shrink-0 truncate px-1 text-center font-serif text-2xl font-semibold text-ink transition hover:bg-panel/60'
-        }
-      >
-        {label}
-      </button>
-      <button
-        type="button"
-        aria-label={nextLabel}
-        onClick={onNext}
-        className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
-      >
-        <ArrowIcon dir="right" />
-      </button>
+    // Il "relative" sta sul contenitore esterno (senza overflow-hidden):
+    // il dropdown è posizionato rispetto a questo, non alla pillola vera e
+    // propria, altrimenti l'overflow-hidden della pillola (che arrotonda
+    // gli angoli delle frecce interne) lo taglierebbe via.
+    <div className="relative">
+      <div className="flex h-11 items-stretch overflow-hidden rounded-full border border-line bg-tag shadow-sm">
+        <button
+          type="button"
+          aria-label={prevLabel}
+          onClick={onPrev}
+          className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
+        >
+          <ArrowIcon dir="left" />
+        </button>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          aria-expanded={open}
+          onClick={onToggle}
+          className={
+            widthClass +
+            ' shrink-0 truncate px-1 text-center font-serif text-2xl font-semibold text-ink transition hover:bg-panel/60'
+          }
+        >
+          {label}
+        </button>
+        <button
+          type="button"
+          aria-label={nextLabel}
+          onClick={onNext}
+          className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
+        >
+          <ArrowIcon dir="right" />
+        </button>
+      </div>
       {open && dropdown}
     </div>
   )
@@ -236,7 +242,7 @@ export default function WebMonth() {
 
       <OnThisDay className="mb-5 max-w-md" />
 
-      <div className="divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
+      <div className="w-3/4 divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
         {grid
           .filter((cell) => cell.inMonth)
           .map((cell) => {
@@ -247,9 +253,15 @@ export default function WebMonth() {
             const isWeekend = cell.weekday === 0 || cell.weekday === 6
             const dayNum = parseWall(cell.key)?.d ?? ''
 
+            // Titoli di tutte le note del giorno (nessun filtro sul mood:
+            // quelle vicine al centro scala sfumano invece di sparire, vedi
+            // moodTitleOpacity).
             const titles = dayNotes
-              .map((n) => n.title || plainText(n.content).slice(0, 80))
-              .filter(Boolean)
+              .map((n) => ({
+                text: n.title || plainText(n.content).slice(0, 80),
+                mood: n.mood,
+              }))
+              .filter((t) => t.text)
             const imgs = dayNotes
               .flatMap((n) =>
                 (n.images || []).map((fn) => fileUrl(n, fn, { thumb: '200x200' })),
@@ -306,8 +318,9 @@ export default function WebMonth() {
                           <span
                             key={i}
                             className="max-w-full truncate text-sm font-medium text-ink"
+                            style={{ opacity: moodTitleOpacity(t.mood) }}
                           >
-                            {t}
+                            {t.text}
                           </span>
                         ))}
                       </span>

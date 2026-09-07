@@ -5,6 +5,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.5',
+    date: '2026-09-07 21:17',
+    changes: [
+      'Vista mese (web): risolto il menu a tendina di anno/mese che non compariva più (era tagliato via dagli angoli arrotondati della placchetta).',
+      'Vista giorno (web): ridisegnata come su mobile — la giornata sta sempre tutta a schermo senza dover scorrere, e la colonna è più stretta (stessa larghezza delle righe della vista mese, ridotta del 25%) invece di essere dispersiva a piena larghezza.',
+      'Vista mese (mobile e web): i titoli delle note non compaiono più a tutto o niente in base al mood — sfumano gradualmente più il mood è vicino al centro scala (0.5) e sono a piena opacità quando è marcato (≤0.2 o ≥0.8).',
+    ],
+  },
+  {
     version: '0.10.4',
     date: '2026-09-07 20:48',
     changes: [
