@@ -10,6 +10,12 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+# Un nuovo push annulla le build ancora in corso/in coda: così `:latest` non
+# regredisce a un'immagine più vecchia e la coda si svuota subito.
+concurrency:
+  group: docker-publish
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}

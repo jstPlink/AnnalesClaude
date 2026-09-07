@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.1',
+    date: '2026-09-07 18:03',
+    changes: [
+      'CI: le build Docker superate vengono annullate (`:latest` non regredisce più, coda smaltita subito). Sblocca la pubblicazione della v0.10.0.',
+    ],
+  },
+  {
     version: '0.10.0',
     date: '2026-09-07 16:41',
     changes: [
