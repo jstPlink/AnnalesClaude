@@ -5,6 +5,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.8',
+    date: '2026-09-07 22:07',
+    changes: [
+      'Vista mese (web): i pulsanti anno/mese/Oggi erano sfasati rispetto alla colonna centrata sotto — ora sono allineati alla stessa larghezza.',
+      'Errori Gemini: quando il limite di richieste è raggiunto, il messaggio ora indica un tempo di attesa preciso (dal RetryInfo di Gemini) invece del generico "riprova tra poco".',
+    ],
+  },
+  {
     version: '0.10.7',
     date: '2026-09-07 21:42',
     changes: [

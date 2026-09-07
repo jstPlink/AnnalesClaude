@@ -148,7 +148,7 @@ export default function WebMonth() {
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <header className="mx-auto mb-6 flex w-3/5 flex-wrap items-center justify-between gap-4">
         <div ref={navRef} className="flex flex-wrap items-center gap-3">
           <PillNav
             label={cursor.year}

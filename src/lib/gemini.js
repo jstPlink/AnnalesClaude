@@ -25,14 +25,30 @@ async function callGeminiParts(apiKey, parts) {
   )
   if (!res.ok) {
     let detail = ''
+    let retryDelaySeconds = null
     try {
       const data = await res.json()
       detail = data?.error?.message || ''
+      // Sui 429 Gemini include spesso un dettaglio RetryInfo con il tempo
+      // esatto di attesa consigliato (es. "retryDelay": "38s") — lo usiamo
+      // per dare un tempo preciso invece di un generico "riprova tra poco".
+      const retryInfo = data?.error?.details?.find((d) =>
+        String(d?.['@type'] || '').includes('RetryInfo'),
+      )
+      const m = String(retryInfo?.retryDelay || '').match(/([\d.]+)\s*s/)
+      if (m) retryDelaySeconds = Math.ceil(Number(m[1]))
     } catch {
       // risposta non JSON, ignora
     }
+    if (retryDelaySeconds == null) {
+      const retryAfter = res.headers.get('retry-after')
+      if (retryAfter && !Number.isNaN(Number(retryAfter))) {
+        retryDelaySeconds = Math.ceil(Number(retryAfter))
+      }
+    }
     const err = new Error(detail || 'Richiesta a Gemini non riuscita.')
     err.status = res.status
+    err.retryDelaySeconds = retryDelaySeconds
     throw err
   }
   const data = await res.json()
@@ -292,7 +308,17 @@ export async function draftNoteFromPhotos(
 export function describeGeminiError(err) {
   if (!err) return 'Errore sconosciuto.'
   if (err.status === 400 || err.status === 403) return 'Chiave API Gemini non valida.'
-  if (err.status === 429) return 'Limite di richieste Gemini raggiunto, riprova tra poco.'
+  if (err.status === 429) {
+    const s = err.retryDelaySeconds
+    if (s != null) {
+      const label =
+        s >= 60
+          ? `${Math.ceil(s / 60)} minut${Math.ceil(s / 60) === 1 ? 'o' : 'i'}`
+          : `${s} second${s === 1 ? 'o' : 'i'}`
+      return `Limite di richieste Gemini raggiunto, riprova tra circa ${label}.`
+    }
+    return 'Limite di richieste Gemini raggiunto, riprova tra poco (di solito entro un minuto).'
+  }
   if (err.status) return `Errore Gemini (${err.status}): ${err.message}`
   if (err.name === 'TypeError') return 'Impossibile raggiungere Gemini (rete).'
   return err.message || String(err)
