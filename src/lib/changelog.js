@@ -1,16 +1,22 @@
 // Changelog dell'app, mostrato in Impostazioni -> Novità.
-// Voci dalla più recente alla più vecchia. Ad ogni bump di versione in
-// package.json aggiungere qui la voce corrispondente.
+// Voci dalla più recente alla più vecchia. La versione in package.json e la
+// voce qui sotto si aggiornano AL MOMENTO DEL COMMIT (non durante lo
+// sviluppo); `date` è data + ora del commit ("YYYY-MM-DD HH:MM").
 
 export const CHANGELOG = [
   {
+    version: '0.9.2',
+    date: '2026-09-07 15:56',
+    changes: ['Changelog con data e ora per ogni versione.'],
+  },
+  {
     version: '0.9.1',
-    date: '2026-09-07',
+    date: '2026-09-07 15:48',
     changes: ['Sezione "Novità" nelle Impostazioni con il changelog per versione.'],
   },
   {
     version: '0.9.0',
-    date: '2026-09-07',
+    date: '2026-09-07 15:39',
     changes: [
       '"In questo giorno": in vista mese le note della stessa data degli anni scorsi.',
       'Ricerca per testo (titolo e contenuto) nella pagina Cerca.',
@@ -25,14 +31,14 @@ export const CHANGELOG = [
   },
   {
     version: '0.4.2',
-    date: '2026-09-07',
+    date: '2026-09-07 14:28',
     changes: [
       'Vista mese: nelle righe del giorno si vedono i titoli di tutte le note, non solo quelle con umore estremo.',
     ],
   },
   {
     version: '0.4.1',
-    date: '2026-09-07',
+    date: '2026-09-07 14:26',
     changes: [
       'Schermata "Importa da immagine": selettori completi (persone con foto, tag esistenti, luogo su mappa, canzoni) e aggiunta immagini da dispositivo o Immich.',
       'Impostazioni web raggruppate in sezioni collassabili, con "Integrazioni" per Immich/Gemini/Spotify.',
@@ -42,7 +48,7 @@ export const CHANGELOG = [
   },
   {
     version: '0.3.0',
-    date: '2026-09-07',
+    date: '2026-09-07 13:58',
     changes: [
       'Impostazioni mobile: sezione unica "Integrazioni" e icone su tutte le voci.',
       'Aggiunta di una persona locale (solo nome) dalle impostazioni.',
@@ -51,7 +57,7 @@ export const CHANGELOG = [
   },
   {
     version: '0.2.0',
-    date: '2026-09-07',
+    date: '2026-09-07 13:45',
     changes: [
       'Nuova schermata web "Importa da immagine": Gemini estrae le note da uno screenshot del vecchio diario.',
       'Cancellare una persona collegata a delle note chiede se sostituirla o rimuoverla ovunque.',
@@ -61,7 +67,7 @@ export const CHANGELOG = [
   },
   {
     version: '0.1.0',
-    date: '2026-09-07',
+    date: '2026-09-07 11:06',
     changes: [
       'Prime modifiche: fix del salvataggio immagini in modifica nota, ritocchi al layout di giorno e nota, versione dell’app in Impostazioni.',
       'Sezioni "Supporto" e "Offrimi un caffè".',
