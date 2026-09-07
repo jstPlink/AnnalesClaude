@@ -180,8 +180,8 @@ export default function Login() {
             : 'Non hai un account? Registrati'}
         </button>
 
-        <p className="mt-6 text-center text-xs text-ink-soft">
-          Autenticazione tramite PocketBase (collection <code>users</code>).
+        <p className="mt-6 text-center text-xs text-ink-soft tabular-nums">
+          Annales · v{__APP_VERSION__}
         </p>
       </div>
     </PhoneShell>

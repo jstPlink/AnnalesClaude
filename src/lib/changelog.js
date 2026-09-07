@@ -5,6 +5,11 @@
 
 export const CHANGELOG = [
   {
+    version: '0.9.6',
+    date: '2026-09-07 16:33',
+    changes: ['Versione dell’app mostrata nella pagina di login (mobile e web).'],
+  },
+  {
     version: '0.9.5',
     date: '2026-09-07 16:32',
     changes: [

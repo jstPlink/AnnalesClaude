@@ -85,7 +85,9 @@ export default function WebLogin() {
             un giorno alla volta.
           </p>
         </div>
-        <p className="text-xs text-ink-soft">Diario personale · PWA</p>
+        <p className="text-xs text-ink-soft tabular-nums">
+          Annales · v{__APP_VERSION__}
+        </p>
       </div>
 
       {/* Form */}
