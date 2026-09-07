@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.9.5',
+    date: '2026-09-07 16:32',
+    changes: [
+      'Migration dedicata che tiene la registrazione aperta lato database: creare un account dal login resta possibile.',
+    ],
+  },
+  {
     version: '0.9.4',
     date: '2026-09-07 16:30',
     changes: [
