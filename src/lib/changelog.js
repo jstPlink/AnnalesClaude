@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.4',
+    date: '2026-09-07 20:48',
+    changes: [
+      'Scegli da Immich: se l\'originale di una foto non è più disponibile sul server (libreria spostata/cancellata), non fallisce più tutto l\'import — viene scaricata una versione ridotta al suo posto, con un avviso prima di aggiungerla.',
+    ],
+  },
+  {
     version: '0.10.3',
     date: '2026-09-07 20:45',
     changes: [

@@ -80,6 +80,10 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
   const [error, setError] = useState('')
   const [selected, setSelected] = useState([])
   const [importing, setImporting] = useState(false)
+  // Se una o più foto scaricate sono arrivate in versione ridotta (fallback:
+  // originale non più su Immich), aspettiamo conferma esplicita invece di
+  // chiudere subito, per far leggere l'avviso.
+  const [pendingFallback, setPendingFallback] = useState(null)
   // Giorno scelto dal calendario per saltare direttamente lì invece di
   // scorrere/"Carica altre" tra le foto più recenti. Vuoto = nessun filtro.
   const [dateFilter, setDateFilter] = useState('')
@@ -93,6 +97,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
       setNextPage(null)
       setError('')
       setDateFilter('')
+      setPendingFallback(null)
       return
     }
     if (loadedRef.current) return
@@ -142,6 +147,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
 
   function toggle(asset) {
     haptic()
+    setPendingFallback(null)
     setSelected((prev) =>
       prev.some((a) => a.id === asset.id)
         ? prev.filter((a) => a.id !== asset.id)
@@ -157,7 +163,14 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
       const files = await Promise.all(
         selected.map((asset) => fetchImmichOriginalAsFile(baseUrl, apiKey, asset)),
       )
-      onConfirm(files)
+      const fallbackCount = files.filter((f) => f.immichFallback).length
+      if (fallbackCount > 0) {
+        // Non chiudiamo subito: l'utente deve vedere l'avviso prima che il
+        // dialog si chiuda (il genitore chiude alla chiamata di onConfirm).
+        setPendingFallback({ files, count: fallbackCount })
+      } else {
+        onConfirm(files)
+      }
     } catch (err) {
       setError(describeImmichError(err))
     } finally {
@@ -262,18 +275,46 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
         </div>
 
         <div className="border-t border-line px-5 py-4">
-          <button
-            type="button"
-            disabled={!selected.length || importing}
-            onClick={handleConfirm}
-            className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95 disabled:opacity-50"
-          >
-            {importing
-              ? 'Importo…'
-              : selected.length
-                ? `Aggiungi ${selected.length} foto`
-                : 'Seleziona delle foto'}
-          </button>
+          {pendingFallback ? (
+            <>
+              <p className="mb-3 rounded-2xl border border-warn-dark bg-warn/20 px-4 py-3 text-sm text-ink">
+                {pendingFallback.count === pendingFallback.files.length
+                  ? pendingFallback.count === 1
+                    ? "L'originale di questa foto non è più su Immich (libreria spostata o cancellata): verrà aggiunta una versione ridotta al posto suo."
+                    : `Gli originali di queste ${pendingFallback.count} foto non sono più su Immich (libreria spostata o cancellata): verranno aggiunte in versione ridotta al posto loro.`
+                  : `${pendingFallback.count} di ${pendingFallback.files.length} foto non sono più disponibili come originale su Immich: per quelle verrà aggiunta una versione ridotta.`}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPendingFallback(null)}
+                  className="flex-1 rounded-full border border-line bg-tag px-6 py-3 text-sm font-bold text-ink transition active:scale-95"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onConfirm(pendingFallback.files)}
+                  className="flex-1 rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95"
+                >
+                  Aggiungi comunque
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={!selected.length || importing}
+              onClick={handleConfirm}
+              className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95 disabled:opacity-50"
+            >
+              {importing
+                ? 'Importo…'
+                : selected.length
+                  ? `Aggiungi ${selected.length} foto`
+                  : 'Seleziona delle foto'}
+            </button>
+          )}
         </div>
       </div>
     </div>

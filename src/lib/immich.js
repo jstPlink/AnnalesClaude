@@ -67,11 +67,32 @@ export async function fetchImmichThumbnailBlob(baseUrl, apiKey, assetId) {
 
 // Scarica l'originale e lo confeziona come File, pronto per la stessa
 // pipeline di salvataggio usata per i file scelti dal dispositivo.
+//
+// Se l'originale non è più raggiungibile lato server (404 — tipicamente
+// perché la libreria/cartella è stata spostata o cancellata dopo che
+// l'asset era già stato indicizzato da Immich) non blocchiamo l'import:
+// scarichiamo invece l'anteprima "preview" (più grande della thumbnail,
+// ma comunque una versione ridotta, non l'originale) e marchiamo il File
+// risultante con `immichFallback = true`, così chi chiama può avvisare
+// l'utente che ha ottenuto una versione ridotta.
 export async function fetchImmichOriginalAsFile(baseUrl, apiKey, asset) {
-  const res = await immichFetch(baseUrl, apiKey, `/api/assets/${asset.id}/original`)
-  const blob = await res.blob()
   const name = asset.originalFileName || `${asset.id}.jpg`
-  return new File([blob], name, { type: blob.type || 'image/jpeg' })
+  try {
+    const res = await immichFetch(baseUrl, apiKey, `/api/assets/${asset.id}/original`)
+    const blob = await res.blob()
+    return new File([blob], name, { type: blob.type || 'image/jpeg' })
+  } catch (err) {
+    if (err.status !== 404) throw err
+    const res = await immichFetch(
+      baseUrl,
+      apiKey,
+      `/api/assets/${asset.id}/thumbnail?size=preview`,
+    )
+    const blob = await res.blob()
+    const file = new File([blob], name, { type: blob.type || 'image/jpeg' })
+    file.immichFallback = true
+    return file
+  }
 }
 
 // Elenco delle persone taggate su Immich con un nome assegnato.
