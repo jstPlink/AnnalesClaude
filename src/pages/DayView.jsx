@@ -18,7 +18,8 @@ import {
 } from '../lib/dates'
 
 const DAY_MIN = 24 * 60
-const RAIL_W = 37 // px, larghezza della barra oraria a sinistra (-20%)
+const RAIL_W = 31 // px, larghezza della barra oraria a sinistra (-20%, poi -15%)
+const HOUR_LINE_W = Math.round(RAIL_W / 2) // trattini alle ore: metà della colonna
 const MIN_BLOCK = 24 // px, altezza minima di un blocco nota
 
 function startMinutes(value) {
@@ -166,7 +167,7 @@ export default function DayView() {
                   {!label && (
                     <span
                       className="absolute right-0 bg-line"
-                      style={{ top, height: 1, width: RAIL_W }}
+                      style={{ top, height: 1, width: HOUR_LINE_W }}
                     />
                   )}
                   {label && (

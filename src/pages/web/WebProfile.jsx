@@ -310,6 +310,10 @@ export default function WebProfile() {
             <dt className="text-ink-soft">Autenticazione</dt>
             <dd className="font-medium text-ink">PocketBase · users</dd>
           </div>
+          <div className="flex items-center justify-between py-3">
+            <dt className="text-ink-soft">Versione</dt>
+            <dd className="font-medium text-ink tabular-nums">{__APP_VERSION__}</dd>
+          </div>
         </dl>
 
         <button
@@ -609,6 +613,54 @@ export default function WebProfile() {
               {savingGemini ? 'Salvo…' : 'Salva'}
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
+        <h2 className="font-serif text-xl font-semibold text-ink">Supporto</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Domande, problemi o suggerimenti su Annales? Scrivimi pure.
+        </p>
+        <dl className="mt-5 divide-y divide-line-soft border-y border-line-soft text-sm">
+          <div className="flex items-center justify-between py-3">
+            <dt className="text-ink-soft">Email</dt>
+            <dd>
+              <a
+                href="mailto:fp.dignazio@gmail.com"
+                className="font-medium text-ink underline decoration-line-soft underline-offset-2 hover:decoration-ink"
+              >
+                fp.dignazio@gmail.com
+              </a>
+            </dd>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <dt className="text-ink-soft">Telegram</dt>
+            <dd>
+              <a
+                href="https://t.me/fplinio"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-ink underline decoration-line-soft underline-offset-2 hover:decoration-ink"
+              >
+                @fplinio
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
+        <h2 className="font-serif text-xl font-semibold text-ink">
+          Offrimi un caffè
+        </h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
+          farlo da qui.
+        </p>
+        {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando sarà
+            pronto, sostituire con il link reale (https://buymeacoffee.com/…). */}
+        <div className="mt-5 flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
+          Buy Me a Coffee · presto disponibile
         </div>
       </div>
 

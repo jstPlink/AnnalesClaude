@@ -364,7 +364,7 @@ export default function NoteView() {
           <CircleButton onClick={() => navigate(-1)} title="Indietro">
             <Icon name="chevron-left" size={22} />
           </CircleButton>
-          <span className="text-center text-[1.3rem] font-bold text-ink-soft tabular-nums">
+          <span className="text-center text-2xl font-extrabold text-ink tabular-nums">
             {year}
           </span>
           <CircleButton
@@ -418,10 +418,11 @@ export default function NoteView() {
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
         {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
-            solo il divisorio tra titolo e contenuto. Almeno il 40% dello
-            schermo anche vuoto: se le altre informazioni sotto sforano, è
-            la pagina intera (main) a scorrere, non questo riquadro. */}
-        <div className="mt-4 flex min-h-[40dvh] flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
+            solo il divisorio tra titolo e contenuto. Almeno il 35% dello
+            schermo anche vuoto, ma si estende (flex-1) se il contenuto è più
+            grande: se le altre informazioni sotto sforano, è la pagina intera
+            (main) a scorrere, non questo riquadro. */}
+        <div className="mt-4 flex min-h-[35dvh] flex-1 flex-col overflow-hidden rounded-2xl bg-cream">
           <input
             type="text"
             placeholder="Titolo della nota"

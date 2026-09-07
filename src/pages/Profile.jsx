@@ -600,14 +600,59 @@ export default function Profile() {
           </CollapsibleSection>
         </div>
 
+        <div className="mt-6">
+          <CollapsibleSection title="Supporto">
+            <p className="text-xs text-ink-soft">
+              Domande, problemi o suggerimenti su Annales? Scrivimi pure.
+            </p>
+            <a
+              href="mailto:fp.dignazio@gmail.com"
+              className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
+            >
+              <span className="text-xs font-semibold text-ink-soft">Email</span>
+              <span className="text-sm font-medium text-ink">
+                fp.dignazio@gmail.com
+              </span>
+            </a>
+            <a
+              href="https://t.me/fplinio"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
+            >
+              <span className="text-xs font-semibold text-ink-soft">Telegram</span>
+              <span className="text-sm font-medium text-ink">@fplinio</span>
+            </a>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Offrimi un caffè">
+            <p className="text-xs text-ink-soft">
+              Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
+              farlo da qui.
+            </p>
+            {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando
+                sarà pronto, sostituire con il link reale
+                (https://buymeacoffee.com/…). */}
+            <div className="flex items-center justify-center rounded-xl border border-dashed border-line bg-cream px-3 py-4 text-center text-xs font-semibold text-ink-soft">
+              Buy Me a Coffee · presto disponibile
+            </div>
+          </CollapsibleSection>
+        </div>
+
         <button
           type="button"
           onClick={onLogout}
-          className="mt-auto flex items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
+          className="mt-6 flex items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
         >
           <Icon name="logout" size={18} />
           Esci
         </button>
+
+        <p className="mt-6 text-center text-xs text-ink-soft">
+          Annales · versione {__APP_VERSION__}
+        </p>
       </main>
 
       {immichReady && (

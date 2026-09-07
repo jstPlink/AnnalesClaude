@@ -59,8 +59,12 @@ function appendMultiRelation(fd, field, ids) {
 
 // Campi comuni a create e update, inclusa la data: modificabile anche dopo
 // il primo salvataggio, per correggere note assegnate al giorno sbagliato.
+// `appendImages`: in aggiornamento le nuove immagini vanno inviate con la
+// chiave `images+` (AGGIUNGI in coda). Senza il `+` PocketBase sostituisce
+// l'intera lista file con le sole nuove immagini, cancellando quelle già
+// salvate — era la causa del "salva solo le nuove immagini" in modifica.
 function commonFields(data, opts) {
-  const { newFiles, removedImages, peopleIds, tagIds } = opts
+  const { newFiles, removedImages, peopleIds, tagIds, appendImages } = opts
   const fd = new FormData()
   fd.append('title', data.title ?? '')
   fd.append('content', data.content ?? '')
@@ -69,7 +73,8 @@ function commonFields(data, opts) {
   fd.append('songs', JSON.stringify(data.songs ?? []))
   fd.append('timeStart', toPbTime(data.timeStart))
   fd.append('timeEnd', toPbTime(data.timeEnd))
-  for (const file of newFiles) fd.append('images', file)
+  const imagesField = appendImages ? 'images+' : 'images'
+  for (const file of newFiles) fd.append(imagesField, file)
   for (const name of removedImages) fd.append('images-', name)
   appendMultiRelation(fd, 'people', peopleIds)
   appendMultiRelation(fd, 'tags', tagIds)
@@ -83,7 +88,13 @@ export async function createNote(
   data,
   { newFiles = [], peopleIds = [], tagIds = [] } = {},
 ) {
-  const fd = commonFields(data, { newFiles, removedImages: [], peopleIds, tagIds })
+  const fd = commonFields(data, {
+    newFiles,
+    removedImages: [],
+    peopleIds,
+    tagIds,
+    appendImages: false,
+  })
   return pb.collection(COLLECTION).create(fd)
 }
 
@@ -92,7 +103,13 @@ export async function updateNote(
   data,
   { newFiles = [], removedImages = [], peopleIds = [], tagIds = [] } = {},
 ) {
-  const fd = commonFields(data, { newFiles, removedImages, peopleIds, tagIds })
+  const fd = commonFields(data, {
+    newFiles,
+    removedImages,
+    peopleIds,
+    tagIds,
+    appendImages: true,
+  })
   return pb.collection(COLLECTION).update(id, fd)
 }
 
