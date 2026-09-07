@@ -5,6 +5,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.9.4',
+    date: '2026-09-07 16:30',
+    changes: [
+      'Fix migration PocketBase che bloccava l’avvio (`@request.data` → `@request.body`, sintassi v0.23+).',
+      'Anche persone e tag diventano per-utente (regole per-proprietario).',
+    ],
+  },
+  {
     version: '0.9.3',
     date: '2026-09-07 16:23',
     changes: [
