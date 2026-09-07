@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
-import { dayKey, fullDayLabel } from '../lib/dates'
+import { dayKey, fullDayLabel, todayKey } from '../lib/dates'
 import {
   searchImmichPhotos,
   fetchImmichThumbnailBlob,
@@ -69,7 +69,9 @@ function ImmichThumb({ baseUrl, apiKey, asset, selected, onToggle }) {
 
 // Dialog per scegliere foto dal server Immich configurato in Profilo.
 // `onConfirm(files)` riceve i File scaricati, pronti per la stessa pipeline
-// di salvataggio usata per gli allegati locali.
+// di salvataggio usata per gli allegati locali. Il campo data in alto
+// permette di saltare direttamente a un giorno preciso (via `takenAfter`/
+// `takenBefore`), invece di scorrere/"Carica altre" tra le più recenti.
 export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm }) {
   const [items, setItems] = useState([])
   const [nextPage, setNextPage] = useState(null)
@@ -78,6 +80,9 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
   const [error, setError] = useState('')
   const [selected, setSelected] = useState([])
   const [importing, setImporting] = useState(false)
+  // Giorno scelto dal calendario per saltare direttamente lì invece di
+  // scorrere/"Carica altre" tra le foto più recenti. Vuoto = nessun filtro.
+  const [dateFilter, setDateFilter] = useState('')
   const loadedRef = useRef(false)
 
   useEffect(() => {
@@ -87,6 +92,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
       setSelected([])
       setNextPage(null)
       setError('')
+      setDateFilter('')
       return
     }
     if (loadedRef.current) return
@@ -95,14 +101,17 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  async function loadPage(page) {
+  async function loadPage(page, { dateFilter: dayOverride = dateFilter } = {}) {
     const setBusy = page === 1 ? setLoading : setLoadingMore
     setBusy(true)
     setError('')
     try {
-      const { items: newItems, nextPage: np } = await searchImmichPhotos(baseUrl, apiKey, {
-        page,
-      })
+      const params = { page }
+      if (dayOverride) {
+        params.takenAfter = `${dayOverride}T00:00:00.000Z`
+        params.takenBefore = `${dayOverride}T23:59:59.999Z`
+      }
+      const { items: newItems, nextPage: np } = await searchImmichPhotos(baseUrl, apiKey, params)
       setItems((prev) => (page === 1 ? newItems : [...prev, ...newItems]))
       setNextPage(np)
     } catch (err) {
@@ -110,6 +119,23 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
     } finally {
       setBusy(false)
     }
+  }
+
+  function handleDateChange(e) {
+    const value = e.target.value
+    haptic()
+    setDateFilter(value)
+    setItems([])
+    setNextPage(null)
+    loadPage(1, { dateFilter: value })
+  }
+
+  function handleClearDate() {
+    haptic()
+    setDateFilter('')
+    setItems([])
+    setNextPage(null)
+    loadPage(1, { dateFilter: '' })
   }
 
   const sections = useMemo(() => groupByDay(items), [items])
@@ -162,13 +188,41 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
           </button>
         </div>
 
+        <div className="flex items-center gap-2 border-b border-line px-5 py-3">
+          <label
+            htmlFor="immich-date-jump"
+            className="shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-soft"
+          >
+            Vai al giorno
+          </label>
+          <input
+            id="immich-date-jump"
+            type="date"
+            value={dateFilter}
+            max={todayKey()}
+            onChange={handleDateChange}
+            className="rounded-xl border border-line bg-tag px-2 py-1.5 text-sm text-ink outline-none"
+          />
+          {dateFilter && (
+            <button
+              type="button"
+              onClick={handleClearDate}
+              className="ml-auto shrink-0 text-xs font-semibold text-ink-soft underline"
+            >
+              Mostra tutte
+            </button>
+          )}
+        </div>
+
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
             <p className="py-10 text-center text-ink-soft">Carico foto…</p>
           ) : error && !items.length ? (
             <p className="py-10 text-center text-sm text-delete-dark">{error}</p>
           ) : !items.length ? (
-            <p className="py-10 text-center text-ink-soft">Nessuna foto trovata.</p>
+            <p className="py-10 text-center text-ink-soft">
+              {dateFilter ? 'Nessuna foto in questo giorno.' : 'Nessuna foto trovata.'}
+            </p>
           ) : (
             <>
               {sections.map((section) => (

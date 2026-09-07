@@ -4,10 +4,36 @@ import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
 import { createPerson } from '../lib/people'
 
+function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptic()
+        onToggle(person.id)
+      }}
+      className={
+        'flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition ' +
+        (active ? 'bg-tag' : 'hover:bg-tag/60')
+      }
+    >
+      <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
+      <span className="text-sm font-semibold text-ink">{person.name}</span>
+      {active && (
+        <span className="ml-auto text-ink">
+          <Icon name="check" size={18} />
+        </span>
+      )}
+    </button>
+  )
+}
+
 // Dialog per selezionare le persone coinvolte in questa nota: tra quelle già
 // in elenco (Profilo / Immich), o creandone una nuova al volo (solo nome).
-// Con `usageCounts` ({ personId: n° note }) le persone più usate salgono in
-// cima; a parità di uso, ordine alfabetico.
+// Con `usageCounts` ({ personId: n° note }) le persone già usate almeno una
+// volta salgono in cima (ordinate per uso, poi alfabetico) e sono separate
+// visivamente ("Frequenti" / "Altre persone") dal resto, ordinato solo
+// alfabeticamente.
 export default function PeoplePickerSheet({
   open,
   people,
@@ -23,12 +49,22 @@ export default function PeoplePickerSheet({
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
-  const orderedPeople = useMemo(() => {
-    if (!usageCounts) return people
-    return [...people].sort((a, b) => {
+  // Separa chi ha già almeno una nota (ordinate per uso, poi alfabetico) dal
+  // resto (solo alfabetico), così le più frequenti in cima non si confondono
+  // con le altre.
+  const { frequentPeople, otherPeople } = useMemo(() => {
+    if (!usageCounts) return { frequentPeople: people, otherPeople: [] }
+    const frequent = []
+    const other = []
+    for (const person of people) {
+      ;(usageCounts[person.id] ? frequent : other).push(person)
+    }
+    frequent.sort((a, b) => {
       const diff = (usageCounts[b.id] || 0) - (usageCounts[a.id] || 0)
       return diff !== 0 ? diff : a.name.localeCompare(b.name)
     })
+    other.sort((a, b) => a.name.localeCompare(b.name))
+    return { frequentPeople: frequent, otherPeople: other }
   }, [people, usageCounts])
 
   if (!open) return null
@@ -98,37 +134,50 @@ export default function PeoplePickerSheet({
               dal tuo Immich in Profilo → Persone.
             </p>
           ) : (
-            <div className="space-y-1">
-              {orderedPeople.map((person) => {
-                const active = selectedIds.includes(person.id)
-                return (
-                  <button
-                    key={person.id}
-                    type="button"
-                    onClick={() => {
-                      haptic()
-                      onToggle(person.id)
-                    }}
-                    className={
-                      'flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition ' +
-                      (active ? 'bg-tag' : 'hover:bg-tag/60')
-                    }
-                  >
-                    <PersonAvatar
+            <>
+              {frequentPeople.length > 0 && (
+                <div className="space-y-1">
+                  {otherPeople.length > 0 && (
+                    <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                      Frequenti
+                    </p>
+                  )}
+                  {frequentPeople.map((person) => (
+                    <PersonRow
+                      key={person.id}
                       person={person}
+                      active={selectedIds.includes(person.id)}
                       immichUrl={immichUrl}
                       immichApiKey={immichApiKey}
+                      onToggle={onToggle}
                     />
-                    <span className="text-sm font-semibold text-ink">{person.name}</span>
-                    {active && (
-                      <span className="ml-auto text-ink">
-                        <Icon name="check" size={18} />
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+                  ))}
+                </div>
+              )}
+              {otherPeople.length > 0 && (
+                <div
+                  className={
+                    frequentPeople.length > 0 ? 'mt-4 space-y-1 border-t border-line pt-3' : 'space-y-1'
+                  }
+                >
+                  {frequentPeople.length > 0 && (
+                    <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                      Altre persone
+                    </p>
+                  )}
+                  {otherPeople.map((person) => (
+                    <PersonRow
+                      key={person.id}
+                      person={person}
+                      active={selectedIds.includes(person.id)}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      onToggle={onToggle}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
 

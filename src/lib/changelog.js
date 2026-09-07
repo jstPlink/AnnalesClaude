@@ -5,6 +5,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.2',
+    date: '2026-09-07 20:35',
+    changes: [
+      'Selettore persone: le più frequenti sono separate visivamente ("Frequenti" / "Altre persone") invece di mischiarsi al resto.',
+      'Scegli da Immich: campo "Vai al giorno" con calendario per saltare direttamente alle foto di una data precisa.',
+    ],
+  },
+  {
     version: '0.10.1',
     date: '2026-09-07 18:03',
     changes: [
