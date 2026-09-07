@@ -117,14 +117,19 @@ export default function Sidebar() {
         </NavLink>
         <NavLink
           to="/importa"
+          title="Funzione provvisoria"
           className={({ isActive }) =>
-            'rounded-xl border px-3 py-2 transition ' +
+            'flex items-center gap-2 rounded-xl border px-3 py-2 font-semibold transition ' +
             (isActive
-              ? 'border-line bg-cream text-ink'
-              : 'border-line text-ink-soft hover:bg-cream/60')
+              ? 'border-warn-dark bg-warn text-ink'
+              : 'border-warn-dark/60 bg-warn/85 text-ink hover:bg-warn')
           }
         >
+          <Icon name="alert-triangle" size={14} className="shrink-0" />
           Importa
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-ink/55">
+            beta
+          </span>
         </NavLink>
       </nav>
 

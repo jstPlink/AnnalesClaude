@@ -1,21 +1,58 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { createNote, describeError } from '../../lib/notes'
+import {
+  createNote,
+  describeError,
+  peopleUsageCounts,
+} from '../../lib/notes'
 import { listPeople, createPerson } from '../../lib/people'
 import { listTags, createTag } from '../../lib/tags'
 import { extractNotesFromImage, describeGeminiError } from '../../lib/gemini'
 import { MONTHS_IT } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
+import PersonAvatar from '../../components/PersonAvatar'
+import PeoplePickerSheet from '../../components/PeoplePickerSheet'
+import TagPickerSheet from '../../components/TagPickerSheet'
+import AddSongSheet from '../../components/AddSongSheet'
+import PlacePickerSheet from '../../components/PlacePickerSheet'
+import PlaceCard from '../../components/PlaceCard'
+import AddImagesSheet from '../../components/AddImagesSheet'
+import ImmichPicker from '../../components/ImmichPicker'
 import Icon from '../../components/Icon'
 
 // Schermata PROVVISORIA (solo web) per migrare il vecchio diario tenuto su
 // Google Fogli: si incolla lo screenshot di una o più giornate, Gemini ne
 // estrae le singole attività come note, che si rivedono e salvano una a una.
+// La revisione usa gli stessi selettori del telefono (persone con foto, tag
+// esistenti, luogo su mappa, canzoni da Spotify).
 
 const now = new Date()
 
-function toDraft(n) {
+// Costruisce la bozza modificabile abbinando i nomi estratti da Gemini alle
+// persone/tag già in elenco (match sul nome, case-insensitive); quelli senza
+// corrispondenza restano "in attesa" e verranno creati al salvataggio.
+function toDraft(n, allPeople, allTags) {
+  const peopleIds = []
+  const pendingPeople = []
+  for (const nm of n.people || []) {
+    const hit = allPeople.find(
+      (p) => p.name.trim().toLowerCase() === nm.trim().toLowerCase(),
+    )
+    if (hit) peopleIds.push(hit.id)
+    else if (!pendingPeople.some((x) => x.toLowerCase() === nm.toLowerCase()))
+      pendingPeople.push(nm)
+  }
+  const tagIds = []
+  const pendingTags = []
+  for (const nm of n.tags || []) {
+    const hit = allTags.find(
+      (t) => t.name.trim().toLowerCase() === nm.trim().toLowerCase(),
+    )
+    if (hit) tagIds.push(hit.id)
+    else if (!pendingTags.some((x) => x.toLowerCase() === nm.toLowerCase()))
+      pendingTags.push(nm)
+  }
   return {
     date: n.date || '',
     title: n.title || '',
@@ -23,67 +60,44 @@ function toDraft(n) {
     mood: typeof n.mood === 'number' ? n.mood : 0.5,
     timeStart: n.timeStart || '',
     timeEnd: n.timeEnd || '',
-    people: [...(n.people || [])],
-    place: n.place || '',
-    tags: [...(n.tags || [])],
+    peopleIds,
+    pendingPeople,
+    tagIds,
+    pendingTags,
+    place: n.place ? { name: n.place, lat: null, lon: null } : null,
+    songs: [],
+    files: [], // immagini (File) da allegare, aggiunte in revisione
   }
 }
 
-function ChipEditor({ label, values, onChange, placeholder }) {
-  const [input, setInput] = useState('')
-  function add() {
-    const v = input.trim()
-    if (!v) return
-    if (!values.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      onChange([...values, v])
+// Abbina/crea per nome, restituendo gli id. Aggiorna la lista locale con gli
+// eventuali nuovi record.
+async function resolveNames(names, list, setList, create) {
+  const ids = []
+  let current = list
+  for (const nm of names) {
+    let hit = current.find(
+      (x) => x.name.trim().toLowerCase() === nm.trim().toLowerCase(),
+    )
+    if (!hit) {
+      hit = await create(nm)
+      current = [...current, hit]
     }
-    setInput('')
+    ids.push(hit.id)
   }
-  return (
-    <div>
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-        {label}
-      </span>
-      <div className="flex flex-wrap gap-1.5">
-        {values.map((v) => (
-          <span
-            key={v}
-            className="flex items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2.5 pr-1.5 text-sm font-medium text-ink"
-          >
-            {v}
-            <button
-              type="button"
-              title="Rimuovi"
-              onClick={() => onChange(values.filter((x) => x !== v))}
-              className="text-ink-soft transition hover:text-delete-dark"
-            >
-              <Icon name="x" size={12} />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={input}
-          placeholder={placeholder}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              add()
-            }
-          }}
-          onBlur={add}
-          className="min-w-[8rem] flex-1 rounded-lg border border-line bg-cream px-2.5 py-1 text-sm text-ink outline-none focus:border-ink-soft"
-        />
-      </div>
-    </div>
-  )
+  if (current !== list) setList(current)
+  return ids
 }
 
 export default function WebImport() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const apiKey = user?.geminiApiKey?.trim()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
+  const immichReady = Boolean(immichUrl && immichApiKey)
+  const spotifyClientId = user?.spotifyClientId?.trim()
+  const spotifyClientSecret = user?.spotifyClientSecret?.trim()
 
   const [image, setImage] = useState(null) // { dataUrl, base64, mimeType }
   const [year, setYear] = useState(now.getFullYear())
@@ -91,6 +105,7 @@ export default function WebImport() {
 
   const [allPeople, setAllPeople] = useState([])
   const [allTags, setAllTags] = useState([])
+  const [peopleUsage, setPeopleUsage] = useState(null)
 
   const [extracting, setExtracting] = useState(false)
   const [error, setError] = useState('')
@@ -102,12 +117,89 @@ export default function WebImport() {
   const [results, setResults] = useState([]) // [{ title, date, status }]
   const [done, setDone] = useState(false)
 
-  const fileInputRef = useRef(null)
+  const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
+  const [tagSheetOpen, setTagSheetOpen] = useState(false)
+  const [songSheetOpen, setSongSheetOpen] = useState(false)
+  const [placeSheetOpen, setPlaceSheetOpen] = useState(false)
+  const [addImagesOpen, setAddImagesOpen] = useState(false)
+  const [immichOpen, setImmichOpen] = useState(false)
+
+  const fileInputRef = useRef(null) // immagine sorgente (screenshot)
+  const noteFilesRef = useRef(null) // immagini da allegare alla nota
 
   useEffect(() => {
     listPeople().then(setAllPeople).catch(() => {})
     listTags().then(setAllTags).catch(() => {})
+    peopleUsageCounts().then(setPeopleUsage).catch(() => {})
   }, [])
+
+  const setField = (patch) => setDraft((d) => ({ ...d, ...patch }))
+
+  const selectedPeople = useMemo(
+    () => (draft ? allPeople.filter((p) => draft.peopleIds.includes(p.id)) : []),
+    [allPeople, draft],
+  )
+  const selectedTags = useMemo(
+    () => (draft ? allTags.filter((t) => draft.tagIds.includes(t.id)) : []),
+    [allTags, draft],
+  )
+
+  const previews = useMemo(
+    () => (draft?.files || []).map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [draft?.files],
+  )
+  useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews])
+
+  function addFiles(list) {
+    const picked = Array.from(list || []).filter((f) => f.type.startsWith('image/'))
+    if (picked.length) setDraft((d) => ({ ...d, files: [...d.files, ...picked] }))
+  }
+
+  function togglePerson(id) {
+    setDraft((d) => ({
+      ...d,
+      peopleIds: d.peopleIds.includes(id)
+        ? d.peopleIds.filter((x) => x !== id)
+        : [...d.peopleIds, id],
+    }))
+  }
+  function toggleTag(id) {
+    setDraft((d) => ({
+      ...d,
+      tagIds: d.tagIds.includes(id)
+        ? d.tagIds.filter((x) => x !== id)
+        : [...d.tagIds, id],
+    }))
+  }
+
+  // Crea al volo una persona/tag "in attesa" e la sposta tra i selezionati.
+  async function materializePending(kind, name) {
+    try {
+      if (kind === 'person') {
+        const rec = await createPerson(name)
+        setAllPeople((p) =>
+          [...p, rec].sort((a, b) => a.name.localeCompare(b.name)),
+        )
+        setDraft((d) => ({
+          ...d,
+          peopleIds: [...d.peopleIds, rec.id],
+          pendingPeople: d.pendingPeople.filter((x) => x !== name),
+        }))
+      } else {
+        const rec = await createTag(name)
+        setAllTags((t) =>
+          [...t, rec].sort((a, b) => a.name.localeCompare(b.name)),
+        )
+        setDraft((d) => ({
+          ...d,
+          tagIds: [...d.tagIds, rec.id],
+          pendingTags: d.pendingTags.filter((x) => x !== name),
+        }))
+      }
+    } catch (err) {
+      setError(describeError(err))
+    }
+  }
 
   const loadFile = useCallback((file) => {
     if (!file || !file.type.startsWith('image/')) return
@@ -127,8 +219,6 @@ export default function WebImport() {
     reader.readAsDataURL(file)
   }, [])
 
-  // Incolla dagli appunti (Ctrl/Cmd+V) — solo nella fase di scelta immagine,
-  // per non sovrascrivere una revisione in corso.
   const pasteEnabled = !notes && !done
   useEffect(() => {
     if (!pasteEnabled) return
@@ -166,7 +256,7 @@ export default function WebImport() {
       }
       setNotes(result)
       setIndex(0)
-      setDraft(toDraft(result[0]))
+      setDraft(toDraft(result[0], allPeople, allTags))
       setResults([])
       setDone(false)
     } catch (err) {
@@ -184,25 +274,8 @@ export default function WebImport() {
       setDraft(null)
     } else {
       setIndex(next)
-      setDraft(toDraft(notes[next]))
+      setDraft(toDraft(notes[next], allPeople, allTags))
     }
-  }
-
-  async function resolveNames(names, list, setList, create) {
-    const ids = []
-    let current = list
-    for (const nm of names) {
-      let hit = current.find(
-        (x) => x.name.trim().toLowerCase() === nm.trim().toLowerCase(),
-      )
-      if (!hit) {
-        hit = await create(nm)
-        current = [...current, hit]
-      }
-      ids.push(hit.id)
-    }
-    if (current !== list) setList(current)
-    return ids
   }
 
   async function saveCurrent() {
@@ -210,27 +283,32 @@ export default function WebImport() {
     setSaving(true)
     setError('')
     try {
-      const peopleIds = await resolveNames(
-        draft.people,
+      const createdPeopleIds = await resolveNames(
+        draft.pendingPeople,
         allPeople,
         setAllPeople,
         createPerson,
       )
-      const tagIds = await resolveNames(draft.tags, allTags, setAllTags, createTag)
+      const createdTagIds = await resolveNames(
+        draft.pendingTags,
+        allTags,
+        setAllTags,
+        createTag,
+      )
+      const peopleIds = [...new Set([...draft.peopleIds, ...createdPeopleIds])]
+      const tagIds = [...new Set([...draft.tagIds, ...createdTagIds])]
       await createNote(
         {
           dateKey: draft.date,
           title: draft.title,
           content: draft.content,
           mood: draft.mood,
-          place: draft.place
-            ? { name: draft.place, lat: null, lon: null }
-            : null,
-          songs: [],
+          place: draft.place,
+          songs: draft.songs,
           timeStart: draft.timeStart || '09:00',
           timeEnd: draft.timeEnd || '10:00',
         },
-        { peopleIds, tagIds },
+        { newFiles: draft.files, peopleIds, tagIds },
       )
       advance({
         title: draft.title || '(senza titolo)',
@@ -262,16 +340,15 @@ export default function WebImport() {
     setError('')
   }
 
-  const setField = (patch) => setDraft((d) => ({ ...d, ...patch }))
-
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-baseline justify-between gap-3">
         <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
           Importa da immagine
         </h1>
-        <span className="rounded-full border border-line bg-tag px-2.5 py-1 text-xs font-semibold text-ink-soft">
-          provvisorio
+        <span className="flex items-center gap-1.5 rounded-full border border-warn-dark bg-warn px-2.5 py-1 text-xs font-bold text-ink">
+          <Icon name="alert-triangle" size={13} className="shrink-0" />
+          Funzione provvisoria
         </span>
       </div>
       <p className="mb-6 text-sm text-ink-soft">
@@ -453,31 +530,306 @@ export default function WebImport() {
             />
           </label>
 
-          <ChipEditor
-            label="Persone"
-            values={draft.people}
-            onChange={(people) => setField({ people })}
-            placeholder="aggiungi…"
-          />
-          <ChipEditor
-            label="Tag"
-            values={draft.tags}
-            onChange={(tags) => setField({ tags })}
-            placeholder="aggiungi…"
-          />
+          {/* Immagini */}
+          <div className="rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Immagini
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  immichReady
+                    ? setAddImagesOpen(true)
+                    : noteFilesRef.current?.click()
+                }
+                className="rounded-full border border-line bg-tag px-3 py-1 text-xs font-bold text-ink transition hover:brightness-95"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {previews.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessuna immagine</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {previews.map((p, i) => (
+                  <div
+                    key={p.url}
+                    className="relative aspect-square overflow-hidden rounded-lg bg-panel-2 ring-2 ring-save"
+                  >
+                    <img
+                      src={p.url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() =>
+                        setField({
+                          files: draft.files.filter((_, idx) => idx !== i),
+                        })
+                      }
+                      className="absolute right-1 top-1 rounded-full bg-black/55 px-1.5 text-xs text-white"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-              Luogo
-            </span>
-            <input
-              type="text"
-              value={draft.place}
-              onChange={(e) => setField({ place: e.target.value })}
-              placeholder="Nome del luogo"
-              className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
-            />
-          </label>
+          {/* Persone */}
+          <div className="rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Persone
+              </span>
+              <button
+                type="button"
+                onClick={() => setPeopleSheetOpen(true)}
+                className="rounded-full border border-line bg-tag px-3 py-1 text-xs font-bold text-ink transition hover:brightness-95"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {selectedPeople.length === 0 && draft.pendingPeople.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessuna persona</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedPeople.map((person) => (
+                  <span
+                    key={person.id}
+                    className="flex items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={24}
+                    />
+                    <span className="text-sm font-semibold text-ink">
+                      {person.name}
+                    </span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => togglePerson(person.id)}
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
+                {draft.pendingPeople.map((nm) => (
+                  <span
+                    key={nm}
+                    className="flex items-center gap-1.5 rounded-full border border-dashed border-line bg-tag/60 py-1 pl-2.5 pr-1.5 text-sm font-semibold text-ink-soft"
+                  >
+                    {nm}
+                    <button
+                      type="button"
+                      title="Crea e aggiungi"
+                      onClick={() => materializePending('person', nm)}
+                      className="rounded-full bg-save px-1.5 text-xs font-bold text-ink"
+                    >
+                      crea
+                    </button>
+                    <button
+                      type="button"
+                      title="Scarta"
+                      onClick={() =>
+                        setField({
+                          pendingPeople: draft.pendingPeople.filter(
+                            (x) => x !== nm,
+                          ),
+                        })
+                      }
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Tag */}
+          <div className="rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Tag
+              </span>
+              <button
+                type="button"
+                onClick={() => setTagSheetOpen(true)}
+                className="rounded-full border border-line bg-tag px-3 py-1 text-xs font-bold text-ink transition hover:brightness-95"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {selectedTags.length === 0 && draft.pendingTags.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessun tag</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
+                  >
+                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
+                    {tag.name}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => toggleTag(tag.id)}
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={12} />
+                    </button>
+                  </span>
+                ))}
+                {draft.pendingTags.map((nm) => (
+                  <span
+                    key={nm}
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-line bg-tag/60 py-1 pl-2 pr-1.5 text-sm font-medium text-ink-soft"
+                  >
+                    {nm}
+                    <button
+                      type="button"
+                      title="Crea e aggiungi"
+                      onClick={() => materializePending('tag', nm)}
+                      className="rounded-full bg-save px-1.5 text-xs font-bold text-ink"
+                    >
+                      crea
+                    </button>
+                    <button
+                      type="button"
+                      title="Scarta"
+                      onClick={() =>
+                        setField({
+                          pendingTags: draft.pendingTags.filter((x) => x !== nm),
+                        })
+                      }
+                      className="text-ink-soft"
+                    >
+                      <Icon name="x" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Luogo */}
+          <div className="rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Luogo
+              </span>
+              <button
+                type="button"
+                onClick={() => setPlaceSheetOpen(true)}
+                className="rounded-full border border-line bg-tag px-3 py-1 text-xs font-bold text-ink transition hover:brightness-95"
+              >
+                {draft.place ? 'Cambia' : '+ Aggiungi'}
+              </button>
+            </div>
+            {draft.place ? (
+              draft.place.lat != null ? (
+                <PlaceCard
+                  place={draft.place}
+                  onRemove={() => setField({ place: null })}
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={draft.place.name}
+                    onChange={(e) =>
+                      setField({
+                        place: { ...draft.place, name: e.target.value },
+                      })
+                    }
+                    placeholder="Nome del luogo (senza mappa)"
+                    className="min-w-0 flex-1 rounded-xl border border-line bg-tag px-3 py-2 text-sm text-ink outline-none"
+                  />
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => setField({ place: null })}
+                    className="shrink-0 text-ink-soft"
+                  >
+                    <Icon name="x" size={16} />
+                  </button>
+                </div>
+              )
+            ) : (
+              <p className="text-sm italic text-ink-soft">Nessun luogo</p>
+            )}
+          </div>
+
+          {/* Canzoni */}
+          <div className="rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Canzoni
+              </span>
+              <button
+                type="button"
+                onClick={() => setSongSheetOpen(true)}
+                className="rounded-full border border-line bg-tag px-3 py-1 text-xs font-bold text-ink transition hover:brightness-95"
+              >
+                + Aggiungi
+              </button>
+            </div>
+            {draft.songs.length === 0 ? (
+              <p className="text-sm italic text-ink-soft">Nessuna canzone</p>
+            ) : (
+              <div className="space-y-2">
+                {draft.songs.map((song, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-xl border border-line bg-tag px-2 py-1.5"
+                  >
+                    {song.thumbnailUrl ? (
+                      <img
+                        src={song.thumbnailUrl}
+                        alt=""
+                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
+                        <Icon name="music" size={16} />
+                      </span>
+                    )}
+                    <a
+                      href={song.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                    >
+                      {song.title}
+                    </a>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() =>
+                        setField({
+                          songs: draft.songs.filter((_, idx) => idx !== i),
+                        })
+                      }
+                      className="shrink-0 text-ink-soft"
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {error && <p className="text-sm text-delete-dark">{error}</p>}
 
@@ -510,9 +862,7 @@ export default function WebImport() {
       {/* ---- 3. Riepilogo ---- */}
       {done && (
         <div className="space-y-4 rounded-3xl border border-line bg-tag p-6">
-          <h2 className="font-serif text-2xl font-semibold text-ink">
-            Fatto
-          </h2>
+          <h2 className="font-serif text-2xl font-semibold text-ink">Fatto</h2>
           <p className="text-sm text-ink-soft">
             {results.filter((r) => r.status === 'saved').length} salvate,{' '}
             {results.filter((r) => r.status === 'skipped').length} saltate.
@@ -551,6 +901,84 @@ export default function WebImport() {
             </button>
           </div>
         </div>
+      )}
+
+      <input
+        ref={noteFilesRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          addFiles(e.target.files)
+          e.target.value = ''
+        }}
+      />
+
+      {draft && (
+        <>
+          <AddImagesSheet
+            open={addImagesOpen}
+            onClose={() => setAddImagesOpen(false)}
+            onDevice={() => noteFilesRef.current?.click()}
+            onImmich={immichReady ? () => setImmichOpen(true) : null}
+          />
+          {immichReady && (
+            <ImmichPicker
+              open={immichOpen}
+              baseUrl={immichUrl}
+              apiKey={immichApiKey}
+              onClose={() => setImmichOpen(false)}
+              onConfirm={(files) => {
+                addFiles(files)
+                setImmichOpen(false)
+              }}
+            />
+          )}
+          <PeoplePickerSheet
+            open={peopleSheetOpen}
+            people={allPeople}
+            selectedIds={draft.peopleIds}
+            immichUrl={immichUrl}
+            immichApiKey={immichApiKey}
+            usageCounts={peopleUsage}
+            onClose={() => setPeopleSheetOpen(false)}
+            onToggle={togglePerson}
+            onCreated={(person) => {
+              setAllPeople((prev) =>
+                [...prev, person].sort((a, b) => a.name.localeCompare(b.name)),
+              )
+              setDraft((d) => ({ ...d, peopleIds: [...d.peopleIds, person.id] }))
+            }}
+          />
+          <TagPickerSheet
+            open={tagSheetOpen}
+            tags={allTags}
+            selectedIds={draft.tagIds}
+            onClose={() => setTagSheetOpen(false)}
+            onToggle={toggleTag}
+            onCreated={(tag) => {
+              setAllTags((prev) =>
+                [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)),
+              )
+              setDraft((d) => ({ ...d, tagIds: [...d.tagIds, tag.id] }))
+            }}
+          />
+          <AddSongSheet
+            open={songSheetOpen}
+            onClose={() => setSongSheetOpen(false)}
+            onAdd={(song) =>
+              setDraft((d) => ({ ...d, songs: [...d.songs, song] }))
+            }
+            spotifyClientId={spotifyClientId}
+            spotifyClientSecret={spotifyClientSecret}
+          />
+          <PlacePickerSheet
+            open={placeSheetOpen}
+            onClose={() => setPlaceSheetOpen(false)}
+            onAdd={(place) => setField({ place })}
+          />
+        </>
       )}
     </div>
   )

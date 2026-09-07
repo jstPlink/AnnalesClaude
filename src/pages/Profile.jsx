@@ -27,7 +27,22 @@ import {
 import { listTags, createTag, deleteTag } from '../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../lib/gemini'
+import { downloadIntegrationDoc } from '../lib/integrationDocs'
 import { haptic } from '../lib/haptics'
+
+// Pulsante "scarica la guida" per ottenere il token di un'integrazione.
+function TokenHelp({ which }) {
+  return (
+    <button
+      type="button"
+      onClick={() => downloadIntegrationDoc(which)}
+      className="flex items-center gap-1.5 text-xs font-semibold text-ink-soft underline underline-offset-2"
+    >
+      <Icon name="download" size={13} className="shrink-0" />
+      Come ottenerlo (guida)
+    </button>
+  )
+}
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -386,6 +401,7 @@ export default function Profile() {
               Collega il tuo server Immich per scegliere le foto da lì quando
               aggiungi immagini a una nota.
             </p>
+            <TokenHelp which="immich" />
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-ink-soft">
                 URL server
@@ -445,6 +461,7 @@ export default function Profile() {
                 Chiave API di Google AI Studio per ripulire il testo delle note,
                 riconoscere le persone citate e scrivere contenuti con l'IA.
               </p>
+              <TokenHelp which="gemini" />
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold text-ink-soft">
                   API key
@@ -492,6 +509,7 @@ export default function Profile() {
               cercare canzoni da aggiungere alle note, senza incollare link a
               mano.
             </p>
+            <TokenHelp which="spotify" />
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-ink-soft">
                 Client ID

@@ -33,6 +33,10 @@
   --color-delete: #e06a60;
   --color-delete-dark: #c8564c;
   --color-weekend: #d1584d;
+
+  /* Giallo "warning" saturo: usato per marcare le funzioni provvisorie. */
+  --color-warn: #f2b01e;
+  --color-warn-dark: #c98a00;
 }
 
 html,

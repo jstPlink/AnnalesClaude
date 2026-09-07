@@ -16,9 +16,76 @@ import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/peop
 import { listTags, createTag, deleteTag } from '../../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../../lib/gemini'
+import { downloadIntegrationDoc } from '../../lib/integrationDocs'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import Icon from '../../components/Icon'
+
+// Sezione collassabile in stile web (parità con le Impostazioni mobile).
+// `nested` = riquadro interno più compatto per i raggruppamenti.
+function WebSection({ title, icon, nested = false, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div
+      className={
+        'border border-line ' +
+        (nested ? 'mt-3 rounded-2xl bg-cream' : 'mt-6 rounded-3xl bg-tag')
+      }
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={
+          'flex w-full items-center gap-3 text-left ' +
+          (nested ? 'p-4' : 'p-6 sm:p-8')
+        }
+      >
+        {icon && (
+          <Icon
+            name={icon}
+            size={nested ? 16 : 18}
+            className="shrink-0 text-ink-soft"
+          />
+        )}
+        <h2
+          className={
+            'flex-1 font-serif font-semibold text-ink ' +
+            (nested ? 'text-lg' : 'text-xl')
+          }
+        >
+          {title}
+        </h2>
+        <Icon
+          name="chevron-right"
+          size={16}
+          className={
+            'shrink-0 text-ink-soft transition-transform ' +
+            (open ? 'rotate-90' : '')
+          }
+        />
+      </button>
+      {open && (
+        <div className={nested ? 'px-4 pb-4' : 'px-6 pb-6 sm:px-8 sm:pb-8'}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Link a una guida .md scaricabile su come ottenere il token/credenziali.
+function TokenHelp({ which }) {
+  return (
+    <button
+      type="button"
+      onClick={() => downloadIntegrationDoc(which)}
+      className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-ink-soft underline underline-offset-2 hover:text-ink"
+    >
+      <Icon name="download" size={13} className="shrink-0" />
+      Come ottenerlo (guida)
+    </button>
+  )
+}
 
 export default function WebProfile() {
   const navigate = useNavigate()
@@ -362,14 +429,19 @@ export default function WebProfile() {
         </button>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Immich</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+      <WebSection title="Integrazioni" icon="link">
+        <p className="text-sm text-ink-soft">
+          Chiavi e collegamenti per le funzioni opzionali di Annales.
+        </p>
+
+        <WebSection nested title="Immich" icon="image">
+        <p className="text-sm text-ink-soft">
           Collega il tuo server Immich per scegliere le foto da lì quando
           aggiungi immagini a una nota.
         </p>
+        <TokenHelp which="immich" />
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-4 space-y-4">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
               URL server
@@ -425,123 +497,16 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
-      </div>
+        </WebSection>
 
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Persone</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Elenco delle persone selezionabili nelle note, pescate dal tuo Immich.
-        </p>
-
-        {peopleError && <p className="mt-3 text-sm text-delete-dark">{peopleError}</p>}
-
-        {people.length > 0 && (
-          <div className="mt-4 space-y-1">
-            {people.map((person) => (
-              <div key={person.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
-                <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
-                <span className="flex-1 text-sm font-medium text-ink">{person.name}</span>
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  disabled={removingId === person.id}
-                  onClick={() => removePerson(person.id)}
-                  className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex gap-3">
-          <button
-            type="button"
-            disabled={!immichReady}
-            onClick={() => setPickerOpen(true)}
-            title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
-            className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-          >
-            + Aggiungi da Immich
-          </button>
-          {people.length > 0 && (
-            <button
-              type="button"
-              disabled={!immichReady || refreshing}
-              onClick={refreshNamesFromImmich}
-              title={
-                immichReady
-                  ? 'Aggiorna i nomi se sono cambiati su Immich'
-                  : 'Configura prima Immich qui sopra'
-              }
-              className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-            >
-              {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Tag</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Elenco dei tag selezionabili nelle note.
-        </p>
-
-        {tagsError && <p className="mt-3 text-sm text-delete-dark">{tagsError}</p>}
-
-        {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="flex items-center gap-2 rounded-lg border border-line bg-cream py-1.5 pl-3 pr-2 text-sm font-medium text-ink"
-              >
-                <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                {tag.name}
-                <button
-                  type="button"
-                  title="Rimuovi"
-                  disabled={removingTagId === tag.id}
-                  onClick={() => removeTag(tag.id)}
-                  className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex gap-3">
-          <input
-            type="text"
-            placeholder="Nuovo tag…"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addTag()}
-            className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-sm text-ink outline-none focus:border-ink-soft"
-          />
-          <button
-            type="button"
-            disabled={!newTag.trim() || creatingTag}
-            onClick={addTag}
-            className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-sm font-bold text-ink transition disabled:opacity-50"
-          >
-            {creatingTag ? '…' : 'Crea'}
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Spotify</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+        <WebSection nested title="Spotify" icon="music">
+        <p className="text-sm text-ink-soft">
           Client ID/Secret di un'app Spotify (Client Credentials) per cercare
           canzoni da aggiungere alle note, senza incollare link a mano.
         </p>
+        <TokenHelp which="spotify" />
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-4 space-y-4">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Client ID
@@ -597,16 +562,16 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
-      </div>
+        </WebSection>
 
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Gemini (IA)</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+        <WebSection nested title="Gemini (IA)" icon="sparkles">
+        <p className="text-sm text-ink-soft">
           Chiave API di Google AI Studio per ripulire il testo delle note,
           riconoscere le persone citate e scrivere contenuti con l'IA.
         </p>
+        <TokenHelp which="gemini" />
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-4 space-y-4">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
               API key
@@ -648,11 +613,116 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
-      </div>
+        </WebSection>
+      </WebSection>
 
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">Supporto</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+      <WebSection title="Persone" icon="user">
+        <p className="text-sm text-ink-soft">
+          Elenco delle persone selezionabili nelle note, pescate dal tuo Immich.
+        </p>
+
+        {peopleError && <p className="mt-3 text-sm text-delete-dark">{peopleError}</p>}
+
+        {people.length > 0 && (
+          <div className="mt-4 space-y-1">
+            {people.map((person) => (
+              <div key={person.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
+                <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
+                <span className="flex-1 text-sm font-medium text-ink">{person.name}</span>
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  disabled={removingId === person.id}
+                  onClick={() => removePerson(person.id)}
+                  className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 flex gap-3">
+          <button
+            type="button"
+            disabled={!immichReady}
+            onClick={() => setPickerOpen(true)}
+            title={immichReady ? undefined : 'Configura prima Immich'}
+            className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+          >
+            + Aggiungi da Immich
+          </button>
+          {people.length > 0 && (
+            <button
+              type="button"
+              disabled={!immichReady || refreshing}
+              onClick={refreshNamesFromImmich}
+              title={
+                immichReady
+                  ? 'Aggiorna i nomi se sono cambiati su Immich'
+                  : 'Configura prima Immich'
+              }
+              className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+            >
+              {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+            </button>
+          )}
+        </div>
+      </WebSection>
+
+      <WebSection title="Tag" icon="tag">
+        <p className="text-sm text-ink-soft">
+          Elenco dei tag selezionabili nelle note.
+        </p>
+
+        {tagsError && <p className="mt-3 text-sm text-delete-dark">{tagsError}</p>}
+
+        {tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="flex items-center gap-2 rounded-lg border border-line bg-cream py-1.5 pl-3 pr-2 text-sm font-medium text-ink"
+              >
+                <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                {tag.name}
+                <button
+                  type="button"
+                  title="Rimuovi"
+                  disabled={removingTagId === tag.id}
+                  onClick={() => removeTag(tag.id)}
+                  className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 flex gap-3">
+          <input
+            type="text"
+            placeholder="Nuovo tag…"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addTag()}
+            className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+          />
+          <button
+            type="button"
+            disabled={!newTag.trim() || creatingTag}
+            onClick={addTag}
+            className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-sm font-bold text-ink transition disabled:opacity-50"
+          >
+            {creatingTag ? '…' : 'Crea'}
+          </button>
+        </div>
+      </WebSection>
+
+      <WebSection title="Supporto" icon="mail">
+        <p className="text-sm text-ink-soft">
           Domande, problemi o suggerimenti su Annales? Scrivimi pure.
         </p>
         <dl className="mt-5 divide-y divide-line-soft border-y border-line-soft text-sm">
@@ -681,13 +751,10 @@ export default function WebProfile() {
             </dd>
           </div>
         </dl>
-      </div>
+      </WebSection>
 
-      <div className="mt-6 rounded-3xl border border-line bg-tag p-8">
-        <h2 className="font-serif text-xl font-semibold text-ink">
-          Offrimi un caffè
-        </h2>
-        <p className="mt-1 text-sm text-ink-soft">
+      <WebSection title="Offrimi un caffè" icon="heart">
+        <p className="text-sm text-ink-soft">
           Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
           farlo da qui.
         </p>
@@ -696,7 +763,7 @@ export default function WebProfile() {
         <div className="mt-5 flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
           Buy Me a Coffee · presto disponibile
         </div>
-      </div>
+      </WebSection>
 
       {immichReady && (
         <ImmichPeoplePicker
