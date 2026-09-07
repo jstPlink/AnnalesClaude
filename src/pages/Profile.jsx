@@ -8,6 +8,7 @@ import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import CollapsibleSection from '../components/CollapsibleSection'
 import AppearanceControls from '../components/AppearanceControls'
 import ExportButtons from '../components/ExportButtons'
+import Changelog from '../components/Changelog'
 import { useAuth } from '../context/AuthContext'
 import { pb, fileUrl } from '../lib/pocketbase'
 import {
@@ -754,6 +755,12 @@ export default function Profile() {
             <div className="flex items-center justify-center rounded-xl border border-dashed border-line bg-cream px-3 py-4 text-center text-xs font-semibold text-ink-soft">
               Buy Me a Coffee · presto disponibile
             </div>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Novità" icon="list">
+            <Changelog />
           </CollapsibleSection>
         </div>
 

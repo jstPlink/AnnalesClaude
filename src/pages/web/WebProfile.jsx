@@ -21,6 +21,7 @@ import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import AppearanceControls from '../../components/AppearanceControls'
 import ExportButtons from '../../components/ExportButtons'
+import Changelog from '../../components/Changelog'
 import Icon from '../../components/Icon'
 
 // Sezione collassabile in stile web (parità con le Impostazioni mobile).
@@ -781,6 +782,10 @@ export default function WebProfile() {
         <div className="mt-5 flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
           Buy Me a Coffee · presto disponibile
         </div>
+      </WebSection>
+
+      <WebSection title="Novità" icon="list">
+        <Changelog />
       </WebSection>
 
       {immichReady && (
