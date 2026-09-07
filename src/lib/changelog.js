@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.10.0',
+    date: '2026-09-07 16:41',
+    changes: [
+      'Eliminazione account dalle Impostazioni, con doppia conferma (avviso + digitare ELIMINA). Cancella anche note, persone e tag dell’utente.',
+    ],
+  },
+  {
     version: '0.9.6',
     date: '2026-09-07 16:33',
     changes: ['Versione dell’app mostrata nella pagina di login (mobile e web).'],

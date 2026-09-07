@@ -9,6 +9,7 @@ import CollapsibleSection from '../components/CollapsibleSection'
 import AppearanceControls from '../components/AppearanceControls'
 import ExportButtons from '../components/ExportButtons'
 import Changelog from '../components/Changelog'
+import DeleteAccount from '../components/DeleteAccount'
 import { useAuth } from '../context/AuthContext'
 import { pb, fileUrl } from '../lib/pocketbase'
 import {
@@ -773,7 +774,11 @@ export default function Profile() {
           Esci
         </button>
 
-        <p className="mt-6 text-center text-xs text-ink-soft">
+        <div className="mt-6 flex justify-center">
+          <DeleteAccount />
+        </div>
+
+        <p className="mt-3 text-center text-xs text-ink-soft">
           Annales · versione {__APP_VERSION__}
         </p>
       </main>

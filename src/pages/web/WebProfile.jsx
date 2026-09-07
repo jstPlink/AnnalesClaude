@@ -27,6 +27,7 @@ import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import AppearanceControls from '../../components/AppearanceControls'
 import ExportButtons from '../../components/ExportButtons'
 import Changelog from '../../components/Changelog'
+import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
 
 // Sezione collassabile in stile web (parità con le Impostazioni mobile).
@@ -455,6 +456,10 @@ export default function WebProfile() {
         >
           Esci
         </button>
+
+        <div className="mt-4 flex justify-end border-t border-line-soft pt-4">
+          <DeleteAccount />
+        </div>
       </div>
 
       <WebSection title="Aspetto" icon="settings">
