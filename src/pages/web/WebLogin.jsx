@@ -3,59 +3,30 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { describeError } from '../../lib/notes'
 
-const MIN_PASSWORD = 8
-
 const field =
   'w-full rounded-xl border border-line bg-cream px-4 py-3 text-[15px] text-ink outline-none transition focus:border-ink-soft'
 
+// Solo accesso: la registrazione pubblica è chiusa (gli account si creano
+// dal pannello admin di PocketBase).
 export default function WebLogin() {
-  const { login, signup, isAuthed, ready } = useAuth()
+  const { login, isAuthed, ready } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState('login')
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const from = location.state?.from?.pathname || '/'
-  const isSignup = mode === 'signup'
 
   if (ready && isAuthed) return <Navigate to={from} replace />
-
-  function switchMode() {
-    setMode((m) => (m === 'login' ? 'signup' : 'login'))
-    setError('')
-    setPassword('')
-    setPasswordConfirm('')
-  }
 
   async function onSubmit(e) {
     e.preventDefault()
     setError('')
-    if (isSignup) {
-      if (password.length < MIN_PASSWORD) {
-        setError(`La password deve avere almeno ${MIN_PASSWORD} caratteri.`)
-        return
-      }
-      if (password !== passwordConfirm) {
-        setError('Le due password non coincidono.')
-        return
-      }
-    }
     setBusy(true)
     try {
-      if (isSignup) {
-        await signup(
-          email.trim(),
-          password,
-          name.trim() ? { name: name.trim() } : {},
-        )
-      } else {
-        await login(email.trim(), password)
-      }
+      await login(email.trim(), password)
       navigate(from, { replace: true })
     } catch (err) {
       setError(describeError(err))
@@ -95,56 +66,17 @@ export default function WebLogin() {
             <span className="font-serif text-3xl font-semibold">Annales</span>
           </div>
 
-          <h2 className="font-serif text-3xl font-semibold">
-            {isSignup ? 'Crea il tuo account' : 'Bentornato'}
-          </h2>
+          <h2 className="font-serif text-3xl font-semibold">Bentornato</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            {isSignup
-              ? 'Bastano email e password.'
-              : 'Accedi per continuare il tuo diario.'}
+            Accedi per continuare il tuo diario.
           </p>
 
-          <div className="mt-6 flex rounded-full border border-line bg-tag p-1 text-sm font-semibold">
-            <button
-              type="button"
-              onClick={() => mode !== 'login' && switchMode()}
-              className={
-                'flex-1 rounded-full py-2 transition ' +
-                (!isSignup ? 'bg-cream text-ink shadow-sm' : 'text-ink-soft')
-              }
-            >
-              Accedi
-            </button>
-            <button
-              type="button"
-              onClick={() => mode !== 'signup' && switchMode()}
-              className={
-                'flex-1 rounded-full py-2 transition ' +
-                (isSignup ? 'bg-cream text-ink shadow-sm' : 'text-ink-soft')
-              }
-            >
-              Registrati
-            </button>
-          </div>
-
-          <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-3.5">
-            {isSignup && (
-              <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-                Nome <span className="font-normal">(facoltativo)</span>
-                <input
-                  type="text"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={field}
-                />
-              </label>
-            )}
+          <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3.5">
             <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
               Email
               <input
                 type="email"
-                autoComplete={isSignup ? 'email' : 'username'}
+                autoComplete="username"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -155,27 +87,13 @@ export default function WebLogin() {
               Password
               <input
                 type="password"
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 required
-                minLength={isSignup ? MIN_PASSWORD : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={field}
               />
             </label>
-            {isSignup && (
-              <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-                Conferma password
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  className={field}
-                />
-              </label>
-            )}
 
             {error && (
               <p className="rounded-xl bg-delete/15 px-4 py-2.5 text-sm text-delete-dark">
@@ -188,25 +106,14 @@ export default function WebLogin() {
               disabled={busy}
               className="mt-2 rounded-full bg-ink px-6 py-3 text-sm font-bold text-cream transition hover:brightness-110 disabled:opacity-50"
             >
-              {busy
-                ? isSignup
-                  ? 'Creazione…'
-                  : 'Accesso…'
-                : isSignup
-                  ? 'Crea account'
-                  : 'Entra'}
+              {busy ? 'Accesso…' : 'Entra'}
             </button>
           </form>
 
-          <button
-            type="button"
-            onClick={switchMode}
-            className="mt-5 text-sm text-ink-soft underline underline-offset-2"
-          >
-            {isSignup
-              ? 'Hai già un account? Accedi'
-              : 'Non hai un account? Registrati'}
-          </button>
+          <p className="mt-5 text-xs text-ink-soft">
+            Registrazione chiusa: gli account si creano dal pannello admin di
+            PocketBase.
+          </p>
         </div>
       </div>
     </div>

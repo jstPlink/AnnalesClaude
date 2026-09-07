@@ -64,6 +64,7 @@ export default function FilterView() {
     moodMax: 100,
     sort: 'mood-desc',
     limit: '',
+    text: '',
     place: '',
     personIds: [],
     tagIds: [],
@@ -120,6 +121,7 @@ export default function FilterView() {
         end,
         moodMin,
         moodMax,
+        text: filters.text,
         place: filters.place,
         personIds: filters.personIds,
         tagIds: filters.tagIds,
@@ -197,6 +199,16 @@ export default function FilterView() {
                 className="w-full rounded-xl border border-line bg-cream px-2 py-1.5 text-sm text-ink outline-none"
               />
             </div>
+          </FilterField>
+
+          <FilterField label="Testo (titolo e contenuto)">
+            <input
+              type="text"
+              placeholder="Cerca nel testo…"
+              value={filters.text}
+              onChange={(e) => set({ text: e.target.value })}
+              className="w-full rounded-xl border border-line bg-cream px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-soft"
+            />
           </FilterField>
 
           <FilterField label="Luogo">

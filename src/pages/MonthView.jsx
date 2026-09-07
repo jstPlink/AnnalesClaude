@@ -8,6 +8,7 @@ import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import ImageCarousel from '../components/ImageCarousel'
 import MarqueeText from '../components/MarqueeText'
+import OnThisDay from '../components/OnThisDay'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
@@ -165,6 +166,8 @@ export default function MonthView() {
           </p>
         )}
 
+        <OnThisDay className="mx-3 mb-1 mt-3" />
+
         <ul className="divide-y divide-line-soft">
           {days.map((d) => {
             const isToday = d.key === todayK
@@ -277,10 +280,14 @@ export default function MonthView() {
         open={geminiNoteOpen}
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
+        immichUrl={user?.immichUrl?.trim()}
+        immichApiKey={user?.immichApiKey?.trim()}
         allPeople={allPeople}
         allTags={allTags}
         onGenerated={(draft) =>
-          navigate(`/note/new?date=${todayKey()}`, { state: { aiDraft: draft } })
+          navigate(`/note/new?date=${draft.dateKey || todayKey()}`, {
+            state: { aiDraft: draft },
+          })
         }
       />
     </PhoneShell>

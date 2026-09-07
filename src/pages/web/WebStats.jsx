@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
+import { useAuth } from '../../context/AuthContext'
+import RecapCard from '../../components/RecapCard'
 import { listNotesInRange, countAllNotes, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
@@ -65,6 +67,8 @@ function DayRow({ day, onClick }) {
 export default function WebStats() {
   const navigate = useNavigate()
   const { cursor, setCursor } = useNav()
+  const { user } = useAuth()
+  const geminiApiKey = user?.geminiApiKey?.trim()
   const year = cursor.year
   const [yearNotes, setYearNotes] = useState([])
   const [allTimeCount, setAllTimeCount] = useState(null)
@@ -149,6 +153,13 @@ export default function WebStats() {
           sub={stats.busiestDay ? dayMonthLabel(stats.busiestDay.key) : ''}
         />
       </div>
+
+      <RecapCard
+        label={String(year)}
+        notes={yearNotes}
+        apiKey={geminiApiKey}
+        className="mt-6"
+      />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {stats.topDays.length > 0 && (

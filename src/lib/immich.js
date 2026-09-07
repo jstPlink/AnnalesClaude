@@ -28,18 +28,26 @@ export async function testImmichConnection(baseUrl, apiKey) {
   return res.json()
 }
 
-// Elenco foto (solo immagini, più recenti prima), paginato.
-export async function searchImmichPhotos(baseUrl, apiKey, { page = 1, pageSize = 60 } = {}) {
+// Elenco foto (solo immagini, più recenti prima), paginato. `takenAfter` /
+// `takenBefore` (ISO) limitano la finestra temporale (es. le foto di ieri).
+export async function searchImmichPhotos(
+  baseUrl,
+  apiKey,
+  { page = 1, pageSize = 60, takenAfter, takenBefore } = {},
+) {
+  const body = {
+    page,
+    size: pageSize,
+    type: 'IMAGE',
+    order: 'desc',
+    withDeleted: false,
+  }
+  if (takenAfter) body.takenAfter = takenAfter
+  if (takenBefore) body.takenBefore = takenBefore
   const res = await immichFetch(baseUrl, apiKey, '/api/search/metadata', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      page,
-      size: pageSize,
-      type: 'IMAGE',
-      order: 'desc',
-      withDeleted: false,
-    }),
+    body: JSON.stringify(body),
   })
   const data = await res.json()
   return {

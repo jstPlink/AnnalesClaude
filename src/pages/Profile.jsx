@@ -6,6 +6,8 @@ import Icon from '../components/Icon'
 import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import CollapsibleSection from '../components/CollapsibleSection'
+import AppearanceControls from '../components/AppearanceControls'
+import ExportButtons from '../components/ExportButtons'
 import { useAuth } from '../context/AuthContext'
 import { pb, fileUrl } from '../lib/pocketbase'
 import {
@@ -395,6 +397,12 @@ export default function Profile() {
         </div>
 
         <div className="mt-10">
+          <CollapsibleSection title="Aspetto" icon="settings">
+            <AppearanceControls />
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
           <CollapsibleSection title="Integrazioni" icon="link">
             <CollapsibleSection title="Immich" icon="image">
             <p className="text-xs text-ink-soft">
@@ -575,34 +583,6 @@ export default function Profile() {
             {peopleError && (
               <p className="text-xs text-delete-dark">{peopleError}</p>
             )}
-            {people.length > 0 && (
-              <div className="space-y-1">
-                {people.map((person) => (
-                  <div
-                    key={person.id}
-                    className="flex items-center gap-3 rounded-xl px-1 py-1"
-                  >
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                    />
-                    <span className="flex-1 text-sm font-medium text-ink">
-                      {person.name}
-                    </span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingId === person.id}
-                      onClick={() => removePerson(person.id)}
-                      className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -647,6 +627,34 @@ export default function Profile() {
                 </button>
               )}
             </div>
+            {people.length > 0 && (
+              <div className="space-y-1">
+                {people.map((person) => (
+                  <div
+                    key={person.id}
+                    className="flex items-center gap-3 rounded-xl px-1 py-1"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                    />
+                    <span className="flex-1 text-sm font-medium text-ink">
+                      {person.name}
+                    </span>
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingId === person.id}
+                      onClick={() => removePerson(person.id)}
+                      className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CollapsibleSection>
         </div>
 
@@ -696,6 +704,15 @@ export default function Profile() {
                 {creatingTag ? '…' : 'Crea'}
               </button>
             </div>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Import ed export" icon="download">
+            <p className="text-xs text-ink-soft">
+              L'importazione da immagine è disponibile solo dalla versione web.
+            </p>
+            <ExportButtons />
           </CollapsibleSection>
         </div>
 

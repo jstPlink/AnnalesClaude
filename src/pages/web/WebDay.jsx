@@ -9,6 +9,7 @@ import {
 import { moodColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
 import {
+  addDaysKey,
   dayRange,
   durationMinutes,
   fullDayLabel,
@@ -65,6 +66,19 @@ export default function WebDay() {
     load()
   }, [load])
 
+  const go = useCallback(
+    (delta) => navigate(`/day/${addDaysKey(date, delta)}`),
+    [navigate, date],
+  )
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft') go(-1)
+      if (e.key === 'ArrowRight') go(1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go])
+
   const { blocks, fromH, toH } = useMemo(() => {
     if (!notes.length) return { blocks: [], fromH: 8, toH: 20 }
     const items = notes.map((n) => {
@@ -96,14 +110,32 @@ export default function WebDay() {
           </svg>
           Torna al mese
         </button>
-        <div className="flex items-end justify-between">
-          <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-            {fullDayLabel(date)}
-          </h1>
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Giorno precedente"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+            >
+              <Icon name="chevron-left" size={18} />
+            </button>
+            <h1 className="min-w-0 font-serif text-4xl font-semibold tracking-tight text-ink">
+              {fullDayLabel(date)}
+            </h1>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Giorno successivo"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+            >
+              <Icon name="chevron-right" size={18} />
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => navigate(`/note/new?date=${date}`)}
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
+            className="shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
           >
             + Nuova nota
           </button>

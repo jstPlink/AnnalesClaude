@@ -54,6 +54,14 @@ export function todayKey() {
   return dayKey(new Date())
 }
 
+// Somma `n` giorni a una chiave "YYYY-MM-DD" (n può essere negativo).
+export function addDaysKey(dKey, n) {
+  const p = parseWall(dKey)
+  if (!p) return dKey
+  const d = new Date(p.y, p.mo - 1, p.d + n)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 // "HH.mm" per la UI (come nel mockup: 10.35).
 export function timeLabel(value) {
   const p = parseWall(value)

@@ -1,5 +1,12 @@
 import { pb } from './pocketbase'
 import { dayKey, timeInputValue, toPbTime } from './dates'
+import {
+  enqueue,
+  allOps,
+  removeOp,
+  queuedCount,
+  isNetworkError,
+} from './offlineQueue'
 
 // Accesso alla collection `note` di PocketBase.
 // Campi: title, content (Markdown), mood (0–1), date, timeStart, timeEnd,
@@ -64,7 +71,8 @@ function appendMultiRelation(fd, field, ids) {
 // l'intera lista file con le sole nuove immagini, cancellando quelle già
 // salvate — era la causa del "salva solo le nuove immagini" in modifica.
 function commonFields(data, opts) {
-  const { newFiles, removedImages, peopleIds, tagIds, appendImages } = opts
+  const { newFiles, removedImages, peopleIds, tagIds, appendImages, setUser } =
+    opts
   const fd = new FormData()
   fd.append('title', data.title ?? '')
   fd.append('content', data.content ?? '')
@@ -78,43 +86,130 @@ function commonFields(data, opts) {
   for (const name of removedImages) fd.append('images-', name)
   appendMultiRelation(fd, 'people', peopleIds)
   appendMultiRelation(fd, 'tags', tagIds)
+  // Solo in creazione: assegna la nota all'utente loggato (campo `user`).
+  // In aggiornamento non si tocca, per non riassegnare note altrui.
+  if (setUser && pb.authStore.record?.id) {
+    fd.append('user', pb.authStore.record.id)
+  }
   const dKey = dayKey(data.dateKey ?? data.date)
   if (!dKey) throw new Error('Data della nota mancante o non valida.')
   fd.append('date', dKey)
   return fd
 }
 
+// Esegue `exec`; se fallisce per rete assente mette `op` in coda offline e
+// rilancia un errore con `.queued = true`. Con `queue: false` (riproduzione
+// della coda) non ri-accoda e propaga l'errore così com'è.
+async function runOrQueue(op, exec, queue) {
+  try {
+    return await exec()
+  } catch (err) {
+    if (queue && isNetworkError(err) && (await enqueue(op))) {
+      const e = new Error(
+        'Sei offline: la modifica è in coda e verrà sincronizzata al ritorno online.',
+      )
+      e.queued = true
+      throw e
+    }
+    throw err
+  }
+}
+
 export async function createNote(
   data,
-  { newFiles = [], peopleIds = [], tagIds = [] } = {},
+  { newFiles = [], peopleIds = [], tagIds = [], queue = true } = {},
 ) {
-  const fd = commonFields(data, {
-    newFiles,
-    removedImages: [],
-    peopleIds,
-    tagIds,
-    appendImages: false,
-  })
-  return pb.collection(COLLECTION).create(fd)
+  return runOrQueue(
+    { kind: 'create', data, newFiles, peopleIds, tagIds },
+    () =>
+      pb.collection(COLLECTION).create(
+        commonFields(data, {
+          newFiles,
+          removedImages: [],
+          peopleIds,
+          tagIds,
+          appendImages: false,
+          setUser: true,
+        }),
+      ),
+    queue,
+  )
 }
 
 export async function updateNote(
   id,
   data,
-  { newFiles = [], removedImages = [], peopleIds = [], tagIds = [] } = {},
+  {
+    newFiles = [],
+    removedImages = [],
+    peopleIds = [],
+    tagIds = [],
+    queue = true,
+  } = {},
 ) {
-  const fd = commonFields(data, {
-    newFiles,
-    removedImages,
-    peopleIds,
-    tagIds,
-    appendImages: true,
-  })
-  return pb.collection(COLLECTION).update(id, fd)
+  return runOrQueue(
+    { kind: 'update', id, data, newFiles, removedImages, peopleIds, tagIds },
+    () =>
+      pb.collection(COLLECTION).update(
+        id,
+        commonFields(data, {
+          newFiles,
+          removedImages,
+          peopleIds,
+          tagIds,
+          appendImages: true,
+        }),
+      ),
+    queue,
+  )
 }
 
-export async function deleteNote(id) {
-  return pb.collection(COLLECTION).delete(id)
+export async function deleteNote(id, { queue = true } = {}) {
+  return runOrQueue({ kind: 'delete', id }, () =>
+    pb.collection(COLLECTION).delete(id), queue)
+}
+
+// Riproduce la coda offline in ordine FIFO. Si ferma appena torna un errore
+// di rete (ancora offline); scarta invece un'operazione che fallisce per
+// altri motivi (validazione, nota già cancellata) per non bloccare la coda.
+export async function flushQueue() {
+  if (!pb.authStore.isValid) return { done: 0, left: await queuedCount() }
+  const ops = await allOps()
+  let done = 0
+  for (const op of ops) {
+    try {
+      if (op.kind === 'create') {
+        await createNote(op.data, {
+          newFiles: op.newFiles,
+          peopleIds: op.peopleIds,
+          tagIds: op.tagIds,
+          queue: false,
+        })
+      } else if (op.kind === 'update') {
+        await updateNote(op.id, op.data, {
+          newFiles: op.newFiles,
+          removedImages: op.removedImages,
+          peopleIds: op.peopleIds,
+          tagIds: op.tagIds,
+          queue: false,
+        })
+      } else if (op.kind === 'delete') {
+        try {
+          await deleteNote(op.id, { queue: false })
+        } catch (e) {
+          if (e?.status !== 404) throw e
+        }
+      }
+      await removeOp(op.id)
+      done++
+    } catch (err) {
+      if (isNetworkError(err)) break
+      // eslint-disable-next-line no-console
+      console.warn('Operazione offline scartata:', op.kind, err)
+      await removeOp(op.id)
+    }
+  }
+  return { done, left: await queuedCount() }
 }
 
 // Conteggio di quante note coinvolgono ciascuna persona: { personId: n }.
@@ -163,6 +258,7 @@ export async function listNotesFiltered({
   moodMin,
   moodMax,
   place,
+  text,
   personIds,
   tagIds,
   hasSongs,
@@ -203,6 +299,16 @@ export async function listNotesFiltered({
   }
   if (hasPlace) {
     list = list.filter((n) => Boolean(n.place))
+  }
+  // Ricerca testo su titolo + contenuto (lato client sul testo semplice: il
+  // campo `content` è HTML, un `~` sul server matcherebbe anche i tag).
+  if (text && text.trim()) {
+    const q = text.trim().toLowerCase()
+    list = list.filter(
+      (n) =>
+        (n.title || '').toLowerCase().includes(q) ||
+        plainText(n.content).toLowerCase().includes(q),
+    )
   }
   return list
 }

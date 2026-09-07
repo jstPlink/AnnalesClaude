@@ -19,6 +19,8 @@ import { testGeminiKey, describeGeminiError } from '../../lib/gemini'
 import { downloadIntegrationDoc } from '../../lib/integrationDocs'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
+import AppearanceControls from '../../components/AppearanceControls'
+import ExportButtons from '../../components/ExportButtons'
 import Icon from '../../components/Icon'
 
 // Sezione collassabile in stile web (parità con le Impostazioni mobile).
@@ -429,6 +431,10 @@ export default function WebProfile() {
         </button>
       </div>
 
+      <WebSection title="Aspetto" icon="settings">
+        <AppearanceControls />
+      </WebSection>
+
       <WebSection title="Integrazioni" icon="link">
         <p className="text-sm text-ink-soft">
           Chiavi e collegamenti per le funzioni opzionali di Annales.
@@ -719,6 +725,18 @@ export default function WebProfile() {
             {creatingTag ? '…' : 'Crea'}
           </button>
         </div>
+      </WebSection>
+
+      <WebSection title="Import ed export" icon="download">
+        <button
+          type="button"
+          onClick={() => navigate('/importa')}
+          className="mb-4 flex items-center gap-2 rounded-full border border-warn-dark bg-warn px-4 py-2 text-sm font-bold text-ink transition hover:brightness-105"
+        >
+          <Icon name="alert-triangle" size={14} className="shrink-0" />
+          Importa da immagine
+        </button>
+        <ExportButtons />
       </WebSection>
 
       <WebSection title="Supporto" icon="mail">

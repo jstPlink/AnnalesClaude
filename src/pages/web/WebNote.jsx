@@ -24,6 +24,7 @@ import {
   peopleUsageCounts,
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
+import { fetchImmichOriginalAsFile } from '../../lib/immich'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { useAuth } from '../../context/AuthContext'
@@ -177,6 +178,26 @@ export default function WebNote() {
       .catch(() => {})
   }, [])
 
+  // Bozza "dalle foto di ieri": scarica gli originali Immich e li allega.
+  useEffect(() => {
+    const ids = aiDraft?.immichAssetIds
+    if (!ids?.length || !immichReady) return
+    let alive = true
+    Promise.all(
+      ids.map((assetId) =>
+        fetchImmichOriginalAsFile(immichUrl, immichApiKey, { id: assetId }),
+      ),
+    )
+      .then((files) => {
+        if (alive) setNewFiles((prev) => [...prev, ...files])
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
 
   const previews = useMemo(
@@ -289,7 +310,17 @@ export default function WebNote() {
     } catch (err) {
       savingRef.current = false
       setBusy(false)
-      setDialog({ title: 'Errore nel salvataggio', lines: [describeError(err)] })
+      setDialog(
+        err?.queued
+          ? {
+              title: 'Salvato in coda offline',
+              lines: [
+                describeError(err),
+                'La nota resta aperta qui; comparirà nel diario dopo la sincronizzazione.',
+              ],
+            }
+          : { title: 'Errore nel salvataggio', lines: [describeError(err)] },
+      )
     }
   }
 

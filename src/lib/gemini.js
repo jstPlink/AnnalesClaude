@@ -4,7 +4,8 @@
 // Serve solo una API key (Profilo) — nessun OAuth, chiamata REST diretta,
 // nessuna libreria necessaria.
 
-import { MONTHS_IT } from './dates'
+import { MONTHS_IT, dayKey } from './dates'
+import { plainText } from './notes'
 
 // gemini-2.5-flash è stato ritirato per i nuovi utenti (l'API risponde 404
 // indicando questo modello come sostituto): vedi errore riportato dall'utente
@@ -207,6 +208,85 @@ export async function extractNotesFromImage(
   }
   if (!Array.isArray(arr)) return []
   return arr.map(normalizeExtractedNote).filter(Boolean)
+}
+
+// Recap di un periodo: poche frasi che riassumono un insieme di note.
+export async function recapNotes(apiKey, notes, { label = '' } = {}) {
+  if (!notes || !notes.length) throw new Error('Nessuna nota nel periodo.')
+  const rows = [...notes]
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((n) => {
+      const d = dayKey(n.date)
+      const mood = Math.round(Number(n.mood) * 100)
+      const title = (n.title || '').trim()
+      const body = plainText(n.content).replace(/\s+/g, ' ').slice(0, 240)
+      return `${d} [${mood}] ${title}${body ? ' — ' + body : ''}`
+    })
+  const prompt =
+    `Queste sono le note di diario ${label ? 'del ' + label : 'di un periodo'} ` +
+    '(formato: data [mood 0-100] titolo — estratto). ' +
+    'Scrivi un recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), ' +
+    "di 4-6 frasi: temi ricorrenti, persone e luoghi che tornano, andamento dell'umore nel " +
+    'tempo, due o tre momenti salienti. Tono caldo e sintetico. Rispondi SOLO con il recap, ' +
+    'senza titolo né elenchi puntati.\n\n' +
+    rows.join('\n')
+  return callGemini(apiKey, prompt)
+}
+
+// Bozza di nota a partire da un gruppo di foto (thumbnail in base64) di un
+// dato giorno. Come draftNoteFromPrompt, ritorna un oggetto da rivedere.
+export async function draftNoteFromPhotos(
+  apiKey,
+  images,
+  { dateLabel = '', peopleNames = [], tagNames = [] } = {},
+) {
+  if (!images || !images.length) throw new Error('Nessuna foto selezionata.')
+  const instruction =
+    `Queste sono le foto scattate ${dateLabel ? 'il ' + dateLabel : 'in un giorno'}. ` +
+    'Prepara la bozza di una nota di diario personale in italiano, in prima persona, che ' +
+    'racconti quella giornata a partire da ciò che si vede. Rispondi SOLO con un oggetto JSON ' +
+    'valido, senza testo prima o dopo, con esattamente questa forma:\n' +
+    '{"title": string breve, ' +
+    '"content": string (il racconto, scorrevole, qualche frase), ' +
+    `"tags": array preso ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinente, altrimenti [], ` +
+    `"people": array preso ESATTAMENTE dall'elenco ${JSON.stringify(peopleNames)} se riconosci qualcuno, altrimenti [], ` +
+    '"place": string col nome del luogo se deducibile dalle foto, altrimenti "", ' +
+    '"mood": numero tra 0 e 1 che stima l\'umore della giornata dalle foto, ' +
+    '"timeStart": "HH:MM" plausibile, "timeEnd": "HH:MM" plausibile}'
+  const parts = [
+    { text: instruction },
+    ...images.map((img) => ({
+      inlineData: { mimeType: img.mimeType, data: img.base64 },
+    })),
+  ]
+  const raw = await callGeminiParts(apiKey, parts)
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
+  let data
+  try {
+    data = JSON.parse(match[0])
+  } catch {
+    throw new Error('Gemini non ha restituito un risultato valido.')
+  }
+  const mood = Number(data.mood)
+  let timeStart = TIME_RE.test(data.timeStart) ? data.timeStart : '09:00'
+  let timeEnd = TIME_RE.test(data.timeEnd) ? data.timeEnd : '10:00'
+  if (toMinutes(timeEnd) <= toMinutes(timeStart)) {
+    timeStart = '09:00'
+    timeEnd = '10:00'
+  }
+  return {
+    title: typeof data.title === 'string' ? data.title.trim() : '',
+    content: typeof data.content === 'string' ? data.content.trim() : '',
+    tags: Array.isArray(data.tags) ? data.tags.filter((x) => typeof x === 'string') : [],
+    people: Array.isArray(data.people)
+      ? data.people.filter((x) => typeof x === 'string')
+      : [],
+    place: typeof data.place === 'string' ? data.place.trim() : '',
+    mood: Number.isFinite(mood) ? Math.min(1, Math.max(0, mood)) : 0.5,
+    timeStart,
+    timeEnd,
+  }
 }
 
 export function describeGeminiError(err) {

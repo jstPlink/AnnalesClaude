@@ -4,6 +4,7 @@ import { NavProvider } from './context/NavContext'
 import { useIsWide } from './hooks/useIsWide'
 import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
+import PendingSync from './components/PendingSync'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
 import DayView from './pages/DayView'
@@ -153,6 +154,7 @@ export default function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <PendingSync />
         </BrowserRouter>
       </NavProvider>
     </AuthProvider>

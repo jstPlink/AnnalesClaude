@@ -9,6 +9,7 @@ import {
 } from '../../lib/notes'
 import { dayMood, moodColor, moodTextColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
+import OnThisDay from '../../components/OnThisDay'
 import {
   MONTHS_IT,
   addMonths,
@@ -122,6 +123,8 @@ export default function WebMonth() {
           {error}
         </p>
       )}
+
+      <OnThisDay className="mb-5 max-w-md" />
 
       <div className="divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
         {grid

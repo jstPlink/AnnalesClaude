@@ -66,6 +66,7 @@ export default function WebFilter() {
     moodMax: 100,
     sort: 'mood-desc',
     limit: '',
+    text: '',
     place: '',
     personIds: [],
     tagIds: [],
@@ -119,6 +120,7 @@ export default function WebFilter() {
         end,
         moodMin,
         moodMax,
+        text: filters.text,
         place: filters.place,
         personIds: filters.personIds,
         tagIds: filters.tagIds,
@@ -196,6 +198,19 @@ export default function WebFilter() {
                 className={inputCls}
               />
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-line bg-tag p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Testo (titolo e contenuto)
+            </p>
+            <input
+              type="text"
+              placeholder="Cerca nel testo…"
+              value={filters.text}
+              onChange={(e) => set({ text: e.target.value })}
+              className={inputCls}
+            />
           </div>
 
           <div className="rounded-2xl border border-line bg-tag p-4">

@@ -4,7 +4,9 @@ import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
+import RecapCard from '../components/RecapCard'
 import { useNav } from '../context/NavContext'
+import { useAuth } from '../context/AuthContext'
 import { listNotesInRange, countAllNotes, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
@@ -54,6 +56,8 @@ function DayRow({ day, onClick }) {
 export default function StatsView() {
   const navigate = useNavigate()
   const { cursor, setCursor } = useNav()
+  const { user } = useAuth()
+  const geminiApiKey = user?.geminiApiKey?.trim()
   const year = cursor.year
   const [yearNotes, setYearNotes] = useState([])
   const [allTimeCount, setAllTimeCount] = useState(null)
@@ -130,6 +134,13 @@ export default function StatsView() {
                 sub={stats.busiestDay ? dayMonthLabel(stats.busiestDay.key) : ''}
               />
             </div>
+
+            <RecapCard
+              label={String(year)}
+              notes={yearNotes}
+              apiKey={geminiApiKey}
+              className="mt-5"
+            />
 
             {stats.topDays.length > 0 && (
               <section className="mt-5">

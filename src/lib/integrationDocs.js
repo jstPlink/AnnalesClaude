@@ -95,8 +95,12 @@ export const INTEGRATION_DOCS = {
 }
 
 // Scarica una stringa come file di testo (client-side, nessun server).
-export function downloadTextFile(filename, text) {
-  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
+export function downloadTextFile(
+  filename,
+  text,
+  mime = 'text/markdown;charset=utf-8',
+) {
+  const blob = new Blob([text], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

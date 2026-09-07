@@ -39,6 +39,51 @@
   --color-warn-dark: #c98a00;
 }
 
+/* Famiglia font dell'app: scelta in Impostazioni (attributo data-font su
+   <html>). Il default "rounded" non imposta l'attributo. */
+:root {
+  --font-app: var(--font-sans);
+  color-scheme: light;
+}
+:root[data-font='sans'] {
+  --font-app: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+:root[data-font='serif'] {
+  --font-app: var(--font-serif);
+}
+:root[data-font='mono'] {
+  --font-app: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Consolas',
+    'Liberation Mono', monospace;
+}
+
+/* Tema scuro: attivato quando <html data-theme="dark"> (vedi src/lib/prefs.js,
+   che risolve "Sistema" in chiaro/scuro). Ridefinisce solo i token colore;
+   le utility Tailwind (bg-tag, text-ink, …) li leggono via var(). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-tag: #2b2620;
+  --color-cream: #211e18;
+  --color-sand: #1b1914;
+  --color-panel: #28241c;
+  --color-panel-2: #332e24;
+  --color-line: #4a4437;
+  --color-line-soft: #3a352b;
+
+  --color-ink: #ece3d2;
+  --color-ink-soft: #a89e88;
+
+  --color-save: #7cae4f;
+  --color-save-dark: #6c9c43;
+  --color-delete: #d1655c;
+  --color-delete-dark: #bd554d;
+  --color-weekend: #d1655c;
+
+  --color-warn: #e3a91c;
+  --color-warn-dark: #bd8600;
+}
+
 html,
 body,
 #root {
@@ -49,7 +94,7 @@ body {
   margin: 0;
   background: var(--color-cream);
   color: var(--color-ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;

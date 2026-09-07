@@ -11,6 +11,7 @@ import { listNotesInRange, describeError, plainText } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
 import {
+  addDaysKey,
   dayMonthLabel,
   dayRange,
   durationMinutes,
@@ -19,6 +20,7 @@ import {
 } from '../lib/dates'
 
 const DAY_MIN = 24 * 60
+const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
 const RAIL_W = 31 // px, larghezza della barra oraria a sinistra (-20%, poi -15%)
 const HOUR_LINE_W = Math.round(RAIL_W / 2) // trattini alle ore: metà della colonna
 const MIN_BLOCK = 24 // px, altezza minima di un blocco nota
@@ -111,6 +113,33 @@ export default function DayView() {
     load()
   }, [load])
 
+  // Navigazione tra giorni: swipe orizzontale (mobile) o frecce ← →.
+  const go = useCallback(
+    (delta) => navigate(`/day/${addDaysKey(date, delta)}`),
+    [navigate, date],
+  )
+  const drag = useRef(null)
+  function onPointerDown(e) {
+    drag.current = { x: e.clientX, y: e.clientY }
+  }
+  function onPointerUp(e) {
+    if (!drag.current) return
+    const dx = e.clientX - drag.current.x
+    const dy = e.clientY - drag.current.y
+    drag.current = null
+    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+      go(dx < 0 ? 1 : -1)
+    }
+  }
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft') go(-1)
+      if (e.key === 'ArrowRight') go(1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go])
+
   // Misura l'altezza della fascia oraria (deve stare tutto in una schermata).
   useLayoutEffect(() => {
     const el = trackRef.current
@@ -153,7 +182,12 @@ export default function DayView() {
         </div>
       </header>
 
-      <main className="relative flex-1 overflow-hidden px-3 py-3">
+      <main
+        className="relative flex-1 overflow-hidden px-3 py-3"
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+      >
         {error && (
           <p className="mb-3 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
             {error}
