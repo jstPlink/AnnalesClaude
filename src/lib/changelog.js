@@ -5,6 +5,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.9.3',
+    date: '2026-09-07 16:23',
+    changes: [
+      'Registrazione riaperta; la privacy passa alle regole per-proprietario delle note (ogni utente vede solo le sue).',
+      'Impostazioni web → Persone: pulsanti in alto e creazione di una persona locale.',
+    ],
+  },
+  {
     version: '0.9.2',
     date: '2026-09-07 15:56',
     changes: ['Changelog con data e ora per ogni versione.'],

@@ -12,7 +12,12 @@ import {
   listImmichPeople,
   describeImmichError,
 } from '../../lib/immich'
-import { listPeople, createPersonFromImmich, deletePerson } from '../../lib/people'
+import {
+  listPeople,
+  createPerson,
+  createPersonFromImmich,
+  deletePerson,
+} from '../../lib/people'
 import { listTags, createTag, deleteTag } from '../../lib/tags'
 import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../../lib/gemini'
@@ -132,6 +137,8 @@ export default function WebProfile() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [newPersonName, setNewPersonName] = useState('')
+  const [creatingPerson, setCreatingPerson] = useState(false)
   const [personToDelete, setPersonToDelete] = useState(null)
   const [replacementId, setReplacementId] = useState('')
   const [cascadeBusy, setCascadeBusy] = useState(false)
@@ -259,6 +266,24 @@ export default function WebProfile() {
   async function addPerson(immichPerson) {
     const rec = await createPersonFromImmich(immichPerson)
     setPeople((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async function addLocalPerson() {
+    const name = newPersonName.trim()
+    if (!name || creatingPerson) return
+    setCreatingPerson(true)
+    setPeopleError('')
+    try {
+      const rec = await createPerson(name)
+      setPeople((prev) =>
+        [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)),
+      )
+      setNewPersonName('')
+    } catch (err) {
+      setPeopleError(describeError(err))
+    } finally {
+      setCreatingPerson(false)
+    }
   }
 
   async function removePerson(id) {
@@ -625,10 +650,54 @@ export default function WebProfile() {
 
       <WebSection title="Persone" icon="user">
         <p className="text-sm text-ink-soft">
-          Elenco delle persone selezionabili nelle note, pescate dal tuo Immich.
+          Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
+          Immich o creane una nuova qui.
         </p>
 
         {peopleError && <p className="mt-3 text-sm text-delete-dark">{peopleError}</p>}
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <input
+            type="text"
+            placeholder="Nuova persona…"
+            value={newPersonName}
+            onChange={(e) => setNewPersonName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addLocalPerson()}
+            className="min-w-[10rem] flex-1 rounded-full border border-line bg-cream px-4 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+          />
+          <button
+            type="button"
+            disabled={!newPersonName.trim() || creatingPerson}
+            onClick={addLocalPerson}
+            className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-sm font-bold text-ink transition disabled:opacity-50"
+          >
+            {creatingPerson ? '…' : 'Crea'}
+          </button>
+          <button
+            type="button"
+            disabled={!immichReady}
+            onClick={() => setPickerOpen(true)}
+            title={immichReady ? undefined : 'Configura prima Immich'}
+            className="shrink-0 rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+          >
+            + Aggiungi da Immich
+          </button>
+          {people.length > 0 && (
+            <button
+              type="button"
+              disabled={!immichReady || refreshing}
+              onClick={refreshNamesFromImmich}
+              title={
+                immichReady
+                  ? 'Aggiorna i nomi se sono cambiati su Immich'
+                  : 'Configura prima Immich'
+              }
+              className="shrink-0 rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+            >
+              {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+            </button>
+          )}
+        </div>
 
         {people.length > 0 && (
           <div className="mt-4 space-y-1">
@@ -649,33 +718,6 @@ export default function WebProfile() {
             ))}
           </div>
         )}
-
-        <div className="mt-4 flex gap-3">
-          <button
-            type="button"
-            disabled={!immichReady}
-            onClick={() => setPickerOpen(true)}
-            title={immichReady ? undefined : 'Configura prima Immich'}
-            className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-          >
-            + Aggiungi da Immich
-          </button>
-          {people.length > 0 && (
-            <button
-              type="button"
-              disabled={!immichReady || refreshing}
-              onClick={refreshNamesFromImmich}
-              title={
-                immichReady
-                  ? 'Aggiorna i nomi se sono cambiati su Immich'
-                  : 'Configura prima Immich'
-              }
-              className="rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-            >
-              {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
-            </button>
-          )}
-        </div>
       </WebSection>
 
       <WebSection title="Tag" icon="tag">
