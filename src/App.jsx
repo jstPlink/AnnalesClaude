@@ -20,6 +20,7 @@ import WebProfile from './pages/web/WebProfile'
 import WebData from './pages/web/WebData'
 import WebStats from './pages/web/WebStats'
 import WebFilter from './pages/web/WebFilter'
+import WebImport from './pages/web/WebImport'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
@@ -45,6 +46,24 @@ function Screen({ mobile: Mobile, desktop: Desktop, chrome = true }) {
     </DesktopShell>
   ) : (
     <Desktop />
+  )
+}
+
+// Avviso per le schermate disponibili solo dalla versione web/desktop.
+function WebOnlyNotice() {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-sand p-8 text-center">
+      <p className="text-lg font-bold text-ink">Disponibile solo da web</p>
+      <p className="max-w-xs text-sm text-ink-soft">
+        L'importazione da immagine si usa dalla versione desktop/web di Annales.
+      </p>
+      <a
+        href="/"
+        className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream"
+      >
+        Torna al calendario
+      </a>
+    </div>
   )
 }
 
@@ -97,6 +116,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Screen mobile={FilterView} desktop={WebFilter} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/importa"
+              element={
+                <RequireAuth>
+                  <Screen mobile={WebOnlyNotice} desktop={WebImport} />
                 </RequireAuth>
               }
             />

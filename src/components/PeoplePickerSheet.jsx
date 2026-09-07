@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Icon from './Icon'
 import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
@@ -6,6 +6,8 @@ import { createPerson } from '../lib/people'
 
 // Dialog per selezionare le persone coinvolte in questa nota: tra quelle già
 // in elenco (Profilo / Immich), o creandone una nuova al volo (solo nome).
+// Con `usageCounts` ({ personId: n° note }) le persone più usate salgono in
+// cima; a parità di uso, ordine alfabetico.
 export default function PeoplePickerSheet({
   open,
   people,
@@ -15,10 +17,19 @@ export default function PeoplePickerSheet({
   onClose,
   onToggle,
   onCreated,
+  usageCounts,
 }) {
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+
+  const orderedPeople = useMemo(() => {
+    if (!usageCounts) return people
+    return [...people].sort((a, b) => {
+      const diff = (usageCounts[b.id] || 0) - (usageCounts[a.id] || 0)
+      return diff !== 0 ? diff : a.name.localeCompare(b.name)
+    })
+  }, [people, usageCounts])
 
   if (!open) return null
 
@@ -88,7 +99,7 @@ export default function PeoplePickerSheet({
             </p>
           ) : (
             <div className="space-y-1">
-              {people.map((person) => {
+              {orderedPeople.map((person) => {
                 const active = selectedIds.includes(person.id)
                 return (
                   <button

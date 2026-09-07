@@ -3,9 +3,9 @@ import Icon from './Icon'
 import { loadLeaflet, boundsForDiameterKm } from '../lib/leaflet'
 
 // Targhetta per il luogo salvato: mappa a tutta altezza (bloccata, sola
-// visualizzazione, ~4km di diametro, alta il 65% della larghezza — ridotta
-// del 35% rispetto al quadrato iniziale), nome in una fascia in basso (come
-// la didascalia di una foto, per lasciare più spazio alla mappa).
+// visualizzazione, ~4km di diametro, alta ~49% della larghezza — ridotta
+// del 25% rispetto a prima), con nome del luogo e pulsante "rimuovi" in una
+// fascia in ALTO.
 // `isolate` sul contenitore evita che i pannelli interni di Leaflet (z-index
 // alti, 400-700) sfondino sopra ad altri dialog/sheet dell'app (z-50).
 export default function PlaceCard({ place, onRemove }) {
@@ -53,12 +53,12 @@ export default function PlaceCard({ place, onRemove }) {
   if (!place) return null
 
   return (
-    <div className="isolate relative aspect-[1/0.65] w-full overflow-hidden rounded-xl border border-line bg-panel-2">
+    <div className="isolate relative aspect-[1/0.49] w-full overflow-hidden rounded-xl border border-line bg-panel-2">
       {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
       {/* z-index esplicito: i pannelli interni di Leaflet arrivano a 700 e,
           pur isolati dal resto della pagina, coprirebbero questa fascia
           (impedendo di premere "Rimuovi") se non stesse sopra di loro. */}
-      <div className="absolute inset-x-0 bottom-0 z-[1000] flex items-center gap-1.5 bg-ink/70 px-2 py-1">
+      <div className="absolute inset-x-0 top-0 z-[1000] flex items-center gap-1.5 bg-ink/70 px-2 py-1">
         <span className="min-w-0 flex-1 truncate text-xs font-semibold text-cream">
           {place.name}
         </span>

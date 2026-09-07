@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { pb, fileUrl } from '../../lib/pocketbase'
-import { describeError } from '../../lib/notes'
+import {
+  describeError,
+  listNotesWithPerson,
+  reassignPersonInNotes,
+} from '../../lib/notes'
 import {
   testImmichConnection,
   listImmichPeople,
@@ -58,6 +62,9 @@ export default function WebProfile() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [personToDelete, setPersonToDelete] = useState(null)
+  const [replacementId, setReplacementId] = useState('')
+  const [cascadeBusy, setCascadeBusy] = useState(false)
   const [tags, setTags] = useState([])
   const [tagsError, setTagsError] = useState('')
   const [newTag, setNewTag] = useState('')
@@ -186,13 +193,40 @@ export default function WebProfile() {
 
   async function removePerson(id) {
     setRemovingId(id)
+    setPeopleError('')
     try {
-      await deletePerson(id)
-      setPeople((prev) => prev.filter((p) => p.id !== id))
+      const linked = await listNotesWithPerson(id)
+      if (linked.length === 0) {
+        await deletePerson(id)
+        setPeople((prev) => prev.filter((p) => p.id !== id))
+      } else {
+        setReplacementId('')
+        setPersonToDelete({ person: people.find((p) => p.id === id), notes: linked })
+      }
     } catch (err) {
       setPeopleError(describeError(err))
     } finally {
       setRemovingId('')
+    }
+  }
+
+  // mode: 'replace' (sostituisci con replacementId) | 'detach' (togli e basta).
+  async function confirmCascade(mode) {
+    if (!personToDelete || cascadeBusy) return
+    const { person, notes } = personToDelete
+    const toId = mode === 'replace' ? replacementId : null
+    if (mode === 'replace' && !toId) return
+    setCascadeBusy(true)
+    setPeopleError('')
+    try {
+      await reassignPersonInNotes(person.id, toId, notes)
+      await deletePerson(person.id)
+      setPeople((prev) => prev.filter((p) => p.id !== person.id))
+      setPersonToDelete(null)
+    } catch (err) {
+      setPeopleError(describeError(err))
+    } finally {
+      setCascadeBusy(false)
     }
   }
 
@@ -673,6 +707,75 @@ export default function WebProfile() {
           onClose={() => setPickerOpen(false)}
           onPick={addPerson}
         />
+      )}
+
+      {personToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+          onClick={() => !cascadeBusy && setPersonToDelete(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-line bg-cream p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-serif text-xl font-semibold text-ink">
+              Rimuovi {personToDelete.person?.name}
+            </h3>
+            <p className="mt-2 text-sm text-ink-soft">
+              È collegata a {personToDelete.notes.length}{' '}
+              {personToDelete.notes.length === 1 ? 'nota' : 'note'}. Scegli cosa
+              fare.
+            </p>
+
+            <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Sostituisci con
+            </label>
+            <select
+              value={replacementId}
+              onChange={(e) => setReplacementId(e.target.value)}
+              disabled={cascadeBusy}
+              className="mt-1 w-full rounded-xl border border-line bg-tag px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+            >
+              <option value="">— scegli una persona —</option>
+              {people
+                .filter((p) => p.id !== personToDelete.person?.id)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="button"
+              disabled={!replacementId || cascadeBusy}
+              onClick={() => confirmCascade('replace')}
+              className="mt-2 w-full rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+            >
+              {cascadeBusy ? 'Aggiorno…' : 'Sostituisci nelle note e rimuovi'}
+            </button>
+
+            <div className="my-4 border-t border-line-soft" />
+
+            <button
+              type="button"
+              disabled={cascadeBusy}
+              onClick={() => confirmCascade('detach')}
+              className="w-full rounded-full border border-delete-dark bg-delete px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+            >
+              {cascadeBusy
+                ? 'Aggiorno…'
+                : `Rimuovi da tutte le ${personToDelete.notes.length} note e cancella`}
+            </button>
+            <button
+              type="button"
+              disabled={cascadeBusy}
+              onClick={() => setPersonToDelete(null)}
+              className="mt-2 w-full rounded-full border border-line bg-tag px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-cream disabled:opacity-50"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

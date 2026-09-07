@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 import DatePickerPopover from '../components/DatePickerPopover'
@@ -25,6 +25,7 @@ import {
   checkSavedNote,
   describeError,
   parsePlace,
+  peopleUsageCounts,
 } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { listPeople } from '../lib/people'
@@ -143,6 +144,7 @@ export default function NoteView() {
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [immichOpen, setImmichOpen] = useState(false)
   const [allPeople, setAllPeople] = useState([])
+  const [peopleUsage, setPeopleUsage] = useState(null)
   const [peopleIds, setPeopleIds] = useState(() => aiDraft?.peopleIds || [])
   const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
   const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
@@ -190,6 +192,9 @@ export default function NoteView() {
       .catch(() => {})
     listTags()
       .then(setAllTags)
+      .catch(() => {})
+    peopleUsageCounts()
+      .then(setPeopleUsage)
       .catch(() => {})
   }, [])
 
@@ -441,175 +446,194 @@ export default function NoteView() {
           />
         </div>
 
-        {hasExtras && (
-          // Un'unica colonna, ordine fisso: persone → divisore → foto →
-          // luogo → tag → canzone.
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-panel p-3">
-            {selectedPeople.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                {selectedPeople.map((person) => (
-                  <span
-                    key={person.id}
-                    className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
-                  >
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                      size={24}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                      {person.name}
-                    </span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => togglePerson(person.id)}
-                      className="shrink-0 text-ink-soft"
-                    >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+        {hasExtras &&
+          (() => {
+            // Ordine fisso: persone → foto → luogo → tag → canzone. Ogni
+            // sezione presente è separata dalla successiva da un divisore.
+            // Persone e tag sono su griglia a 2 colonne.
+            const sections = []
 
-            {selectedPeople.length > 0 &&
-              (!noImages ||
-                form.place ||
-                selectedTags.length > 0 ||
-                form.songs.length > 0) && (
-                <div className="border-t border-line-soft" />
-              )}
-
-            {!noImages && (
-              <div className="grid grid-cols-3 gap-2">
-                {existingImages.map((fn, i) => (
-                  <div
-                    key={fn}
-                    className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
-                  >
-                    <button
-                      type="button"
-                      title="Visualizza"
-                      onClick={() => setViewerIndex(i)}
-                      className="block h-full w-full"
+            if (selectedPeople.length > 0) {
+              sections.push(
+                <div key="people" className="grid grid-cols-2 gap-1.5">
+                  {selectedPeople.map((person) => (
+                    <span
+                      key={person.id}
+                      className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
                     >
-                      <img
-                        src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
-                        alt=""
-                        className="h-full w-full object-cover"
+                      <PersonAvatar
+                        person={person}
+                        immichUrl={immichUrl}
+                        immichApiKey={immichApiKey}
+                        size={24}
                       />
-                    </button>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => {
-                        setExistingImages((prev) => prev.filter((x) => x !== fn))
-                        setRemovedImages((prev) => [...prev, fn])
-                      }}
-                      className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
-                    >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </div>
-                ))}
-                {previews.map((p, i) => (
-                  <div
-                    key={p.url}
-                    className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
-                  >
-                    <button
-                      type="button"
-                      title="Visualizza"
-                      onClick={() => setViewerIndex(existingImages.length + i)}
-                      className="block h-full w-full"
-                    >
-                      <img src={p.url} alt="" className="h-full w-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() =>
-                        setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
-                      }
-                      className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
-                    >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {form.place && (
-              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
-            )}
-
-            {selectedTags.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                {selectedTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
-                  >
-                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                      {tag.name}
-                    </span>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => toggleTag(tag.id)}
-                      className="shrink-0 text-ink-soft"
-                    >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {form.songs.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                {form.songs.map((song, i) => (
-                  <div
-                    key={i}
-                    className="flex w-full items-center gap-2 rounded-lg border border-[#1db954]/35 bg-[#e7f8ec] px-2 py-1.5"
-                  >
-                    {song.thumbnailUrl ? (
-                      <img
-                        src={song.thumbnailUrl}
-                        alt=""
-                        className="h-8 w-8 shrink-0 rounded object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#1db954]/15 text-[#178a41]">
-                        <Icon name="music" size={14} />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                        {person.name}
                       </span>
-                    )}
-                    <a
-                      href={song.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => togglePerson(person.id)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>,
+              )
+            }
+
+            if (!noImages) {
+              sections.push(
+                <div key="images" className="grid grid-cols-3 gap-2">
+                  {existingImages.map((fn, i) => (
+                    <div
+                      key={fn}
+                      className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
                     >
-                      {song.title}
-                    </a>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => removeSong(i)}
-                      className="shrink-0 text-ink-soft"
+                      <button
+                        type="button"
+                        title="Visualizza"
+                        onClick={() => setViewerIndex(i)}
+                        className="block h-full w-full"
+                      >
+                        <img
+                          src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => {
+                          setExistingImages((prev) => prev.filter((x) => x !== fn))
+                          setRemovedImages((prev) => [...prev, fn])
+                        }}
+                        className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {previews.map((p, i) => (
+                    <div
+                      key={p.url}
+                      className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
                     >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        title="Visualizza"
+                        onClick={() => setViewerIndex(existingImages.length + i)}
+                        className="block h-full w-full"
+                      >
+                        <img src={p.url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() =>
+                          setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
+                        }
+                        className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>,
+              )
+            }
+
+            if (form.place) {
+              sections.push(
+                <PlaceCard
+                  key="place"
+                  place={form.place}
+                  onRemove={() => set({ place: null })}
+                />,
+              )
+            }
+
+            if (selectedTags.length > 0) {
+              sections.push(
+                <div key="tags" className="grid grid-cols-2 gap-1.5">
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
+                    >
+                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                        {tag.name}
+                      </span>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => toggleTag(tag.id)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>,
+              )
+            }
+
+            if (form.songs.length > 0) {
+              sections.push(
+                <div key="songs" className="flex flex-col gap-1.5">
+                  {form.songs.map((song, i) => (
+                    <div
+                      key={i}
+                      className="flex min-h-[3.25rem] w-full items-center gap-2 rounded-lg border border-[#12c150]/45 bg-[#e3f8e9] px-2 py-2"
+                    >
+                      {song.thumbnailUrl ? (
+                        <img
+                          src={song.thumbnailUrl}
+                          alt=""
+                          className="h-9 w-9 shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-[#12c150]/20 text-[#0e9440]">
+                          <Icon name="music" size={14} />
+                        </span>
+                      )}
+                      <a
+                        href={song.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                      >
+                        {song.title}
+                      </a>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => removeSong(i)}
+                        className="shrink-0 text-ink-soft"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>,
+              )
+            }
+
+            return (
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-panel p-3">
+                {sections.map((node, i) => (
+                  <Fragment key={node.key}>
+                    {i > 0 && <div className="border-t border-line-soft" />}
+                    {node}
+                  </Fragment>
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            )
+          })()}
 
         <div className="h-6" />
       </main>
@@ -734,6 +758,7 @@ export default function NoteView() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+        usageCounts={peopleUsage}
         onCreated={(person) => {
           setAllPeople((prev) =>
             [...prev, person].sort((a, b) => a.name.localeCompare(b.name)),

@@ -21,6 +21,7 @@ import {
   checkSavedNote,
   describeError,
   parsePlace,
+  peopleUsageCounts,
 } from '../../lib/notes'
 import { fileUrl } from '../../lib/pocketbase'
 import { listPeople } from '../../lib/people'
@@ -123,6 +124,7 @@ export default function WebNote() {
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [immichOpen, setImmichOpen] = useState(false)
   const [allPeople, setAllPeople] = useState([])
+  const [peopleUsage, setPeopleUsage] = useState(null)
   const [peopleIds, setPeopleIds] = useState(() => aiDraft?.peopleIds || [])
   const [baselinePeopleIds, setBaselinePeopleIds] = useState([])
   const [peopleSheetOpen, setPeopleSheetOpen] = useState(false)
@@ -169,6 +171,9 @@ export default function WebNote() {
       .catch(() => {})
     listTags()
       .then(setAllTags)
+      .catch(() => {})
+    peopleUsageCounts()
+      .then(setPeopleUsage)
       .catch(() => {})
   }, [])
 
@@ -678,6 +683,7 @@ export default function WebNote() {
         immichApiKey={immichApiKey}
         onClose={() => setPeopleSheetOpen(false)}
         onToggle={togglePerson}
+        usageCounts={peopleUsage}
         onCreated={(person) => {
           setAllPeople((prev) =>
             [...prev, person].sort((a, b) => a.name.localeCompare(b.name)),

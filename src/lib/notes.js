@@ -117,6 +117,37 @@ export async function deleteNote(id) {
   return pb.collection(COLLECTION).delete(id)
 }
 
+// Conteggio di quante note coinvolgono ciascuna persona: { personId: n }.
+// Serve a mostrare in cima le persone più usate nel selettore.
+export async function peopleUsageCounts() {
+  const list = await pb.collection(COLLECTION).getFullList({ fields: 'people' })
+  const counts = {}
+  for (const n of list) {
+    for (const id of n.people || []) counts[id] = (counts[id] || 0) + 1
+  }
+  return counts
+}
+
+// Note che coinvolgono una data persona (record completi di `people`, così
+// da poter riscrivere la relazione senza perdere le altre persone).
+export async function listNotesWithPerson(personId) {
+  const list = await pb
+    .collection(COLLECTION)
+    .getFullList({ fields: 'id,title,date,people' })
+  return list.filter((n) => (n.people || []).includes(personId))
+}
+
+// Sostituisce (o rimuove, se `toId` è null) una persona in un elenco di note.
+// La relazione viene riscritta per intero: niente duplicati, le altre
+// persone della nota restano intatte.
+export async function reassignPersonInNotes(fromId, toId, notes) {
+  for (const n of notes) {
+    const next = (n.people || []).filter((id) => id !== fromId)
+    if (toId && !next.includes(toId)) next.push(toId)
+    await pb.collection(COLLECTION).update(n.id, { people: next })
+  }
+}
+
 // Elenco note filtrato per intervallo di date, intervallo di mood, luogo
 // (sottostringa) e/o persone/tag coinvolti (nota inclusa se coinvolge
 // ALMENO una delle persone/uno dei tag). Tutti i parametri sono opzionali:

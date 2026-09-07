@@ -115,6 +115,17 @@ export default function Sidebar() {
         >
           Cerca
         </NavLink>
+        <NavLink
+          to="/importa"
+          className={({ isActive }) =>
+            'rounded-xl border px-3 py-2 transition ' +
+            (isActive
+              ? 'border-line bg-cream text-ink'
+              : 'border-line text-ink-soft hover:bg-cream/60')
+          }
+        >
+          Importa
+        </NavLink>
       </nav>
 
       <div className="mt-auto border-t border-line p-4">

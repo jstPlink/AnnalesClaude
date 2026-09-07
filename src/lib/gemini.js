@@ -1,20 +1,25 @@
 // Integrazione Gemini (Google AI Studio): pulizia/riassunto del testo di una
-// nota, analisi delle persone citate, generazione di nuovo contenuto.
+// nota, analisi delle persone citate, generazione di nuovo contenuto,
+// estrazione di note da uno screenshot di vecchio diario.
 // Serve solo una API key (Profilo) — nessun OAuth, chiamata REST diretta,
 // nessuna libreria necessaria.
+
+import { MONTHS_IT } from './dates'
 
 // gemini-2.5-flash è stato ritirato per i nuovi utenti (l'API risponde 404
 // indicando questo modello come sostituto): vedi errore riportato dall'utente
 // il 2026-09-06.
 const MODEL = 'gemini-3.6-flash'
 
-async function callGemini(apiKey, prompt) {
+// Chiamata generica: il chiamante fornisce l'array `parts` completo (testo,
+// e/o immagini come { inlineData: { mimeType, data } }).
+async function callGeminiParts(apiKey, parts) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      body: JSON.stringify({ contents: [{ parts }] }),
     },
   )
   if (!res.ok) {
@@ -36,6 +41,10 @@ async function callGemini(apiKey, prompt) {
     .trim()
   if (!text) throw new Error('Gemini non ha restituito testo.')
   return text
+}
+
+async function callGemini(apiKey, prompt) {
+  return callGeminiParts(apiKey, [{ text: prompt }])
 }
 
 // Verifica rapida della chiave (una richiesta minima).
@@ -134,6 +143,70 @@ export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], ta
     timeStart,
     timeEnd,
   }
+}
+
+// Normalizza/valida una nota estratta da Gemini (schermata di import).
+function normalizeExtractedNote(n) {
+  if (!n || typeof n !== 'object') return null
+  const dateOk = typeof n.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(n.date)
+  const mood = Number(n.mood)
+  const asName = (x) => (typeof x === 'string' ? x.trim() : '')
+  return {
+    date: dateOk ? n.date : '',
+    title: asName(n.title),
+    content: asName(n.content),
+    mood: Number.isFinite(mood) ? Math.min(1, Math.max(0, mood)) : 0.5,
+    timeStart: TIME_RE.test(n.timeStart) ? n.timeStart : '',
+    timeEnd: TIME_RE.test(n.timeEnd) ? n.timeEnd : '',
+    people: Array.isArray(n.people) ? n.people.map(asName).filter(Boolean) : [],
+    place: asName(n.place),
+    tags: Array.isArray(n.tags) ? n.tags.map(asName).filter(Boolean) : [],
+  }
+}
+
+// Estrae una o più note da uno screenshot di un vecchio diario tenuto su un
+// foglio di calcolo (una riga = un giorno; nella cella di testo più attività
+// con orari; un voto di umore 0–100 per riga). Ogni blocco coerente di
+// attività diventa una nota separata, da rivedere prima di salvare.
+export async function extractNotesFromImage(
+  apiKey,
+  { imageBase64, mimeType, year, month, peopleNames = [], tagNames = [] },
+) {
+  const ref = `${MONTHS_IT[month]} ${year}`
+  const instruction =
+    "L'immagine è lo screenshot di un vecchio diario tenuto su un foglio di calcolo. " +
+    'Ogni RIGA è un giorno e contiene: la lettera del giorno della settimana, il numero del giorno del mese, ' +
+    'una cella di testo con righe che iniziano con un orario tipo "04.30" o "17.00 ~", ' +
+    'a volte un titolo in una colonna a parte, un voto di umore da 0 a 100, a volte una foto. ' +
+    `Il mese di riferimento è ${ref}. ` +
+    'Converti OGNI giornata in UNA O PIÙ note separate: raggruppa le righe della cella di testo per attività/blocco ' +
+    'coerente (per argomento e continuità di orario) e crea una nota per ciascun blocco. ' +
+    'Rispondi SOLO con un array JSON valido, senza testo prima o dopo. Ogni elemento con ESATTAMENTE questi campi: ' +
+    '{"date": "YYYY-MM-DD" (mese e anno di riferimento + il numero del giorno della riga), ' +
+    '"title": stringa breve (se la riga ha un titolo usalo per il blocco principale, altrimenti sintetizzane uno), ' +
+    '"content": stringa col testo del blocco, ripulito ma mantenendo la sequenza oraria (righe "HH.MM ~ ..."), ' +
+    '"mood": numero tra 0 e 1 = voto della riga diviso 100; se manca usa 0.5, ' +
+    '"timeStart": "HH:MM" dal primo orario del blocco, o "" se assente, ' +
+    '"timeEnd": "HH:MM" dall\'ultimo orario del blocco, o "" se assente, ' +
+    `"people": array di nomi di persona citati nel blocco; usa ESATTAMENTE i nomi dell'elenco ${JSON.stringify(peopleNames)} quando corrispondono, aggiungi gli altri nomi propri chiaramente citati, ` +
+    '"place": stringa col nome del luogo se chiaro dal testo, altrimenti "", ' +
+    `"tags": array preso ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinente, altrimenti []}. ` +
+    'Se una giornata non ha testo, restituisci comunque una nota con "content" vuoto e il mood della riga. ' +
+    'Ordina le note per data e orario.'
+  const raw = await callGeminiParts(apiKey, [
+    { text: instruction },
+    { inlineData: { mimeType, data: imageBase64 } },
+  ])
+  const match = raw.match(/\[[\s\S]*\]/)
+  if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
+  let arr
+  try {
+    arr = JSON.parse(match[0])
+  } catch {
+    throw new Error('Gemini non ha restituito un risultato valido.')
+  }
+  if (!Array.isArray(arr)) return []
+  return arr.map(normalizeExtractedNote).filter(Boolean)
 }
 
 export function describeGeminiError(err) {
