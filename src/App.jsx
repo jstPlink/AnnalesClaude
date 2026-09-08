@@ -1,4 +1,10 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
 import { useIsWide } from './hooks/useIsWide'
@@ -25,11 +31,15 @@ import WebImport from './pages/web/WebImport'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
+  const { pathname } = useLocation()
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-cream text-ink">
+    <div className="app-paper flex h-dvh w-full overflow-hidden bg-cream text-ink">
       <Sidebar />
       <main className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1180px] px-8 py-8 xl:px-12">
+        <div
+          key={pathname}
+          className="anim-page mx-auto max-w-[1180px] px-8 py-8 xl:px-12"
+        >
           {children}
         </div>
       </main>

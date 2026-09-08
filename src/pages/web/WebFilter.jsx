@@ -411,12 +411,13 @@ export default function WebFilter() {
                 {results.length === 1 ? 'a' : 'e'}
               </p>
               <div className="flex flex-col gap-3">
-                {results.map((n) => (
+                {results.map((n, i) => (
                   <button
                     key={n.id}
                     type="button"
                     onClick={() => navigate(`/note/${n.id}`)}
-                    className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
+                    style={{ '--i': i }}
+                    className="anim-row flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <span
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"

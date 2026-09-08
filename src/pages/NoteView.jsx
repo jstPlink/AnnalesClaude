@@ -445,7 +445,7 @@ export default function NoteView() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
         {loadError && (
           <p className="mb-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
             {loadError}

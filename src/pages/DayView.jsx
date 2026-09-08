@@ -182,7 +182,8 @@ export default function DayView() {
       </header>
 
       <main
-        className="relative flex-1 overflow-hidden bg-panel px-3 py-3"
+        key={date}
+        className="anim-page relative flex-1 overflow-hidden bg-panel px-3 py-3"
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -229,7 +230,7 @@ export default function DayView() {
             )}
 
             {trackH > 0 &&
-              blocks.map(({ note: n, startMin, endMin, lane, lanes, images }) => {
+              blocks.map(({ note: n, startMin, endMin, lane, lanes, images }, bi) => {
                 const top = startMin * pxPerMin
                 const rawH = (endMin - startMin) * pxPerMin
                 const h = Math.max(MIN_BLOCK, rawH)
@@ -242,8 +243,9 @@ export default function DayView() {
                     key={n.id}
                     type="button"
                     onClick={() => navigate(`/note/${n.id}`)}
-                    className="absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
+                    className="anim-row absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
                     style={{
+                      '--i': bi,
                       top,
                       height: h,
                       left: `calc(${lane * widthPct}% + ${lane ? 4 : 0}px)`,

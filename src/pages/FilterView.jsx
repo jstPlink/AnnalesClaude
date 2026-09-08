@@ -153,7 +153,7 @@ export default function FilterView() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         <div className="space-y-4 rounded-2xl bg-tag p-4">
           <FilterField label="Periodo">
             <div className="flex items-center gap-2">
@@ -426,8 +426,8 @@ export default function FilterView() {
                 {results.length === 1 ? 'a' : 'e'}
               </p>
               <ul className="space-y-2">
-                {results.map((n) => (
-                  <li key={n.id}>
+                {results.map((n, i) => (
+                  <li key={n.id} className="anim-row" style={{ '--i': i }}>
                     <button
                       type="button"
                       onClick={() => navigate(`/note/${n.id}`)}

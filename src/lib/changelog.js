@@ -5,6 +5,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.11.0',
+    date: '2026-09-08 14:29',
+    changes: [
+      'Micro-animazioni in tutta l’app: transizioni tra schermate, liste che compaiono a cascata, contatori delle Statistiche che salgono, skeleton al posto di "Carico…", card "In questo giorno" che si dispiega, pillole e pulsanti animati, crossfade del tema.',
+      'Impostazioni → Aspetto: interruttore "Animazioni" (Sistema / Sì / No). "Sistema" rispetta la preferenza di movimento ridotto del dispositivo.',
+      'Impostazioni → Aspetto: scelta dello sfondo tra 8 texture in stile diario (nessuno, puntini, rigato, quadretti, grana, margine, lino, vignetta).',
+    ],
+  },
+  {
     version: '0.10.9',
     date: '2026-09-07 22:41',
     changes: [

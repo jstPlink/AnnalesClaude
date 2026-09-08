@@ -259,9 +259,249 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
 }
 
+/* Micro-animazioni dell'app. `data-anim` è messo da src/lib/prefs.js
+   ('on' | 'off', risolvendo "Sistema" via prefers-reduced-motion). */
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+}
+@keyframes unfurl {
+  from {
+    opacity: 0;
+    transform: scaleY(0.55) rotate(-1.5deg);
+  }
+}
+@keyframes dropIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -150%);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, 8%);
+  }
+  100% {
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes btnPop {
+  0% {
+    transform: scale(0.88);
+  }
+  55% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes skelShimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes moodGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+  }
+}
+@keyframes drawStroke {
+  from {
+    stroke-dashoffset: var(--dash, 30);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.anim-page {
+  animation: pageIn 0.34s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.anim-row {
+  animation: rowIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 38ms);
+}
+.anim-unfurl {
+  animation: unfurl 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  transform-origin: top center;
+}
+.anim-drop {
+  animation: dropIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.anim-pop {
+  animation: btnPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-panel-2) 0%,
+    var(--color-line-soft) 50%,
+    var(--color-panel-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skelShimmer 1.3s linear infinite;
+  border-radius: 6px;
+}
+
+/* Crossfade del tema sulle superfici principali. */
+:root:not([data-anim='off']) body,
+:root:not([data-anim='off']) header,
+:root:not([data-anim='off']) main,
+:root:not([data-anim='off']) aside {
+  transition: background-color 0.4s ease, border-color 0.4s ease,
+    color 0.4s ease;
+}
+
+/* Gate: con animazioni OFF (o "Sistema" + reduce) tutto è istantaneo. */
+:root[data-anim='off'] *,
+:root[data-anim='off'] *::before,
+:root[data-anim='off'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
 @media (prefers-reduced-motion: reduce) {
-  * {
+  :root:not([data-anim='on']) *,
+  :root:not([data-anim='on']) *::before,
+  :root:not([data-anim='on']) *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ============ Sfondi "carta" ============
+   `data-paper` su <html> (src/lib/prefs.js). La texture va sopra il colore di
+   sfondo esistente della superficie (.app-paper), quindi il primo stop dei
+   pattern è `transparent`. */
+:root {
+  --paper-rule: rgba(58, 50, 38, 0.09);
+  --paper-dot: rgba(58, 50, 38, 0.15);
+  --paper-grid: rgba(58, 50, 38, 0.06);
+  --paper-margin: rgba(192, 87, 74, 0.42);
+  --paper-vignette: rgba(58, 50, 38, 0.11);
+  --paper-linen-a: rgba(58, 50, 38, 0.045);
+  --paper-linen-b: rgba(255, 252, 244, 0.5);
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.23 0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --tex-puntini: radial-gradient(var(--paper-dot) 1px, transparent 1.4px);
+  --tex-rigato: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    var(--paper-rule) 27px,
+    var(--paper-rule) 28px
+  );
+  --tex-quadretti: linear-gradient(var(--paper-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
+  --tex-margine: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--paper-rule) 27px,
+      var(--paper-rule) 28px
+    ),
+    linear-gradient(
+      90deg,
+      transparent 26px,
+      var(--paper-margin) 26px,
+      var(--paper-margin) 27px,
+      transparent 27px
+    );
+  --tex-lino: repeating-linear-gradient(
+      45deg,
+      var(--paper-linen-a) 0 1px,
+      transparent 1px 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      var(--paper-linen-b) 0 1px,
+      transparent 1px 5px
+    );
+  --tex-vignetta: radial-gradient(
+    140% 100% at 50% 0%,
+    transparent 45%,
+    var(--paper-vignette) 100%
+  );
+}
+:root[data-theme='dark'] {
+  --paper-rule: rgba(236, 227, 210, 0.09);
+  --paper-dot: rgba(236, 227, 210, 0.12);
+  --paper-grid: rgba(236, 227, 210, 0.06);
+  --paper-margin: rgba(221, 130, 113, 0.38);
+  --paper-vignette: rgba(0, 0, 0, 0.26);
+  --paper-linen-a: rgba(0, 0, 0, 0.2);
+  --paper-linen-b: rgba(236, 227, 210, 0.045);
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.92 0 0 0 0 0.89 0 0 0 0 0.82 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.app-paper {
+  background-repeat: repeat;
+}
+:root[data-paper='puntini'] .app-paper {
+  background-image: var(--tex-puntini);
+  background-size: 20px 20px;
+}
+:root[data-paper='rigato'] .app-paper {
+  background-image: var(--tex-rigato);
+}
+:root[data-paper='quadretti'] .app-paper {
+  background-image: var(--tex-quadretti);
+  background-size: 20px 20px;
+}
+:root[data-paper='grana'] .app-paper {
+  background-image: var(--paper-grain);
+  background-size: 160px 160px;
+}
+:root[data-paper='margine'] .app-paper {
+  background-image: var(--tex-margine);
+}
+:root[data-paper='lino'] .app-paper {
+  background-image: var(--tex-lino);
+}
+:root[data-paper='vignetta'] .app-paper {
+  background-image: var(--tex-vignetta);
+  background-attachment: fixed;
+}
+
+/* Anteprima swatch nelle Impostazioni. */
+.paper-swatch {
+  background-color: var(--color-cream);
+  background-repeat: repeat;
+}
+.paper-swatch[data-p='puntini'] {
+  background-image: var(--tex-puntini);
+  background-size: 11px 11px;
+}
+.paper-swatch[data-p='rigato'] {
+  background-image: var(--tex-rigato);
+  background-size: auto 9px;
+}
+.paper-swatch[data-p='quadretti'] {
+  background-image: var(--tex-quadretti);
+  background-size: 9px 9px;
+}
+.paper-swatch[data-p='grana'] {
+  background-image: var(--paper-grain);
+  background-size: 80px 80px;
+}
+.paper-swatch[data-p='margine'] {
+  background-image: var(--tex-margine);
+  background-size: auto 9px, auto;
+}
+.paper-swatch[data-p='lino'] {
+  background-image: var(--tex-lino);
+}
+.paper-swatch[data-p='vignetta'] {
+  background-image: var(--tex-vignetta);
 }

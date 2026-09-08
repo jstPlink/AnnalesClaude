@@ -5,6 +5,8 @@ import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import RecapCard from '../components/RecapCard'
+import CountUp from '../components/CountUp'
+import Skeleton from '../components/Skeleton'
 import { useNav } from '../context/NavContext'
 import { useAuth } from '../context/AuthContext'
 import { listNotesInRange, countAllNotes, describeError } from '../lib/notes'
@@ -21,19 +23,20 @@ function StatCard({ label, value, sub }) {
         {label}
       </p>
       <p className="mt-1 truncate font-serif text-2xl font-semibold text-ink">
-        {value}
+        <CountUp value={value} />
       </p>
       {sub && <p className="mt-0.5 truncate text-xs text-ink-soft">{sub}</p>}
     </div>
   )
 }
 
-function DayRow({ day, onClick }) {
+function DayRow({ day, onClick, style }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl border border-line-soft bg-panel px-3 py-2.5 text-left transition active:brightness-95"
+      style={style}
+      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line-soft bg-panel px-3 py-2.5 text-left transition active:brightness-95"
     >
       <span
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
@@ -110,7 +113,7 @@ export default function StatsView() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         {error && (
           <p className="mb-3 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
             {error}
@@ -118,7 +121,14 @@ export default function StatsView() {
         )}
 
         {loading && !yearNotes.length ? (
-          <p className="py-10 text-center text-ink-soft">Carico…</p>
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-line bg-tag p-4">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="mt-3 h-7 w-14" />
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">
@@ -148,10 +158,11 @@ export default function StatsView() {
                   Giorni migliori
                 </p>
                 <div className="space-y-2">
-                  {stats.topDays.map((d) => (
+                  {stats.topDays.map((d, i) => (
                     <DayRow
                       key={d.key}
                       day={d}
+                      style={{ '--i': i }}
                       onClick={() => navigate(`/day/${d.key}`)}
                     />
                   ))}
@@ -165,10 +176,11 @@ export default function StatsView() {
                   Giorni più difficili
                 </p>
                 <div className="space-y-2">
-                  {stats.bottomDays.map((d) => (
+                  {stats.bottomDays.map((d, i) => (
                     <DayRow
                       key={d.key}
                       day={d}
+                      style={{ '--i': i }}
                       onClick={() => navigate(`/day/${d.key}`)}
                     />
                   ))}

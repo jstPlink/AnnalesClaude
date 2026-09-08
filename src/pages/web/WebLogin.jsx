@@ -65,7 +65,7 @@ export default function WebLogin() {
   }
 
   return (
-    <div className="grid min-h-dvh w-full bg-cream text-ink lg:grid-cols-2">
+    <div className="app-paper grid min-h-dvh w-full bg-cream text-ink lg:grid-cols-2">
       {/* Pannello decorativo */}
       <div className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-sand p-12 lg:flex">
         <div className="flex items-center gap-3">

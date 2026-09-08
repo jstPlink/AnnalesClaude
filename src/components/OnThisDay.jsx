@@ -55,7 +55,7 @@ export default function OnThisDay({ className = '' }) {
 
   return (
     <div
-      className={'rounded-2xl border border-line bg-cream p-3 ' + className}
+      className={'anim-unfurl rounded-2xl border border-line bg-cream p-3 ' + className}
     >
       <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-soft">
         <Icon name="calendar" size={13} className="shrink-0" />

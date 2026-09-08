@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
 import { useAuth } from '../../context/AuthContext'
 import RecapCard from '../../components/RecapCard'
+import CountUp from '../../components/CountUp'
 import { listNotesInRange, countAllNotes, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
@@ -32,19 +33,20 @@ function StatCard({ label, value, sub }) {
         {label}
       </p>
       <p className="mt-1 truncate font-serif text-3xl font-semibold text-ink">
-        {value}
+        <CountUp value={value} />
       </p>
       {sub && <p className="mt-0.5 truncate text-sm text-ink-soft">{sub}</p>}
     </div>
   )
 }
 
-function DayRow({ day, onClick }) {
+function DayRow({ day, onClick, style }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
+      style={style}
+      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <span
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
@@ -168,8 +170,13 @@ export default function WebStats() {
               Giorni migliori
             </p>
             <div className="space-y-2">
-              {stats.topDays.map((d) => (
-                <DayRow key={d.key} day={d} onClick={() => navigate(`/day/${d.key}`)} />
+              {stats.topDays.map((d, i) => (
+                <DayRow
+                  key={d.key}
+                  day={d}
+                  style={{ '--i': i }}
+                  onClick={() => navigate(`/day/${d.key}`)}
+                />
               ))}
             </div>
           </section>
@@ -181,8 +188,13 @@ export default function WebStats() {
               Giorni più difficili
             </p>
             <div className="space-y-2">
-              {stats.bottomDays.map((d) => (
-                <DayRow key={d.key} day={d} onClick={() => navigate(`/day/${d.key}`)} />
+              {stats.bottomDays.map((d, i) => (
+                <DayRow
+                  key={d.key}
+                  day={d}
+                  style={{ '--i': i }}
+                  onClick={() => navigate(`/day/${d.key}`)}
+                />
               ))}
             </div>
           </section>

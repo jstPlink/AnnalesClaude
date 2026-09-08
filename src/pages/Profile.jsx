@@ -359,7 +359,7 @@ export default function Profile() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col overflow-y-auto no-scrollbar px-6 py-8">
+      <main className="anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-6 py-8">
         <div className="flex items-center gap-4">
           <button
             type="button"

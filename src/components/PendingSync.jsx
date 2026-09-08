@@ -51,7 +51,7 @@ export default function PendingSync() {
     <button
       type="button"
       onClick={flush}
-      className="fixed left-1/2 top-[max(0.5rem,env(safe-area-inset-top))] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-warn-dark bg-warn px-3 py-1.5 text-xs font-bold text-ink shadow-lg"
+      className="anim-drop fixed left-1/2 top-[max(0.5rem,env(safe-area-inset-top))] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-warn-dark bg-warn px-3 py-1.5 text-xs font-bold text-ink shadow-lg"
     >
       <Icon name="cloud" size={14} className="shrink-0" />
       {busy ? 'Sincronizzo…' : `${count} in attesa · sincronizza`}

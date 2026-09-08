@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { haptic } from '../lib/haptics'
 
 const VARIANTS = {
@@ -19,6 +20,7 @@ export default function CircleButton({
   className = '',
   type = 'button',
 }) {
+  const [pop, setPop] = useState(false)
   return (
     <button
       type={type}
@@ -26,10 +28,13 @@ export default function CircleButton({
         onClick
           ? (e) => {
               haptic()
+              setPop(false)
+              requestAnimationFrame(() => setPop(true))
               onClick(e)
             }
           : undefined
       }
+      onAnimationEnd={() => setPop(false)}
       disabled={disabled}
       title={title}
       aria-label={title}
@@ -38,6 +43,7 @@ export default function CircleButton({
         'inline-flex shrink-0 items-center justify-center rounded-full ' +
         'shadow-sm transition active:scale-95 disabled:opacity-40 ' +
         'disabled:active:scale-100 ' +
+        (pop ? 'anim-pop ' : '') +
         (VARIANTS[variant] ?? VARIANTS.light) +
         ' ' +
         className

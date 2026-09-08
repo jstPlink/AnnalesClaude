@@ -9,7 +9,7 @@ export default function MoodSlider({ value, onChange }) {
   const textColor = moodTextColor(value)
   return (
     <div
-      className="relative flex h-[1.6rem] items-center rounded-full px-3"
+      className="relative flex h-[1.6rem] items-center rounded-full px-3 transition-colors duration-200 ease-out"
       style={{ backgroundColor: color }}
     >
       <span

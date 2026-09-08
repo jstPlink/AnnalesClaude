@@ -34,7 +34,16 @@ export default function CollapsibleSection({
           className={'shrink-0 text-ink-soft transition-transform ' + (open ? 'rotate-90' : '')}
         />
       </button>
-      {open && <div className="space-y-3 border-t border-line p-4">{children}</div>}
+      <div
+        className={
+          'grid transition-[grid-template-rows] duration-300 ease-out ' +
+          (open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')
+        }
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-3 border-t border-line p-4">{children}</div>
+        </div>
+      </div>
     </div>
   )
 }
