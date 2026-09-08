@@ -5,6 +5,18 @@
 
 export const CHANGELOG = [
   {
+    version: '0.13.0',
+    date: '2026-09-08 17:01',
+    changes: [
+      'Impostazioni → Aspetto: stili grafici alternativi per una singola vista, con interruttore rapido anche dentro la vista.',
+      'Vista giorno "Disegnata" (web + mobile): sfondo carta, font a mano, righe delle ore e cornici delle note tracciate a mano.',
+      'Vista mese "Bacheca" (solo web): i giorni con contenuti diventano cartoncini appuntati su una bacheca di sughero, uniti da filo rosso quando condividono una persona o un tag.',
+      'Statistiche: le persone più presenti ora mostrano l’avatar e stanno su targhette con bordo e sfondo chiaro.',
+      'Impostazioni (web): tolte le righe "Email" e "Autenticazione"; ora si possono cambiare nome utente ed email dell’account.',
+      'Web: versione dell’app spostata nella colonna di sinistra.',
+    ],
+  },
+  {
     version: '0.12.0',
     date: '2026-09-08 15:20',
     changes: [

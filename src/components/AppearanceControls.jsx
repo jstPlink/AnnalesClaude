@@ -8,14 +8,22 @@ import {
   ANIM_LABELS,
   PAPERS,
   PAPER_LABELS,
+  SKIN_DAYS,
+  SKIN_DAY_LABELS,
+  SKIN_MONTHS,
+  SKIN_MONTH_LABELS,
   getTheme,
   getFont,
   getAnim,
   getPaper,
+  getSkinDay,
+  getSkinMonth,
   setTheme,
   setFont,
   setAnim,
   setPaper,
+  setSkinDay,
+  setSkinMonth,
 } from '../lib/prefs'
 
 function Segmented({ label, options, labels, value, onChange }) {
@@ -52,6 +60,8 @@ export default function AppearanceControls() {
   const [font, setFontState] = useState(getFont())
   const [anim, setAnimState] = useState(getAnim())
   const [paper, setPaperState] = useState(getPaper())
+  const [skinDay, setSkinDayState] = useState(getSkinDay())
+  const [skinMonth, setSkinMonthState] = useState(getSkinMonth())
 
   return (
     <div className="space-y-4">
@@ -117,6 +127,34 @@ export default function AppearanceControls() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-3 border-t border-line-soft pt-4">
+        <Segmented
+          label="Vista giorno"
+          options={SKIN_DAYS}
+          labels={SKIN_DAY_LABELS}
+          value={skinDay}
+          onChange={(v) => {
+            setSkinDayState(v)
+            setSkinDay(v)
+          }}
+        />
+        <Segmented
+          label="Vista mese (web)"
+          options={SKIN_MONTHS}
+          labels={SKIN_MONTH_LABELS}
+          value={skinMonth}
+          onChange={(v) => {
+            setSkinMonthState(v)
+            setSkinMonth(v)
+          }}
+        />
+        <p className="text-xs text-ink-soft">
+          Stili grafici alternativi per una singola vista. “Disegnata” trasforma
+          la vista giorno in un diario tracciato a mano; “Bacheca” dispone il
+          mese come un collage (solo da web).
+        </p>
       </div>
 
       <p className="text-xs text-ink-soft">

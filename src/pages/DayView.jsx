@@ -10,6 +10,7 @@ import ImageCarousel from '../components/ImageCarousel'
 import { listNotesInRange, describeError, plainText } from '../lib/notes'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
+import { getSkinDay, setSkinDay } from '../lib/prefs'
 import {
   addDaysKey,
   dayMonthLabel,
@@ -89,6 +90,7 @@ export default function DayView() {
   const [error, setError] = useState('')
   const trackRef = useRef(null)
   const [trackH, setTrackH] = useState(0)
+  const [skin, setSkin] = useState(getSkinDay())
 
   const parsed = parseWall(date)
   const year = parsed?.y ?? new Date().getFullYear()
@@ -177,13 +179,28 @@ export default function DayView() {
           <div className="flex justify-center">
             <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" />
           </div>
-          <span />
+          <div className="flex justify-end">
+            <CircleButton
+              onClick={() => {
+                const next = skin === 'sketch' ? 'plain' : 'sketch'
+                setSkin(next)
+                setSkinDay(next)
+              }}
+              title={skin === 'sketch' ? 'Stile normale' : 'Stile disegnato'}
+            >
+              <Icon
+                name="edit"
+                size={20}
+                className={skin === 'sketch' ? 'text-delete-dark' : ''}
+              />
+            </CircleButton>
+          </div>
         </div>
       </header>
 
       <main
         key={date}
-        className="anim-page relative flex-1 overflow-hidden bg-panel px-3 py-3"
+        className="day-surface anim-page relative flex-1 overflow-hidden bg-panel px-3 py-3"
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -205,16 +222,16 @@ export default function DayView() {
               return (
                 <div
                   key={h}
-                  className="absolute left-0 right-0 flex items-start"
+                  className="hour-line absolute left-0 right-0 flex items-start"
                   style={{ top }}
                 >
                   <span
-                    className="shrink-0 -translate-y-1.5 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
+                    className="hour-label shrink-0 -translate-y-1.5 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
                     style={{ width: RAIL_W }}
                   >
                     {label ? `${String(h).padStart(2, '0')}:00` : ''}
                   </span>
-                  <span className="mt-[1px] h-px flex-1 bg-line/70" />
+                  <span className="hour-rule mt-[1px] h-px flex-1 bg-line/70" />
                 </div>
               )
             })}
@@ -243,7 +260,7 @@ export default function DayView() {
                     key={n.id}
                     type="button"
                     onClick={() => navigate(`/note/${n.id}`)}
-                    className="anim-row absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
+                    className="note-block anim-row absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
                     style={{
                       '--i': bi,
                       top,
@@ -261,7 +278,7 @@ export default function DayView() {
                       <span className="flex h-full w-full">
                         {/* Orario di inizio/fine avvolto dal colore del mood */}
                         <span
-                          className="flex w-11 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-bold tabular-nums"
+                          className="note-time flex w-11 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-bold tabular-nums"
                           style={{
                             backgroundColor: moodColor(n.mood),
                             color: moodTextColor(n.mood),
@@ -273,7 +290,7 @@ export default function DayView() {
 
                         <span className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
                           <span className="flex min-w-0 items-center gap-1.5">
-                            <MarqueeText className="min-w-0 flex-1 shrink text-[13px] font-semibold leading-tight text-ink">
+                            <MarqueeText className="note-title min-w-0 flex-1 shrink text-[13px] font-semibold leading-tight text-ink">
                               {n.title || (
                                 <span className="italic text-ink-soft">
                                   Senza titolo

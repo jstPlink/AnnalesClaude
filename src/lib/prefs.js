@@ -6,6 +6,8 @@ const THEME_KEY = 'annales.theme'
 const FONT_KEY = 'annales.font'
 const ANIM_KEY = 'annales.anim'
 const PAPER_KEY = 'annales.paper'
+const SKIN_DAY_KEY = 'annales.skinDay'
+const SKIN_MONTH_KEY = 'annales.skinMonth'
 
 export const THEMES = ['system', 'light', 'dark']
 export const THEME_LABELS = { system: 'Sistema', light: 'Chiaro', dark: 'Scuro' }
@@ -42,6 +44,14 @@ export const PAPER_LABELS = {
   vignetta: 'Vignetta',
 }
 
+// Skin per pagina: temi grafici alternativi applicati a una singola vista.
+// "sketch" = diario disegnato a mano sulla vista giorno (web + mobile).
+// "board" = bacheca collage sulla vista mese (solo web).
+export const SKIN_DAYS = ['plain', 'sketch']
+export const SKIN_DAY_LABELS = { plain: 'Normale', sketch: 'Disegnata' }
+export const SKIN_MONTHS = ['plain', 'board']
+export const SKIN_MONTH_LABELS = { plain: 'Normale', board: 'Bacheca' }
+
 function read(key, fallback, allowed) {
   try {
     const v = localStorage.getItem(key)
@@ -62,6 +72,12 @@ export function getAnim() {
 }
 export function getPaper() {
   return read(PAPER_KEY, 'nessuna', PAPERS)
+}
+export function getSkinDay() {
+  return read(SKIN_DAY_KEY, 'plain', SKIN_DAYS)
+}
+export function getSkinMonth() {
+  return read(SKIN_MONTH_KEY, 'plain', SKIN_MONTHS)
 }
 
 function prefersDark() {
@@ -106,6 +122,14 @@ export function applyPrefs() {
   if (paper === 'nessuna') delete root.dataset.paper
   else root.dataset.paper = paper
 
+  const skinDay = getSkinDay()
+  if (skinDay === 'plain') delete root.dataset.skinDay
+  else root.dataset.skinDay = skinDay
+
+  const skinMonth = getSkinMonth()
+  if (skinMonth === 'plain') delete root.dataset.skinMonth
+  else root.dataset.skinMonth = skinMonth
+
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', dark ? '#211e18' : '#dbd1bd')
 }
@@ -130,6 +154,12 @@ export function setAnim(v) {
 }
 export function setPaper(v) {
   setKey(PAPER_KEY, v)
+}
+export function setSkinDay(v) {
+  setKey(SKIN_DAY_KEY, v)
+}
+export function setSkinMonth(v) {
+  setKey(SKIN_MONTH_KEY, v)
 }
 
 // In modalità "Sistema", segue i cambi del SO in tempo reale (tema + motion).

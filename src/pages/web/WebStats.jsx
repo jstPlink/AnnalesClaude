@@ -4,6 +4,7 @@ import { useNav } from '../../context/NavContext'
 import { useAuth } from '../../context/AuthContext'
 import RecapCard from '../../components/RecapCard'
 import CountUp from '../../components/CountUp'
+import PersonAvatar from '../../components/PersonAvatar'
 import { listNotesInRange, countAllNotes, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
@@ -78,6 +79,8 @@ export default function WebStats() {
   const { cursor, setCursor } = useNav()
   const { user } = useAuth()
   const geminiApiKey = user?.geminiApiKey?.trim()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
   const year = cursor.year
   const [yearNotes, setYearNotes] = useState([])
   const [allTimeCount, setAllTimeCount] = useState(null)
@@ -175,15 +178,21 @@ export default function WebStats() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
             Persone più presenti
           </p>
-          <ol className="grid gap-x-8 gap-y-1 overflow-hidden rounded-2xl border border-line bg-panel p-2 sm:grid-cols-2">
+          <ol className="grid gap-2 sm:grid-cols-2">
             {stats.topPeople.map((p, i) => (
               <li
                 key={p.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-2"
+                className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2"
               >
                 <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
                   {i + 1}
                 </span>
+                <PersonAvatar
+                  person={p.person || { name: p.name }}
+                  immichUrl={immichUrl}
+                  immichApiKey={immichApiKey}
+                  size={28}
+                />
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
                   {p.name}
                 </span>

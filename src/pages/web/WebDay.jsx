@@ -10,6 +10,7 @@ import {
 } from '../../lib/notes'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
+import { getSkinDay, setSkinDay } from '../../lib/prefs'
 import {
   addDaysKey,
   dayRange,
@@ -94,6 +95,7 @@ export default function WebDay() {
   const [error, setError] = useState('')
   const trackRef = useRef(null)
   const [trackH, setTrackH] = useState(0)
+  const [skin, setSkin] = useState(getSkinDay())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -191,13 +193,35 @@ export default function WebDay() {
               <Icon name="chevron-right" size={18} />
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate(`/note/new?date=${date}`)}
-            className="shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
-          >
-            + Nuova nota
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = skin === 'sketch' ? 'plain' : 'sketch'
+                setSkin(next)
+                setSkinDay(next)
+              }}
+              aria-pressed={skin === 'sketch'}
+              title={
+                skin === 'sketch' ? 'Stile normale' : 'Stile diario disegnato'
+              }
+              className={
+                'flex h-9 w-9 items-center justify-center rounded-full border transition ' +
+                (skin === 'sketch'
+                  ? 'border-delete-dark bg-delete/15 text-delete-dark'
+                  : 'border-line text-ink-soft hover:bg-tag hover:text-ink')
+              }
+            >
+              <Icon name="edit" size={17} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/note/new?date=${date}`)}
+              className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
+            >
+              + Nuova nota
+            </button>
+          </div>
         </div>
       </header>
 
@@ -207,7 +231,7 @@ export default function WebDay() {
         </p>
       )}
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
+      <div className="day-surface min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
         {loading ? (
           <p className="flex h-full items-center justify-center text-ink-soft">Carico…</p>
         ) : !notes.length ? (
@@ -233,16 +257,16 @@ export default function WebDay() {
                 return (
                   <div
                     key={h}
-                    className="absolute left-0 right-0 flex items-start"
+                    className="hour-line absolute left-0 right-0 flex items-start"
                     style={{ top }}
                   >
                     <span
-                      className="shrink-0 -translate-y-2 text-right text-xs font-semibold tabular-nums text-ink-soft"
+                      className="hour-label shrink-0 -translate-y-2 text-right text-xs font-semibold tabular-nums text-ink-soft"
                       style={{ width: RAIL_W }}
                     >
                       {label ? `${String(h).padStart(2, '0')}:00` : ''}
                     </span>
-                    <span className="mt-[1px] h-px flex-1 bg-line/70" />
+                    <span className="hour-rule mt-[1px] h-px flex-1 bg-line/70" />
                   </div>
                 )
               })}
@@ -264,7 +288,7 @@ export default function WebDay() {
                       key={n.id}
                       type="button"
                       onClick={() => navigate(`/note/${n.id}`)}
-                      className="absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
+                      className="note-block absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition hover:-translate-y-px hover:shadow-md"
                       style={{
                         top,
                         height: h,
@@ -281,7 +305,7 @@ export default function WebDay() {
                         <span className="flex h-full w-full">
                           {/* Orario di inizio/fine avvolto dal colore del mood */}
                           <span
-                            className="flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-xs font-bold tabular-nums"
+                            className="note-time flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-xs font-bold tabular-nums"
                             style={{
                               backgroundColor: moodColor(n.mood),
                               color: moodTextColor(n.mood),
@@ -293,7 +317,7 @@ export default function WebDay() {
 
                           <span className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-2">
                             <span className="flex min-w-0 items-center gap-1.5">
-                              <MarqueeText className="min-w-0 flex-1 shrink font-serif text-[15px] font-semibold leading-tight text-ink">
+                              <MarqueeText className="note-title min-w-0 flex-1 shrink font-serif text-[15px] font-semibold leading-tight text-ink">
                                 {n.title || (
                                   <span className="italic text-ink-soft">Senza titolo</span>
                                 )}

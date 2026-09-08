@@ -26,6 +26,7 @@ import { downloadIntegrationDoc } from '../../lib/integrationDocs'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import AppearanceControls from '../../components/AppearanceControls'
+import AccountFields from '../../components/AccountFields'
 import ExportButtons from '../../components/ExportButtons'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
@@ -436,20 +437,9 @@ export default function WebProfile() {
           </div>
         </div>
 
-        <dl className="mt-8 divide-y divide-line-soft border-y border-line-soft text-sm">
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-ink-soft">Email</dt>
-            <dd className="font-medium text-ink">{email}</dd>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-ink-soft">Autenticazione</dt>
-            <dd className="font-medium text-ink">PocketBase · users</dd>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-ink-soft">Versione</dt>
-            <dd className="font-medium text-ink tabular-nums">{__APP_VERSION__}</dd>
-          </div>
-        </dl>
+        <div className="mt-8 border-t border-line-soft pt-6">
+          <AccountFields />
+        </div>
 
         <button
           type="button"

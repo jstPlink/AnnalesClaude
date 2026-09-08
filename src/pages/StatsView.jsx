@@ -7,6 +7,7 @@ import YearPill from '../components/YearPill'
 import RecapCard from '../components/RecapCard'
 import CountUp from '../components/CountUp'
 import Skeleton from '../components/Skeleton'
+import PersonAvatar from '../components/PersonAvatar'
 import { useNav } from '../context/NavContext'
 import { useAuth } from '../context/AuthContext'
 import { listNotesInRange, countAllNotes, describeError } from '../lib/notes'
@@ -69,6 +70,8 @@ export default function StatsView() {
   const { cursor, setCursor } = useNav()
   const { user } = useAuth()
   const geminiApiKey = user?.geminiApiKey?.trim()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
   const year = cursor.year
   const [yearNotes, setYearNotes] = useState([])
   const [allTimeCount, setAllTimeCount] = useState(null)
@@ -165,15 +168,21 @@ export default function StatsView() {
                 <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Persone più presenti
                 </p>
-                <ol className="overflow-hidden rounded-2xl border border-line-soft bg-panel">
+                <ol className="space-y-1.5">
                   {stats.topPeople.map((p, i) => (
                     <li
                       key={p.id}
-                      className="flex items-center gap-3 border-t border-line-soft px-3 py-2 first:border-t-0"
+                      className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2"
                     >
                       <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
                         {i + 1}
                       </span>
+                      <PersonAvatar
+                        person={p.person || { name: p.name }}
+                        immichUrl={immichUrl}
+                        immichApiKey={immichApiKey}
+                        size={28}
+                      />
                       <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
                         {p.name}
                       </span>

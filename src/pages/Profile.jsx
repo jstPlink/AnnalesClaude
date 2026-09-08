@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import CollapsibleSection from '../components/CollapsibleSection'
+import AccountFields from '../components/AccountFields'
 import AppearanceControls from '../components/AppearanceControls'
 import ExportButtons from '../components/ExportButtons'
 import Changelog from '../components/Changelog'
@@ -404,6 +405,12 @@ export default function Profile() {
         </div>
 
         <div className="mt-10">
+          <CollapsibleSection title="Account" icon="user">
+            <AccountFields />
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
           <CollapsibleSection title="Aspetto" icon="settings">
             <AppearanceControls />
           </CollapsibleSection>

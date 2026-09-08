@@ -9,7 +9,10 @@ import {
 } from '../../lib/notes'
 import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
+import { getSkinMonth, setSkinMonth } from '../../lib/prefs'
 import OnThisDay from '../../components/OnThisDay'
+import Icon from '../../components/Icon'
+import MonthBoard from './MonthBoard'
 import {
   MONTHS_IT,
   addMonths,
@@ -82,6 +85,7 @@ export default function WebMonth() {
   const [error, setError] = useState('')
   const [openYear, setOpenYear] = useState(false)
   const [openMonth, setOpenMonth] = useState(false)
+  const [skinMonth, setSkinMonthState] = useState(getSkinMonth())
   const navRef = useRef(null)
 
   useEffect(() => {
@@ -230,6 +234,26 @@ export default function WebMonth() {
           >
             Oggi
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = skinMonth === 'board' ? 'plain' : 'board'
+              setSkinMonthState(next)
+              setSkinMonth(next)
+            }}
+            aria-pressed={skinMonth === 'board'}
+            title={
+              skinMonth === 'board' ? 'Vista a elenco' : 'Vista bacheca'
+            }
+            className={
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border shadow-sm transition active:scale-95 ' +
+              (skinMonth === 'board'
+                ? 'border-delete-dark bg-delete/15 text-delete-dark'
+                : 'border-line bg-tag text-ink-soft hover:bg-panel hover:text-ink')
+            }
+          >
+            <Icon name={skinMonth === 'board' ? 'list' : 'image'} size={18} />
+          </button>
         </div>
         {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
       </header>
@@ -242,6 +266,14 @@ export default function WebMonth() {
 
       <OnThisDay className="mb-5 max-w-md" />
 
+      {skinMonth === 'board' ? (
+        <MonthBoard
+          grid={grid}
+          byDay={byDay}
+          monthLabel={MONTHS_IT[cursor.month]}
+          onNavigate={navigate}
+        />
+      ) : (
       <div className="mx-auto w-3/5 divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">
         {grid
           .filter((cell) => cell.inMonth)
@@ -353,6 +385,7 @@ export default function WebMonth() {
             )
           })}
       </div>
+      )}
     </div>
   )
 }

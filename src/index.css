@@ -505,3 +505,324 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .paper-swatch[data-p='vignetta'] {
   background-image: var(--tex-vignetta);
 }
+
+/* ============ Skin "diario disegnato" — vista giorno ============
+   Attivata da <html data-skin-day="sketch"> (src/lib/prefs.js). Sovrascrive
+   colori, font e bordi solo dentro `.day-surface` (DayView + WebDay); il
+   resto dell'app resta invariato. Font a mano self-hosted in /public/fonts.
+   Le righe e le cornici usano il filtro SVG #annales-wob (SketchDefs.jsx). */
+@font-face {
+  font-family: 'Annales Marker';
+  src: url('/fonts/caveat-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Annales Hand';
+  src: url('/fonts/kalam-300.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Annales Hand';
+  src: url('/fonts/kalam-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Annales Hand';
+  src: url('/fonts/kalam-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root[data-skin-day='sketch'] {
+  --sk-paper: #efe7d6;
+  --sk-card: #e7dcc0;
+  --sk-ink: #2c3742;
+  --sk-ink-soft: #6b6f62;
+  --sk-accent: #bf4535;
+  --sk-tex: radial-gradient(rgba(40, 30, 15, 0.05) 1px, transparent 0);
+}
+:root[data-skin-day='sketch'][data-theme='dark'] {
+  --sk-paper: #211d17;
+  --sk-card: #2a2418;
+  --sk-ink: #e9dcc0;
+  --sk-ink-soft: #a99f86;
+  --sk-accent: #d76d5c;
+  --sk-tex: radial-gradient(rgba(255, 248, 230, 0.03) 1px, transparent 0);
+}
+
+:root[data-skin-day='sketch'] .day-surface {
+  background-color: var(--sk-paper) !important;
+  background-image: var(--sk-tex);
+  background-size: 4px 4px;
+  border-color: var(--sk-ink-soft) !important;
+  color: var(--sk-ink);
+  font-family: 'Annales Hand', 'Kalam', system-ui, sans-serif;
+}
+
+/* righe delle ore: tratto irregolare, "spezzato", disegnato a mano */
+:root[data-skin-day='sketch'] .day-surface .hour-rule {
+  height: 2px;
+  background: var(--sk-ink-soft);
+  opacity: 0.55;
+  filter: url(#annales-wob);
+}
+:root[data-skin-day='sketch'] .day-surface .hour-label {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  color: var(--sk-ink-soft);
+}
+
+/* blocchi nota: cornice storta a mano (::before) su fondo carta (::after) */
+:root[data-skin-day='sketch'] .day-surface .note-block {
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-skin-day='sketch'] .day-surface .note-block > span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px 9px 13px 8px;
+}
+:root[data-skin-day='sketch'] .day-surface .note-block::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: var(--sk-card);
+  border-radius: 14px 10px 16px 9px;
+}
+:root[data-skin-day='sketch'] .day-surface .note-block::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: 2;
+  border: 2.5px solid var(--sk-ink);
+  border-radius: 14px 10px 16px 9px;
+  filter: url(#annales-wob);
+  pointer-events: none;
+}
+:root[data-skin-day='sketch'] .day-surface .note-title {
+  font-family: 'Annales Marker', 'Caveat', cursive !important;
+  font-weight: 700 !important;
+  font-size: 1.02rem !important;
+  letter-spacing: 0.01em;
+}
+:root[data-skin-day='sketch'] .day-surface .note-time {
+  font-family: 'Annales Hand', 'Kalam', sans-serif !important;
+}
+
+/* ============ Skin "bacheca" — vista mese (solo web) ============
+   Attivata da <html data-skin-month="board"> (src/lib/prefs.js). Rende il
+   componente MonthBoard: cartoncini appuntati su sughero, uniti da filo
+   rosso. Layout a flusso (flex-wrap): regge un numero qualsiasi di giorni.
+   I fili e i bordi usano il filtro #annales-wob (SketchDefs.jsx). */
+:root[data-skin-month='board'] {
+  --bd-cork: #ccb488;
+  --bd-cork-spot: rgba(120, 88, 52, 0.16);
+  --bd-paper: #f4ecdd;
+  --bd-ink: #3c362b;
+  --bd-ink-soft: #6f6653;
+  --bd-thread: #c96f5b;
+  --bd-edge: rgba(60, 50, 35, 0.28);
+}
+:root[data-skin-month='board'][data-theme='dark'] {
+  --bd-cork: #3a3120;
+  --bd-cork-spot: rgba(0, 0, 0, 0.3);
+  --bd-paper: #ecdfc2;
+  --bd-ink: #2e2a22;
+  --bd-ink-soft: #5f584a;
+  --bd-thread: #df7d66;
+  --bd-edge: rgba(255, 248, 230, 0.22);
+}
+
+.month-board {
+  position: relative;
+  margin: 0 auto;
+  width: 84%;
+  max-width: 66rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  gap: 26px 30px;
+  padding: 36px 30px 42px;
+  border-radius: 8px;
+  background-color: var(--bd-cork);
+  background-image: radial-gradient(var(--bd-cork-spot) 9%, transparent 10%),
+    radial-gradient(var(--bd-cork-spot) 9%, transparent 10%);
+  background-size: 8px 8px, 13px 13px;
+  background-position: 0 0, 4px 5px;
+  box-shadow: inset 0 0 60px rgba(20, 14, 6, 0.22),
+    0 10px 30px rgba(20, 14, 6, 0.18);
+}
+.month-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 55%,
+    rgba(28, 18, 8, 0.24)
+  );
+}
+.month-board--empty {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 1.1rem;
+  color: var(--bd-ink-soft);
+}
+.month-board__threads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mb-card {
+  position: relative;
+  z-index: 2;
+  width: 190px;
+  padding: 10px 10px 12px;
+  border: 0;
+  background: var(--bd-paper);
+  color: var(--bd-ink);
+  text-align: left;
+  cursor: pointer;
+  transform: rotate(var(--r, 0deg));
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: 0 6px 14px rgba(20, 14, 6, 0.28);
+}
+.mb-card:hover {
+  transform: rotate(0) translateY(-3px) scale(1.03);
+  z-index: 6;
+  box-shadow: 0 12px 22px rgba(20, 14, 6, 0.34);
+}
+.mb-card:focus-visible {
+  outline: 2px dashed var(--bd-thread);
+  outline-offset: 3px;
+}
+.mb-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: 5;
+  border: 2px solid var(--bd-edge);
+  filter: url(#annales-wob);
+  pointer-events: none;
+}
+
+.mb-pin {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 30%,
+    rgba(255, 255, 255, 0.85),
+    var(--bd-thread) 46%,
+    rgba(0, 0, 0, 0.45)
+  );
+  box-shadow: 0 3px 5px rgba(10, 6, 2, 0.4);
+  z-index: 4;
+}
+
+.mb-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.82) contrast(0.96);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
+}
+.mb-cap {
+  display: block;
+  padding: 8px 4px 2px;
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.12rem;
+  line-height: 1.12;
+}
+.mb-cap b {
+  color: var(--bd-thread);
+}
+
+.mb-note-in {
+  display: flex;
+  gap: 9px;
+  padding: 4px 2px 2px;
+}
+.mb-daynum {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.mb-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.mb-titles span {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mb-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px 0;
+}
+.mb-mood {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.mb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.72rem;
+  color: var(--bd-ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-card {
+    transition: none;
+  }
+  .mb-card:hover {
+    transform: rotate(var(--r, 0deg));
+  }
+}

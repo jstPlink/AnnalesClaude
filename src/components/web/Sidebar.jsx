@@ -177,6 +177,9 @@ export default function Sidebar() {
             </svg>
           </button>
         </div>
+        <p className="mt-2 px-1.5 text-[11px] text-ink-soft tabular-nums">
+          Annales · v{__APP_VERSION__}
+        </p>
       </div>
     </aside>
   )

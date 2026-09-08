@@ -11,6 +11,7 @@ import { useIsWide } from './hooks/useIsWide'
 import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
 import PendingSync from './components/PendingSync'
+import SketchDefs from './components/SketchDefs'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
 import DayView from './pages/DayView'
@@ -82,6 +83,7 @@ export default function App() {
   return (
     <AuthProvider>
       <NavProvider>
+        <SketchDefs />
         <BrowserRouter>
           <Routes>
             <Route

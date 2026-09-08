@@ -96,7 +96,6 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     }
   }
 
-  const peopleName = new Map(allPeople.map((p) => [p.id, p.name]))
   const tagName = new Map(allTags.map((t) => [t.id, t.name]))
 
   const personCount = new Map()
@@ -123,11 +122,16 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     }
   }
 
-  const topPeople = topEntries(
-    personCount,
-    (id) => peopleName.get(id) || '—',
-    10,
-  )
+  const peopleById = new Map(allPeople.map((p) => [p.id, p]))
+  const topPeople = [...personCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([id, count]) => ({
+      id,
+      count,
+      name: peopleById.get(id)?.name || '—',
+      person: peopleById.get(id) || null,
+    }))
   const topTags = topEntries(tagCount, (id) => tagName.get(id) || '—', 1)
   const topPlaces = topEntries(placeCount, (name) => name, 1)
 
