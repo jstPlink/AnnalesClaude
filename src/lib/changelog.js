@@ -5,6 +5,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.11.1',
+    date: '2026-09-08 14:53',
+    changes: [
+      'Selezione persone (nota e ricerca): elenco limitato alle 10 più frequenti, con "Mostra tutte" per il resto; le persone già selezionate restano sempre visibili.',
+      'Impostazioni → Persone: accanto a ogni nome il numero di note collegate; il pulsante di rimozione ora ha un bordo.',
+    ],
+  },
+  {
     version: '0.11.0',
     date: '2026-09-08 14:29',
     changes: [

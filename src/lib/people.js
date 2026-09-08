@@ -32,3 +32,18 @@ export async function createPerson(name) {
 export async function deletePerson(id) {
   return pb.collection(COLLECTION).delete(id)
 }
+
+// Le `limit` persone più frequenti (per numero di note in `counts`, poi
+// alfabetico), più quelle in `keepIds` anche se fuori dai primi `limit`
+// (così una persona già selezionata non sparisce dall'elenco).
+export function topByUsage(people, counts, keepIds = [], limit = 10) {
+  const c = counts || {}
+  const sorted = [...people].sort((a, b) => {
+    const d = (c[b.id] || 0) - (c[a.id] || 0)
+    return d !== 0 ? d : a.name.localeCompare(b.name)
+  })
+  const top = sorted.slice(0, limit)
+  const ids = new Set(top.map((p) => p.id))
+  const kept = new Set(keepIds)
+  return top.concat(sorted.filter((p) => kept.has(p.id) && !ids.has(p.id)))
+}

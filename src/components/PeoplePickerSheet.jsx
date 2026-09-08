@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Icon from './Icon'
 import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
 import { createPerson } from '../lib/people'
+
+const LIMIT = 10
 
 function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
   return (
@@ -30,10 +32,9 @@ function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
 
 // Dialog per selezionare le persone coinvolte in questa nota: tra quelle già
 // in elenco (Profilo / Immich), o creandone una nuova al volo (solo nome).
-// Con `usageCounts` ({ personId: n° note }) il 50% più usato (per numero di
-// note, non solo "usate almeno una volta") sale in cima sotto "Frequenti"
-// (ordinate per uso, poi alfabetico), separato visivamente dall'altro 50%
-// sotto "Altre persone" (ordinato solo alfabeticamente).
+// Di default mostra solo le 10 persone più frequenti (per numero di note;
+// con `usageCounts`, altrimenti alfabetico), più quelle già selezionate; il
+// resto è dietro "Mostra tutte".
 export default function PeoplePickerSheet({
   open,
   people,
@@ -48,22 +49,32 @@ export default function PeoplePickerSheet({
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+  const [showAll, setShowAll] = useState(false)
 
-  // Divide a metà per numero di note (non per "usata almeno una volta"): il
-  // 50% più usato in cima (ordinate per uso, poi alfabetico), il resto sotto
-  // (solo alfabetico) — così le più frequenti in cima non si confondono con
-  // le altre.
-  const { frequentPeople, otherPeople } = useMemo(() => {
-    if (!usageCounts) return { frequentPeople: people, otherPeople: [] }
-    const byUsage = [...people].sort((a, b) => {
-      const diff = (usageCounts[b.id] || 0) - (usageCounts[a.id] || 0)
-      return diff !== 0 ? diff : a.name.localeCompare(b.name)
-    })
-    const splitAt = Math.ceil(byUsage.length / 2)
-    const frequent = byUsage.slice(0, splitAt)
-    const other = byUsage.slice(splitAt).sort((a, b) => a.name.localeCompare(b.name))
-    return { frequentPeople: frequent, otherPeople: other }
-  }, [people, usageCounts])
+  useEffect(() => {
+    if (open) setShowAll(false)
+  }, [open])
+
+  const { shown, hidden } = useMemo(() => {
+    const byUsage = usageCounts
+      ? [...people].sort((a, b) => {
+          const diff = (usageCounts[b.id] || 0) - (usageCounts[a.id] || 0)
+          return diff !== 0 ? diff : a.name.localeCompare(b.name)
+        })
+      : [...people].sort((a, b) => a.name.localeCompare(b.name))
+    const top = byUsage.slice(0, LIMIT)
+    const topIds = new Set(top.map((p) => p.id))
+    // Le persone già selezionate restano visibili anche se fuori dalle top 10.
+    const keptSelected = byUsage.filter(
+      (p) => selectedIds.includes(p.id) && !topIds.has(p.id),
+    )
+    const shownList = top.concat(keptSelected)
+    const shownIds = new Set(shownList.map((p) => p.id))
+    return {
+      shown: shownList,
+      hidden: byUsage.filter((p) => !shownIds.has(p.id)),
+    }
+  }, [people, usageCounts, selectedIds])
 
   if (!open) return null
 
@@ -133,37 +144,40 @@ export default function PeoplePickerSheet({
             </p>
           ) : (
             <>
-              {frequentPeople.length > 0 && (
-                <div className="space-y-1">
-                  {otherPeople.length > 0 && (
-                    <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                      Frequenti
-                    </p>
-                  )}
-                  {frequentPeople.map((person) => (
-                    <PersonRow
-                      key={person.id}
-                      person={person}
-                      active={selectedIds.includes(person.id)}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                      onToggle={onToggle}
-                    />
-                  ))}
-                </div>
-              )}
-              {otherPeople.length > 0 && (
-                <div
-                  className={
-                    frequentPeople.length > 0 ? 'mt-4 space-y-1 border-t border-line pt-3' : 'space-y-1'
-                  }
+              <div className="space-y-1">
+                {hidden.length > 0 && (
+                  <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                    Più frequenti
+                  </p>
+                )}
+                {shown.map((person) => (
+                  <PersonRow
+                    key={person.id}
+                    person={person}
+                    active={selectedIds.includes(person.id)}
+                    immichUrl={immichUrl}
+                    immichApiKey={immichApiKey}
+                    onToggle={onToggle}
+                  />
+                ))}
+              </div>
+
+              {hidden.length > 0 && !showAll && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-3 w-full rounded-xl border border-line bg-tag px-3 py-2 text-xs font-bold text-ink-soft transition hover:text-ink"
                 >
-                  {frequentPeople.length > 0 && (
-                    <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                      Altre persone
-                    </p>
-                  )}
-                  {otherPeople.map((person) => (
+                  Mostra tutte ({hidden.length})
+                </button>
+              )}
+
+              {hidden.length > 0 && showAll && (
+                <div className="mt-4 space-y-1 border-t border-line pt-3">
+                  <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                    Altre persone
+                  </p>
+                  {hidden.map((person) => (
                     <PersonRow
                       key={person.id}
                       person={person}

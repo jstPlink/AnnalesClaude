@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { listNotesFiltered, describeError } from '../../lib/notes'
-import { listPeople } from '../../lib/people'
+import {
+  listNotesFiltered,
+  describeError,
+  peopleUsageCounts,
+} from '../../lib/notes'
+import { listPeople, topByUsage } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import Icon from '../../components/Icon'
@@ -65,6 +69,8 @@ export default function WebFilter() {
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
   const [peopleOpen, setPeopleOpen] = useState(false)
+  const [peopleUsage, setPeopleUsage] = useState(null)
+  const [showAllPeople, setShowAllPeople] = useState(false)
   const [filters, setFilters] = useState({
     from: '',
     to: '',
@@ -94,6 +100,9 @@ export default function WebFilter() {
     listTags()
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
+    peopleUsageCounts()
+      .then(setPeopleUsage)
+      .catch(() => {})
   }, [])
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -266,32 +275,48 @@ export default function WebFilter() {
                 />
               </button>
               {peopleOpen && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {people.map((p) => {
-                    const active = filters.personIds.includes(p.id)
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => togglePerson(p.id)}
-                        className={
-                          'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition ' +
-                          (active
-                            ? 'bg-ink text-cream'
-                            : 'border border-line bg-cream text-ink hover:bg-cream/70')
-                        }
-                      >
-                        <PersonAvatar
-                          person={p}
-                          immichUrl={immichUrl}
-                          immichApiKey={immichApiKey}
-                          size={20}
-                        />
-                        {p.name}
-                      </button>
-                    )
-                  })}
-                </div>
+                <>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {(showAllPeople
+                      ? people
+                      : topByUsage(people, peopleUsage, filters.personIds, 10)
+                    ).map((p) => {
+                      const active = filters.personIds.includes(p.id)
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => togglePerson(p.id)}
+                          className={
+                            'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition ' +
+                            (active
+                              ? 'bg-ink text-cream'
+                              : 'border border-line bg-cream text-ink hover:bg-cream/70')
+                          }
+                        >
+                          <PersonAvatar
+                            person={p}
+                            immichUrl={immichUrl}
+                            immichApiKey={immichApiKey}
+                            size={20}
+                          />
+                          {p.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {people.length > 10 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllPeople((v) => !v)}
+                      className="mt-2 text-xs font-bold text-ink-soft underline underline-offset-2 hover:text-ink"
+                    >
+                      {showAllPeople
+                        ? 'Mostra solo le più frequenti'
+                        : `Mostra tutte (${people.length})`}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}

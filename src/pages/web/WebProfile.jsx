@@ -6,6 +6,7 @@ import {
   describeError,
   listNotesWithPerson,
   reassignPersonInNotes,
+  peopleUsageCounts,
 } from '../../lib/notes'
 import {
   testImmichConnection,
@@ -134,6 +135,7 @@ export default function WebProfile() {
 
   const immichReady = Boolean(user?.immichUrl && user?.immichApiKey)
   const [people, setPeople] = useState([])
+  const [peopleUsage, setPeopleUsage] = useState(null)
   const [peopleError, setPeopleError] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [removingId, setRemovingId] = useState('')
@@ -234,6 +236,9 @@ export default function WebProfile() {
     listTags()
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
+    peopleUsageCounts()
+      .then(setPeopleUsage)
+      .catch(() => {})
   }, [])
 
   async function addTag() {
@@ -710,12 +715,18 @@ export default function WebProfile() {
               <div key={person.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
                 <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
                 <span className="flex-1 text-sm font-medium text-ink">{person.name}</span>
+                {peopleUsage && (
+                  <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                    {peopleUsage[person.id] || 0}{' '}
+                    {(peopleUsage[person.id] || 0) === 1 ? 'nota' : 'note'}
+                  </span>
+                )}
                 <button
                   type="button"
                   title="Rimuovi"
                   disabled={removingId === person.id}
                   onClick={() => removePerson(person.id)}
-                  className="rounded-full p-1.5 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                  className="shrink-0 rounded-full border border-line px-2 py-0.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
                 >
                   ×
                 </button>
