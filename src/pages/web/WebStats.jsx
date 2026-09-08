@@ -9,7 +9,12 @@ import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { computeYearStats } from '../../lib/stats'
 import { moodColor, moodTextColor } from '../../lib/mood'
-import { dayMonthLabel } from '../../lib/dates'
+import { MONTHS_IT, dayMonthLabel, parseWall } from '../../lib/dates'
+
+function shortDM(key) {
+  const p = parseWall(key)
+  return p ? `${p.d} ${MONTHS_IT[p.mo - 1].slice(0, 3).toLowerCase()}` : ''
+}
 
 function NavArrow({ dir, onClick, label }) {
   return (
@@ -55,11 +60,13 @@ function DayRow({ day, onClick, style }) {
         {Math.round(day.mood * 100)}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-ink">
+        <span className="block truncate text-sm font-semibold text-ink">
           {dayMonthLabel(day.key)}
         </span>
-        <span className="block text-xs text-ink-soft">
-          {day.count} {day.count === 1 ? 'nota' : 'note'}
+        <span className="block truncate text-xs text-ink-soft">
+          {day.titles?.length
+            ? day.titles.join(' · ')
+            : `${day.count} ${day.count === 1 ? 'nota' : 'note'}`}
         </span>
       </span>
     </button>
@@ -163,6 +170,32 @@ export default function WebStats() {
         className="mt-6"
       />
 
+      {stats.topPeople.length > 0 && (
+        <section className="mt-8">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            Persone più presenti
+          </p>
+          <ol className="grid gap-x-8 gap-y-1 overflow-hidden rounded-2xl border border-line bg-panel p-2 sm:grid-cols-2">
+            {stats.topPeople.map((p, i) => (
+              <li
+                key={p.id}
+                className="flex items-center gap-3 rounded-lg px-3 py-2"
+              >
+                <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                  {p.name}
+                </span>
+                <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                  {p.count} {p.count === 1 ? 'nota' : 'note'}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {stats.topDays.length > 0 && (
           <section>
@@ -201,13 +234,23 @@ export default function WebStats() {
         )}
       </div>
 
-      {(stats.topPerson || stats.topTag || stats.topPlace) && (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {stats.topPerson && (
+      {(stats.bestWeek ||
+        stats.bestWeekday ||
+        stats.topTag ||
+        stats.topPlace) && (
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.bestWeek && (
             <StatCard
-              label="Persona più presente"
-              value={stats.topPerson.name}
-              sub={`in ${stats.topPerson.count} note`}
+              label="Settimana migliore"
+              value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
+              sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
+            />
+          )}
+          {stats.bestWeekday && (
+            <StatCard
+              label="Giorno più su di morale"
+              value={stats.bestWeekday.name}
+              sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
             />
           )}
           {stats.topTag && (

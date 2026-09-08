@@ -1,36 +1,100 @@
 import { dayMood } from './mood'
 import { groupByDay, parsePlace } from './notes'
+import { parseWall } from './dates'
 
-// Trova il valore col conteggio più alto in una Map id->count, e lo
-// traduce in nome tramite nameFn. null se la mappa è vuota.
-function topEntry(counts, nameFn) {
-  let bestId = null
-  let bestCount = 0
-  for (const [id, count] of counts) {
-    if (count > bestCount) {
-      bestId = id
-      bestCount = count
-    }
-  }
-  return bestId != null ? { name: nameFn(bestId), count: bestCount } : null
+const WEEKDAYS_IT = [
+  'Domenica',
+  'Lunedì',
+  'Martedì',
+  'Mercoledì',
+  'Giovedì',
+  'Venerdì',
+  'Sabato',
+]
+
+// Le `limit` voci col conteggio più alto in una Map id->count.
+function topEntries(counts, nameFn, limit) {
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id, count]) => ({ id, name: nameFn(id), count }))
 }
 
-// Statistiche aggregate sulle note di un anno: giorni migliori/peggiori,
-// giorno più pieno, persona/tag/luogo più ricorrenti, mood medio.
+// Chiave (YYYY-MM-DD) del lunedì della settimana che contiene `dKey`.
+function mondayKey(dKey) {
+  const p = parseWall(dKey)
+  if (!p) return dKey
+  const dt = new Date(p.y, p.mo - 1, p.d)
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7))
+  const mm = String(dt.getMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getDate()).padStart(2, '0')
+  return `${dt.getFullYear()}-${mm}-${dd}`
+}
+
+// Statistiche aggregate sulle note di un anno.
 export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {}) {
   const byDay = groupByDay(yearNotes)
   const dayEntries = [...byDay.entries()].map(([key, notes]) => ({
     key,
     mood: dayMood(notes),
     count: notes.length,
+    titles: notes
+      .map((n) => n.title?.trim())
+      .filter(Boolean)
+      .slice(0, 3),
   }))
 
-  const topDays = [...dayEntries].sort((a, b) => b.mood - a.mood).slice(0, 2)
-  const bottomDays = [...dayEntries].sort((a, b) => a.mood - b.mood).slice(0, 2)
+  const topDays = [...dayEntries].sort((a, b) => b.mood - a.mood).slice(0, 5)
+  const bottomDays = [...dayEntries].sort((a, b) => a.mood - b.mood).slice(0, 5)
   const busiestDay = dayEntries.reduce(
     (best, d) => (!best || d.count > best.count ? d : best),
     null,
   )
+
+  // Settimana con il mood medio più alto (almeno 2 giorni scritti, se
+  // possibile: evita che un singolo giorno euforico "vinca" la settimana).
+  const weekMap = new Map()
+  for (const d of dayEntries) {
+    const wk = mondayKey(d.key)
+    const e = weekMap.get(wk) || {
+      week: wk,
+      moodSum: 0,
+      days: 0,
+      notes: 0,
+      first: d.key,
+      last: d.key,
+    }
+    e.moodSum += d.mood
+    e.days += 1
+    e.notes += d.count
+    if (d.key < e.first) e.first = d.key
+    if (d.key > e.last) e.last = d.key
+    weekMap.set(wk, e)
+  }
+  const weeks = [...weekMap.values()].map((e) => ({ ...e, mood: e.moodSum / e.days }))
+  const bestWeek =
+    weeks.filter((w) => w.days >= 2).sort((a, b) => b.mood - a.mood)[0] ||
+    weeks.sort((a, b) => b.mood - a.mood)[0] ||
+    null
+
+  // Giorno della settimana con il mood medio più alto.
+  const wdSum = Array(7).fill(0)
+  const wdN = Array(7).fill(0)
+  for (const d of dayEntries) {
+    const p = parseWall(d.key)
+    if (!p) continue
+    const wd = new Date(p.y, p.mo - 1, p.d).getDay()
+    wdSum[wd] += d.mood
+    wdN[wd] += 1
+  }
+  let bestWeekday = null
+  for (let i = 0; i < 7; i += 1) {
+    if (!wdN[i]) continue
+    const m = wdSum[i] / wdN[i]
+    if (!bestWeekday || m > bestWeekday.mood) {
+      bestWeekday = { day: i, name: WEEKDAYS_IT[i], mood: m, count: wdN[i] }
+    }
+  }
 
   const peopleName = new Map(allPeople.map((p) => [p.id, p.name]))
   const tagName = new Map(allTags.map((t) => [t.id, t.name]))
@@ -59,6 +123,14 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     }
   }
 
+  const topPeople = topEntries(
+    personCount,
+    (id) => peopleName.get(id) || '—',
+    10,
+  )
+  const topTags = topEntries(tagCount, (id) => tagName.get(id) || '—', 1)
+  const topPlaces = topEntries(placeCount, (name) => name, 1)
+
   return {
     noteCount: yearNotes.length,
     dayCount: dayEntries.length,
@@ -66,8 +138,11 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     topDays,
     bottomDays,
     busiestDay,
-    topPerson: topEntry(personCount, (id) => peopleName.get(id) || '—'),
-    topTag: topEntry(tagCount, (id) => tagName.get(id) || '—'),
-    topPlace: topEntry(placeCount, (name) => name),
+    bestWeek,
+    bestWeekday,
+    topPeople,
+    topPerson: topPeople[0] || null,
+    topTag: topTags[0] || null,
+    topPlace: topPlaces[0] || null,
   }
 }

@@ -5,6 +5,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.12.0',
+    date: '2026-09-08 15:20',
+    changes: [
+      'Statistiche: classifica delle 10 persone più presenti nelle note, con il conteggio.',
+      'Statistiche: giorni migliori e più difficili estesi a 5 + 5, con i titoli delle note.',
+      'Statistiche: nuove voci "Settimana migliore" e "Giorno più su di morale".',
+    ],
+  },
+  {
     version: '0.11.1',
     date: '2026-09-08 14:53',
     changes: [
