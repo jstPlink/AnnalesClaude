@@ -11,7 +11,7 @@ import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { computeYearStats } from '../../lib/stats'
 import { moodColor, moodTextColor } from '../../lib/mood'
-import { MONTHS_IT, dayKey, dayMonthLabel, parseWall, timeLabel } from '../../lib/dates'
+import { MONTHS_IT, dayKey, dayMonthLabel, parseWall } from '../../lib/dates'
 
 function shortDM(key) {
   const p = parseWall(key)
@@ -86,36 +86,6 @@ function DayRow({ day, onClick, style }) {
             {day.count} {day.count === 1 ? 'nota' : 'note'}
           </span>
         )}
-      </span>
-    </button>
-  )
-}
-
-function NoteRow({ note, onClick, style }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={style}
-      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-    >
-      <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
-        style={{
-          backgroundColor: moodColor(note.mood),
-          color: moodTextColor(note.mood),
-        }}
-      >
-        {Math.round(Number(note.mood) * 100)}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">
-          {note.title || <span className="italic text-ink-soft">Senza titolo</span>}
-        </span>
-        <span className="block truncate text-xs text-ink-soft">
-          {dayMonthLabel(dayKey(note.date))} · {timeLabel(note.timeStart)}–
-          {timeLabel(note.timeEnd)}
-        </span>
       </span>
     </button>
   )
@@ -260,7 +230,7 @@ export default function WebStats() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
             Persone più presenti
           </p>
-          <ol className="space-y-2">
+          <ol className="grid gap-2 sm:grid-cols-2">
             {stats.topPeople.map((p, i) => (
               <li
                 key={p.id}
@@ -318,44 +288,6 @@ export default function WebStats() {
                   day={d}
                   style={{ '--i': i }}
                   onClick={() => navigate(`/day/${d.key}`)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        {stats.topNotes.length > 0 && (
-          <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Note migliori
-            </p>
-            <div className="space-y-2">
-              {stats.topNotes.map((n, i) => (
-                <NoteRow
-                  key={n.id}
-                  note={n}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/note/${n.id}`)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {stats.bottomNotes.length > 0 && (
-          <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Note peggiori
-            </p>
-            <div className="space-y-2">
-              {stats.bottomNotes.map((n, i) => (
-                <NoteRow
-                  key={n.id}
-                  note={n}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/note/${n.id}`)}
                 />
               ))}
             </div>

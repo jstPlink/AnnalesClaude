@@ -5,16 +5,6 @@
 
 export const CHANGELOG = [
   {
-    version: '0.15.0',
-    date: '2026-09-09 11:26',
-    changes: [
-      'Statistiche: nuove voci "Note migliori" e "Note peggiori" (le 5 note singole con mood più alto/basso), oltre ai giorni; "Persone più presenti" (web) ora su una sola colonna.',
-      'Impostazioni: Persone, Tag e Luoghi raggruppati sotto un\'unica voce "Elenchi personali", come già fatto per le Integrazioni.',
-      'Ricerca: il filtro Luogo non è più una barra di testo — mostra i luoghi salvati come targhette da scegliere, come già persone e tag.',
-      'Luoghi già scritti in note esistenti (prima che "Luoghi" esistesse) vengono ora importati automaticamente nell\'elenco la prima volta che apri Impostazioni.',
-    ],
-  },
-  {
     version: '0.14.1',
     date: '2026-09-09 10:59',
     changes: [

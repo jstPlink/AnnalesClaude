@@ -238,29 +238,6 @@ export async function placesUsageCounts() {
   return counts
 }
 
-// Luoghi distinti già scritti nelle note (nome + coordinate), deduplicati
-// per nome. Serve alla sincronizzazione una tantum con la collection
-// `places` (lib/places.js: syncPlacesFromNotes) — le note create prima di
-// Impostazioni → Luoghi hanno il loro luogo solo dentro il campo `place`
-// della nota, non ancora come voce curata.
-export async function listDistinctPlacesFromNotes() {
-  const records = await pb.collection(COLLECTION).getFullList({
-    filter: 'place != ""',
-    fields: 'place',
-  })
-  const seen = new Set()
-  const places = []
-  for (const r of records) {
-    const p = parsePlace(r.place)
-    if (!p?.name) continue
-    const key = p.name.trim().toLowerCase()
-    if (seen.has(key)) continue
-    seen.add(key)
-    places.push(p)
-  }
-  return places
-}
-
 // Note il cui luogo corrisponde (per nome, case-insensitive) al luogo dato
 // (record completi di `place`, così da poterlo riscrivere). Usata dalla
 // gestione luoghi in Impostazioni per la cascata cancella/sostituisci, come
