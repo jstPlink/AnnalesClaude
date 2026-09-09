@@ -255,36 +255,79 @@ export default function WebStats() {
         className="mt-6"
       />
 
-      {stats.topPeople.length > 0 && (
-        <section className="mt-8">
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
-            Persone più presenti
-          </p>
-          <ol className="space-y-2">
-            {stats.topPeople.map((p, i) => (
-              <li
-                key={p.id}
-                className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2"
-              >
-                <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
-                  {i + 1}
-                </span>
-                <PersonAvatar
-                  person={p.person || { name: p.name }}
-                  immichUrl={immichUrl}
-                  immichApiKey={immichApiKey}
-                  size={28}
+      {(stats.topPeople.length > 0 ||
+        stats.bestWeek ||
+        stats.bestWeekday ||
+        stats.topTag ||
+        stats.topPlace) && (
+        <div className="mt-8 grid gap-8 lg:grid-cols-2">
+          {stats.topPeople.length > 0 && (
+            <section>
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Persone più presenti
+              </p>
+              <ol className="space-y-2">
+                {stats.topPeople.map((p, i) => (
+                  <li
+                    key={p.id}
+                    className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2"
+                  >
+                    <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
+                      {i + 1}
+                    </span>
+                    <PersonAvatar
+                      person={p.person || { name: p.name }}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={28}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                      {p.name}
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                      {p.count} {p.count === 1 ? 'nota' : 'note'}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {(stats.bestWeek || stats.bestWeekday || stats.topTag || stats.topPlace) && (
+            <section className="space-y-4">
+              {stats.bestWeek && (
+                <StatCard
+                  label="Settimana migliore"
+                  value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
+                  sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
+                  onClick={openWeekNotes}
                 />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-                  {p.name}
-                </span>
-                <span className="shrink-0 text-xs tabular-nums text-ink-soft">
-                  {p.count} {p.count === 1 ? 'nota' : 'note'}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
+              )}
+              {stats.bestWeekday && (
+                <StatCard
+                  label="Giorno più su di morale"
+                  value={stats.bestWeekday.name}
+                  sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
+                  onClick={openWeekdayNotes}
+                />
+              )}
+              {stats.topTag && (
+                <StatCard
+                  label="Tag più usato"
+                  value={stats.topTag.name}
+                  sub={`in ${stats.topTag.count} note`}
+                />
+              )}
+              {stats.topPlace && (
+                <StatCard
+                  label="Luogo più frequente"
+                  value={stats.topPlace.name}
+                  sub={`in ${stats.topPlace.count} note`}
+                />
+              )}
+            </section>
+          )}
+        </div>
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
@@ -362,44 +405,6 @@ export default function WebStats() {
           </section>
         )}
       </div>
-
-      {(stats.bestWeek ||
-        stats.bestWeekday ||
-        stats.topTag ||
-        stats.topPlace) && (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.bestWeek && (
-            <StatCard
-              label="Settimana migliore"
-              value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
-              sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
-              onClick={openWeekNotes}
-            />
-          )}
-          {stats.bestWeekday && (
-            <StatCard
-              label="Giorno più su di morale"
-              value={stats.bestWeekday.name}
-              sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
-              onClick={openWeekdayNotes}
-            />
-          )}
-          {stats.topTag && (
-            <StatCard
-              label="Tag più usato"
-              value={stats.topTag.name}
-              sub={`in ${stats.topTag.count} note`}
-            />
-          )}
-          {stats.topPlace && (
-            <StatCard
-              label="Luogo più frequente"
-              value={stats.topPlace.name}
-              sub={`in ${stats.topPlace.count} note`}
-            />
-          )}
-        </div>
-      )}
 
       {!loading && !stats.noteCount && (
         <p className="py-16 text-center text-ink-soft">Nessuna nota nel {year}.</p>
