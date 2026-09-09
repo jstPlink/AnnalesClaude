@@ -223,29 +223,43 @@ export async function peopleUsageCounts() {
   return counts
 }
 
-// Luoghi già usati in altre note (nome + coordinate), dal più recente,
-// deduplicati per nome — per riproporli quando si aggiunge un luogo a una
-// nuova nota invece di dover ricercare/ridigitare da capo. Non serve una
-// collection dedicata: il luogo vive già dentro ogni nota (campo `place`,
-// JSON {name,lat,lon}); si legge solo quel campo (proiezione leggera, come
-// `peopleUsageCounts` sopra) e si deduplica lato client.
-export async function listRecentPlaces() {
-  const records = await pb.collection(COLLECTION).getFullList({
-    filter: 'place != ""',
-    fields: 'place',
-    sort: '-date',
-  })
-  const seen = new Set()
-  const places = []
-  for (const r of records) {
-    const p = parsePlace(r.place)
+// Conteggio di quante note usano ciascun luogo, chiave = nome normalizzato
+// (minuscolo, come per il confronto in listNotesWithPlace): { nome: n }.
+// Serve a mostrare il numero di note collegate in Impostazioni → Luoghi.
+export async function placesUsageCounts() {
+  const list = await pb.collection(COLLECTION).getFullList({ fields: 'place' })
+  const counts = {}
+  for (const n of list) {
+    const p = parsePlace(n.place)
     if (!p?.name) continue
-    const key = p.name.toLowerCase()
-    if (seen.has(key)) continue
-    seen.add(key)
-    places.push(p)
+    const key = p.name.trim().toLowerCase()
+    counts[key] = (counts[key] || 0) + 1
   }
-  return places
+  return counts
+}
+
+// Note il cui luogo corrisponde (per nome, case-insensitive) al luogo dato
+// (record completi di `place`, così da poterlo riscrivere). Usata dalla
+// gestione luoghi in Impostazioni per la cascata cancella/sostituisci, come
+// già `listNotesWithPerson` per le persone — qui però `place` non è una
+// relazione ma un JSON {name,lat,lon} per nota (vedi parsePlace), quindi il
+// confronto è sul nome invece che su un id.
+export async function listNotesWithPlace(placeName) {
+  const key = placeName.trim().toLowerCase()
+  const list = await pb
+    .collection(COLLECTION)
+    .getFullList({ fields: 'id,title,date,place' })
+  return list.filter((n) => parsePlace(n.place)?.name?.trim().toLowerCase() === key)
+}
+
+// Sostituisce (o rimuove, se `toPlace` è null/assente) il luogo in un
+// elenco di note. A differenza di persone/tag il campo non è una relazione
+// multipla: si riscrive per intero (una nota ha un solo luogo).
+export async function reassignPlaceInNotes(toPlace, notes) {
+  const value = toPlace?.name ? serializePlace(toPlace) : ''
+  for (const n of notes) {
+    await pb.collection(COLLECTION).update(n.id, { place: value })
+  }
 }
 
 // Note che coinvolgono una data persona (record completi di `people`, così

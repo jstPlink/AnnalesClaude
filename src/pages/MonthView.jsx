@@ -285,6 +285,7 @@ export default function MonthView() {
         open={geminiNoteOpen}
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
+        customInstructions={user?.geminiCustomInstructions?.trim()}
         immichUrl={user?.immichUrl?.trim()}
         immichApiKey={user?.immichApiKey?.trim()}
         allPeople={allPeople}

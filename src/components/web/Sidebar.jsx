@@ -10,7 +10,7 @@ import NewNoteWithGeminiSheet from '../NewNoteWithGeminiSheet'
 
 export default function Sidebar() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   const name = user?.name?.trim() || user?.email || 'Utente'
   const initial = name.charAt(0).toUpperCase()
@@ -62,6 +62,7 @@ export default function Sidebar() {
         open={geminiNoteOpen}
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
+        customInstructions={user?.geminiCustomInstructions?.trim()}
         immichUrl={user?.immichUrl?.trim()}
         immichApiKey={user?.immichApiKey?.trim()}
         allPeople={allPeople}
@@ -138,45 +139,27 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto border-t border-line p-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/profilo')}
-            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-cream/60"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-cream font-serif text-lg font-semibold text-ink">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initial
-              )}
+        <button
+          type="button"
+          onClick={() => navigate('/profilo')}
+          className="flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-cream/60"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-cream font-serif text-xl font-semibold text-ink">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initial
+            )}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-ink">
+              {user?.name?.trim() || 'Profilo'}
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-ink">
-                {user?.name?.trim() || 'Profilo'}
-              </span>
-              <span className="block truncate text-xs text-ink-soft">
-                {user?.email}
-              </span>
+            <span className="block truncate text-xs text-ink-soft">
+              {user?.email}
             </span>
-          </button>
-          <button
-            type="button"
-            aria-label="Esci"
-            title="Esci"
-            onClick={() => {
-              logout()
-              navigate('/login', { replace: true })
-            }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-cream"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
-        </div>
+          </span>
+        </button>
         <p className="mt-2 px-1.5 text-[11px] text-ink-soft tabular-nums">
           Annales · v{__APP_VERSION__}
         </p>

@@ -5,6 +5,7 @@ import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
+import PlacePickerSheet from '../components/PlacePickerSheet'
 import CollapsibleSection from '../components/CollapsibleSection'
 import AccountFields from '../components/AccountFields'
 import AppearanceControls from '../components/AppearanceControls'
@@ -18,6 +19,9 @@ import {
   listNotesWithPerson,
   reassignPersonInNotes,
   peopleUsageCounts,
+  listNotesWithPlace,
+  reassignPlaceInNotes,
+  placesUsageCounts,
 } from '../lib/notes'
 import {
   testImmichConnection,
@@ -31,6 +35,7 @@ import {
   deletePerson,
 } from '../lib/people'
 import { listTags, createTag, deleteTag } from '../lib/tags'
+import { listPlaces, deletePlace, upsertPlaceIfMissing } from '../lib/places'
 import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../lib/gemini'
 import { downloadIntegrationDoc } from '../lib/integrationDocs'
@@ -106,6 +111,17 @@ export default function Profile() {
   const [creatingTag, setCreatingTag] = useState(false)
   const [removingTagId, setRemovingTagId] = useState('')
 
+  const [places, setPlaces] = useState([])
+  const [placesUsage, setPlacesUsage] = useState(null)
+  const [placesError, setPlacesError] = useState('')
+  const [placeSheetOpen, setPlaceSheetOpen] = useState(false)
+  const [removingPlaceId, setRemovingPlaceId] = useState('')
+  // Luogo collegato a delle note per cui si è chiesta la rimozione:
+  // { place, notes }. Finché è impostato, mostra il dialog di scelta.
+  const [placeToDelete, setPlaceToDelete] = useState(null)
+  const [placeReplacementId, setPlaceReplacementId] = useState('')
+  const [placeCascadeBusy, setPlaceCascadeBusy] = useState(false)
+
   const [spotifyClientId, setSpotifyClientId] = useState(user?.spotifyClientId || '')
   const [spotifyClientSecret, setSpotifyClientSecret] = useState(
     user?.spotifyClientSecret || '',
@@ -118,6 +134,14 @@ export default function Profile() {
   const [savingGemini, setSavingGemini] = useState(false)
   const [testingGemini, setTestingGemini] = useState(false)
   const [geminiStatus, setGeminiStatus] = useState(null)
+  // Istruzioni fisse aggiunte a ogni richiesta di "Nuova nota con Gemini"
+  // (tono, cosa evidenziare/evitare...). Salvate sull'utente: valgono sugli
+  // stessi dispositivi.
+  const [geminiInstructions, setGeminiInstructions] = useState(
+    user?.geminiCustomInstructions || '',
+  )
+  const [savingGeminiInstructions, setSavingGeminiInstructions] = useState(false)
+  const [geminiInstructionsStatus, setGeminiInstructionsStatus] = useState(null)
 
   useEffect(() => {
     setImmichUrl(user?.immichUrl || '')
@@ -125,6 +149,7 @@ export default function Profile() {
     setSpotifyClientId(user?.spotifyClientId || '')
     setSpotifyClientSecret(user?.spotifyClientSecret || '')
     setGeminiApiKey(user?.geminiApiKey || '')
+    setGeminiInstructions(user?.geminiCustomInstructions || '')
   }, [user])
 
   async function saveGemini() {
@@ -139,6 +164,21 @@ export default function Profile() {
       setGeminiStatus({ ok: false, message: describeError(err) })
     } finally {
       setSavingGemini(false)
+    }
+  }
+
+  async function saveGeminiInstructions() {
+    setSavingGeminiInstructions(true)
+    setGeminiInstructionsStatus(null)
+    try {
+      await pb.collection('users').update(user.id, {
+        geminiCustomInstructions: geminiInstructions.trim(),
+      })
+      setGeminiInstructionsStatus({ ok: true, message: 'Salvato.' })
+    } catch (err) {
+      setGeminiInstructionsStatus({ ok: false, message: describeError(err) })
+    } finally {
+      setSavingGeminiInstructions(false)
     }
   }
 
@@ -191,8 +231,14 @@ export default function Profile() {
     listTags()
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
+    listPlaces()
+      .then(setPlaces)
+      .catch((err) => setPlacesError(describeError(err)))
     peopleUsageCounts()
       .then(setPeopleUsage)
+      .catch(() => {})
+    placesUsageCounts()
+      .then(setPlacesUsage)
       .catch(() => {})
   }, [])
 
@@ -221,6 +267,63 @@ export default function Profile() {
       setTagsError(describeError(err))
     } finally {
       setRemovingTagId('')
+    }
+  }
+
+  // Aggiunto tramite PlacePickerSheet (ricerca/mappa): l'upsert evita
+  // duplicati se il luogo era già stato salvato in precedenza.
+  async function addPlace(place) {
+    setPlacesError('')
+    try {
+      const rec = await upsertPlaceIfMissing(place, places)
+      if (rec && !places.some((p) => p.id === rec.id)) {
+        setPlaces((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
+      }
+    } catch (err) {
+      setPlacesError(describeError(err))
+    }
+  }
+
+  async function removePlace(id) {
+    setRemovingPlaceId(id)
+    setPlacesError('')
+    try {
+      const place = places.find((p) => p.id === id)
+      const linked = await listNotesWithPlace(place.name)
+      if (linked.length === 0) {
+        await deletePlace(id)
+        setPlaces((prev) => prev.filter((p) => p.id !== id))
+      } else {
+        // Collegato a delle note: chiedi se sostituire con un altro luogo o
+        // confermare la rimozione da impostazioni e da tutte le note.
+        setPlaceReplacementId('')
+        setPlaceToDelete({ place, notes: linked })
+      }
+    } catch (err) {
+      setPlacesError(describeError(err))
+    } finally {
+      setRemovingPlaceId('')
+    }
+  }
+
+  // mode: 'replace' (sostituisci con placeReplacementId) | 'detach' (togli e basta).
+  async function confirmPlaceCascade(mode) {
+    if (!placeToDelete || placeCascadeBusy) return
+    const { place, notes } = placeToDelete
+    const to =
+      mode === 'replace' ? places.find((p) => p.id === placeReplacementId) : null
+    if (mode === 'replace' && !to) return
+    setPlaceCascadeBusy(true)
+    setPlacesError('')
+    try {
+      await reassignPlaceInNotes(to, notes)
+      await deletePlace(place.id)
+      setPlaces((prev) => prev.filter((p) => p.id !== place.id))
+      setPlaceToDelete(null)
+    } catch (err) {
+      setPlacesError(describeError(err))
+    } finally {
+      setPlaceCascadeBusy(false)
     }
   }
 
@@ -523,6 +626,41 @@ export default function Profile() {
                   {savingGemini ? 'Salvo…' : 'Salva'}
                 </button>
               </div>
+
+              <CollapsibleSection title="Istruzioni personalizzate" icon="edit">
+                <p className="text-xs text-ink-soft">
+                  Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
+                  usare, cosa evidenziare o evitare...). Salvate sul tuo
+                  account: valgono su tutti i dispositivi.
+                </p>
+                <textarea
+                  rows={4}
+                  placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
+                  value={geminiInstructions}
+                  onChange={(e) => setGeminiInstructions(e.target.value)}
+                  className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                />
+                {geminiInstructionsStatus && (
+                  <p
+                    className={
+                      'text-xs ' +
+                      (geminiInstructionsStatus.ok
+                        ? 'text-save-dark'
+                        : 'text-delete-dark')
+                    }
+                  >
+                    {geminiInstructionsStatus.message}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={saveGeminiInstructions}
+                  disabled={savingGeminiInstructions}
+                  className="w-full rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
+                </button>
+              </CollapsibleSection>
             </CollapsibleSection>
 
             <CollapsibleSection title="Spotify" icon="music">
@@ -728,6 +866,59 @@ export default function Profile() {
         </div>
 
         <div className="mt-6">
+          <CollapsibleSection title="Luoghi" icon="map-pin">
+            <p className="text-xs text-ink-soft">
+              Elenco dei luoghi selezionabili nelle note. Vengono aggiunti
+              anche automaticamente quando ne scegli uno da una nota.
+            </p>
+            {placesError && (
+              <p className="text-xs text-delete-dark">{placesError}</p>
+            )}
+            {places.length > 0 && (
+              <div className="space-y-1">
+                {places.map((place) => (
+                  <div
+                    key={place.id}
+                    className="flex items-center gap-3 rounded-xl px-1 py-1"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-ink-soft">
+                      <Icon name="map-pin" size={14} />
+                    </span>
+                    <span className="flex-1 text-sm font-medium text-ink">
+                      {place.name}
+                    </span>
+                    {placesUsage && (
+                      <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                        {placesUsage[place.name.trim().toLowerCase()] || 0}{' '}
+                        {(placesUsage[place.name.trim().toLowerCase()] || 0) === 1
+                          ? 'nota'
+                          : 'note'}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingPlaceId === place.id}
+                      onClick={() => removePlace(place.id)}
+                      className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setPlaceSheetOpen(true)}
+              className="w-full rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition"
+            >
+              + Aggiungi luogo
+            </button>
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
           <CollapsibleSection title="Import ed export" icon="download">
             <p className="text-xs text-ink-soft">
               L'importazione da immagine è disponibile solo dalla versione web.
@@ -873,6 +1064,81 @@ export default function Profile() {
               type="button"
               disabled={cascadeBusy}
               onClick={() => setPersonToDelete(null)}
+              className="mt-2 w-full rounded-full border border-line bg-panel px-4 py-2.5 text-sm font-bold text-ink transition disabled:opacity-50"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      )}
+
+      <PlacePickerSheet
+        open={placeSheetOpen}
+        onClose={() => setPlaceSheetOpen(false)}
+        onAdd={addPlace}
+      />
+
+      {placeToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+          onClick={() => !placeCascadeBusy && setPlaceToDelete(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-cream p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-extrabold text-ink">
+              Rimuovi {placeToDelete.place?.name}
+            </h3>
+            <p className="mt-2 text-sm text-ink-soft">
+              È collegato a {placeToDelete.notes.length}{' '}
+              {placeToDelete.notes.length === 1 ? 'nota' : 'note'}. Scegli cosa
+              fare.
+            </p>
+
+            <label className="mt-4 block text-xs font-semibold text-ink-soft">
+              Sostituisci con
+            </label>
+            <select
+              value={placeReplacementId}
+              onChange={(e) => setPlaceReplacementId(e.target.value)}
+              disabled={placeCascadeBusy}
+              className="mt-1 w-full rounded-xl border border-line bg-panel px-3 py-2 text-sm text-ink outline-none"
+            >
+              <option value="">— scegli un luogo —</option>
+              {places
+                .filter((p) => p.id !== placeToDelete.place?.id)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="button"
+              disabled={!placeReplacementId || placeCascadeBusy}
+              onClick={() => confirmPlaceCascade('replace')}
+              className="mt-2 w-full rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition disabled:opacity-50"
+            >
+              {placeCascadeBusy ? 'Aggiorno…' : 'Sostituisci nelle note e rimuovi'}
+            </button>
+
+            <div className="my-3 border-t border-line-soft" />
+
+            <button
+              type="button"
+              disabled={placeCascadeBusy}
+              onClick={() => confirmPlaceCascade('detach')}
+              className="w-full rounded-full border border-delete-dark bg-delete px-4 py-2.5 text-sm font-bold text-ink transition disabled:opacity-50"
+            >
+              {placeCascadeBusy
+                ? 'Aggiorno…'
+                : `Rimuovi da tutte le ${placeToDelete.notes.length} note e cancella`}
+            </button>
+            <button
+              type="button"
+              disabled={placeCascadeBusy}
+              onClick={() => setPlaceToDelete(null)}
               className="mt-2 w-full rounded-full border border-line bg-panel px-4 py-2.5 text-sm font-bold text-ink transition disabled:opacity-50"
             >
               Annulla

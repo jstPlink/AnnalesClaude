@@ -5,6 +5,9 @@ import {
   draftNoteFromPrompt,
   draftNoteFromPhotos,
   describeGeminiError,
+  loadGeminiPromptDraft,
+  saveGeminiPromptDraft,
+  clearGeminiPromptDraft,
 } from '../lib/gemini'
 import { searchPlaces } from '../lib/leaflet'
 import {
@@ -19,6 +22,17 @@ import { addDaysKey, dayMonthLabel, todayKey } from '../lib/dates'
 // compilata, da rivedere prima di salvare — nulla viene salvato da qui.
 
 const MAX_PHOTOS_TO_GEMINI = 10
+
+// Esempi vari per il placeholder del prompt: uno diverso a ogni apertura del
+// dialog, invece di un unico esempio fisso (con un nome sempre uguale).
+const PROMPT_PLACEHOLDERS = [
+  'Es. oggi pranzo con Marco al ristorante vicino al lago, giornata bellissima…',
+  'Es. mattinata di lavoro intensa, poi corsa al parco e cena con la famiglia…',
+  'Es. giornata no: sveglia tardi, riunione stressante, serata di recupero con un film…',
+  'Es. gita fuori porta con gli amici, tanto sole e la scoperta di un paesino carino…',
+  'Es. giornata tranquilla in casa, un po’ di lettura e la spesa fatta insieme…',
+  'Es. mattina dal dentista, poi shopping e aperitivo con i colleghi…',
+]
 
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -90,6 +104,7 @@ export default function NewNoteWithGeminiSheet({
   open,
   onClose,
   apiKey,
+  customInstructions,
   immichUrl,
   immichApiKey,
   allPeople,
@@ -101,6 +116,8 @@ export default function NewNoteWithGeminiSheet({
 
   const [mode, setMode] = useState('prompt') // prompt | photos
   const [prompt, setPrompt] = useState('')
+  const [restoredDraft, setRestoredDraft] = useState(false)
+  const [placeholder, setPlaceholder] = useState(PROMPT_PLACEHOLDERS[0])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -111,7 +128,15 @@ export default function NewNoteWithGeminiSheet({
   useEffect(() => {
     if (!open) return
     setMode('prompt')
-    setPrompt('')
+    // Se un tentativo precedente è fallito (rete, chiave, limite...) il
+    // prompt scritto è ancora in locale: lo si ritrova qui invece di
+    // doverlo riscrivere da capo.
+    const draft = loadGeminiPromptDraft()
+    setPrompt(draft)
+    setRestoredDraft(Boolean(draft))
+    setPlaceholder(
+      PROMPT_PLACEHOLDERS[Math.floor(Math.random() * PROMPT_PLACEHOLDERS.length)],
+    )
     setLoading(false)
     setError('')
     setAssets([])
@@ -148,6 +173,7 @@ export default function NewNoteWithGeminiSheet({
       const draft = await draftNoteFromPrompt(apiKey, prompt.trim(), {
         peopleNames: allPeople.map((p) => p.name),
         tagNames: allTags.map((t) => t.name),
+        customInstructions,
       })
       onGenerated({
         title: draft.title,
@@ -159,6 +185,7 @@ export default function NewNoteWithGeminiSheet({
         timeStart: draft.timeStart,
         timeEnd: draft.timeEnd,
       })
+      clearGeminiPromptDraft()
       onClose()
     } catch (err) {
       setError(describeGeminiError(err))
@@ -184,6 +211,7 @@ export default function NewNoteWithGeminiSheet({
         dateLabel: dayMonthLabel(yKey),
         peopleNames: allPeople.map((p) => p.name),
         tagNames: allTags.map((t) => t.name),
+        customInstructions,
       })
       onGenerated({
         dateKey: yKey,
@@ -309,12 +337,23 @@ export default function NewNoteWithGeminiSheet({
                 Racconta cosa è successo: Gemini prova a ricavare titolo, testo,
                 tag, persone e luogo. Potrai correggere tutto prima di salvare.
               </p>
+              {restoredDraft && (
+                <p className="rounded-xl border border-warn-dark bg-warn/20 px-3 py-2 text-xs text-ink">
+                  Testo ripristinato dall'ultimo tentativo (non era andato a
+                  buon fine).
+                </p>
+              )}
               <textarea
                 autoFocus
                 rows={5}
-                placeholder="Es. oggi pranzo con Elena al ristorante vicino al lago, giornata bellissima…"
+                placeholder={placeholder}
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setPrompt(v)
+                  setRestoredDraft(false)
+                  saveGeminiPromptDraft(v)
+                }}
                 className="w-full resize-none rounded-xl border border-line bg-tag px-3 py-2 text-sm text-ink outline-none"
               />
               <button

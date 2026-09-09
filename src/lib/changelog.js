@@ -5,6 +5,21 @@
 
 export const CHANGELOG = [
   {
+    version: '0.14.0',
+    date: '2026-09-09 09:41',
+    changes: [
+      'Nuova nota con Gemini: se la generazione fallisce, il testo scritto resta salvato (tra dispositivi) e si ritrova riaprendo il dialog, invece di doverlo riscrivere.',
+      'Nuova nota con Gemini: istruzioni personalizzate (tono, cosa evidenziare/evitare) impostabili in Impostazioni → Integrazioni → Gemini, salvate sull\'account e applicate a ogni generazione.',
+      'Nuova nota con Gemini: placeholder del prompt ora vario (6 esempi diversi a rotazione) invece di un unico esempio fisso.',
+      'Impostazioni: nuova sezione "Luoghi" accanto a Persone e Tag — elenco con conteggio note, creazione anche da qui, cancella/sostituisci se un luogo è collegato a delle note.',
+      'Aggiungi luogo: sezione "Luoghi salvati" per riscegliere un posto già usato, aggiornata automaticamente quando ne scegli uno nuovo da una nota.',
+      'Statistiche: rimosso "Giorno più pieno"; "Giorni migliori/difficili" ora mostrano tutte le note del giorno, non solo le prime 3; "Giorno più su di morale" e "Settimana migliore" sono cliccabili e aprono la lista delle note corrispondenti.',
+      'Impostazioni → Novità: changelog collassabile per versione (solo l\'ultima aperta di default), più facile da scorrere con tante versioni accumulate.',
+      'Impostazioni (web): "Esci" ed "Elimina account" spostati in fondo alla pagina, come su mobile — resta in alto solo la sezione Account (nome/email).',
+      'Sidebar (web): rimosso il pulsante di logout dalla riga profilo in basso a sinistra (si esce dalla pagina Profilo); icona del profilo leggermente più grande.',
+    ],
+  },
+  {
     version: '0.13.0',
     date: '2026-09-08 17:01',
     changes: [

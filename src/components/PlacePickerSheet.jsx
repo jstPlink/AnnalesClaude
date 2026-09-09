@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 import { loadLeaflet, searchPlaces, reverseGeocode } from '../lib/leaflet'
-import { listRecentPlaces } from '../lib/notes'
+import { listPlaces, upsertPlaceIfMissing } from '../lib/places'
 
 const DEFAULT_CENTER = [41.9, 12.5] // Italia, vista d'insieme
 const DEFAULT_ZOOM = 5
@@ -34,19 +34,20 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
   const [selected, setSelected] = useState(null)
   const [nameOverride, setNameOverride] = useState('')
   const [locating, setLocating] = useState(false)
-  const [recentPlaces, setRecentPlaces] = useState([])
+  const [savedPlaces, setSavedPlaces] = useState([])
 
   const mapElRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
 
-  // Luoghi già usati in altre note, per riproporli invece di dover
-  // ricercare/ridigitare da capo un posto in cui si è già stati.
+  // Luoghi salvati (Impostazioni → Luoghi, o aggiunti in precedenza da una
+  // nota), per riproporli invece di dover ricercare/ridigitare da capo un
+  // posto in cui si è già stati.
   useEffect(() => {
     if (!open) return
     let alive = true
-    listRecentPlaces()
-      .then((places) => alive && setRecentPlaces(places))
+    listPlaces()
+      .then((places) => alive && setSavedPlaces(places))
       .catch(() => {})
     return () => {
       alive = false
@@ -107,7 +108,7 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
     setSelected(null)
     setNameOverride('')
     setError('')
-    setRecentPlaces([])
+    setSavedPlaces([])
   }, [open])
 
   if (!open) return null
@@ -144,7 +145,11 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
 
   function confirm() {
     if (!selected || !nameOverride.trim()) return
-    onAdd({ name: nameOverride.trim(), lat: selected.lat, lon: selected.lon })
+    const place = { name: nameOverride.trim(), lat: selected.lat, lon: selected.lon }
+    onAdd(place)
+    // Lo salva anche tra i luoghi curati (Impostazioni → Luoghi), se non
+    // c'è già uno con lo stesso nome — non blocca la chiusura del dialog.
+    upsertPlaceIfMissing(place, savedPlaces).catch(() => {})
     onClose()
   }
 
@@ -188,15 +193,15 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           </button>
         </div>
 
-        {!results.length && recentPlaces.length > 0 && (
+        {!results.length && savedPlaces.length > 0 && (
           <div className="border-b border-line px-5 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-              Luoghi già usati
+              Luoghi salvati
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {recentPlaces.map((p) => (
+              {savedPlaces.map((p) => (
                 <button
-                  key={p.name}
+                  key={p.id}
                   type="button"
                   onClick={() => {
                     onAdd(p)

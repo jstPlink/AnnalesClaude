@@ -38,18 +38,11 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     key,
     mood: dayMood(notes),
     count: notes.length,
-    titles: notes
-      .map((n) => n.title?.trim())
-      .filter(Boolean)
-      .slice(0, 3),
+    titles: notes.map((n) => n.title?.trim()).filter(Boolean),
   }))
 
   const topDays = [...dayEntries].sort((a, b) => b.mood - a.mood).slice(0, 5)
   const bottomDays = [...dayEntries].sort((a, b) => a.mood - b.mood).slice(0, 5)
-  const busiestDay = dayEntries.reduce(
-    (best, d) => (!best || d.count > best.count ? d : best),
-    null,
-  )
 
   // Settimana con il mood medio più alto (almeno 2 giorni scritti, se
   // possibile: evita che un singolo giorno euforico "vinca" la settimana).
@@ -141,7 +134,6 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     avgMood: moodN ? moodSum / moodN : null,
     topDays,
     bottomDays,
-    busiestDay,
     bestWeek,
     bestWeekday,
     topPeople,

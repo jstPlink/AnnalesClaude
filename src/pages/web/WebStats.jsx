@@ -5,12 +5,13 @@ import { useAuth } from '../../context/AuthContext'
 import RecapCard from '../../components/RecapCard'
 import CountUp from '../../components/CountUp'
 import PersonAvatar from '../../components/PersonAvatar'
+import NotesListSheet from '../../components/NotesListSheet'
 import { listNotesInRange, countAllNotes, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { computeYearStats } from '../../lib/stats'
 import { moodColor, moodTextColor } from '../../lib/mood'
-import { MONTHS_IT, dayMonthLabel, parseWall } from '../../lib/dates'
+import { MONTHS_IT, dayKey, dayMonthLabel, parseWall } from '../../lib/dates'
 
 function shortDM(key) {
   const p = parseWall(key)
@@ -32,9 +33,17 @@ function NavArrow({ dir, onClick, label }) {
   )
 }
 
-function StatCard({ label, value, sub }) {
+function StatCard({ label, value, sub, onClick }) {
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <div className="rounded-2xl border border-line bg-tag p-5">
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={
+        'rounded-2xl border border-line bg-tag p-5 text-left' +
+        (onClick ? ' transition hover:-translate-y-0.5 hover:shadow-md' : '')
+      }
+    >
       <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
         {label}
       </p>
@@ -42,7 +51,7 @@ function StatCard({ label, value, sub }) {
         <CountUp value={value} />
       </p>
       {sub && <p className="mt-0.5 truncate text-sm text-ink-soft">{sub}</p>}
-    </div>
+    </Tag>
   )
 }
 
@@ -52,7 +61,7 @@ function DayRow({ day, onClick, style }) {
       type="button"
       onClick={onClick}
       style={style}
-      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
+      className="anim-row flex w-full items-start gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <span
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
@@ -64,11 +73,19 @@ function DayRow({ day, onClick, style }) {
         <span className="block truncate text-sm font-semibold text-ink">
           {dayMonthLabel(day.key)}
         </span>
-        <span className="block truncate text-xs text-ink-soft">
-          {day.titles?.length
-            ? day.titles.join(' · ')
-            : `${day.count} ${day.count === 1 ? 'nota' : 'note'}`}
-        </span>
+        {day.titles?.length ? (
+          <span className="mt-0.5 flex flex-col gap-0.5">
+            {day.titles.map((t, i) => (
+              <span key={i} className="block truncate text-xs text-ink-soft">
+                {t}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className="block text-xs text-ink-soft">
+            {day.count} {day.count === 1 ? 'nota' : 'note'}
+          </span>
+        )}
       </span>
     </button>
   )
@@ -88,6 +105,7 @@ export default function WebStats() {
   const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [listSheet, setListSheet] = useState(null) // { title, subtitle, notes } | null
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -122,6 +140,45 @@ export default function WebStats() {
     [yearNotes, people, tags],
   )
 
+  // Ordina per data/orario, per la lista note nel dialog.
+  function sortByDateTime(list) {
+    return [...list].sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1
+      return (a.timeStart || '') < (b.timeStart || '') ? -1 : 1
+    })
+  }
+
+  function openWeekdayNotes() {
+    if (!stats.bestWeekday) return
+    const notes = sortByDateTime(
+      yearNotes.filter((n) => {
+        const p = parseWall(n.date)
+        return p && new Date(p.y, p.mo - 1, p.d).getDay() === stats.bestWeekday.day
+      }),
+    )
+    setListSheet({
+      title: stats.bestWeekday.name,
+      subtitle: `${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'} nel ${year}`,
+      notes,
+    })
+  }
+
+  function openWeekNotes() {
+    if (!stats.bestWeek) return
+    const { first, last } = stats.bestWeek
+    const notes = sortByDateTime(
+      yearNotes.filter((n) => {
+        const dk = dayKey(n.date)
+        return dk >= first && dk <= last
+      }),
+    )
+    setListSheet({
+      title: 'Settimana migliore',
+      subtitle: `${shortDM(first)} – ${shortDM(last)}`,
+      notes,
+    })
+  }
+
   return (
     <div>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -152,17 +209,12 @@ export default function WebStats() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard label="Note totali" value={allTimeCount ?? '—'} />
         <StatCard label={`Note nel ${year}`} value={stats.noteCount} />
         <StatCard
           label="Mood medio"
           value={stats.avgMood != null ? Math.round(stats.avgMood * 100) : '—'}
-        />
-        <StatCard
-          label="Giorno più pieno"
-          value={stats.busiestDay ? stats.busiestDay.count : '—'}
-          sub={stats.busiestDay ? dayMonthLabel(stats.busiestDay.key) : ''}
         />
       </div>
 
@@ -253,6 +305,7 @@ export default function WebStats() {
               label="Settimana migliore"
               value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
               sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
+              onClick={openWeekNotes}
             />
           )}
           {stats.bestWeekday && (
@@ -260,6 +313,7 @@ export default function WebStats() {
               label="Giorno più su di morale"
               value={stats.bestWeekday.name}
               sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
+              onClick={openWeekdayNotes}
             />
           )}
           {stats.topTag && (
@@ -282,6 +336,15 @@ export default function WebStats() {
       {!loading && !stats.noteCount && (
         <p className="py-16 text-center text-ink-soft">Nessuna nota nel {year}.</p>
       )}
+
+      <NotesListSheet
+        open={Boolean(listSheet)}
+        title={listSheet?.title}
+        subtitle={listSheet?.subtitle}
+        notes={listSheet?.notes || []}
+        onClose={() => setListSheet(null)}
+        onSelectNote={(id) => navigate(`/note/${id}`)}
+      />
     </div>
   )
 }

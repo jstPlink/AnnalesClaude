@@ -12,6 +12,34 @@ import { plainText } from './notes'
 // il 2026-09-06.
 const MODEL = 'gemini-3.6-flash'
 
+// Bozza del prompt scritto per "Nuova nota con Gemini": salvata in
+// localStorage a ogni battitura e cancellata solo alla generazione riuscita.
+// Se la chiamata a Gemini fallisce per qualunque motivo (rete, chiave,
+// limite di richieste...) il testo scritto non va perso — riaprendo il
+// dialog lo si ritrova già lì, senza doverlo riscrivere.
+const PROMPT_DRAFT_KEY = 'annales.geminiPromptDraft'
+
+export function loadGeminiPromptDraft() {
+  try {
+    return localStorage.getItem(PROMPT_DRAFT_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveGeminiPromptDraft(text) {
+  try {
+    if (text) localStorage.setItem(PROMPT_DRAFT_KEY, text)
+    else localStorage.removeItem(PROMPT_DRAFT_KEY)
+  } catch {
+    // localStorage non disponibile: nessun backup possibile, non blocca l'uso
+  }
+}
+
+export function clearGeminiPromptDraft() {
+  saveGeminiPromptDraft('')
+}
+
 // Chiamata generica: il chiamante fornisce l'array `parts` completo (testo,
 // e/o immagini come { inlineData: { mimeType, data } }).
 async function callGeminiParts(apiKey, parts) {
@@ -115,7 +143,11 @@ function toMinutes(hhmm) {
 // disponibili, luogo, mood e orario stimati) a partire da un prompt libero.
 // La nota risultante va sempre rivista dall'utente prima di salvare: qui si
 // crea solo una bozza.
-export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], tagNames = [] } = {}) {
+export async function draftNoteFromPrompt(
+  apiKey,
+  prompt,
+  { peopleNames = [], tagNames = [], customInstructions = '' } = {},
+) {
   const instruction =
     'Da queste indicazioni scritte da un utente, prepara la bozza di una nota personale di diario in italiano, in prima persona. ' +
     'Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, con esattamente questa forma:\n' +
@@ -127,6 +159,9 @@ export async function draftNoteFromPrompt(apiKey, prompt, { peopleNames = [], ta
     '"mood": numero tra 0 e 1 che stimi l\'umore raccontato (0 = pessima giornata, 0.5 = neutra, 1 = ottima giornata), dedotto dal tono e dai fatti del testo, ' +
     '"timeStart": stringa "HH:MM" (24 ore) con l\'orario di inizio più plausibile in base alle indicazioni (es. "colazione" ~ mattina presto, "cena" ~ sera); se non è deducibile usa "09:00", ' +
     '"timeEnd": stringa "HH:MM" con l\'orario di fine plausibile, successivo a timeStart di una durata ragionevole per quanto descritto; se non è deducibile usa "10:00"}\n\n' +
+    (customInstructions.trim()
+      ? `Istruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato JSON richiesto sopra): ${customInstructions.trim()}\n\n`
+      : '') +
     `Indicazioni dell'utente:\n${prompt}`
   const raw = await callGemini(apiKey, instruction)
   const match = raw.match(/\{[\s\S]*\}/)
@@ -254,7 +289,7 @@ export async function recapNotes(apiKey, notes, { label = '' } = {}) {
 export async function draftNoteFromPhotos(
   apiKey,
   images,
-  { dateLabel = '', peopleNames = [], tagNames = [] } = {},
+  { dateLabel = '', peopleNames = [], tagNames = [], customInstructions = '' } = {},
 ) {
   if (!images || !images.length) throw new Error('Nessuna foto selezionata.')
   const instruction =
@@ -268,7 +303,10 @@ export async function draftNoteFromPhotos(
     `"people": array preso ESATTAMENTE dall'elenco ${JSON.stringify(peopleNames)} se riconosci qualcuno, altrimenti [], ` +
     '"place": string col nome del luogo se deducibile dalle foto, altrimenti "", ' +
     '"mood": numero tra 0 e 1 che stima l\'umore della giornata dalle foto, ' +
-    '"timeStart": "HH:MM" plausibile, "timeEnd": "HH:MM" plausibile}'
+    '"timeStart": "HH:MM" plausibile, "timeEnd": "HH:MM" plausibile}' +
+    (customInstructions.trim()
+      ? `\n\nIstruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato JSON richiesto sopra): ${customInstructions.trim()}`
+      : '')
   const parts = [
     { text: instruction },
     ...images.map((img) => ({
