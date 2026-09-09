@@ -5,6 +5,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.14.1',
+    date: '2026-09-09 10:59',
+    changes: [
+      'Nuovi default per chi non ha ancora personalizzato l\'aspetto: tema chiaro, font tondeggiante, animazioni attive, sfondo rigato.',
+    ],
+  },
+  {
     version: '0.14.0',
     date: '2026-09-09 09:41',
     changes: [

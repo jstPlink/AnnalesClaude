@@ -62,16 +62,16 @@ function read(key, fallback, allowed) {
 }
 
 export function getTheme() {
-  return read(THEME_KEY, 'system', THEMES)
+  return read(THEME_KEY, 'light', THEMES)
 }
 export function getFont() {
   return read(FONT_KEY, 'rounded', FONTS)
 }
 export function getAnim() {
-  return read(ANIM_KEY, 'system', ANIMS)
+  return read(ANIM_KEY, 'on', ANIMS)
 }
 export function getPaper() {
-  return read(PAPER_KEY, 'nessuna', PAPERS)
+  return read(PAPER_KEY, 'rigato', PAPERS)
 }
 export function getSkinDay() {
   return read(SKIN_DAY_KEY, 'plain', SKIN_DAYS)
