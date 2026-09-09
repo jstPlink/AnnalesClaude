@@ -23,7 +23,12 @@ import {
   deletePerson,
 } from '../../lib/people'
 import { listTags, createTag, deleteTag } from '../../lib/tags'
-import { listPlaces, deletePlace, upsertPlaceIfMissing } from '../../lib/places'
+import {
+  listPlaces,
+  deletePlace,
+  upsertPlaceIfMissing,
+  syncPlacesFromNotes,
+} from '../../lib/places'
 import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
 import { testGeminiKey, describeGeminiError } from '../../lib/gemini'
 import { downloadIntegrationDoc } from '../../lib/integrationDocs'
@@ -276,7 +281,19 @@ export default function WebProfile() {
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
     listPlaces()
-      .then(setPlaces)
+      .then(async (loaded) => {
+        setPlaces(loaded)
+        // Sincronizzazione una tantum (idempotente): i luoghi già scritti
+        // in note esistenti prima che "Luoghi" esistesse come elenco
+        // curato non ci finiscono da soli — li recupera qui, silenziosa,
+        // così l'elenco si autocompleta al primo giro.
+        try {
+          const { places: updated, created } = await syncPlacesFromNotes(loaded)
+          if (created > 0) setPlaces(updated)
+        } catch {
+          // sincronizzazione best-effort: l'elenco già caricato resta valido
+        }
+      })
       .catch((err) => setPlacesError(describeError(err)))
     peopleUsageCounts()
       .then(setPeopleUsage)
@@ -765,7 +782,13 @@ export default function WebProfile() {
         </WebSection>
       </WebSection>
 
-      <WebSection title="Persone" icon="user">
+      <WebSection title="Elenchi personali" icon="list">
+        <p className="text-sm text-ink-soft">
+          Persone, tag e luoghi che usi nelle note: dati unici e personali
+          tuoi, gestiti tutti da qui.
+        </p>
+
+        <WebSection nested title="Persone" icon="user">
         <p className="text-sm text-ink-soft">
           Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
           Immich o creane una nuova qui.
@@ -841,9 +864,9 @@ export default function WebProfile() {
             ))}
           </div>
         )}
-      </WebSection>
+        </WebSection>
 
-      <WebSection title="Tag" icon="tag">
+        <WebSection nested title="Tag" icon="tag">
         <p className="text-sm text-ink-soft">
           Elenco dei tag selezionabili nelle note.
         </p>
@@ -891,9 +914,9 @@ export default function WebProfile() {
             {creatingTag ? '…' : 'Crea'}
           </button>
         </div>
-      </WebSection>
+        </WebSection>
 
-      <WebSection title="Luoghi" icon="map-pin">
+        <WebSection nested title="Luoghi" icon="map-pin">
         <p className="text-sm text-ink-soft">
           Elenco dei luoghi selezionabili nelle note. Vengono aggiunti anche
           automaticamente quando ne scegli uno da una nota.
@@ -940,6 +963,7 @@ export default function WebProfile() {
             + Aggiungi luogo
           </button>
         </div>
+        </WebSection>
       </WebSection>
 
       <WebSection title="Import ed export" icon="download">

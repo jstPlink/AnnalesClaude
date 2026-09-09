@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { listNotesFiltered, describeError, peopleUsageCounts } from '../lib/notes'
 import { listPeople, topByUsage } from '../lib/people'
 import { listTags } from '../lib/tags'
+import { listPlaces } from '../lib/places'
 import { moodColor, moodTextColor } from '../lib/mood'
 import { dateRangeBounds, dayKey, dayMonthLabel, timeLabel, todayKey } from '../lib/dates'
 import { haptic } from '../lib/haptics'
@@ -80,6 +81,8 @@ export default function FilterView() {
   const [peopleError, setPeopleError] = useState('')
   const [tags, setTags] = useState([])
   const [tagsError, setTagsError] = useState('')
+  const [places, setPlaces] = useState([])
+  const [placesError, setPlacesError] = useState('')
 
   useEffect(() => {
     listPeople()
@@ -88,6 +91,9 @@ export default function FilterView() {
     listTags()
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
+    listPlaces()
+      .then(setPlaces)
+      .catch((err) => setPlacesError(describeError(err)))
     peopleUsageCounts()
       .then(setPeopleUsage)
       .catch(() => {})
@@ -111,6 +117,13 @@ export default function FilterView() {
         ? filters.tagIds.filter((x) => x !== id)
         : [...filters.tagIds, id],
     })
+  }
+
+  // Un solo luogo alla volta (il filtro sottostante confronta per nome, non
+  // per relazione multipla come persone/tag): un secondo tap lo toglie.
+  function togglePlace(name) {
+    haptic()
+    set({ place: filters.place === name ? '' : name })
   }
 
   async function applyFilters() {
@@ -216,15 +229,38 @@ export default function FilterView() {
             />
           </FilterField>
 
-          <FilterField label="Luogo">
-            <input
-              type="text"
-              placeholder="Cerca per luogo…"
-              value={filters.place}
-              onChange={(e) => set({ place: e.target.value })}
-              className="w-full rounded-xl border border-line bg-cream px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-soft"
-            />
-          </FilterField>
+          {placesError && (
+            <FilterField label="Luogo">
+              <p className="text-xs text-delete-dark">{placesError}</p>
+            </FilterField>
+          )}
+
+          {places.length > 0 && (
+            <FilterField label="Luogo">
+              <div className="flex flex-wrap gap-1.5">
+                {places.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => togglePlace(p.name)}
+                    className={
+                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      (filters.place === p.name
+                        ? 'bg-ink text-cream'
+                        : 'border border-line bg-cream text-ink')
+                    }
+                  >
+                    <Icon
+                      name="map-pin"
+                      size={12}
+                      className={filters.place === p.name ? 'text-cream' : 'text-ink-soft'}
+                    />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </FilterField>
+          )}
 
           {peopleError && (
             <FilterField label="Persone">
