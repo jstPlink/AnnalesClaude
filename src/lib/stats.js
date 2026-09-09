@@ -44,6 +44,16 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
   const topDays = [...dayEntries].sort((a, b) => b.mood - a.mood).slice(0, 5)
   const bottomDays = [...dayEntries].sort((a, b) => a.mood - b.mood).slice(0, 5)
 
+  // Le 5 note singole (non giorni) con mood più alto/basso: a differenza di
+  // "Giorni migliori/difficili" (media pesata di TUTTE le note del giorno,
+  // vedi dayMood), qui una nota isolata con un mood estremo emerge sempre,
+  // anche se il resto della giornata l'ha "diluita" nella classifica giorni.
+  const byMoodDesc = [...yearNotes]
+    .filter((n) => Number.isFinite(Number(n.mood)))
+    .sort((a, b) => Number(b.mood) - Number(a.mood))
+  const topNotes = byMoodDesc.slice(0, 5)
+  const bottomNotes = [...byMoodDesc].reverse().slice(0, 5)
+
   // Settimana con il mood medio più alto (almeno 2 giorni scritti, se
   // possibile: evita che un singolo giorno euforico "vinca" la settimana).
   const weekMap = new Map()
@@ -134,6 +144,8 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     avgMood: moodN ? moodSum / moodN : null,
     topDays,
     bottomDays,
+    topNotes,
+    bottomNotes,
     bestWeek,
     bestWeekday,
     topPeople,

@@ -8,6 +8,7 @@ import {
 } from '../../lib/notes'
 import { listPeople, topByUsage } from '../../lib/people'
 import { listTags } from '../../lib/tags'
+import { listPlaces } from '../../lib/places'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import Icon from '../../components/Icon'
 import PersonAvatar from '../../components/PersonAvatar'
@@ -92,6 +93,8 @@ export default function WebFilter() {
   const [peopleError, setPeopleError] = useState('')
   const [tags, setTags] = useState([])
   const [tagsError, setTagsError] = useState('')
+  const [places, setPlaces] = useState([])
+  const [placesError, setPlacesError] = useState('')
 
   useEffect(() => {
     listPeople()
@@ -100,6 +103,9 @@ export default function WebFilter() {
     listTags()
       .then(setTags)
       .catch((err) => setTagsError(describeError(err)))
+    listPlaces()
+      .then(setPlaces)
+      .catch((err) => setPlacesError(describeError(err)))
     peopleUsageCounts()
       .then(setPeopleUsage)
       .catch(() => {})
@@ -121,6 +127,12 @@ export default function WebFilter() {
         ? filters.tagIds.filter((x) => x !== id)
         : [...filters.tagIds, id],
     })
+  }
+
+  // Un solo luogo alla volta (il filtro sottostante confronta per nome, non
+  // per relazione multipla come persone/tag): un secondo click lo toglie.
+  function togglePlace(name) {
+    set({ place: filters.place === name ? '' : name })
   }
 
   async function applyFilters() {
@@ -228,18 +240,34 @@ export default function WebFilter() {
             />
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Luogo
-            </p>
-            <input
-              type="text"
-              placeholder="Cerca per luogo…"
-              value={filters.place}
-              onChange={(e) => set({ place: e.target.value })}
-              className={inputCls}
-            />
-          </div>
+          {placesError && (
+            <div className="rounded-2xl border border-line bg-tag p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Luogo
+              </p>
+              <p className="text-xs text-delete-dark">{placesError}</p>
+            </div>
+          )}
+
+          {places.length > 0 && (
+            <div className="rounded-2xl border border-line bg-tag p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Luogo
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {places.map((p) => (
+                  <ChipButton
+                    key={p.id}
+                    icon="map-pin"
+                    active={filters.place === p.name}
+                    onClick={() => togglePlace(p.name)}
+                  >
+                    {p.name}
+                  </ChipButton>
+                ))}
+              </div>
+            </div>
+          )}
 
           {peopleError && (
             <div className="rounded-2xl border border-line bg-tag p-4">

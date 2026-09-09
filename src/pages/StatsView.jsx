@@ -16,7 +16,14 @@ import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { computeYearStats } from '../lib/stats'
 import { moodColor, moodTextColor } from '../lib/mood'
-import { MONTHS_IT, dayKey, dayMonthLabel, parseWall, todayKey } from '../lib/dates'
+import {
+  MONTHS_IT,
+  dayKey,
+  dayMonthLabel,
+  parseWall,
+  timeLabel,
+  todayKey,
+} from '../lib/dates'
 
 // "3 set" da una chiave YYYY-MM-DD (per gli intervalli compatti).
 function shortDM(key) {
@@ -77,6 +84,36 @@ function DayRow({ day, onClick, style }) {
             {day.count} {day.count === 1 ? 'nota' : 'note'}
           </span>
         )}
+      </span>
+    </button>
+  )
+}
+
+function NoteRow({ note, onClick, style }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={style}
+      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line-soft bg-panel px-3 py-2.5 text-left transition active:brightness-95"
+    >
+      <span
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
+        style={{
+          backgroundColor: moodColor(note.mood),
+          color: moodTextColor(note.mood),
+        }}
+      >
+        {Math.round(Number(note.mood) * 100)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-ink">
+          {note.title || <span className="italic text-ink-soft">Senza titolo</span>}
+        </span>
+        <span className="block truncate text-xs text-ink-soft">
+          {dayMonthLabel(dayKey(note.date))} · {timeLabel(note.timeStart)}–
+          {timeLabel(note.timeEnd)}
+        </span>
       </span>
     </button>
   )
@@ -277,6 +314,42 @@ export default function StatsView() {
                       day={d}
                       style={{ '--i': i }}
                       onClick={() => navigate(`/day/${d.key}`)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {stats.topNotes.length > 0 && (
+              <section className="mt-5">
+                <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Note migliori
+                </p>
+                <div className="space-y-2">
+                  {stats.topNotes.map((n, i) => (
+                    <NoteRow
+                      key={n.id}
+                      note={n}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/note/${n.id}`)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {stats.bottomNotes.length > 0 && (
+              <section className="mt-5">
+                <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Note peggiori
+                </p>
+                <div className="space-y-2">
+                  {stats.bottomNotes.map((n, i) => (
+                    <NoteRow
+                      key={n.id}
+                      note={n}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/note/${n.id}`)}
                     />
                   ))}
                 </div>

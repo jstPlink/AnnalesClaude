@@ -1,4 +1,5 @@
 import { pb } from './pocketbase'
+import { listDistinctPlacesFromNotes } from './notes'
 
 // Accesso alla collection `places` di PocketBase: l'elenco (curato
 // dall'utente in Impostazioni, o creato al volo scegliendo un luogo su una
@@ -39,4 +40,23 @@ export async function upsertPlaceIfMissing(place, existing) {
   const already = existing.find((p) => p.name.trim().toLowerCase() === key)
   if (already) return already
   return createPlace(place)
+}
+
+// Sincronizzazione una tantum: crea in `places` i luoghi già scritti in
+// note esistenti (create prima che questa collection esistesse, o comunque
+// non passate da PlacePickerSheet) ma non ancora presenti come voce curata.
+// Ritorna l'elenco aggiornato e quanti ne ha creati di nuovi.
+export async function syncPlacesFromNotes(existingPlaces) {
+  const fromNotes = await listDistinctPlacesFromNotes()
+  const result = [...existingPlaces]
+  let created = 0
+  for (const place of fromNotes) {
+    const key = place.name.trim().toLowerCase()
+    if (result.some((p) => p.name.trim().toLowerCase() === key)) continue
+    const rec = await createPlace(place)
+    result.push(rec)
+    created += 1
+  }
+  result.sort((a, b) => a.name.localeCompare(b.name))
+  return { places: result, created }
 }
