@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.17.0',
+    date: '2026-09-10 19:25',
+    changes: [
+      'Skin "Pagine" (vista mese web) rifinita: foglio più largo, carta con grana/screziatura e bordi appena irregolari, disegnini a tema umore appena accennati nella metà destra del foglio, rotazione delle pagine più contenuta.',
+      'Linguetta dell’umore: solo il numero (senza scritta "umore") e forma diversa per fascia — gagliardetto, pillola, bordo ondulato o frastagliato.',
+      'Giorni con foto: due polaroid affiancate quando ci sono almeno due fotografie, con nastro adesivo più visibile; angoli piegati o bordo strappato assegnati a caso ad alcune pagine.',
+      'Nomi delle persone del giorno su etichette di nastro (con foto del volto se disponibile da Immich), in colonna nello spazio tra le note e le fotografie.',
+    ],
+  },
+  {
     version: '0.16.0',
     date: '2026-09-10 17:07',
     changes: [

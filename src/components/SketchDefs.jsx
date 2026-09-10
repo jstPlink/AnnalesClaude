@@ -35,6 +35,32 @@ export default function SketchDefs() {
             yChannelSelector="G"
           />
         </filter>
+        {/* Variante a onda più larga: deforma i bordi di un intero foglio
+            (skin "pagine") per farlo sembrare tagliato a mano e un po'
+            vissuto. Richiamata con `filter: url(#annales-paper)`. */}
+        <filter
+          id="annales-paper"
+          x="-6%"
+          y="-6%"
+          width="112%"
+          height="112%"
+          filterUnits="objectBoundingBox"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.011 0.015"
+            numOctaves="2"
+            seed="4"
+            result="warp"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="warp"
+            scale="3"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
       </defs>
     </svg>
   )

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
+import { useAuth } from '../../context/AuthContext'
 import {
   listNotesInRange,
   groupByDay,
   describeError,
   plainText,
 } from '../../lib/notes'
+import { listPeople } from '../../lib/people'
 import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
 import { getSkinMonth, setSkinMonth } from '../../lib/prefs'
@@ -81,7 +83,11 @@ function PillNav({ label, ariaLabel, prevLabel, nextLabel, onPrev, onNext, open,
 export default function WebMonth() {
   const navigate = useNavigate()
   const { cursor, setCursor } = useNav()
+  const { user } = useAuth()
+  const immichUrl = user?.immichUrl?.trim()
+  const immichApiKey = user?.immichApiKey?.trim()
   const [notes, setNotes] = useState([])
+  const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [openYear, setOpenYear] = useState(false)
@@ -148,7 +154,19 @@ export default function WebMonth() {
     load()
   }, [load])
 
+  // Elenco persone (per le etichette coi nomi nella skin "Pagine"). Caricato
+  // una volta; se fallisce, la skin resta senza targhette.
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch(() => setPeople([]))
+  }, [])
+
   const byDay = useMemo(() => groupByDay(notes), [notes])
+  const peopleById = useMemo(
+    () => new Map(people.map((p) => [p.id, p])),
+    [people],
+  )
   const todayK = todayKey()
 
   return (
@@ -290,6 +308,9 @@ export default function WebMonth() {
           byDay={byDay}
           monthLabel={MONTHS_IT[cursor.month]}
           onNavigate={navigate}
+          peopleById={peopleById}
+          immichUrl={immichUrl}
+          immichApiKey={immichApiKey}
         />
       ) : (
       <div className="mx-auto w-3/5 divide-y divide-line-soft overflow-hidden rounded-3xl border border-line">

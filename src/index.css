@@ -954,16 +954,25 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   --mp-ink-c: #34506d;
   --mp-hl: rgba(228, 198, 86, 0.5);
   --mp-hl-wknd: rgba(198, 70, 55, 0.32);
+  --paper-fold: #e7ddc7;
+  /* Grana fine della carta (fibre) e leggera screziatura, come immagini SVG
+     ripetibili. Solo tema chiaro: nel tema scuro tornano a `none`. */
+  --mp-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+  --mp-fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.18' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.3'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E");
 }
 :root[data-skin-month='pages'][data-theme='dark'] {
   --mp-ink-b: #cdbfa6;
   --mp-ink-c: #9db6d0;
   --mp-hl: rgba(228, 198, 86, 0.28);
   --mp-hl-wknd: rgba(214, 108, 96, 0.3);
+  --paper-fold: #4a4334;
+  --mp-grain: none;
+  --mp-fiber: none;
 }
 
 .month-pages {
-  width: min(560px, 100%);
+  /* foglio allungato in orizzontale (~+40% rispetto ai 560px iniziali) */
+  width: min(784px, 100%);
   margin: 0 auto;
 }
 .mp-stack {
@@ -971,11 +980,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   padding-left: 18px;
 }
 .mp-page {
+  --mp-doodle: none;
   position: relative;
   display: block;
   width: 100%;
+  min-height: 128px;
   margin-top: -10px;
-  padding: 16px 22px 20px 40px;
+  padding: 16px 24px 20px 58px;
   font: inherit;
   text-align: left;
   appearance: none;
@@ -983,34 +994,45 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   border: 1px solid var(--color-line-soft);
   border-radius: 2px 3px 3px 2px;
   background-color: var(--color-tag);
-  background-image: linear-gradient(
+  background-image: var(--mp-doodle), var(--mp-grain, none),
+    var(--mp-fiber, none),
+    linear-gradient(
       90deg,
-      transparent 31px,
-      var(--paper-margin) 31px 32px,
-      transparent 32px
+      transparent 46px,
+      var(--paper-margin) 46px 47px,
+      transparent 47px
     ),
     repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  background-size: 46% auto, 160px 160px, 260px 260px, auto, auto;
+  background-repeat: no-repeat, repeat, repeat, no-repeat, repeat;
+  background-position: right top, 0 0, 0 0, 0 0, 0 0;
+  background-blend-mode: multiply, soft-light, soft-light, normal, normal;
   box-shadow: 0 -6px 12px -8px rgba(20, 12, 4, 0.22),
-    0 12px 22px -12px rgba(20, 12, 4, 0.36);
+    0 12px 22px -12px rgba(20, 12, 4, 0.36),
+    inset 0 0 40px rgba(84, 62, 30, 0.05);
   color: var(--color-ink);
   cursor: pointer;
   transform: rotate(var(--r, 0deg));
   transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
+/* bordi appena irregolari, come tagliati a mano (non sui fogli strappati) */
+.mp-page:not(.torn) {
+  filter: url(#annales-paper);
+}
 .mp-page:first-child {
   margin-top: 0;
 }
-.mp-page:nth-child(odd) {
-  --r: -0.5deg;
-}
-.mp-page:nth-child(even) {
-  --r: 0.5deg;
+/* la grana e i disegnini slittano di foglio in foglio: nessuna pagina uguale */
+.mp-page:nth-child(2n) {
+  background-position: right 46px, 60px 30px, -40px 20px, 0 0, 0 0;
+  border-radius: 3px 2px 4px 2px;
 }
 .mp-page:nth-child(3n) {
-  margin-left: 6px;
+  background-position: right -52px, -30px 80px, 70px -30px, 0 0, 0 0;
+  border-radius: 2px 4px 2px 3px;
 }
-.mp-page:nth-child(4n + 1) {
-  margin-left: -4px;
+.mp-page:nth-child(3n + 1) {
+  background-position: right 18px, 20px -50px, -60px 60px, 0 0, 0 0;
 }
 .mp-page:hover,
 .mp-page:focus-visible {
@@ -1027,7 +1049,82 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   opacity: 0.72;
 }
 .mp-page.has-photo {
-  min-height: 188px;
+  min-height: 200px;
+}
+.mp-page.has-photo.two-photo {
+  min-height: 216px;
+}
+.mp-page.has-tapes:not(.has-photo) {
+  min-height: 182px;
+}
+
+/* imperfezioni casuali della pagina (classe assegnata da MonthPages.jsx) */
+.mp-page.dogear-br::after,
+.mp-page.dogear-tr::after {
+  content: '';
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  z-index: 2;
+  filter: drop-shadow(-1px -1px 1px rgba(20, 12, 4, 0.16));
+}
+.mp-page.dogear-br::after {
+  right: -1px;
+  bottom: -1px;
+  border-radius: 0 0 3px 0;
+  background: linear-gradient(
+      315deg,
+      transparent 46%,
+      rgba(20, 12, 4, 0.2) 47% 50%,
+      transparent 51%
+    ),
+    linear-gradient(135deg, var(--paper-fold, #e7ddc7) 0 50%, transparent 50%);
+}
+.mp-page.dogear-tr::after {
+  right: -1px;
+  top: -1px;
+  background: linear-gradient(
+      225deg,
+      transparent 46%,
+      rgba(20, 12, 4, 0.2) 47% 50%,
+      transparent 51%
+    ),
+    linear-gradient(45deg, var(--paper-fold, #e7ddc7) 0 50%, transparent 50%);
+}
+.mp-page.torn {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 93%,
+    97.5% 97%,
+    95% 93.5%,
+    92% 98%,
+    88.5% 94%,
+    85% 98.6%,
+    81% 94.4%,
+    77.5% 99%,
+    73.5% 94.6%,
+    69% 98.7%,
+    65% 94.2%,
+    61% 99.2%,
+    57% 94.8%,
+    53% 98.5%,
+    49% 94%,
+    45% 99%,
+    41% 94.6%,
+    37% 98.8%,
+    33% 94.2%,
+    29% 99.1%,
+    25% 94.7%,
+    21% 98.6%,
+    17% 94.1%,
+    13% 99%,
+    9% 94.6%,
+    5% 98%,
+    2% 94.4%,
+    0 98.6%
+  );
+  padding-bottom: 34px;
 }
 
 .mp-tab {
@@ -1035,11 +1132,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   left: -18px;
   top: 14px;
   z-index: 4;
-  width: 62px;
-  padding: 5px 5px 6px 10px;
+  width: 50px;
+  padding: 7px 6px 8px 11px;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   line-height: 1;
   border-radius: 3px 11px 11px 3px;
   background: var(--mp-tab, var(--color-line));
@@ -1051,20 +1148,52 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-tab b {
   font-family: 'Annales Marker', 'Caveat', cursive;
   font-weight: 700;
-  font-size: 1.35rem;
-}
-.mp-tab i {
-  font-style: normal;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.46rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.72;
-  margin-top: 1px;
+  font-size: 1.5rem;
 }
 .mp-tab.is-empty {
   background: var(--color-line-soft);
   color: var(--color-ink-soft);
+}
+/* silhouette diversa per fascia d'umore (classe da MonthPages.jsx) */
+.mp-tab--green {
+  border-radius: 3px 0 0 3px;
+  padding-right: 15px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 11px) 50%, 100% 100%, 0 100%);
+}
+.mp-tab--blue {
+  border-radius: 3px 22px 22px 3px;
+}
+.mp-tab--yellow {
+  border-radius: 3px 5px 5px 3px;
+  clip-path: polygon(0 0, 100% 5%, 95% 27%, 100% 50%, 95% 73%, 100% 95%, 0 100%);
+}
+.mp-tab--coral {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    90% 15%,
+    100% 32%,
+    88% 50%,
+    100% 68%,
+    91% 85%,
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Disegnini a tema umore, sparsi (non a griglia) nella metà destra del
+   foglio, appena accennati a penna sotto le righe. Solo tema chiaro. */
+:root[data-skin-month='pages']:not([data-theme='dark']) .mp-page.mood-green {
+  --mp-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='560'%3E%3Cg fill='none' stroke='%233a3226' stroke-width='2' stroke-linecap='round' opacity='0.13'%3E%3Cg transform='rotate(-8 250 74)'%3E%3Ccircle cx='250' cy='74' r='14'/%3E%3Cpath d='M250 44v-13M250 104v13M216 74h-13M284 74h13M228 52l-9-9M272 96l9 9M272 52l9-9M228 96l-9 9'/%3E%3C/g%3E%3Cg transform='rotate(6 96 320)'%3E%3Cpath d='M96 372v-70M96 340q0-28 18-42M96 344q0-20-16-30'/%3E%3C/g%3E%3Cg transform='rotate(-15 276 452)'%3E%3Cpath d='M262 472q14-6 20-22q6 16 20 22q-14 6-20 22q-6-16-20-22z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+:root[data-skin-month='pages']:not([data-theme='dark']) .mp-page.mood-blue {
+  --mp-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='560'%3E%3Cg fill='none' stroke='%233a3226' stroke-width='2' stroke-linecap='round' opacity='0.12'%3E%3Cg transform='rotate(4 240 96)'%3E%3Cpath d='M210 118q-16 0-16-16q0-16 18-15q3-18 24-18q20 0 22 20q16-2 16 14q0 15-16 15z'/%3E%3C/g%3E%3Cg transform='rotate(-3 120 290)'%3E%3Cpath d='M60 286q12-12 24 0t24 0t24 0t24 0'/%3E%3Cpath d='M60 306q12-12 24 0t24 0t24 0t24 0'/%3E%3C/g%3E%3Cg transform='rotate(9 256 444)'%3E%3Cpath d='M234 456q-12 0-12-12q0-12 14-11q2-13 18-13q15 0 16 15q12-1 12 10q0 11-12 11z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+:root[data-skin-month='pages']:not([data-theme='dark']) .mp-page.mood-yellow {
+  --mp-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='560'%3E%3Cg fill='none' stroke='%233a3226' stroke-width='2' stroke-linecap='round' opacity='0.12'%3E%3Cg transform='rotate(-12 250 100)'%3E%3Cpath d='M250 100q0-20-20-20q-24 0-24 26q0 30 34 30q40 0 40-46'/%3E%3C/g%3E%3Cg transform='rotate(7 110 300)'%3E%3Cpath d='M88 292h44M88 308h44M88 324h44'/%3E%3C/g%3E%3Cg transform='rotate(-5 268 460)'%3E%3Ccircle cx='268' cy='460' r='18'/%3E%3Cpath d='M268 442v-10'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+:root[data-skin-month='pages']:not([data-theme='dark']) .mp-page.mood-coral {
+  --mp-doodle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='560'%3E%3Cg fill='none' stroke='%233a3226' stroke-width='2' stroke-linecap='round' opacity='0.13'%3E%3Cg transform='rotate(5 232 92)'%3E%3Cpath d='M200 110q-16 0-16-16q0-16 18-15q3-18 24-18q20 0 22 20q16-2 16 14q0 15-16 15z'/%3E%3Cpath d='M198 122l-8 18M218 122l-8 18M238 122l-8 18M258 122l-8 18'/%3E%3C/g%3E%3Cg transform='rotate(-6 110 300)'%3E%3Cpath d='M70 300q12 10 24 0q12-10 24 0q12 10 24 0'/%3E%3C/g%3E%3Cg transform='rotate(13 258 452)'%3E%3Cpath d='M244 438l-8 20M262 442l-8 20M280 438l-8 20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 .mp-head {
@@ -1120,6 +1249,16 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   flex-direction: column;
   gap: 0.28rem;
 }
+/* lascia libera la colonna di destra per polaroid ed etichette */
+.mp-page.has-photo .mp-notes {
+  padding-right: 40%;
+}
+.mp-page.has-photo.two-photo .mp-notes {
+  padding-right: 46%;
+}
+.mp-page.has-tapes:not(.has-photo) .mp-notes {
+  padding-right: 30%;
+}
 .mp-n {
   position: relative;
   padding-left: 1.05rem;
@@ -1169,32 +1308,115 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   opacity: 0.75;
 }
 
-.mp-pola {
+/* etichette dei nomi: colonna verticale nello spazio fra le note e le foto */
+.mp-tapes {
+  position: absolute;
+  top: 56px;
+  bottom: 14px;
+  left: 56%;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 9px;
+  pointer-events: none;
+}
+.mp-page.two-photo .mp-tapes {
+  left: 50%;
+}
+.mp-page:not(.has-photo) .mp-tapes {
+  left: auto;
+  right: 26px;
+  align-items: flex-end;
+}
+.mp-tape {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 172px;
+  padding: 4px 11px 4px 5px;
+  font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--mp-tape-ink, var(--mp-ink-b));
+  background: var(--mp-tape-bg, rgba(228, 216, 180, 0.66));
+  border-left: 1px dashed var(--mp-tape-edge, rgba(150, 132, 88, 0.32));
+  border-right: 1px dashed var(--mp-tape-edge, rgba(150, 132, 88, 0.32));
+  box-shadow: 0 2px 4px rgba(20, 12, 4, 0.2);
+  filter: url(#annales-wob);
+}
+.mp-tape > span:first-child {
+  flex: none;
+  box-shadow: 0 0 0 1.5px rgba(255, 253, 246, 0.8), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.mp-tape-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mp-tape:nth-child(3n) {
+  transform: rotate(-2.4deg);
+}
+.mp-tape:nth-child(3n + 1) {
+  transform: rotate(1.7deg);
+}
+.mp-tape:nth-child(3n + 2) {
+  transform: rotate(-0.7deg);
+}
+
+.mp-polas {
   position: absolute;
   right: -16px;
-  top: 20px;
+  top: 18px;
   z-index: 3;
-  width: 128px;
+  display: flex;
+  gap: 0;
+}
+.mp-pola {
+  position: relative;
+  width: 124px;
   margin: 0;
   padding: 8px 8px 26px;
   background: #f7f1e3;
   box-shadow: 0 9px 18px rgba(20, 12, 4, 0.3);
-  transform: rotate(var(--pr, 4deg));
+  transform: rotate(var(--pr, 3deg));
 }
-.mp-pola.is-stack {
-  box-shadow: 0 9px 18px rgba(20, 12, 4, 0.3), 6px 6px 0 -1px #efe7d5,
-    6px 6px 0 0 rgba(20, 12, 4, 0.18);
+.mp-polas.two .mp-pola {
+  width: 112px;
+}
+.mp-polas.two .mp-pola:first-child {
+  transform: rotate(-2.6deg);
+  z-index: 2;
+}
+.mp-polas.two .mp-pola:last-child {
+  transform: rotate(2.4deg);
+  margin-left: -14px;
 }
 .mp-pola::before {
   content: '';
   position: absolute;
   left: 50%;
-  top: -11px;
-  width: 66px;
-  height: 24px;
+  top: -12px;
+  width: 72px;
+  height: 27px;
   transform: translateX(-50%) rotate(-4deg);
-  background: rgba(244, 236, 206, 0.55);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  background: rgba(236, 226, 194, 0.86);
+  border: 1px solid rgba(176, 158, 112, 0.4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  filter: url(#annales-wob);
+}
+.mp-pola.tc::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 16px;
+  width: 44px;
+  height: 20px;
+  transform: rotate(-42deg);
+  background: rgba(236, 226, 194, 0.84);
+  border: 1px solid rgba(176, 158, 112, 0.38);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   filter: url(#annales-wob);
 }
 .mp-ph {
@@ -1218,20 +1440,37 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   text-overflow: ellipsis;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .mp-tab {
     left: -14px;
-    width: 54px;
+    width: 46px;
   }
   .mp-tab b {
-    font-size: 1.2rem;
+    font-size: 1.32rem;
+  }
+  .mp-page {
+    padding-left: 50px;
   }
   .mp-wd {
     font-size: 1.24rem;
   }
-  .mp-pola {
-    width: 108px;
+  .mp-page.has-photo .mp-notes {
+    padding-right: 34%;
+  }
+  .mp-tapes {
+    left: 50%;
+  }
+  .mp-page.two-photo .mp-tapes {
+    left: 46%;
+  }
+  .mp-polas {
     right: -10px;
+  }
+  .mp-pola {
+    width: 102px;
+  }
+  .mp-polas.two .mp-pola {
+    width: 90px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
