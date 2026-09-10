@@ -991,8 +991,27 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   text-align: left;
   appearance: none;
   -webkit-appearance: none;
-  border: 1px solid var(--color-line-soft);
+  /* il bordo visibile lo disegna ::before (col filtro "vissuto") */
+  border: 1px solid transparent;
   border-radius: 2px 3px 3px 2px;
+  background: transparent;
+  box-shadow: 0 -6px 12px -8px rgba(20, 12, 4, 0.22),
+    0 12px 22px -12px rgba(20, 12, 4, 0.36);
+  color: var(--color-ink);
+  cursor: pointer;
+  transform: rotate(var(--r, 0deg));
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+/* Carta, righe, grana e disegnini stanno su ::before: un livello SENZA figli,
+   così il filtro che ne ondula i bordi non taglia linguetta, foto ed
+   etichette (figli di .mp-page, che la filter-region clipperebbe). */
+.mp-page::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border: 1px solid var(--color-line-soft);
+  border-radius: inherit;
   background-color: var(--color-tag);
   background-image: var(--mp-doodle), var(--mp-grain, none),
     var(--mp-fiber, none),
@@ -1007,31 +1026,30 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background-repeat: no-repeat, repeat, repeat, no-repeat, repeat;
   background-position: right top, 0 0, 0 0, 0 0, 0 0;
   background-blend-mode: multiply, soft-light, soft-light, normal, normal;
-  box-shadow: 0 -6px 12px -8px rgba(20, 12, 4, 0.22),
-    0 12px 22px -12px rgba(20, 12, 4, 0.36),
-    inset 0 0 40px rgba(84, 62, 30, 0.05);
-  color: var(--color-ink);
-  cursor: pointer;
-  transform: rotate(var(--r, 0deg));
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: inset 0 0 40px rgba(84, 62, 30, 0.05);
+  pointer-events: none;
 }
 /* bordi appena irregolari, come tagliati a mano (non sui fogli strappati) */
-.mp-page:not(.torn) {
+.mp-page:not(.torn)::before {
   filter: url(#annales-paper);
 }
 .mp-page:first-child {
   margin-top: 0;
 }
 /* la grana e i disegnini slittano di foglio in foglio: nessuna pagina uguale */
-.mp-page:nth-child(2n) {
+.mp-page:nth-child(2n)::before {
   background-position: right 46px, 60px 30px, -40px 20px, 0 0, 0 0;
+}
+.mp-page:nth-child(2n) {
   border-radius: 3px 2px 4px 2px;
 }
-.mp-page:nth-child(3n) {
+.mp-page:nth-child(3n)::before {
   background-position: right -52px, -30px 80px, 70px -30px, 0 0, 0 0;
+}
+.mp-page:nth-child(3n) {
   border-radius: 2px 4px 2px 3px;
 }
-.mp-page:nth-child(3n + 1) {
+.mp-page:nth-child(3n + 1)::before {
   background-position: right 18px, 20px -50px, -60px 60px, 0 0, 0 0;
 }
 .mp-page:hover,
