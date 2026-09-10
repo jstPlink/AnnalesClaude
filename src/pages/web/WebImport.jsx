@@ -8,7 +8,12 @@ import {
 } from '../../lib/notes'
 import { listPeople, createPerson } from '../../lib/people'
 import { listTags, createTag } from '../../lib/tags'
-import { extractNotesFromImage, describeGeminiError } from '../../lib/gemini'
+import {
+  extractNotesFromImage,
+  segmentDayIntoNotes,
+  describeGeminiError,
+} from '../../lib/gemini'
+import { parseDelimited, sheetRowsToDays, timesInText } from '../../lib/importSheet'
 import { MONTHS_IT } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
 import PersonAvatar from '../../components/PersonAvatar'
@@ -22,12 +27,22 @@ import ImmichPicker from '../../components/ImmichPicker'
 import Icon from '../../components/Icon'
 
 // Schermata PROVVISORIA (solo web) per migrare il vecchio diario tenuto su
-// Google Fogli: si incolla lo screenshot di una o più giornate, Gemini ne
-// estrae le singole attività come note, che si rivedono e salvano una a una.
-// La revisione usa gli stessi selettori del telefono (persone con foto, tag
-// esistenti, luogo su mappa, canzoni da Spotify).
+// Google Fogli. Due sorgenti:
+//  - "Da foglio (testo)": si incolla/carica l'export TSV/CSV di un mese;
+//    ogni giornata viene mandata a Gemini che sceglie SOLO dove tagliarla in
+//    più note (il testo non viene riscritto: vedi segmentDayIntoNotes in
+//    lib/gemini.js). Copertura garantita del 100% del testo; sovra/sotto-
+//    segmentazione si sistemano in revisione con Fondi / Spezza.
+//  - "Da immagine": si incolla lo screenshot di una o più giornate.
+// In entrambi i casi le note estratte si rivedono e salvano una a una, con
+// gli stessi selettori del telefono (persone con foto, tag, luogo, canzoni).
 
 const now = new Date()
+
+const clamp01 = (x) => Math.min(1, Math.max(0, x))
+// Tetto ai riavvii automatici dopo un 429 di Gemini durante la segmentazione
+// di un mese: oltre questo si ferma e si offre "Riprendi".
+const RETRY_CAP = 12
 
 // Costruisce la bozza modificabile abbinando i nomi estratti da Gemini alle
 // persone/tag già in elenco (match sul nome, case-insensitive); quelli senza
@@ -67,6 +82,11 @@ function toDraft(n, allPeople, allTags) {
     place: n.place ? { name: n.place, lat: null, lon: null } : null,
     songs: [],
     files: [], // immagini (File) da allegare, aggiunte in revisione
+    // Solo import da testo: avvisi non bloccanti + intervallo di righe del
+    // blocco originale del giorno (per il pannello di copertura e Fondi/Spezza).
+    flags: Array.isArray(n.flags) ? n.flags : [],
+    sourceStart: n.sourceStart ?? null,
+    sourceEnd: n.sourceEnd ?? null,
   }
 }
 
@@ -99,9 +119,19 @@ export default function WebImport() {
   const spotifyClientId = user?.spotifyClientId?.trim()
   const spotifyClientSecret = user?.spotifyClientSecret?.trim()
 
+  const [mode, setMode] = useState('text') // 'text' (foglio) | 'image' (screenshot)
   const [image, setImage] = useState(null) // { dataUrl, base64, mimeType }
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
+
+  // Import da testo: TSV/CSV di un mese e mappatura colonne (lettere del foglio).
+  const [tsv, setTsv] = useState('')
+  const [cols, setCols] = useState({ day: 'B', text: 'C', title: 'D', mood: 'E' })
+  const [segmenting, setSegmenting] = useState(false)
+  const [segProgress, setSegProgress] = useState('')
+  const [resumeFrom, setResumeFrom] = useState(null) // indice giorno da cui riprendere
+  const [partialNotes, setPartialNotes] = useState([]) // note già segmentate prima di un errore
+  const [dayText, setDayText] = useState({}) // { 'YYYY-MM-DD': testo grezzo del giorno }
 
   const [allPeople, setAllPeople] = useState([])
   const [allTags, setAllTags] = useState([])
@@ -125,7 +155,9 @@ export default function WebImport() {
   const [immichOpen, setImmichOpen] = useState(false)
 
   const fileInputRef = useRef(null) // immagine sorgente (screenshot)
+  const tsvFileRef = useRef(null) // file TSV/CSV sorgente (foglio)
   const noteFilesRef = useRef(null) // immagini da allegare alla nota
+  const contentRef = useRef(null) // textarea contenuto, per "Spezza qui"
 
   useEffect(() => {
     listPeople().then(setAllPeople).catch(() => {})
@@ -219,7 +251,7 @@ export default function WebImport() {
     reader.readAsDataURL(file)
   }, [])
 
-  const pasteEnabled = !notes && !done
+  const pasteEnabled = mode === 'image' && !notes && !done
   useEffect(() => {
     if (!pasteEnabled) return
     function onPaste(e) {
@@ -264,6 +296,215 @@ export default function WebImport() {
     } finally {
       setExtracting(false)
     }
+  }
+
+  // Import da testo: legge il TSV/CSV, ricava le giornate del mese e le manda
+  // a Gemini una alla volta. Ogni giornata diventa 1+ note (partizione lossless
+  // del testo: vedi segmentDayIntoNotes). Su 429 aspetta e riprova; su altro
+  // errore si ferma tenendo quanto già fatto e offre "Riprendi".
+  async function runExtractText() {
+    if (!apiKey || segmenting) return
+    const rows = parseDelimited(tsv)
+    const days = sheetRowsToDays(rows, {
+      year,
+      month,
+      day: cols.day,
+      text: cols.text,
+      title: cols.title,
+      mood: cols.mood,
+    })
+    if (!days.length) {
+      setError(
+        'Nessuna giornata riconosciuta: controlla le colonne indicate e il mese/anno.',
+      )
+      return
+    }
+    setSegmenting(true)
+    setError('')
+    const from = resumeFrom || 0
+    const acc = from ? [...partialNotes] : []
+    const texts = from ? { ...dayText } : {}
+    let retries = 0
+    try {
+      for (let k = from; k < days.length; k++) {
+        const d = days[k]
+        setSegProgress(`Giorno ${k + 1} di ${days.length} — ${d.dateKey}`)
+        texts[d.dateKey] = d.rawText
+        let segs
+        try {
+          segs = await segmentDayIntoNotes(apiKey, {
+            dateKey: d.dateKey,
+            rawText: d.rawText,
+            sheetTitle: d.sheetTitle,
+            moodScore: d.moodScore,
+            peopleNames: allPeople.map((p) => p.name),
+            tagNames: allTags.map((t) => t.name),
+          })
+        } catch (err) {
+          if (err.status === 429 && retries < RETRY_CAP) {
+            retries++
+            const wait = (err.retryDelaySeconds || 30) + 1
+            setSegProgress(`Limite Gemini raggiunto: attendo ${wait}s…`)
+            await new Promise((r) => setTimeout(r, wait * 1000))
+            k--
+            continue
+          }
+          setDayText(texts)
+          setPartialNotes(acc)
+          setResumeFrom(k)
+          setError(
+            `${describeGeminiError(err)} — premi "Riprendi dal giorno ${k + 1}".`,
+          )
+          return
+        }
+        acc.push(...segs)
+      }
+      if (!acc.length) {
+        setError('Nessuna nota estratta dal testo.')
+        return
+      }
+      setDayText(texts)
+      setNotes(acc)
+      setIndex(0)
+      setDraft(toDraft(acc[0], allPeople, allTags))
+      setResults([])
+      setResumeFrom(null)
+      setPartialNotes([])
+      setDone(false)
+    } finally {
+      setSegmenting(false)
+      setSegProgress('')
+    }
+  }
+
+  const loadTsvFile = useCallback((file) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setTsv(String(reader.result || ''))
+      setNotes(null)
+      setDone(false)
+      setResults([])
+      setResumeFrom(null)
+      setPartialNotes([])
+      setError('')
+    }
+    reader.readAsText(file)
+  }, [])
+
+  // Ricostruisce un "segmento" (nomi, non id) dalla bozza corrente, così che
+  // Fondi/Spezza non perdano le modifiche fatte a mano nella revisione.
+  const segFromDraft = useCallback(
+    (d) => ({
+      date: d.date,
+      title: d.title,
+      content: d.content,
+      mood: d.mood,
+      timeStart: d.timeStart,
+      timeEnd: d.timeEnd,
+      people: [
+        ...allPeople.filter((p) => d.peopleIds.includes(p.id)).map((p) => p.name),
+        ...d.pendingPeople,
+      ],
+      tags: [
+        ...allTags.filter((t) => d.tagIds.includes(t.id)).map((t) => t.name),
+        ...d.pendingTags,
+      ],
+      place: d.place?.name || '',
+      sourceStart: d.sourceStart ?? null,
+      sourceEnd: d.sourceEnd ?? null,
+    }),
+    [allPeople, allTags],
+  )
+
+  // Fonde la nota corrente con quella adiacente (dir = -1 prima, +1 dopo).
+  // Se gli indici di riga originali sono noti si ricompone il testo dal blocco
+  // del giorno; altrimenti si concatenano i due contenuti.
+  function mergeAdjacent(dir) {
+    if (!notes || !draft) return
+    const j = index + dir
+    if (j < 0 || j >= notes.length) return
+    const cur = segFromDraft(draft)
+    const other = notes[j]
+    if (cur.date !== other.date) {
+      setError('Si possono fondere solo blocchi dello stesso giorno.')
+      return
+    }
+    const a = dir < 0 ? other : cur
+    const b = dir < 0 ? cur : other
+    const haveIdx = a.sourceStart != null && b.sourceEnd != null
+    const lines = String(dayText[cur.date] || '')
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+    const content = haveIdx
+      ? lines
+          .slice(a.sourceStart, b.sourceEnd + 1)
+          .join('\n')
+          .replace(/^\s+|\s+$/g, '')
+      : [a.content, b.content].filter((s) => s && s.trim()).join('\n')
+    const times = timesInText(content)
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))]
+    const startTimes = [a.timeStart, b.timeStart].filter(Boolean).sort()
+    const endTimes = [a.timeEnd, b.timeEnd].filter(Boolean).sort()
+    const mergedSeg = {
+      date: cur.date,
+      title: a.title || b.title,
+      content,
+      mood: clamp01((Number(a.mood) + Number(b.mood)) / 2),
+      timeStart: startTimes[0] || times[0] || '',
+      timeEnd: endTimes[endTimes.length - 1] || times[times.length - 1] || '',
+      people: uniq([...(a.people || []), ...(b.people || [])]),
+      tags: uniq([...(a.tags || []), ...(b.tags || [])]),
+      place: a.place || b.place || '',
+      sourceStart: haveIdx ? a.sourceStart : null,
+      sourceEnd: haveIdx ? b.sourceEnd : null,
+      flags: [],
+    }
+    const lo = Math.min(index, j)
+    setNotes([...notes.slice(0, lo), mergedSeg, ...notes.slice(lo + 2)])
+    setIndex(lo)
+    setDraft(toDraft(mergedSeg, allPeople, allTags))
+    setError('')
+  }
+
+  // Spezza la nota corrente nel punto in cui è il cursore dentro il contenuto:
+  // la parte prima resta, quella dopo diventa una nuova nota subito successiva.
+  function splitAtCaret() {
+    if (!draft || !notes) return
+    const ta = contentRef.current
+    const pos =
+      ta && ta.selectionStart != null ? ta.selectionStart : draft.content.length
+    const before = draft.content.slice(0, pos).replace(/\s+$/g, '')
+    const after = draft.content.slice(pos).replace(/^\s+/g, '')
+    if (!before.trim() || !after.trim()) {
+      setError('Metti il cursore nel punto del testo in cui vuoi spezzare.')
+      return
+    }
+    const base = segFromDraft(draft)
+    const tA = timesInText(before)
+    const tB = timesInText(after)
+    const partA = {
+      ...base,
+      content: before,
+      timeStart: tA[0] || base.timeStart || '',
+      timeEnd: tA[tA.length - 1] || '',
+      sourceStart: null,
+      sourceEnd: null,
+      flags: [],
+    }
+    const partB = {
+      ...base,
+      title: '',
+      content: after,
+      timeStart: tB[0] || '',
+      timeEnd: tB[tB.length - 1] || '',
+      sourceStart: null,
+      sourceEnd: null,
+      flags: [],
+    }
+    setNotes([...notes.slice(0, index), partA, partB, ...notes.slice(index + 1)])
+    setDraft(toDraft(partA, allPeople, allTags))
+    setError('')
   }
 
   function advance(entry) {
@@ -333,6 +574,11 @@ export default function WebImport() {
 
   function reset() {
     setImage(null)
+    setTsv('')
+    setDayText({})
+    setResumeFrom(null)
+    setPartialNotes([])
+    setSegProgress('')
     setNotes(null)
     setDraft(null)
     setResults([])
@@ -344,17 +590,44 @@ export default function WebImport() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-baseline justify-between gap-3">
         <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
-          Importa da immagine
+          Importa
         </h1>
         <span className="flex items-center gap-1.5 rounded-full border border-warn-dark bg-warn px-2.5 py-1 text-xs font-bold text-ink">
           <Icon name="alert-triangle" size={13} className="shrink-0" />
           Funzione provvisoria
         </span>
       </div>
+
+      {!notes && !done && (
+        <div className="mb-4 inline-flex rounded-full border border-line bg-tag p-1 text-sm font-bold">
+          {[
+            ['text', 'Da foglio (testo)'],
+            ['image', 'Da immagine'],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setMode(key)
+                setError('')
+              }}
+              className={
+                'rounded-full px-4 py-1.5 transition ' +
+                (mode === key
+                  ? 'bg-save text-ink shadow-sm'
+                  : 'text-ink-soft hover:text-ink')
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <p className="mb-6 text-sm text-ink-soft">
-        Incolla (Ctrl/Cmd+V) o carica lo screenshot di una o più giornate del
-        vecchio diario. Gemini ne estrae le singole attività come note separate,
-        da rivedere e salvare una alla volta.
+        {mode === 'text'
+          ? 'Incolla o carica l’export TSV/CSV di un mese del vecchio diario su Google Fogli. Gemini divide ogni giornata in una o più note — senza riscrivere il testo, solo scegliendo dove tagliare — che rivedi e salvi una alla volta.'
+          : 'Incolla (Ctrl/Cmd+V) o carica lo screenshot di una o più giornate del vecchio diario. Gemini ne estrae le singole attività come note separate, da rivedere e salvare una alla volta.'}
       </p>
 
       {!apiKey && (
@@ -363,8 +636,141 @@ export default function WebImport() {
         </p>
       )}
 
-      {/* ---- 1. Immagine + periodo ---- */}
-      {!notes && !done && (
+      {/* ---- 1a. Da foglio: TSV/CSV di un mese ---- */}
+      {mode === 'text' && !notes && !done && (
+        <div className="space-y-4 rounded-3xl border border-line bg-tag p-6">
+          <button
+            type="button"
+            onClick={() => tsvFileRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              loadTsvFile(e.dataTransfer.files?.[0])
+            }}
+            className="flex min-h-[64px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-cream p-3 text-center text-sm font-semibold text-ink transition hover:border-ink-soft"
+          >
+            <Icon name="list" size={18} className="text-ink-soft" />
+            Trascina o clicca per caricare un file .tsv / .csv
+          </button>
+          <input
+            ref={tsvFileRef}
+            type="file"
+            accept=".tsv,.csv,.txt,text/plain,text/tab-separated-values"
+            hidden
+            onChange={(e) => {
+              loadTsvFile(e.target.files?.[0])
+              e.target.value = ''
+            }}
+          />
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              …oppure incolla qui le righe del mese (Ctrl/Cmd+V)
+            </span>
+            <textarea
+              rows={7}
+              value={tsv}
+              onChange={(e) => {
+                setTsv(e.target.value)
+                setResumeFrom(null)
+                setPartialNotes([])
+              }}
+              placeholder={
+                'Incolla qui la selezione di un mese dal foglio Google: una riga per giorno, colonne separate da TAB (o virgola). Le celle con più righe restano tra virgolette — va bene così.'
+              }
+              className="w-full resize-y rounded-xl border border-line bg-cream px-3 py-2 font-mono text-xs leading-relaxed text-ink outline-none focus:border-ink-soft"
+            />
+          </label>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Mese
+              </span>
+              <select
+                value={month}
+                onChange={(e) => setMonth(Number(e.target.value))}
+                className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+              >
+                {MONTHS_IT.map((m, i) => (
+                  <option key={m} value={i}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Anno
+              </span>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+              >
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            {[
+              ['day', 'Col. giorno'],
+              ['text', 'Col. testo'],
+              ['title', 'Col. titolo'],
+              ['mood', 'Col. voto'],
+            ].map(([key, label]) => (
+              <label key={key} className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {label}
+                </span>
+                <input
+                  type="text"
+                  value={cols[key]}
+                  onChange={(e) =>
+                    setCols((c) => ({
+                      ...c,
+                      [key]: e.target.value.toUpperCase().slice(0, 3),
+                    }))
+                  }
+                  placeholder="—"
+                  className="w-16 rounded-xl border border-line bg-cream px-3 py-2 text-center text-sm text-ink outline-none focus:border-ink-soft"
+                />
+              </label>
+            ))}
+            <p className="w-full text-xs text-ink-soft">
+              Lettere di colonna del foglio (A, B, C…). Lascia vuoto “titolo” o
+              “voto” se non ci sono.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {segmenting && segProgress && (
+              <span className="text-sm text-ink-soft">{segProgress}</span>
+            )}
+            <button
+              type="button"
+              disabled={!apiKey || (!tsv.trim() && !resumeFrom) || segmenting}
+              onClick={runExtractText}
+              className="ml-auto rounded-full border border-save-dark bg-save px-5 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+            >
+              {segmenting
+                ? 'Segmento…'
+                : resumeFrom
+                  ? `Riprendi dal giorno ${resumeFrom + 1}`
+                  : 'Segmenta il mese'}
+            </button>
+          </div>
+
+          {error && <p className="text-sm text-delete-dark">{error}</p>}
+        </div>
+      )}
+
+      {/* ---- 1b. Da immagine: screenshot + periodo ---- */}
+      {mode === 'image' && !notes && !done && (
         <div className="space-y-4 rounded-3xl border border-line bg-tag p-6">
           <button
             type="button"
@@ -465,6 +871,93 @@ export default function WebImport() {
             </button>
           </div>
 
+          {/* Solo import da testo: Fondi/Spezza + avvisi + blocco originale */}
+          {mode === 'text' && (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => mergeAdjacent(-1)}
+                  disabled={
+                    saving ||
+                    index === 0 ||
+                    notes[index - 1]?.date !== draft.date
+                  }
+                  className="rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-tag disabled:opacity-40"
+                >
+                  ↑ Fondi con precedente
+                </button>
+                <button
+                  type="button"
+                  onClick={() => mergeAdjacent(1)}
+                  disabled={
+                    saving ||
+                    index + 1 >= notes.length ||
+                    notes[index + 1]?.date !== draft.date
+                  }
+                  className="rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-tag disabled:opacity-40"
+                >
+                  ↓ Fondi con successiva
+                </button>
+                <button
+                  type="button"
+                  onClick={splitAtCaret}
+                  disabled={saving}
+                  className="rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-tag disabled:opacity-40"
+                  title="Spezza il contenuto nel punto in cui è il cursore"
+                >
+                  ✂ Spezza qui
+                </button>
+              </div>
+
+              {draft.flags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {draft.flags.map((f) => (
+                    <span
+                      key={f}
+                      className="flex items-center gap-1 rounded-full border border-warn-dark bg-warn px-2 py-0.5 text-xs font-semibold text-ink"
+                    >
+                      <Icon name="alert-triangle" size={11} className="shrink-0" />
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {dayText[draft.date] != null && (
+                <details className="rounded-2xl border border-line bg-cream p-3 text-sm">
+                  <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                    Blocco originale del giorno
+                    {draft.sourceStart != null
+                      ? ` · righe evidenziate = questa nota`
+                      : ' · modificata a mano'}
+                  </summary>
+                  <pre className="mt-2 overflow-x-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-ink">
+                    {String(dayText[draft.date])
+                      .replace(/\r\n/g, '\n')
+                      .split('\n')
+                      .map((ln, i) => {
+                        const inSeg =
+                          draft.sourceStart != null &&
+                          i >= draft.sourceStart &&
+                          i <= draft.sourceEnd
+                        return (
+                          <span
+                            key={i}
+                            className={
+                              inSeg ? 'block bg-save/40' : 'block text-ink-soft'
+                            }
+                          >
+                            {ln || ' '}
+                          </span>
+                        )
+                      })}
+                  </pre>
+                </details>
+              )}
+            </>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -523,6 +1016,7 @@ export default function WebImport() {
               Contenuto
             </span>
             <textarea
+              ref={contentRef}
               rows={9}
               value={draft.content}
               onChange={(e) => setField({ content: e.target.value })}
@@ -890,7 +1384,7 @@ export default function WebImport() {
               onClick={reset}
               className="rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-tag"
             >
-              Importa un'altra immagine
+              Importa altro
             </button>
             <button
               type="button"
