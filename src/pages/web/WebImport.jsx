@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   createNote,
   describeError,
+  listNotesInRange,
   peopleUsageCounts,
 } from '../../lib/notes'
 import { listPeople, createPerson } from '../../lib/people'
@@ -14,7 +15,7 @@ import {
   describeGeminiError,
 } from '../../lib/gemini'
 import { parseDelimited, sheetRowsToDays, timesInText } from '../../lib/importSheet'
-import { MONTHS_IT } from '../../lib/dates'
+import { MONTHS_IT, dayKey, monthRange } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
 import PersonAvatar from '../../components/PersonAvatar'
 import PeoplePickerSheet from '../../components/PeoplePickerSheet'
@@ -126,10 +127,17 @@ export default function WebImport() {
 
   // Import da testo: TSV/CSV di un mese e mappatura colonne (lettere del foglio).
   const [tsv, setTsv] = useState('')
-  const [cols, setCols] = useState({ day: 'B', text: 'C', title: 'D', mood: 'E' })
+  const [cols, setCols] = useState({
+    month: '',
+    day: 'B',
+    text: 'C',
+    title: 'D',
+    mood: 'E',
+  })
   const [segmenting, setSegmenting] = useState(false)
   const [segProgress, setSegProgress] = useState('')
   const [resumeFrom, setResumeFrom] = useState(null) // indice giorno da cui riprendere
+  const [preSkipped, setPreSkipped] = useState(0) // giorni saltati perché già importati
   const [partialNotes, setPartialNotes] = useState([]) // note già segmentate prima di un errore
   const [dayText, setDayText] = useState({}) // { 'YYYY-MM-DD': testo grezzo del giorno }
 
@@ -305,9 +313,10 @@ export default function WebImport() {
   async function runExtractText() {
     if (!apiKey || segmenting) return
     const rows = parseDelimited(tsv)
-    const days = sheetRowsToDays(rows, {
+    let days = sheetRowsToDays(rows, {
       year,
       month,
+      monthCol: cols.month,
       day: cols.day,
       text: cols.text,
       title: cols.title,
@@ -315,10 +324,36 @@ export default function WebImport() {
     })
     if (!days.length) {
       setError(
-        'Nessuna giornata riconosciuta: controlla le colonne indicate e il mese/anno.',
+        'Nessuna giornata riconosciuta per ' +
+          `${MONTHS_IT[month]} ${year}: controlla le colonne indicate, il mese/anno` +
+          (cols.month ? ' e la colonna mese.' : '.'),
       )
       return
     }
+
+    // Anti-duplicato: se un giorno del mese ha già note salvate, lo si salta —
+    // così si può ridare in pasto anche l'anno intero senza ricreare quanto
+    // già importato. La segmentazione avviene prima della revisione, quindi
+    // su "Riprendi" il filtro dà lo stesso elenco e gli indici restano validi.
+    let skipped = 0
+    try {
+      const { start, end } = monthRange(year, month)
+      const existing = await listNotesInRange({ start, end })
+      const hasNotes = new Set(existing.map((n) => dayKey(n.date)))
+      const before = days.length
+      days = days.filter((d) => !hasNotes.has(d.dateKey))
+      skipped = before - days.length
+    } catch {
+      // fetch fallito: si procede senza filtro anti-duplicato
+    }
+    if (!days.length) {
+      setError(
+        `Tutti i ${skipped} giorni di ${MONTHS_IT[month]} ${year} presenti nel testo risultano già importati.`,
+      )
+      return
+    }
+    if (!resumeFrom) setPreSkipped(skipped)
+
     setSegmenting(true)
     setError('')
     const from = resumeFrom || 0
@@ -578,6 +613,7 @@ export default function WebImport() {
     setDayText({})
     setResumeFrom(null)
     setPartialNotes([])
+    setPreSkipped(0)
     setSegProgress('')
     setNotes(null)
     setDraft(null)
@@ -718,6 +754,7 @@ export default function WebImport() {
 
           <div className="flex flex-wrap items-end gap-3">
             {[
+              ['month', 'Col. mese'],
               ['day', 'Col. giorno'],
               ['text', 'Col. testo'],
               ['title', 'Col. titolo'],
@@ -743,7 +780,11 @@ export default function WebImport() {
             ))}
             <p className="w-full text-xs text-ink-soft">
               Lettere di colonna del foglio (A, B, C…). Lascia vuoto “titolo” o
-              “voto” se non ci sono.
+              “voto” se non ci sono. Indica <strong>“mese”</strong> (la colonna
+              che contiene il mese, come numero 1–12 o nome) per incollare più
+              mesi insieme — anche l’anno intero — e lavorarli uno alla volta
+              cambiando il menu <em>Mese</em> qui sopra. I giorni già importati
+              vengono saltati in automatico.
             </p>
           </div>
 
@@ -861,6 +902,11 @@ export default function WebImport() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-ink-soft">
               Nota {index + 1} di {notes.length}
+              {mode === 'text' && preSkipped > 0 && (
+                <span className="ml-2 font-normal">
+                  · {preSkipped} giorni già importati, saltati
+                </span>
+              )}
             </span>
             <button
               type="button"
@@ -1360,6 +1406,8 @@ export default function WebImport() {
           <p className="text-sm text-ink-soft">
             {results.filter((r) => r.status === 'saved').length} salvate,{' '}
             {results.filter((r) => r.status === 'skipped').length} saltate.
+            {preSkipped > 0 &&
+              ` ${preSkipped} giorni non riproposti perché già presenti nel diario.`}
           </p>
           <ul className="divide-y divide-line-soft border-y border-line-soft text-sm">
             {results.map((r, i) => (

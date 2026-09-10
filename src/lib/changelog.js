@@ -9,11 +9,13 @@
 
 export const CHANGELOG = [
   {
-    version: '0.19.0',
-    date: '2026-09-10 21:21',
+    version: '0.19.1',
+    date: '2026-09-10 22:05',
     changes: [
-      'Importa (solo web): nuova modalità "Da foglio (testo)" per migrare il vecchio diario tenuto su Google Fogli — si incolla o si carica l\'export TSV/CSV di un mese e si indicano le colonne (giorno, testo, titolo, voto).',
+      'Importa (solo web): nuova modalità "Da foglio (testo)" per migrare il vecchio diario tenuto su Google Fogli — si incolla o si carica l\'export TSV/CSV e si indicano le colonne (giorno, testo, titolo, voto).',
       'Ogni giornata viene divisa in una o più note: Gemini sceglie solo dove tagliare, senza riscrivere il testo, così il contenuto originale è sempre coperto per intero. In revisione la suddivisione si corregge con "Fondi con precedente/successiva" e "Spezza qui", con avvisi per i casi dubbi (troppi blocchi, blocco senza orario, ecc.) e il testo grezzo del giorno sempre a vista.',
+      'Colonna "mese" opzionale: indicandola si può incollare più mesi in una volta (anche l\'anno intero) e lavorarli uno alla volta cambiando il menu Mese.',
+      'I giorni che hanno già note salvate nel diario vengono saltati in automatico: si può ridare in pasto lo stesso file senza ricreare quanto già importato.',
       'La schermata "Importa da immagine" diventa "Importa", con l\'interruttore Da foglio / Da immagine.',
     ],
   },

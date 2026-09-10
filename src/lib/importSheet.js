@@ -3,7 +3,32 @@
 // titolo, una col voto di umore 0–100). Usato SOLO dalla schermata
 // provvisoria "Importa da testo" (src/pages/web/WebImport.jsx).
 
+import { MONTHS_IT } from './dates'
+
 const pad = (n) => String(n).padStart(2, '0')
+
+// Interpreta il valore di una colonna "mese": numero 1–12, oppure nome
+// italiano anche abbreviato ("gennaio", "gen", "GEN"), oppure una stringa
+// tipo "01-2019" / "2019-01" da cui si prende il primo numero 1–12.
+// Ritorna il mese 0-based (0 = gennaio), o null se non riconosciuto.
+export function parseMonth(raw) {
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+  if (!s) return null
+  const whole = Number(s.replace(',', '.'))
+  if (Number.isInteger(whole) && whole >= 1 && whole <= 12) return whole - 1
+  const idx = MONTHS_IT.findIndex((m) => {
+    const ml = m.toLowerCase()
+    return s === ml || (s.length >= 3 && ml.startsWith(s))
+  })
+  if (idx >= 0) return idx
+  for (const tok of s.split(/[^\d]+/).filter(Boolean)) {
+    const n = Number(tok)
+    if (Number.isInteger(n) && n >= 1 && n <= 12) return n - 1
+  }
+  return null
+}
 
 // Divide un testo delimitato (TSV o CSV) in righe di celle, gestendo i campi
 // tra virgolette con a-capo interni e virgolette raddoppiate ("") — è così
@@ -101,15 +126,24 @@ export function timesInText(s) {
 // - Una riga senza testo E senza voto viene ignorata; con solo il voto resta
 //   (giornata vuota comunque registrata).
 // - Se lo stesso giorno compare più volte si tiene la prima occorrenza.
-export function sheetRowsToDays(rows, { year, month, day, text, title, mood }) {
+// - `monthCol` (opzionale): lettera/indice della colonna col mese. Se dato,
+//   si tengono SOLO le righe il cui mese corrisponde a `month` — così si può
+//   incollare più mesi (anche l'anno intero) e lavorarli uno alla volta
+//   cambiando il mese scelto.
+export function sheetRowsToDays(
+  rows,
+  { year, month, day, text, title, mood, monthCol },
+) {
   const di = colToIndex(day)
   const ti = colToIndex(text)
   const tii = colToIndex(title)
   const mi = colToIndex(mood)
+  const mci = colToIndex(monthCol)
   const lastDay = new Date(year, month + 1, 0).getDate()
   const seen = new Set()
   const out = []
   for (const r of rows) {
+    if (mci != null && parseMonth(r[mci]) !== month) continue
     const dayNum = Number(String((di != null && r[di]) || '').trim())
     if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > lastDay) continue
     if (seen.has(dayNum)) continue
