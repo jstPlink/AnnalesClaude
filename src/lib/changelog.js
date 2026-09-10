@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.18.0',
+    date: '2026-09-10 21:10',
+    changes: [
+      'Impostazioni → Aspetto: nuovo sfondo "Immagine" — si carica una foto personale (resta solo sul dispositivo, ridimensionata).',
+      'Skin "Pagine" (vista mese web): foglio più largo, testata del giorno in tonalità oro, niente più contatore di note, foto +15%.',
+      'Skin "Pagine": nomi delle persone su più colonne a misura del nome; se il giorno ha un luogo compare un francobollo con mini-mappa, se ha una canzone un dischetto con la copertina.',
+      'Skin "Pagine": più disegnini a tema umore e frammenti dei titoli delle note sbiaditi sullo sfondo, con qualche macchia di caffè; bordi del foglio e linguette leggermente irregolari.',
+    ],
+  },
+  {
     version: '0.17.0',
     date: '2026-09-10 19:25',
     changes: [

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { dayMood, moodColor, moodTextColor } from '../../lib/mood'
-import { plainText } from '../../lib/notes'
+import { plainText, parsePlace } from '../../lib/notes'
 import { parseWall, weekdayLong } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 
@@ -18,6 +18,16 @@ function handFor(id) {
 // Inclinazione stabile per chiave, in circa [-spread, +spread] gradi.
 function tilt(key, spread) {
   return ((hash(key) % 1000) / 1000) * spread * 2 - spread
+}
+// PRNG deterministico da un seme (per posizionare i frammenti di sfondo in
+// modo stabile per ogni giorno).
+function rng(seed) {
+  let x = seed % 2147483647
+  if (x <= 0) x += 2147483646
+  return () => {
+    x = (x * 16807) % 2147483647
+    return (x - 1) / 2147483646
+  }
 }
 
 // Fascia d'umore -> forma della linguetta + disegnino di sfondo. Le soglie
@@ -60,12 +70,52 @@ function tapeTint(id) {
   return TAPE_TINTS[hash(id) % TAPE_TINTS.length]
 }
 
+const SCRIB_FONTS = [
+  "'Annales Marker', 'Caveat', cursive",
+  "'Annales Hand', 'Kalam', sans-serif",
+  "'Annales Hand Gochi', 'Gochi Hand', cursive",
+  "'Annales Hand Shadows', 'Shadows Into Light', cursive",
+]
+
+// Frammenti di testo (pezzi dei titoli delle note) da spargere sfumati sullo
+// sfondo, con ~1 su 5 sostituito da una macchia. Posizioni/rotazioni/opacità
+// deterministiche per giorno.
+function buildScribbles(key, titles) {
+  const chunks = []
+  for (const t of titles) {
+    const parts = (t.text || '').split(/\s+/).filter((w) => w.length > 2)
+    for (let i = 0; i < parts.length && chunks.length < 8; i += 2) {
+      chunks.push(parts.slice(i, i + 2).join(' '))
+    }
+  }
+  if (!chunks.length) return []
+  const r = rng(hash(`${key}~scr`))
+  const count = Math.min(6, Math.max(3, chunks.length))
+  const out = []
+  for (let i = 0; i < count; i += 1) {
+    const stain = i > 0 && Math.floor(r() * 5) === 0
+    out.push({
+      id: i,
+      kind: stain ? (r() > 0.5 ? 'stain' : 'blot') : null,
+      text: stain ? '' : chunks[i % chunks.length],
+      left: `${2 + Math.round(r() * 52)}%`,
+      top: `${3 + Math.round(r() * 84)}%`,
+      rot: `${(r() * 12 - 6).toFixed(1)}deg`,
+      op: (0.07 + r() * 0.09).toFixed(3),
+      font: SCRIB_FONTS[Math.floor(r() * SCRIB_FONTS.length)],
+      size: stain ? 34 + Math.round(r() * 20) : 0,
+    })
+  }
+  return out
+}
+
 // Vista mese "pagine" (solo web, skin `pages`): ogni giorno del mese è una
-// pagina di diario impilata sulla precedente. Linguetta-umore a lato (con
-// forma diversa per fascia d'umore), testata rossa nei weekend, titoli in
-// "mani" diverse, disegnini a tema umore accennati sul foglio, polaroid col
-// nastro per i giorni con foto (due affiancate se ci sono almeno due
-// fotografie) ed etichette di nastro coi nomi delle persone del giorno.
+// pagina di diario impilata sulla precedente. Linguetta-umore a lato (forma
+// per fascia d'umore, lunghezza leggermente variabile), testata oro/rossa,
+// titoli in "mani" diverse, disegnini + frammenti di testo a tema sullo
+// sfondo, polaroid col nastro (due se ci sono ≥2 foto), etichette coi nomi
+// delle persone e, se presenti, un francobollo del luogo e un dischetto CD
+// della canzone.
 export default function MonthPages({
   grid,
   byDay,
@@ -98,7 +148,7 @@ export default function MonthPages({
           if (imgs.length >= 2) break
         }
 
-        // Persone distinte del giorno (max 3), risolte sull'elenco locale.
+        // Persone distinte del giorno, risolte sull'elenco locale.
         const pids = []
         for (const n of dayNotes) {
           for (const id of n.people || []) {
@@ -108,7 +158,31 @@ export default function MonthPages({
         const people = pids
           .map((id) => peopleById?.get(id))
           .filter(Boolean)
-          .slice(0, 3)
+
+        // Primo luogo e prima canzone (con copertina) del giorno.
+        let placeName = ''
+        for (const n of dayNotes) {
+          const pl = parsePlace(n.place)
+          if (pl?.name?.trim()) {
+            placeName = pl.name.trim()
+            break
+          }
+        }
+        let songCover = null // null = nessuna canzone; '' = canzone senza copertina
+        for (const n of dayNotes) {
+          const s = (n.songs || [])[0]
+          if (s) {
+            songCover = s.thumbnailUrl || ''
+            break
+          }
+        }
+
+        const titles = dayNotes
+          .map((n) => ({
+            id: n.id,
+            text: n.title?.trim() || plainText(n.content).slice(0, 70),
+          }))
+          .filter((t) => t.text)
 
         return {
           key: c.key,
@@ -120,14 +194,14 @@ export default function MonthPages({
           mood,
           kind: has ? moodKind(mood) : null,
           flaw: flawFor(c.key),
-          titles: dayNotes
-            .map((n) => ({
-              id: n.id,
-              text: n.title?.trim() || plainText(n.content).slice(0, 70),
-            }))
-            .filter((t) => t.text),
+          tw: `${48 + (hash(`${c.key}~tw`) % 6)}px`,
+          titles,
           imgs,
           people,
+          placeName,
+          songCover,
+          hasSong: songCover !== null,
+          scribbles: has ? buildScribbles(c.key, titles) : [],
         }
       })
   }, [grid, byDay, peopleById])
@@ -135,116 +209,177 @@ export default function MonthPages({
   return (
     <div className="month-pages">
       <div className="mp-stack">
-        {pages.map((pg) => (
-          <button
-            key={pg.key}
-            type="button"
-            onClick={() => onNavigate(`/day/${pg.key}`)}
-            style={{ '--r': `${tilt(pg.key, 1.3).toFixed(2)}deg` }}
-            className={
-              'mp-page' +
-              (pg.weekend ? ' wknd' : '') +
-              (pg.has ? '' : ' is-empty') +
-              (pg.imgs.length > 0 ? ' has-photo' : '') +
-              (pg.imgs.length > 1 ? ' two-photo' : '') +
-              (pg.people.length > 0 ? ' has-tapes' : '') +
-              (pg.kind ? ` mood-${pg.kind}` : '') +
-              (pg.flaw ? ` ${pg.flaw}` : '')
-            }
-            aria-label={
-              `${pg.weekday} ${pg.dayNum} ${monthLabel} — ` +
-              (pg.has
-                ? `${pg.count} ${pg.count === 1 ? 'nota' : 'note'}`
-                : 'nessuna nota')
-            }
-          >
-            {pg.has ? (
-              <span
-                className={'mp-tab' + (pg.kind ? ` mp-tab--${pg.kind}` : '')}
-                aria-hidden="true"
-                style={{ '--mp-tab': moodColor(pg.mood), color: moodTextColor(pg.mood) }}
-              >
-                <b>{Math.round(pg.mood * 100)}</b>
-              </span>
-            ) : (
-              <span className="mp-tab is-empty" aria-hidden="true">
-                <b>·</b>
-              </span>
-            )}
-
-            <span className="mp-head">
-              <span className="mp-wd">
-                <span className="mp-hl" aria-hidden="true" />
-                {pg.weekday}&nbsp;{pg.dayNum}
-              </span>
-              {pg.has && (
-                <span className="mp-cnt">
-                  {pg.count} {pg.count === 1 ? 'nota' : 'note'}
+        {pages.map((pg) => {
+          const hasMedia = Boolean(pg.placeName) || pg.hasSong
+          return (
+            <button
+              key={pg.key}
+              type="button"
+              onClick={() => onNavigate(`/day/${pg.key}`)}
+              style={{ '--r': `${tilt(pg.key, 1.3).toFixed(2)}deg` }}
+              className={
+                'mp-page' +
+                (pg.weekend ? ' wknd' : '') +
+                (pg.has ? '' : ' is-empty') +
+                (pg.imgs.length > 0 ? ' has-photo' : '') +
+                (pg.imgs.length > 1 ? ' two-photo' : '') +
+                (pg.people.length > 0 ? ' has-tapes' : '') +
+                (hasMedia ? ' has-media' : '') +
+                (pg.kind ? ` mood-${pg.kind}` : '') +
+                (pg.flaw ? ` ${pg.flaw}` : '')
+              }
+              aria-label={
+                `${pg.weekday} ${pg.dayNum} ${monthLabel} — ` +
+                (pg.has
+                  ? `${pg.count} ${pg.count === 1 ? 'nota' : 'note'}`
+                  : 'nessuna nota')
+              }
+            >
+              {pg.has ? (
+                <span
+                  className={'mp-tab' + (pg.kind ? ` mp-tab--${pg.kind}` : '')}
+                  aria-hidden="true"
+                  style={{
+                    '--mp-tab': moodColor(pg.mood),
+                    '--mp-tw': pg.tw,
+                    color: moodTextColor(pg.mood),
+                  }}
+                >
+                  <b>{Math.round(pg.mood * 100)}</b>
+                </span>
+              ) : (
+                <span className="mp-tab is-empty" aria-hidden="true">
+                  <b>·</b>
                 </span>
               )}
-            </span>
 
-            {pg.titles.length > 0 ? (
-              <span className="mp-notes">
-                {pg.titles.map((t) => (
-                  <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
-                    {t.text}
-                  </span>
-                ))}
+              <span className="mp-head">
+                <span className="mp-wd">
+                  <span className="mp-hl" aria-hidden="true" />
+                  {pg.weekday}&nbsp;{pg.dayNum}
+                </span>
               </span>
-            ) : (
-              <span className="mp-empty">niente di segnato</span>
-            )}
 
-            {pg.people.length > 0 && (
-              <span className="mp-tapes" aria-hidden="true">
-                {pg.people.map((person) => {
-                  const tint = tapeTint(person.id)
-                  return (
+              {pg.titles.length > 0 ? (
+                <span className="mp-notes">
+                  {pg.titles.map((t) => (
+                    <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
+                      {t.text}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <span className="mp-empty">niente di segnato</span>
+              )}
+
+              {pg.scribbles.length > 0 && (
+                <span className="mp-scribbles" aria-hidden="true">
+                  {pg.scribbles.map((s) => (
                     <span
-                      key={person.id}
-                      className="mp-tape"
+                      key={s.id}
+                      className={s.kind || undefined}
+                      style={
+                        s.kind
+                          ? {
+                              left: s.left,
+                              top: s.top,
+                              '--sr': s.rot,
+                              '--sw': `${s.size}px`,
+                            }
+                          : {
+                              left: s.left,
+                              top: s.top,
+                              '--sr': s.rot,
+                              '--so': s.op,
+                              fontFamily: s.font,
+                            }
+                      }
+                    >
+                      {s.text}
+                    </span>
+                  ))}
+                </span>
+              )}
+
+              {(pg.people.length > 0 || hasMedia) && (
+                <span className="mp-side" aria-hidden="true">
+                  {pg.people.length > 0 && (
+                    <span className="mp-tapes">
+                      {pg.people.map((person) => {
+                        const tint = tapeTint(person.id)
+                        return (
+                          <span
+                            key={person.id}
+                            className="mp-tape"
+                            style={{
+                              '--mp-tape-bg': tint.bg,
+                              '--mp-tape-ink': tint.ink,
+                              '--mp-tape-edge': tint.edge,
+                            }}
+                          >
+                            <PersonAvatar
+                              person={person}
+                              immichUrl={immichUrl}
+                              immichApiKey={immichApiKey}
+                              size={19}
+                            />
+                            <span className="mp-tape-name">{person.name}</span>
+                          </span>
+                        )
+                      })}
+                    </span>
+                  )}
+
+                  {hasMedia && (
+                    <span className="mp-place-row">
+                      {pg.placeName && (
+                        <span className="mp-place">
+                          <span className="mp-map" />
+                          <span className="mp-place-name">{pg.placeName}</span>
+                        </span>
+                      )}
+                      {pg.hasSong && (
+                        <span className="mp-disc-wrap">
+                          <span
+                            className="mp-disc"
+                            style={
+                              pg.songCover
+                                ? { '--cover': `url(${pg.songCover})` }
+                                : undefined
+                            }
+                          />
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </span>
+              )}
+
+              {pg.imgs.length > 0 && (
+                <span
+                  className={'mp-polas' + (pg.imgs.length > 1 ? ' two' : '')}
+                  aria-hidden="true"
+                >
+                  {pg.imgs.map((im, i) => (
+                    <span
+                      key={i}
+                      className={'mp-pola' + (i === 0 ? ' tc' : '')}
                       style={{
-                        '--mp-tape-bg': tint.bg,
-                        '--mp-tape-ink': tint.ink,
-                        '--mp-tape-edge': tint.edge,
+                        '--pr': `${tilt(`${pg.key}p${i}`, 5).toFixed(2)}deg`,
                       }}
                     >
-                      <PersonAvatar
-                        person={person}
-                        immichUrl={immichUrl}
-                        immichApiKey={immichApiKey}
-                        size={20}
+                      <span
+                        className="mp-ph"
+                        style={{ backgroundImage: `url(${im.url})` }}
                       />
-                      <span className="mp-tape-name">{person.name}</span>
+                      {im.cap && <span className="mp-cap">{im.cap}</span>}
                     </span>
-                  )
-                })}
-              </span>
-            )}
-
-            {pg.imgs.length > 0 && (
-              <span
-                className={'mp-polas' + (pg.imgs.length > 1 ? ' two' : '')}
-                aria-hidden="true"
-              >
-                {pg.imgs.map((im, i) => (
-                  <span
-                    key={i}
-                    className={'mp-pola' + (i === 0 ? ' tc' : '')}
-                    style={{ '--pr': `${tilt(`${pg.key}p${i}`, 5).toFixed(2)}deg` }}
-                  >
-                    <span
-                      className="mp-ph"
-                      style={{ backgroundImage: `url(${im.url})` }}
-                    />
-                    {im.cap && <span className="mp-cap">{im.cap}</span>}
-                  </span>
-                ))}
-              </span>
-            )}
-          </button>
-        ))}
+                  ))}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
