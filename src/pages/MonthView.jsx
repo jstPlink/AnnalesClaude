@@ -10,10 +10,12 @@ import ImageCarousel from '../components/ImageCarousel'
 import MarqueeText from '../components/MarqueeText'
 import OnThisDay from '../components/OnThisDay'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
+import MonthPages from './web/MonthPages'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../lib/mood'
+import { getSkinMonth } from '../lib/prefs'
 import { fileUrl } from '../lib/pocketbase'
 import {
   MONTHS_IT,
@@ -98,6 +100,23 @@ export default function MonthView() {
 
   const todayK = todayKey()
 
+  // Skin "Pagine" anche da telefono: quando la vista mese è impostata su
+  // "pages" (Aspetto), i giorni diventano pagine di diario impilate come sul
+  // web. Riusa il componente MonthPages; l'impaginato passa a verticale grazie
+  // al blocco @media (max-width: 480px) in index.css.
+  const skinPages = getSkinMonth() === 'pages'
+  const pagesData = useMemo(() => {
+    if (!skinPages) return null
+    return {
+      grid: monthDayKeys(cursor.year, cursor.month).map((key) => ({
+        key,
+        inMonth: true,
+      })),
+      byDay: groupByDay(notes),
+      peopleById: new Map(allPeople.map((p) => [p.id, p])),
+    }
+  }, [skinPages, notes, cursor.year, cursor.month, allPeople])
+
   // Tutti i giorni del mese, con o senza note.
   const days = useMemo(() => {
     const grouped = groupByDay(notes)
@@ -172,6 +191,21 @@ export default function MonthView() {
 
         <OnThisDay className="mx-3 mb-1 mt-3" />
 
+        {skinPages ? (
+          <div className="pb-2 pt-1">
+            {pagesData && (
+              <MonthPages
+                grid={pagesData.grid}
+                byDay={pagesData.byDay}
+                monthLabel={MONTHS_IT[cursor.month]}
+                onNavigate={navigate}
+                peopleById={pagesData.peopleById}
+                immichUrl={user?.immichUrl?.trim()}
+                immichApiKey={user?.immichApiKey?.trim()}
+              />
+            )}
+          </div>
+        ) : (
         <ul className="divide-y divide-line-soft">
           {days.map((d) => {
             const isToday = d.key === todayK
@@ -248,6 +282,7 @@ export default function MonthView() {
             )
           })}
         </ul>
+        )}
 
         {loading && !notes.length && (
           <p className="p-6 text-center text-sm text-ink-soft">Carico…</p>

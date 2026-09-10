@@ -56,6 +56,7 @@ export const PAPER_LABELS = {
 // Skin per pagina: temi grafici alternativi applicati a una singola vista.
 // "sketch" = diario disegnato a mano sulla vista giorno (web + mobile).
 // "board" = bacheca collage sulla vista mese (solo web).
+// "pages" = pagine di diario impilate sulla vista mese (web + mobile).
 export const SKIN_DAYS = ['plain', 'sketch']
 export const SKIN_DAY_LABELS = { plain: 'Normale', sketch: 'Disegnata' }
 export const SKIN_MONTHS = ['plain', 'board', 'pages']

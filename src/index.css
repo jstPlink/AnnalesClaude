@@ -1905,6 +1905,163 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     width: 106px;
   }
 }
+
+/* ---- Telefono (PhoneShell ~440px): la skin "pagine" passa a un impaginato
+   VERTICALE. Il cartoncino occupa quasi tutta la larghezza; persone, luogo e
+   musica non stanno più a fianco ma SOTTO, in una fila che va a capo; la foto
+   resta una piccola polaroid in alto a destra. Attivata anche dalla vista mese
+   mobile (src/pages/MonthView.jsx) quando "Vista mese" = Pagine. ---- */
+@media (max-width: 480px) {
+  .month-pages {
+    width: 100%;
+    padding: 0 15px;
+  }
+  .mp-stack {
+    padding-left: 6px;
+  }
+  .mp-page {
+    padding: 4px 14px 14px 44px;
+    min-height: 76px;
+    margin-top: -8px;
+  }
+  .mp-page.has-tapes,
+  .mp-page.has-media {
+    min-height: 76px;
+  }
+  .mp-page.has-photo,
+  .mp-page.has-photo.two-photo {
+    min-height: 150px;
+  }
+  .mp-tab {
+    left: -9px;
+    top: 10px;
+    width: 40px;
+    padding: 5px 5px 6px 9px;
+  }
+  .mp-tab b {
+    font-size: 1.16rem;
+  }
+  .mp-head {
+    gap: 7px;
+  }
+  .mp-wd {
+    font-size: 1.16rem;
+  }
+  /* cartoncino a tutta larghezza utile; più stretto se c'è una foto a destra */
+  .mp-notes {
+    width: auto;
+    max-width: 80%;
+    margin-top: 0.3rem;
+    padding: 9px 14px 15px 13px;
+  }
+  .mp-page.has-photo .mp-notes {
+    max-width: 60%;
+  }
+  .mp-n[data-hand='a'] {
+    font-size: 1.14rem;
+  }
+  .mp-n[data-hand='b'] {
+    font-size: 0.95rem;
+  }
+  .mp-n[data-hand='c'] {
+    font-size: 0.98rem;
+  }
+  .mp-n[data-hand='d'] {
+    font-size: 1rem;
+  }
+  /* niente frammenti di testo sullo sfondo: troppo rumore sul piccolo */
+  .mp-scribbles {
+    display: none;
+  }
+  /* persone + luogo + musica sotto il cartoncino, in fila che va a capo */
+  .mp-side {
+    position: static;
+    left: auto;
+    top: auto;
+    width: auto;
+    margin: 9px 0 2px;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+  }
+  .mp-page.has-photo.two-photo .mp-side {
+    width: auto;
+    gap: 10px 14px;
+  }
+  .mp-page.has-photo .mp-side {
+    padding-right: 96px;
+  }
+  .mp-page.has-photo.two-photo .mp-side {
+    padding-right: 148px;
+  }
+  .mp-side .mp-tapes {
+    flex: 1 1 100%;
+  }
+  .mp-tape {
+    font-size: 0.88rem;
+    padding: 4px 13px 4px 7px;
+  }
+  .mp-place {
+    width: 92px;
+    margin-top: 2px;
+  }
+  .mp-map {
+    height: 62px;
+  }
+  .mp-place-name {
+    font-size: 0.76rem;
+  }
+  .mp-disc {
+    width: 58px;
+    height: 58px;
+  }
+  .mp-song span {
+    max-width: 108px;
+  }
+  .mp-song .t {
+    font-size: 0.8rem;
+  }
+  .mp-song .a {
+    font-size: 0.7rem;
+  }
+  /* foto: polaroid piccola in alto a destra, sopra il cartoncino */
+  .mp-polas {
+    right: -6px;
+    top: 12px;
+  }
+  .mp-pola {
+    width: 96px;
+    padding: 6px 6px 20px;
+  }
+  .mp-polas.two .mp-pola {
+    width: 84px;
+  }
+  .mp-polas.two .mp-pola:last-child {
+    margin-left: -12px;
+  }
+  .mp-pola::before {
+    width: 58px;
+    height: 20px;
+    top: -9px;
+  }
+  .mp-pola.tc::after {
+    width: 38px;
+    height: 17px;
+    left: -10px;
+  }
+  .mp-cap {
+    font-size: 0.78rem;
+  }
+  /* nastro "oggi" un filo più stretto */
+  .mp-today-tape {
+    left: 26%;
+    width: 46%;
+    height: 26px;
+  }
+  .mp-today-tape::after {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .mp-page {
     transition: none;

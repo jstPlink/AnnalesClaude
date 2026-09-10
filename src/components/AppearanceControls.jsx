@@ -256,7 +256,7 @@ export default function AppearanceControls() {
           }}
         />
         <Segmented
-          label="Vista mese (web)"
+          label="Vista mese"
           options={SKIN_MONTHS}
           labels={SKIN_MONTH_LABELS}
           value={skinMonth}
@@ -267,9 +267,9 @@ export default function AppearanceControls() {
         />
         <p className="text-xs text-ink-soft">
           Stili grafici alternativi per una singola vista. “Disegnata” trasforma
-          la vista giorno in un diario tracciato a mano; per il mese (solo da
-          web) “Bacheca” lo dispone come un collage e “Pagine” come pagine di
-          diario impilate.
+          la vista giorno in un diario tracciato a mano; per il mese “Pagine” lo
+          rende come pagine di diario impilate (web e telefono) e “Bacheca” come
+          un collage (solo da web).
         </p>
       </div>
 

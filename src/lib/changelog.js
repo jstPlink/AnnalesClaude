@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.24.0',
+    date: '2026-09-11 00:17',
+    changes: [
+      'Skin "Pagine" ora anche da telefono: se in Aspetto → "Vista mese" scegli "Pagine", la vista mese del telefono diventa pagine di diario impilate come sul web (carta, linguetta dell\'umore, nastro "· oggi ·", decori di sfondo).',
+      'Su telefono l\'impaginato della skin "Pagine" passa in verticale: cartoncino della nota a tutta larghezza, poi persone, luogo e canzone in fila sotto, foto come piccola polaroid.',
+      'Aspetto: il selettore "Vista mese" non è più marcato "(web)"; "Bacheca" resta solo da web.',
+    ],
+  },
+  {
     version: '0.23.0',
     date: '2026-09-11 00:00',
     changes: [
