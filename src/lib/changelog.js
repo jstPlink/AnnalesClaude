@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.20.0',
+    date: '2026-09-10 22:30',
+    changes: [
+      'Skin "Pagine" (vista mese web) ridisegnata a colonne: giorno in alto a sinistra, titoli su un cartoncino strappato del colore dell’umore, poi le persone, poi luogo e canzone, infine le fotografie.',
+      'Skin "Pagine": il luogo è un francobollo con dentini e puntina che, se la nota ha coordinate, mostra una vera mini-mappa; la canzone è un dischetto con la copertina dell’album e, sotto, titolo e autore.',
+      'Skin "Pagine": giorni feriali scritti in nero (weekend in rosso), linguetta dell’umore come nastro adesivo dello stesso colore del cartoncino, segnalibro rosso "oggi" sul giorno corrente.',
+      'Skin "Pagine": più disegnini e frammenti dei titoli sullo sfondo, più piccoli e "dipinti"; foglio più largo.',
+    ],
+  },
+  {
     version: '0.19.1',
     date: '2026-09-10 22:05',
     changes: [

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
-import { dayMood, moodColor, moodTextColor } from '../../lib/mood'
+import { dayMood, moodColor } from '../../lib/mood'
 import { plainText, parsePlace } from '../../lib/notes'
-import { parseWall, weekdayLong } from '../../lib/dates'
+import { parseWall, weekdayLong, todayKey } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 
 // "Mano" stabile per una nota: stesso id -> stesso font, sempre.
@@ -27,6 +27,23 @@ function rng(seed) {
   return () => {
     x = (x * 16807) % 2147483647
     return (x - 1) / 2147483646
+  }
+}
+
+// Tile OSM che contiene (lat, lon) allo zoom dato, più lo scostamento in px
+// per centrare il punto esatto dentro il francobollo (la mappa reale del
+// luogo). Un solo tile 256px: leggero e senza chiave API.
+function osmTileFor(lat, lon, z) {
+  const n = 2 ** z
+  const xf = ((lon + 180) / 360) * n
+  const latRad = (lat * Math.PI) / 180
+  const yf =
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
+  const px = Math.round((xf - Math.floor(xf)) * 256 - 128)
+  const py = Math.round((yf - Math.floor(yf)) * 256 - 128)
+  return {
+    url: `https://tile.openstreetmap.org/${z}/${Math.floor(xf)}/${Math.floor(yf)}.png`,
+    pos: `calc(50% - ${px}px) calc(50% - ${py}px)`,
   }
 }
 
@@ -59,23 +76,16 @@ function flawFor(key) {
 // Tinte tenui per le targhette dei nomi (sfondo / testo / bordo già abbinati),
 // scelte in modo stabile dall'id della persona.
 const TAPE_TINTS = [
-  { bg: '#d7dee6', ink: '#4a5c6c', edge: '#9fb0bd' },
-  { bg: '#e6dccb', ink: '#6b5940', edge: '#c3ad8c' },
-  { bg: '#dde3cf', ink: '#586841', edge: '#aebd93' },
-  { bg: '#e3d5dc', ink: '#6d4f5e', edge: '#c0a3b1' },
-  { bg: '#e5ddc9', ink: '#6a5c3f', edge: '#c1b189' },
-  { bg: '#dcd8e2', ink: '#544e63', edge: '#b3acc0' },
+  { bg: '#d7dee6', ink: '#4a5c6c', edge: '#5f7486' },
+  { bg: '#e6dccb', ink: '#6b5940', edge: '#7d6543' },
+  { bg: '#dde3cf', ink: '#586841', edge: '#647049' },
+  { bg: '#e3d5dc', ink: '#6d4f5e', edge: '#7a5b68' },
+  { bg: '#e5ddc9', ink: '#6a5c3f', edge: '#786443' },
+  { bg: '#dcd8e2', ink: '#544e63', edge: '#615a72' },
 ]
 function tapeTint(id) {
   return TAPE_TINTS[hash(id) % TAPE_TINTS.length]
 }
-
-const SCRIB_FONTS = [
-  "'Annales Marker', 'Caveat', cursive",
-  "'Annales Hand', 'Kalam', sans-serif",
-  "'Annales Hand Gochi', 'Gochi Hand', cursive",
-  "'Annales Hand Shadows', 'Shadows Into Light', cursive",
-]
 
 // Frammenti di testo (pezzi dei titoli delle note) da spargere sfumati sullo
 // sfondo, con ~1 su 5 sostituito da una macchia. Posizioni/rotazioni/opacità
@@ -102,7 +112,6 @@ function buildScribbles(key, titles) {
       top: `${3 + Math.round(r() * 84)}%`,
       rot: `${(r() * 12 - 6).toFixed(1)}deg`,
       op: (0.07 + r() * 0.09).toFixed(3),
-      font: SCRIB_FONTS[Math.floor(r() * SCRIB_FONTS.length)],
       size: stain ? 34 + Math.round(r() * 20) : 0,
     })
   }
@@ -159,20 +168,31 @@ export default function MonthPages({
           .map((id) => peopleById?.get(id))
           .filter(Boolean)
 
-        // Primo luogo e prima canzone (con copertina) del giorno.
+        // Primo luogo (con mappa reale se ha coordinate) e prima canzone
+        // (con copertina) del giorno.
         let placeName = ''
+        let placeMap = null
         for (const n of dayNotes) {
           const pl = parsePlace(n.place)
           if (pl?.name?.trim()) {
             placeName = pl.name.trim()
+            const lat = Number(pl.lat)
+            const lon = Number(pl.lon)
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+              placeMap = osmTileFor(lat, lon, 13)
+            }
             break
           }
         }
         let songCover = null // null = nessuna canzone; '' = canzone senza copertina
+        let songTitle = ''
+        let songArtist = ''
         for (const n of dayNotes) {
           const s = (n.songs || [])[0]
           if (s) {
             songCover = s.thumbnailUrl || ''
+            songTitle = (s.title || '').trim()
+            songArtist = (s.artist || '').trim()
             break
           }
         }
@@ -194,12 +214,17 @@ export default function MonthPages({
           mood,
           kind: has ? moodKind(mood) : null,
           flaw: flawFor(c.key),
-          tw: `${48 + (hash(`${c.key}~tw`) % 6)}px`,
+          isToday: c.key === todayKey(),
+          // lunghezza linguetta: base ~58px, casualità ± ~10% (52–64px)
+          tw: `${52 + (hash(`${c.key}~tw`) % 13)}px`,
           titles,
           imgs,
           people,
           placeName,
+          placeMap,
           songCover,
+          songTitle,
+          songArtist,
           hasSong: songCover !== null,
           scribbles: has ? buildScribbles(c.key, titles) : [],
         }
@@ -221,12 +246,13 @@ export default function MonthPages({
                 'mp-page' +
                 (pg.weekend ? ' wknd' : '') +
                 (pg.has ? '' : ' is-empty') +
+                (pg.isToday ? ' is-today' : '') +
                 (pg.imgs.length > 0 ? ' has-photo' : '') +
                 (pg.imgs.length > 1 ? ' two-photo' : '') +
                 (pg.people.length > 0 ? ' has-tapes' : '') +
                 (hasMedia ? ' has-media' : '') +
                 (pg.kind ? ` mood-${pg.kind}` : '') +
-                (pg.flaw ? ` ${pg.flaw}` : '')
+                (pg.flaw && !pg.isToday ? ` ${pg.flaw}` : '')
               }
               aria-label={
                 `${pg.weekday} ${pg.dayNum} ${monthLabel} — ` +
@@ -235,15 +261,13 @@ export default function MonthPages({
                   : 'nessuna nota')
               }
             >
+              {pg.isToday && <span className="mp-ribbon" aria-hidden="true" />}
+
               {pg.has ? (
                 <span
                   className={'mp-tab' + (pg.kind ? ` mp-tab--${pg.kind}` : '')}
                   aria-hidden="true"
-                  style={{
-                    '--mp-tab': moodColor(pg.mood),
-                    '--mp-tw': pg.tw,
-                    color: moodTextColor(pg.mood),
-                  }}
+                  style={{ '--mp-tab': moodColor(pg.mood), '--mp-tw': pg.tw }}
                 >
                   <b>{Math.round(pg.mood * 100)}</b>
                 </span>
@@ -291,7 +315,6 @@ export default function MonthPages({
                               top: s.top,
                               '--sr': s.rot,
                               '--so': s.op,
-                              fontFamily: s.font,
                             }
                       }
                     >
@@ -334,7 +357,17 @@ export default function MonthPages({
                     <span className="mp-place-row">
                       {pg.placeName && (
                         <span className="mp-place">
-                          <span className="mp-map" />
+                          <span
+                            className={'mp-map' + (pg.placeMap ? ' real' : '')}
+                            style={
+                              pg.placeMap
+                                ? {
+                                    '--map-url': `url(${pg.placeMap.url})`,
+                                    '--map-pos': pg.placeMap.pos,
+                                  }
+                                : undefined
+                            }
+                          />
                           <span className="mp-place-name">{pg.placeName}</span>
                         </span>
                       )}
@@ -348,6 +381,16 @@ export default function MonthPages({
                                 : undefined
                             }
                           />
+                          {(pg.songTitle || pg.songArtist) && (
+                            <span className="mp-song">
+                              {pg.songTitle && (
+                                <span className="t">{pg.songTitle}</span>
+                              )}
+                              {pg.songArtist && (
+                                <span className="a">{pg.songArtist}</span>
+                              )}
+                            </span>
+                          )}
                         </span>
                       )}
                     </span>
