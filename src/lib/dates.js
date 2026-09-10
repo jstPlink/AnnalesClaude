@@ -22,6 +22,15 @@ export const MONTHS_IT = [
 
 // getDay(): 0 = domenica ... 6 = sabato
 export const WEEKDAYS_SHORT_IT = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+export const WEEKDAYS_IT = [
+  'Domenica',
+  'Lunedì',
+  'Martedì',
+  'Mercoledì',
+  'Giovedì',
+  'Venerdì',
+  'Sabato',
+]
 
 const WALL_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/
 
@@ -109,6 +118,13 @@ export function weekdayShort(dKey) {
   if (!p) return ''
   const dt = new Date(p.y, p.mo - 1, p.d)
   return WEEKDAYS_SHORT_IT[dt.getDay()]
+}
+
+// "Mercoledì" — nome completo del giorno della settimana.
+export function weekdayLong(dKey) {
+  const p = parseWall(dKey)
+  if (!p) return ''
+  return WEEKDAYS_IT[new Date(p.y, p.mo - 1, p.d).getDay()]
 }
 
 // true se il giorno è sabato o domenica.

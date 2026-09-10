@@ -13,6 +13,7 @@ import { getSkinMonth, setSkinMonth } from '../../lib/prefs'
 import OnThisDay from '../../components/OnThisDay'
 import Icon from '../../components/Icon'
 import MonthBoard from './MonthBoard'
+import MonthPages from './MonthPages'
 import {
   MONTHS_IT,
   addMonths,
@@ -234,26 +235,36 @@ export default function WebMonth() {
           >
             Oggi
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = skinMonth === 'board' ? 'plain' : 'board'
-              setSkinMonthState(next)
-              setSkinMonth(next)
-            }}
-            aria-pressed={skinMonth === 'board'}
-            title={
-              skinMonth === 'board' ? 'Vista a elenco' : 'Vista bacheca'
-            }
-            className={
-              'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border shadow-sm transition active:scale-95 ' +
-              (skinMonth === 'board'
-                ? 'border-delete-dark bg-delete/15 text-delete-dark'
-                : 'border-line bg-tag text-ink-soft hover:bg-panel hover:text-ink')
-            }
+          <div
+            role="group"
+            aria-label="Stile vista mese"
+            className="flex h-11 shrink-0 items-center gap-0.5 rounded-full border border-line bg-tag p-1 shadow-sm"
           >
-            <Icon name={skinMonth === 'board' ? 'list' : 'image'} size={18} />
-          </button>
+            {[
+              { v: 'plain', icon: 'list', label: 'Elenco' },
+              { v: 'board', icon: 'image', label: 'Bacheca' },
+              { v: 'pages', icon: 'edit', label: 'Pagine' },
+            ].map((o) => (
+              <button
+                key={o.v}
+                type="button"
+                onClick={() => {
+                  setSkinMonthState(o.v)
+                  setSkinMonth(o.v)
+                }}
+                aria-pressed={skinMonth === o.v}
+                title={o.label}
+                className={
+                  'flex h-9 w-9 items-center justify-center rounded-full transition ' +
+                  (skinMonth === o.v
+                    ? 'bg-ink text-cream'
+                    : 'text-ink-soft hover:bg-panel hover:text-ink')
+                }
+              >
+                <Icon name={o.icon} size={17} />
+              </button>
+            ))}
+          </div>
         </div>
         {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
       </header>
@@ -268,6 +279,13 @@ export default function WebMonth() {
 
       {skinMonth === 'board' ? (
         <MonthBoard
+          grid={grid}
+          byDay={byDay}
+          monthLabel={MONTHS_IT[cursor.month]}
+          onNavigate={navigate}
+        />
+      ) : skinMonth === 'pages' ? (
+        <MonthPages
           grid={grid}
           byDay={byDay}
           monthLabel={MONTHS_IT[cursor.month]}

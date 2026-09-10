@@ -433,6 +433,63 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     transparent 45%,
     var(--paper-vignette) 100%
   );
+
+  /* Superfici materiche: carta vergata (filigrana), sughero, assi di legno.
+     "filigrana" resta un overlay sul colore della superficie; "sughero" e
+     "legno" impongono anche un colore di fondo perché sono materiali. */
+  --filigrana-laid: rgba(58, 50, 38, 0.11);
+  --filigrana-chain: rgba(58, 50, 38, 0.05);
+  --tex-filigrana: repeating-linear-gradient(
+      0deg,
+      transparent 0 2px,
+      var(--filigrana-laid) 2px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 25px,
+      var(--filigrana-chain) 25px 27px
+    ),
+    radial-gradient(70% 45% at 28% 22%, rgba(255, 255, 255, 0.4), transparent 62%),
+    var(--paper-grain);
+
+  --sughero-bg: #ccb488;
+  --sughero-fine: rgba(96, 64, 30, 0.24);
+  --sughero-mid: rgba(128, 90, 46, 0.17);
+  --sughero-coarse: rgba(62, 40, 16, 0.13);
+  --tex-sughero: radial-gradient(var(--sughero-fine) 0 1.1px, transparent 1.6px),
+    radial-gradient(var(--sughero-mid) 0 1px, transparent 1.5px),
+    radial-gradient(var(--sughero-coarse) 0 2.6px, transparent 3.1px);
+
+  --legno-bg: #b9986a;
+  --legno-seam: rgba(38, 22, 6, 0.24);
+  --legno-hi: rgba(255, 248, 232, 0.07);
+  --legno-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='190'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.19 0.016' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.27 0 0 0 0 0.16 0 0 0 0 0.06 0 0 0 0.17 0'/%3E%3C/filter%3E%3Crect width='360' height='190' filter='url(%23w)'/%3E%3C/svg%3E");
+  /* planks of uneven height, each a hair lighter/darker than its neighbour */
+  --tex-legno: var(--legno-grain),
+    linear-gradient(
+      0deg,
+      rgba(255, 248, 232, 0.035) 0 116px,
+      rgba(20, 12, 4, 0.04) 116px 248px,
+      rgba(255, 248, 232, 0.028) 248px 300px,
+      rgba(20, 12, 4, 0.05) 300px 452px,
+      rgba(255, 248, 232, 0.03) 452px 520px
+    ),
+    linear-gradient(
+      0deg,
+      transparent 0 115px,
+      var(--legno-seam) 115px 117px,
+      var(--legno-hi) 117px 118px,
+      transparent 118px 247px,
+      var(--legno-seam) 247px 249px,
+      var(--legno-hi) 249px 250px,
+      transparent 250px 299px,
+      var(--legno-seam) 299px 301px,
+      var(--legno-hi) 301px 302px,
+      transparent 302px 451px,
+      var(--legno-seam) 451px 453px,
+      var(--legno-hi) 453px 454px,
+      transparent 454px 520px
+    );
 }
 :root[data-theme='dark'] {
   --paper-rule: rgba(236, 227, 210, 0.09);
@@ -443,6 +500,16 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   --paper-linen-a: rgba(0, 0, 0, 0.2);
   --paper-linen-b: rgba(236, 227, 210, 0.045);
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.92 0 0 0 0 0.89 0 0 0 0 0.82 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --filigrana-laid: rgba(236, 227, 210, 0.09);
+  --filigrana-chain: rgba(236, 227, 210, 0.05);
+  --sughero-bg: #4a3f2b;
+  --sughero-fine: rgba(0, 0, 0, 0.3);
+  --sughero-mid: rgba(0, 0, 0, 0.2);
+  --sughero-coarse: rgba(0, 0, 0, 0.16);
+  --legno-bg: #38301f;
+  --legno-seam: rgba(0, 0, 0, 0.36);
+  --legno-hi: rgba(236, 227, 210, 0.05);
 }
 
 .app-paper {
@@ -472,6 +539,21 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 :root[data-paper='vignetta'] .app-paper {
   background-image: var(--tex-vignetta);
   background-attachment: fixed;
+}
+:root[data-paper='filigrana'] .app-paper {
+  background-image: var(--tex-filigrana);
+  background-size: auto, auto, 100% 100%, 160px 160px;
+}
+:root[data-paper='sughero'] .app-paper {
+  background-color: var(--sughero-bg);
+  background-image: var(--tex-sughero);
+  background-size: 7px 7px, 11px 9px, 19px 17px;
+  background-position: 0 0, 3px 4px, 8px 2px;
+}
+:root[data-paper='legno'] .app-paper {
+  background-color: var(--legno-bg);
+  background-image: var(--tex-legno);
+  background-size: 360px 190px, 100% 520px, 100% 520px;
 }
 
 /* Anteprima swatch nelle Impostazioni. */
@@ -505,6 +587,20 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .paper-swatch[data-p='vignetta'] {
   background-image: var(--tex-vignetta);
 }
+.paper-swatch[data-p='filigrana'] {
+  background-image: var(--tex-filigrana);
+  background-size: auto, auto, 100% 100%, 60px 60px;
+}
+.paper-swatch[data-p='sughero'] {
+  background-color: var(--sughero-bg);
+  background-image: var(--tex-sughero);
+  background-size: 6px 6px, 9px 8px, 15px 14px;
+}
+.paper-swatch[data-p='legno'] {
+  background-color: var(--legno-bg);
+  background-image: var(--tex-legno);
+  background-size: 120px 64px, 100% 100%, 100% 100%;
+}
 
 /* ============ Skin "diario disegnato" — vista giorno ============
    Attivata da <html data-skin-day="sketch"> (src/lib/prefs.js). Sovrascrive
@@ -533,6 +629,25 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-family: 'Annales Hand';
   src: url('/fonts/kalam-700.woff2') format('woff2');
   font-weight: 700;
+  font-display: swap;
+}
+/* Font usati dalla skin "pagine" della vista mese (self-hosted per l'offline). */
+@font-face {
+  font-family: 'Annales Pen';
+  src: url('/fonts/permanent-marker-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Annales Hand Gochi';
+  src: url('/fonts/gochi-hand-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Annales Hand Shadows';
+  src: url('/fonts/shadows-into-light-400.woff2') format('woff2');
+  font-weight: 400;
   font-display: swap;
 }
 
@@ -823,6 +938,308 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     transition: none;
   }
   .mb-card:hover {
+    transform: rotate(var(--r, 0deg));
+  }
+}
+
+/* ============ Skin "pagine" — vista mese (solo web) ============
+   Attivata da <html data-skin-month="pages"> (src/lib/prefs.js). Rende il
+   componente MonthPages: i giorni come pagine di diario impilate, con
+   linguetta-umore a sinistra, titoli scritti in "mani" diverse e polaroid
+   attaccate col nastro. Colori legati ai token del tema (chiaro/scuro); la
+   texture sotto la pila è quella scelta in Aspetto (data-paper). Linguetta,
+   evidenziatore e nastro usano il filtro #annales-wob (SketchDefs.jsx). */
+:root[data-skin-month='pages'] {
+  --mp-ink-b: #4d4234;
+  --mp-ink-c: #34506d;
+  --mp-hl: rgba(228, 198, 86, 0.5);
+  --mp-hl-wknd: rgba(198, 70, 55, 0.32);
+}
+:root[data-skin-month='pages'][data-theme='dark'] {
+  --mp-ink-b: #cdbfa6;
+  --mp-ink-c: #9db6d0;
+  --mp-hl: rgba(228, 198, 86, 0.28);
+  --mp-hl-wknd: rgba(214, 108, 96, 0.3);
+}
+
+.month-pages {
+  width: min(560px, 100%);
+  margin: 0 auto;
+}
+.mp-stack {
+  position: relative;
+  padding-left: 18px;
+}
+.mp-page {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-top: -10px;
+  padding: 16px 22px 20px 40px;
+  font: inherit;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 2px 3px 3px 2px;
+  background-color: var(--color-tag);
+  background-image: linear-gradient(
+      90deg,
+      transparent 31px,
+      var(--paper-margin) 31px 32px,
+      transparent 32px
+    ),
+    repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  box-shadow: 0 -6px 12px -8px rgba(20, 12, 4, 0.22),
+    0 12px 22px -12px rgba(20, 12, 4, 0.36);
+  color: var(--color-ink);
+  cursor: pointer;
+  transform: rotate(var(--r, 0deg));
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.mp-page:first-child {
+  margin-top: 0;
+}
+.mp-page:nth-child(odd) {
+  --r: -0.5deg;
+}
+.mp-page:nth-child(even) {
+  --r: 0.5deg;
+}
+.mp-page:nth-child(3n) {
+  margin-left: 6px;
+}
+.mp-page:nth-child(4n + 1) {
+  margin-left: -4px;
+}
+.mp-page:hover,
+.mp-page:focus-visible {
+  transform: rotate(0) translateY(-2px);
+  z-index: 30;
+  box-shadow: 0 -6px 14px -8px rgba(20, 12, 4, 0.24),
+    0 16px 26px -12px rgba(20, 12, 4, 0.42);
+}
+.mp-page:focus-visible {
+  outline: 2px solid var(--color-weekend);
+  outline-offset: 2px;
+}
+.mp-page.is-empty {
+  opacity: 0.72;
+}
+.mp-page.has-photo {
+  min-height: 188px;
+}
+
+.mp-tab {
+  position: absolute;
+  left: -18px;
+  top: 14px;
+  z-index: 4;
+  width: 62px;
+  padding: 5px 5px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  border-radius: 3px 11px 11px 3px;
+  background: var(--mp-tab, var(--color-line));
+  color: #2c2416;
+  box-shadow: 2px 3px 6px rgba(20, 12, 4, 0.24);
+  transform: rotate(-2.5deg);
+  filter: url(#annales-wob);
+}
+.mp-tab b {
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+.mp-tab i {
+  font-style: normal;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.46rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  margin-top: 1px;
+}
+.mp-tab.is-empty {
+  background: var(--color-line-soft);
+  color: var(--color-ink-soft);
+}
+
+.mp-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mp-wd {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-weight: 400;
+  font-size: 1.42rem;
+  line-height: 1.1;
+  color: var(--color-ink);
+}
+.mp-wd .mp-hl {
+  position: absolute;
+  left: -8px;
+  right: -10px;
+  bottom: 0.05em;
+  height: 0.58em;
+  background: var(--mp-hl);
+  filter: url(#annales-wob);
+  transform: skewX(-11deg) rotate(-1.2deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+.mp-page.wknd .mp-wd {
+  color: var(--color-weekend);
+}
+.mp-page.wknd .mp-wd .mp-hl {
+  background: var(--mp-hl-wknd);
+}
+.mp-cnt {
+  flex: none;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+}
+
+.mp-notes {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+.mp-n {
+  position: relative;
+  padding-left: 1.05rem;
+  line-height: 1.15;
+  color: var(--color-ink);
+}
+.mp-n::before {
+  content: '\2013';
+  position: absolute;
+  left: 0.15rem;
+  opacity: 0.5;
+}
+.mp-n[data-hand='a'] {
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.32rem;
+  transform: rotate(-0.6deg);
+}
+.mp-n[data-hand='b'] {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 1.02rem;
+  color: var(--mp-ink-b);
+  transform: rotate(0.4deg);
+  margin-left: 0.4rem;
+}
+.mp-n[data-hand='c'] {
+  font-family: 'Annales Hand Gochi', 'Gochi Hand', cursive;
+  font-size: 1.08rem;
+  transform: rotate(0.6deg);
+}
+.mp-n[data-hand='d'] {
+  font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
+  font-size: 1.14rem;
+  color: var(--mp-ink-c);
+  transform: rotate(-0.35deg);
+  margin-left: 0.25rem;
+}
+.mp-empty {
+  display: block;
+  position: relative;
+  z-index: 1;
+  margin: 0.45rem 0 0;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.86rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  opacity: 0.75;
+}
+
+.mp-pola {
+  position: absolute;
+  right: -16px;
+  top: 20px;
+  z-index: 3;
+  width: 128px;
+  margin: 0;
+  padding: 8px 8px 26px;
+  background: #f7f1e3;
+  box-shadow: 0 9px 18px rgba(20, 12, 4, 0.3);
+  transform: rotate(var(--pr, 4deg));
+}
+.mp-pola.is-stack {
+  box-shadow: 0 9px 18px rgba(20, 12, 4, 0.3), 6px 6px 0 -1px #efe7d5,
+    6px 6px 0 0 rgba(20, 12, 4, 0.18);
+}
+.mp-pola::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  width: 66px;
+  height: 24px;
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(244, 236, 206, 0.55);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  filter: url(#annales-wob);
+}
+.mp-ph {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.82) contrast(0.95);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.25);
+}
+.mp-cap {
+  display: block;
+  padding-top: 5px;
+  font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
+  font-size: 0.9rem;
+  color: #4a4234;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .mp-tab {
+    left: -14px;
+    width: 54px;
+  }
+  .mp-tab b {
+    font-size: 1.2rem;
+  }
+  .mp-wd {
+    font-size: 1.24rem;
+  }
+  .mp-pola {
+    width: 108px;
+    right: -10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-page {
+    transition: none;
+  }
+  .mp-page:hover,
+  .mp-page:focus-visible {
     transform: rotate(var(--r, 0deg));
   }
 }

@@ -152,8 +152,9 @@ export default function AppearanceControls() {
         />
         <p className="text-xs text-ink-soft">
           Stili grafici alternativi per una singola vista. “Disegnata” trasforma
-          la vista giorno in un diario tracciato a mano; “Bacheca” dispone il
-          mese come un collage (solo da web).
+          la vista giorno in un diario tracciato a mano; per il mese (solo da
+          web) “Bacheca” lo dispone come un collage e “Pagine” come pagine di
+          diario impilate.
         </p>
       </div>
 

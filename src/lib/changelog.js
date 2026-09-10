@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.16.0',
+    date: '2026-09-10 17:07',
+    changes: [
+      'Vista mese (web): nuova skin "Pagine" — i giorni come pagine di diario impilate, con linguetta dell’umore a lato, testata rossa nei weekend, titoli in grafie diverse e polaroid attaccate col nastro per i giorni con foto.',
+      'Vista mese (web): l’interruttore nell’header è ora a tre — Elenco / Bacheca / Pagine.',
+      'Impostazioni → Aspetto: tre nuovi sfondi — Filigrana (carta vergata), Sughero e Legno (assi irregolari).',
+    ],
+  },
+  {
     version: '0.15.1',
     date: '2026-09-09 15:11',
     changes: [

@@ -32,6 +32,9 @@ export const PAPERS = [
   'margine',
   'lino',
   'vignetta',
+  'filigrana',
+  'sughero',
+  'legno',
 ]
 export const PAPER_LABELS = {
   nessuna: 'Nessuno',
@@ -42,6 +45,9 @@ export const PAPER_LABELS = {
   margine: 'Margine',
   lino: 'Lino',
   vignetta: 'Vignetta',
+  filigrana: 'Filigrana',
+  sughero: 'Sughero',
+  legno: 'Legno',
 }
 
 // Skin per pagina: temi grafici alternativi applicati a una singola vista.
@@ -49,8 +55,12 @@ export const PAPER_LABELS = {
 // "board" = bacheca collage sulla vista mese (solo web).
 export const SKIN_DAYS = ['plain', 'sketch']
 export const SKIN_DAY_LABELS = { plain: 'Normale', sketch: 'Disegnata' }
-export const SKIN_MONTHS = ['plain', 'board']
-export const SKIN_MONTH_LABELS = { plain: 'Normale', board: 'Bacheca' }
+export const SKIN_MONTHS = ['plain', 'board', 'pages']
+export const SKIN_MONTH_LABELS = {
+  plain: 'Elenco',
+  board: 'Bacheca',
+  pages: 'Pagine',
+}
 
 function read(key, fallback, allowed) {
   try {
