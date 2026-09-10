@@ -555,6 +555,15 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background-image: var(--tex-legno);
   background-size: 360px 190px, 100% 520px, 100% 520px;
 }
+/* Sfondo personalizzato: l'immagine caricata in Aspetto (data URL in
+   --paper-custom, impostata da src/lib/prefs.js). */
+:root[data-paper='immagine'] .app-paper {
+  background-image: var(--paper-custom, none);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
 
 /* Anteprima swatch nelle Impostazioni. */
 .paper-swatch {

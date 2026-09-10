@@ -6,6 +6,7 @@ const THEME_KEY = 'annales.theme'
 const FONT_KEY = 'annales.font'
 const ANIM_KEY = 'annales.anim'
 const PAPER_KEY = 'annales.paper'
+const PAPER_IMAGE_KEY = 'annales.paperImage'
 const SKIN_DAY_KEY = 'annales.skinDay'
 const SKIN_MONTH_KEY = 'annales.skinMonth'
 
@@ -35,6 +36,7 @@ export const PAPERS = [
   'filigrana',
   'sughero',
   'legno',
+  'immagine',
 ]
 export const PAPER_LABELS = {
   nessuna: 'Nessuno',
@@ -48,6 +50,7 @@ export const PAPER_LABELS = {
   filigrana: 'Filigrana',
   sughero: 'Sughero',
   legno: 'Legno',
+  immagine: 'Immagine',
 }
 
 // Skin per pagina: temi grafici alternativi applicati a una singola vista.
@@ -82,6 +85,15 @@ export function getAnim() {
 }
 export function getPaper() {
   return read(PAPER_KEY, 'rigato', PAPERS)
+}
+// Sfondo personalizzato (data URL, solo per lo sfondo "immagine"). Vive in
+// localStorage come le altre preferenze di aspetto: per-dispositivo.
+export function getPaperImage() {
+  try {
+    return localStorage.getItem(PAPER_IMAGE_KEY) || ''
+  } catch {
+    return ''
+  }
 }
 export function getSkinDay() {
   return read(SKIN_DAY_KEY, 'plain', SKIN_DAYS)
@@ -129,8 +141,18 @@ export function applyPrefs() {
   root.dataset.anim = resolvedAnim()
 
   const paper = getPaper()
-  if (paper === 'nessuna') delete root.dataset.paper
-  else root.dataset.paper = paper
+  const paperImage = paper === 'immagine' ? getPaperImage() : ''
+  // "immagine" senza immagine caricata = nessuno sfondo.
+  if (paper === 'nessuna' || (paper === 'immagine' && !paperImage)) {
+    delete root.dataset.paper
+  } else {
+    root.dataset.paper = paper
+  }
+  if (paperImage) {
+    root.style.setProperty('--paper-custom', `url("${paperImage}")`)
+  } else {
+    root.style.removeProperty('--paper-custom')
+  }
 
   const skinDay = getSkinDay()
   if (skinDay === 'plain') delete root.dataset.skinDay
@@ -164,6 +186,26 @@ export function setAnim(v) {
 }
 export function setPaper(v) {
   setKey(PAPER_KEY, v)
+}
+// Salva/rimuove l'immagine di sfondo personalizzata. `setPaperImage` torna
+// false se localStorage rifiuta il salvataggio (quota: immagine troppo
+// grande), così la UI può avvisare.
+export function setPaperImage(dataUrl) {
+  try {
+    localStorage.setItem(PAPER_IMAGE_KEY, dataUrl)
+  } catch {
+    return false
+  }
+  applyPrefs()
+  return true
+}
+export function clearPaperImage() {
+  try {
+    localStorage.removeItem(PAPER_IMAGE_KEY)
+  } catch {
+    // niente: se non si può rimuovere, applyPrefs userà comunque il valore
+  }
+  applyPrefs()
 }
 export function setSkinDay(v) {
   setKey(SKIN_DAY_KEY, v)
