@@ -76,12 +76,18 @@ function flawFor(key) {
 // Tinte tenui per le targhette dei nomi (sfondo / testo / bordo già abbinati),
 // scelte in modo stabile dall'id della persona.
 const TAPE_TINTS = [
-  { bg: '#d7dee6', ink: '#4a5c6c', edge: '#5f7486' },
-  { bg: '#e6dccb', ink: '#6b5940', edge: '#7d6543' },
-  { bg: '#dde3cf', ink: '#586841', edge: '#647049' },
-  { bg: '#e3d5dc', ink: '#6d4f5e', edge: '#7a5b68' },
-  { bg: '#e5ddc9', ink: '#6a5c3f', edge: '#786443' },
-  { bg: '#dcd8e2', ink: '#544e63', edge: '#615a72' },
+  { bg: '#d7dee6', ink: '#3f5262', edge: '#8397a6' },
+  { bg: '#e7dbc8', ink: '#6b5940', edge: '#a58e6a' },
+  { bg: '#dde3cf', ink: '#4f6139', edge: '#8a9c6a' },
+  { bg: '#e5d4da', ink: '#6d4f5e', edge: '#a889a0' },
+  { bg: '#e6ddc6', ink: '#6a5c3f', edge: '#a89465' },
+  { bg: '#dbd7e4', ink: '#4d4762', edge: '#9089ac' },
+  { bg: '#cfe0dc', ink: '#3f5f5a', edge: '#7ea6a0' },
+  { bg: '#eed7cb', ink: '#7a4f3c', edge: '#c19077' },
+  { bg: '#dde2ea', ink: '#4a566c', edge: '#8b98b3' },
+  { bg: '#e8dbe0', ink: '#65505f', edge: '#b39cae' },
+  { bg: '#d9e2cd', ink: '#556641', edge: '#93a575' },
+  { bg: '#e9e0c8', ink: '#6d5f3a', edge: '#b9a874' },
 ]
 function tapeTint(id) {
   return TAPE_TINTS[hash(id) % TAPE_TINTS.length]
@@ -261,19 +267,17 @@ export default function MonthPages({
                   : 'nessuna nota')
               }
             >
-              {pg.isToday && <span className="mp-ribbon" aria-hidden="true" />}
+              {pg.isToday && (
+                <span className="mp-today-tape" aria-hidden="true" />
+              )}
 
-              {pg.has ? (
+              {pg.has && (
                 <span
                   className={'mp-tab' + (pg.kind ? ` mp-tab--${pg.kind}` : '')}
                   aria-hidden="true"
                   style={{ '--mp-tab': moodColor(pg.mood), '--mp-tw': pg.tw }}
                 >
                   <b>{Math.round(pg.mood * 100)}</b>
-                </span>
-              ) : (
-                <span className="mp-tab is-empty" aria-hidden="true">
-                  <b>·</b>
                 </span>
               )}
 
@@ -284,7 +288,7 @@ export default function MonthPages({
                 </span>
               </span>
 
-              {pg.titles.length > 0 ? (
+              {pg.titles.length > 0 && (
                 <span className="mp-notes">
                   {pg.titles.map((t) => (
                     <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
@@ -292,8 +296,6 @@ export default function MonthPages({
                     </span>
                   ))}
                 </span>
-              ) : (
-                <span className="mp-empty">niente di segnato</span>
               )}
 
               {pg.scribbles.length > 0 && (

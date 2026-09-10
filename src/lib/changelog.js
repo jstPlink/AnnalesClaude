@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.22.0',
+    date: '2026-09-10 23:25',
+    changes: [
+      'Skin "Pagine" (vista mese web): giorno e cartoncino dei titoli ancorati in alto a sinistra; il giorno corrente è segnato da un nastro adesivo rosso ("· oggi ·") che attraversa il centro alto della pagina, dritta e sollevata.',
+      'Skin "Pagine": decori di sfondo su tutta la pagina con animali e natura (uccelli, pesci, cervi, alberi, felci) sotto ai disegnini a tema umore; disegni più piccoli e più numerosi.',
+      'Skin "Pagine": nomi delle persone in grassetto e più leggibili, con più colori (tinta stabile per persona); dischetto della canzone più grande con titolo e autore ingranditi.',
+      'Skin "Pagine": i giorni futuri restano pagine vuote e semplici (niente linguetta dell\'umore né testo segnaposto); foglio e cartoncini un po\' più larghi.',
+    ],
+  },
+  {
     version: '0.21.0',
     date: '2026-09-10 22:55',
     changes: [
