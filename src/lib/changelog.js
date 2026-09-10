@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.21.0',
+    date: '2026-09-10 22:55',
+    changes: [
+      'Impostazioni: la sezione "Elenchi personali" diventa "Dati utente" e sale sopra le Integrazioni. Raccoglie i dati legati all\'account, sincronizzati su tutti i dispositivi.',
+      'Dati utente → Colori del mood: si personalizzano i sei colori con cui l\'app rappresenta l\'umore delle note — dalla barra del mood alle pagine del mese alle statistiche — con anteprima e "Ripristina predefinito". La scelta è salvata sull\'account.',
+      'Dati utente → Luoghi: si modificano nome e posizione di un luogo direttamente dall\'elenco (posizione scelta sulla mappa), senza doverne creare uno nuovo e sostituire il vecchio. La modifica si propaga a tutte le note collegate.',
+    ],
+  },
+  {
     version: '0.20.0',
     date: '2026-09-10 22:30',
     changes: [

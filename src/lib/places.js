@@ -26,6 +26,18 @@ export async function createPlace(place) {
   })
 }
 
+// Aggiorna nome e/o coordinate di un luogo curato. NB: il campo `place`
+// delle note è un JSON indipendente (non una relazione), quindi chi chiama
+// deve propagare la modifica alle note collegate con reassignPlaceInNotes
+// (vedi Impostazioni → Dati utente → Luoghi).
+export async function updatePlace(id, place) {
+  return pb.collection(COLLECTION).update(id, {
+    name: place.name.trim(),
+    lat: place.lat ?? null,
+    lon: place.lon ?? null,
+  })
+}
+
 export async function deletePlace(id) {
   return pb.collection(COLLECTION).delete(id)
 }

@@ -9,6 +9,7 @@ import PlacePickerSheet from '../components/PlacePickerSheet'
 import CollapsibleSection from '../components/CollapsibleSection'
 import AccountFields from '../components/AccountFields'
 import AppearanceControls from '../components/AppearanceControls'
+import MoodGradientControls from '../components/MoodGradientControls'
 import ExportButtons from '../components/ExportButtons'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
@@ -38,6 +39,7 @@ import { listTags, createTag, deleteTag } from '../lib/tags'
 import {
   listPlaces,
   deletePlace,
+  updatePlace,
   upsertPlaceIfMissing,
   syncPlacesFromNotes,
 } from '../lib/places'
@@ -126,6 +128,12 @@ export default function Profile() {
   const [placeToDelete, setPlaceToDelete] = useState(null)
   const [placeReplacementId, setPlaceReplacementId] = useState('')
   const [placeCascadeBusy, setPlaceCascadeBusy] = useState(false)
+  // Modifica di un luogo esistente (nome + posizione), con propagazione
+  // automatica alle note collegate.
+  const [editingPlace, setEditingPlace] = useState(null)
+  const [placeEditName, setPlaceEditName] = useState('')
+  const [placeEditBusy, setPlaceEditBusy] = useState(false)
+  const [placeMapOpen, setPlaceMapOpen] = useState(false)
 
   const [spotifyClientId, setSpotifyClientId] = useState(user?.spotifyClientId || '')
   const [spotifyClientSecret, setSpotifyClientSecret] = useState(
@@ -344,6 +352,54 @@ export default function Profile() {
     }
   }
 
+  function startEditPlace(place) {
+    setEditingPlace({ ...place })
+    setPlaceEditName(place.name)
+    setPlacesError('')
+  }
+
+  function cancelEditPlace() {
+    setEditingPlace(null)
+    setPlaceEditName('')
+  }
+
+  // Salva nome/posizione del luogo e, se qualcosa è cambiato, riscrive il
+  // campo `place` di tutte le note collegate (nome + coordinate).
+  async function savePlaceEdit() {
+    if (!editingPlace || placeEditBusy) return
+    const newName = placeEditName.trim()
+    if (!newName) return
+    const orig = places.find((p) => p.id === editingPlace.id) || editingPlace
+    const updated = {
+      name: newName,
+      lat: editingPlace.lat ?? null,
+      lon: editingPlace.lon ?? null,
+    }
+    const changed =
+      newName.toLowerCase() !== orig.name.trim().toLowerCase() ||
+      (updated.lat ?? null) !== (orig.lat ?? null) ||
+      (updated.lon ?? null) !== (orig.lon ?? null)
+    setPlaceEditBusy(true)
+    setPlacesError('')
+    try {
+      const linked = changed ? await listNotesWithPlace(orig.name) : []
+      await updatePlace(editingPlace.id, updated)
+      if (linked.length) await reassignPlaceInNotes(updated, linked)
+      setPlaces((prev) =>
+        prev
+          .map((p) => (p.id === editingPlace.id ? { ...p, ...updated } : p))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      )
+      setEditingPlace(null)
+      setPlaceEditName('')
+      placesUsageCounts().then(setPlacesUsage).catch(() => {})
+    } catch (err) {
+      setPlacesError(describeError(err))
+    } finally {
+      setPlaceEditBusy(false)
+    }
+  }
+
   async function addPerson(immichPerson) {
     const rec = await createPersonFromImmich(immichPerson)
     setPeople((prev) => [...prev, rec].sort((a, b) => a.name.localeCompare(b.name)))
@@ -533,6 +589,263 @@ export default function Profile() {
         <div className="mt-6">
           <CollapsibleSection title="Aspetto" icon="settings">
             <AppearanceControls />
+          </CollapsibleSection>
+        </div>
+
+        <div className="mt-6">
+          <CollapsibleSection title="Dati utente" icon="list">
+            <p className="text-xs text-ink-soft">
+              Dati unici e personali tuoi, legati all'account e sincronizzati su
+              tutti i dispositivi: i colori con cui vedi l'umore, e le persone,
+              i tag e i luoghi che usi nelle note.
+            </p>
+
+            <CollapsibleSection title="Colori del mood" icon="sparkles">
+              <MoodGradientControls />
+            </CollapsibleSection>
+
+            <CollapsibleSection title="Persone" icon="user">
+            <p className="text-xs text-ink-soft">
+              Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
+              Immich o creane una nuova qui.
+            </p>
+            {peopleError && (
+              <p className="text-xs text-delete-dark">{peopleError}</p>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nuova persona…"
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addLocalPerson()}
+                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
+              />
+              <button
+                type="button"
+                disabled={!newPersonName.trim() || creatingPerson}
+                onClick={addLocalPerson}
+                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {creatingPerson ? '…' : 'Crea'}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={!immichReady}
+                onClick={() => setPickerOpen(true)}
+                title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
+                className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                + Aggiungi da Immich
+              </button>
+              {people.length > 0 && (
+                <button
+                  type="button"
+                  disabled={!immichReady || refreshing}
+                  onClick={refreshNamesFromImmich}
+                  title={
+                    immichReady
+                      ? 'Aggiorna i nomi se sono cambiati su Immich'
+                      : 'Configura prima Immich qui sopra'
+                  }
+                  className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
+                </button>
+              )}
+            </div>
+            {people.length > 0 && (
+              <div className="space-y-1">
+                {people.map((person) => (
+                  <div
+                    key={person.id}
+                    className="flex items-center gap-3 rounded-xl px-1 py-1"
+                  >
+                    <PersonAvatar
+                      person={person}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                    />
+                    <span className="flex-1 text-sm font-medium text-ink">
+                      {person.name}
+                    </span>
+                    {peopleUsage && (
+                      <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                        {peopleUsage[person.id] || 0}{' '}
+                        {(peopleUsage[person.id] || 0) === 1 ? 'nota' : 'note'}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingId === person.id}
+                      onClick={() => removePerson(person.id)}
+                      className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CollapsibleSection>
+
+            <CollapsibleSection title="Tag" icon="tag">
+            <p className="text-xs text-ink-soft">
+              Elenco dei tag selezionabili nelle note.
+            </p>
+            {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
+                  >
+                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
+                    {tag.name}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      disabled={removingTagId === tag.id}
+                      onClick={() => removeTag(tag.id)}
+                      className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
+                    >
+                      <Icon name="x" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nuovo tag…"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
+              />
+              <button
+                type="button"
+                disabled={!newTag.trim() || creatingTag}
+                onClick={addTag}
+                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+              >
+                {creatingTag ? '…' : 'Crea'}
+              </button>
+            </div>
+          </CollapsibleSection>
+
+            <CollapsibleSection title="Luoghi" icon="map-pin">
+            <p className="text-xs text-ink-soft">
+              Elenco dei luoghi selezionabili nelle note. Vengono aggiunti
+              anche automaticamente quando ne scegli uno da una nota.
+              Modificando nome o posizione, l'aggiornamento si propaga a tutte
+              le note collegate.
+            </p>
+            {placesError && (
+              <p className="text-xs text-delete-dark">{placesError}</p>
+            )}
+            {places.length > 0 && (
+              <div className="space-y-1">
+                {places.map((place) => {
+                  const editing = editingPlace?.id === place.id
+                  return (
+                    <div key={place.id} className="rounded-xl px-1 py-1">
+                      {editing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={placeEditName}
+                            onChange={(e) => setPlaceEditName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && savePlaceEdit()}
+                            placeholder="Nome del luogo"
+                            className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-xs text-ink outline-none"
+                          />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setPlaceMapOpen(true)}
+                              className="flex items-center gap-1 rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-bold text-ink transition"
+                            >
+                              <Icon name="map-pin" size={12} />
+                              {editingPlace.lat != null ? 'Sposta' : 'Posiziona'}
+                            </button>
+                            {editingPlace.lat != null && (
+                              <span className="text-xs tabular-nums text-ink-soft">
+                                {Number(editingPlace.lat).toFixed(3)},{' '}
+                                {Number(editingPlace.lon).toFixed(3)}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              disabled={placeEditBusy || !placeEditName.trim()}
+                              onClick={savePlaceEdit}
+                              className="ml-auto rounded-full border border-save-dark bg-save px-4 py-1.5 text-xs font-bold text-ink transition disabled:opacity-50"
+                            >
+                              {placeEditBusy ? 'Salvo…' : 'Salva'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={placeEditBusy}
+                              onClick={cancelEditPlace}
+                              className="rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-bold text-ink transition disabled:opacity-50"
+                            >
+                              Annulla
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-ink-soft">
+                            <Icon name="map-pin" size={14} />
+                          </span>
+                          <span className="flex-1 text-sm font-medium text-ink">
+                            {place.name}
+                          </span>
+                          {placesUsage && (
+                            <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                              {placesUsage[place.name.trim().toLowerCase()] || 0}{' '}
+                              {(placesUsage[place.name.trim().toLowerCase()] || 0) === 1
+                                ? 'nota'
+                                : 'note'}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            title="Modifica"
+                            onClick={() => startEditPlace(place)}
+                            className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-ink hover:text-ink"
+                          >
+                            <Icon name="edit" size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Rimuovi"
+                            disabled={removingPlaceId === place.id}
+                            onClick={() => removePlace(place.id)}
+                            className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
+                          >
+                            <Icon name="x" size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setPlaceSheetOpen(true)}
+              className="w-full rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition"
+            >
+              + Aggiungi luogo
+            </button>
+            </CollapsibleSection>
           </CollapsibleSection>
         </div>
 
@@ -744,201 +1057,6 @@ export default function Profile() {
         </div>
 
         <div className="mt-6">
-          <CollapsibleSection title="Elenchi personali" icon="list">
-            <p className="text-xs text-ink-soft">
-              Persone, tag e luoghi che usi nelle note: dati unici e personali
-              tuoi, gestiti tutti da qui.
-            </p>
-
-            <CollapsibleSection title="Persone" icon="user">
-            <p className="text-xs text-ink-soft">
-              Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
-              Immich o creane una nuova qui.
-            </p>
-            {peopleError && (
-              <p className="text-xs text-delete-dark">{peopleError}</p>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nuova persona…"
-                value={newPersonName}
-                onChange={(e) => setNewPersonName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addLocalPerson()}
-                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
-              />
-              <button
-                type="button"
-                disabled={!newPersonName.trim() || creatingPerson}
-                onClick={addLocalPerson}
-                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-              >
-                {creatingPerson ? '…' : 'Crea'}
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={!immichReady}
-                onClick={() => setPickerOpen(true)}
-                title={immichReady ? undefined : 'Configura prima Immich qui sopra'}
-                className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-              >
-                + Aggiungi da Immich
-              </button>
-              {people.length > 0 && (
-                <button
-                  type="button"
-                  disabled={!immichReady || refreshing}
-                  onClick={refreshNamesFromImmich}
-                  title={
-                    immichReady
-                      ? 'Aggiorna i nomi se sono cambiati su Immich'
-                      : 'Configura prima Immich qui sopra'
-                  }
-                  className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-                >
-                  {refreshing ? 'Aggiorno…' : 'Aggiorna nomi'}
-                </button>
-              )}
-            </div>
-            {people.length > 0 && (
-              <div className="space-y-1">
-                {people.map((person) => (
-                  <div
-                    key={person.id}
-                    className="flex items-center gap-3 rounded-xl px-1 py-1"
-                  >
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                    />
-                    <span className="flex-1 text-sm font-medium text-ink">
-                      {person.name}
-                    </span>
-                    {peopleUsage && (
-                      <span className="shrink-0 text-xs tabular-nums text-ink-soft">
-                        {peopleUsage[person.id] || 0}{' '}
-                        {(peopleUsage[person.id] || 0) === 1 ? 'nota' : 'note'}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingId === person.id}
-                      onClick={() => removePerson(person.id)}
-                      className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
-
-            <CollapsibleSection title="Tag" icon="tag">
-            <p className="text-xs text-ink-soft">
-              Elenco dei tag selezionabili nelle note.
-            </p>
-            {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
-                  >
-                    <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
-                    {tag.name}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingTagId === tag.id}
-                      onClick={() => removeTag(tag.id)}
-                      className="rounded-full p-1 text-ink-soft transition hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nuovo tag…"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                className="min-w-0 flex-1 rounded-full border border-line bg-cream px-4 py-2 text-xs text-ink outline-none"
-              />
-              <button
-                type="button"
-                disabled={!newTag.trim() || creatingTag}
-                onClick={addTag}
-                className="shrink-0 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-              >
-                {creatingTag ? '…' : 'Crea'}
-              </button>
-            </div>
-          </CollapsibleSection>
-
-            <CollapsibleSection title="Luoghi" icon="map-pin">
-            <p className="text-xs text-ink-soft">
-              Elenco dei luoghi selezionabili nelle note. Vengono aggiunti
-              anche automaticamente quando ne scegli uno da una nota.
-            </p>
-            {placesError && (
-              <p className="text-xs text-delete-dark">{placesError}</p>
-            )}
-            {places.length > 0 && (
-              <div className="space-y-1">
-                {places.map((place) => (
-                  <div
-                    key={place.id}
-                    className="flex items-center gap-3 rounded-xl px-1 py-1"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-ink-soft">
-                      <Icon name="map-pin" size={14} />
-                    </span>
-                    <span className="flex-1 text-sm font-medium text-ink">
-                      {place.name}
-                    </span>
-                    {placesUsage && (
-                      <span className="shrink-0 text-xs tabular-nums text-ink-soft">
-                        {placesUsage[place.name.trim().toLowerCase()] || 0}{' '}
-                        {(placesUsage[place.name.trim().toLowerCase()] || 0) === 1
-                          ? 'nota'
-                          : 'note'}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      disabled={removingPlaceId === place.id}
-                      onClick={() => removePlace(place.id)}
-                      className="shrink-0 rounded-full border border-line p-1.5 text-ink-soft transition hover:border-delete-dark hover:text-delete-dark disabled:opacity-50"
-                    >
-                      <Icon name="x" size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setPlaceSheetOpen(true)}
-              className="w-full rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition"
-            >
-              + Aggiungi luogo
-            </button>
-            </CollapsibleSection>
-          </CollapsibleSection>
-        </div>
-
-        <div className="mt-6">
           <CollapsibleSection title="Import ed export" icon="download">
             <p className="text-xs text-ink-soft">
               L'importazione da immagine è disponibile solo dalla versione web.
@@ -1096,6 +1214,24 @@ export default function Profile() {
         open={placeSheetOpen}
         onClose={() => setPlaceSheetOpen(false)}
         onAdd={addPlace}
+      />
+
+      <PlacePickerSheet
+        open={placeMapOpen}
+        initial={
+          editingPlace
+            ? {
+                name: placeEditName || editingPlace.name,
+                lat: editingPlace.lat,
+                lon: editingPlace.lon,
+              }
+            : null
+        }
+        onClose={() => setPlaceMapOpen(false)}
+        onAdd={(p) => {
+          setEditingPlace((ep) => (ep ? { ...ep, lat: p.lat, lon: p.lon } : ep))
+          setPlaceEditName(p.name)
+        }}
       />
 
       {placeToDelete && (

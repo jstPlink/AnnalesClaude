@@ -2,9 +2,14 @@ import { parseWall } from './dates'
 
 // Gestione del valore `mood` (0–1) e della sua rappresentazione a colori.
 
-// Stop del gradiente del mood, coerenti con la palette dell'app:
+// Posizioni fisse degli stop del gradiente del mood (0 = pessimo, 1 = ottimo).
+// L'utente può cambiarne i COLORI da Impostazioni → Dati utente (salvati
+// sull'account, campo `moodGradient`); le posizioni restano queste.
+export const MOOD_STOP_POSITIONS = [0, 0.2, 0.4, 0.6, 0.8, 1]
+
+// Gradiente predefinito, coerente con la palette dell'app:
 // rosso corallo (= delete) → arancio → giallo → verde (= save) → blu → blu-viola.
-const STOPS = [
+const DEFAULT_STOPS = [
   { t: 0.0, c: [224, 101, 94] }, // #e0655e
   { t: 0.2, c: [231, 154, 77] }, // #e79a4d
   { t: 0.4, c: [230, 207, 92] }, // #e6cf5c
@@ -12,6 +17,48 @@ const STOPS = [
   { t: 0.8, c: [94, 169, 214] }, // #5ea9d6
   { t: 1.0, c: [139, 143, 214] }, // #8b8fd6
 ]
+
+const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')
+export function rgbToHex([r, g, b]) {
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+export function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || '').trim())
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null
+}
+
+export const DEFAULT_MOOD_HEX = DEFAULT_STOPS.map((s) => rgbToHex(s.c))
+
+// Stop attivi: il modulo li tiene in una variabile mutabile così che
+// moodColor/moodTextColor (usate ovunque nell'app) riflettano subito il
+// gradiente scelto senza dover passare un parametro in decine di componenti.
+let STOPS = DEFAULT_STOPS
+
+// Imposta il gradiente da 6 colori esadecimali (nell'ordine delle posizioni
+// in MOOD_STOP_POSITIONS). Un valore assente/non valido ripristina il
+// gradiente predefinito. Chiamata all'avvio e a ogni salvataggio dal
+// contesto di autenticazione (src/context/AuthContext.jsx).
+export function setMoodGradient(hexArray) {
+  const arr = Array.isArray(hexArray) ? hexArray.map(hexToRgb) : null
+  if (!arr || arr.length !== MOOD_STOP_POSITIONS.length || arr.some((c) => !c)) {
+    STOPS = DEFAULT_STOPS
+    return
+  }
+  STOPS = arr.map((c, i) => ({ t: MOOD_STOP_POSITIONS[i], c }))
+}
+
+// I 6 colori del gradiente attivo, in esadecimale.
+export function getMoodGradientHex() {
+  return STOPS.map((s) => rgbToHex(s.c))
+}
+
+// Stringa CSS `linear-gradient(...)` del gradiente attivo, per le anteprime.
+export function moodGradientCss(direction = 'to right') {
+  const stops = STOPS.map(
+    (s) => `rgb(${s.c[0]}, ${s.c[1]}, ${s.c[2]}) ${Math.round(s.t * 100)}%`,
+  )
+  return `linear-gradient(${direction}, ${stops.join(', ')})`
+}
 
 function clamp01(n) {
   if (Number.isNaN(n) || n == null) return 0

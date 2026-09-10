@@ -6,12 +6,20 @@ import {
   useState,
 } from 'react'
 import { pb } from '../lib/pocketbase'
+import { setMoodGradient } from '../lib/mood'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(pb.authStore.record)
   const [ready, setReady] = useState(false)
+
+  // Gradiente del mood personalizzato (campo `moodGradient` sull'utente):
+  // applicato in fase di render — non in un effect — così moodColor() usa i
+  // colori scelti già al primo paint, senza flash del gradiente predefinito.
+  // È una scrittura idempotente su una cache di modulo (src/lib/mood.js), e
+  // `user` cambia via authStore.onChange, quindi ogni modifica si propaga.
+  setMoodGradient(user?.moodGradient)
 
   useEffect(() => {
     const unsubscribe = pb.authStore.onChange((_token, record) => {

@@ -26,7 +26,11 @@ function customMarkerIcon(L) {
 // punto qualsiasi sulla mappa. Il punto viene selezionato SEMPRE, anche se
 // OpenStreetMap non riconosce un indirizzo lì (es. un punto in mezzo alla
 // natura): in quel caso il nome va scritto a mano.
-export default function PlacePickerSheet({ open, onClose, onAdd }) {
+// `initial` (opzionale): { name, lat, lon } di un luogo da MODIFICARE. Se
+// presente, la mappa parte centrata lì col segnalino già posato e il nome
+// precompilato, il titolo/azione diventano "Modifica luogo", e il luogo NON
+// viene ri-salvato tra quelli curati (lo aggiorna chi chiama).
+export default function PlacePickerSheet({ open, onClose, onAdd, initial = null }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -39,6 +43,10 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
   const mapElRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
+  // `initial` serve solo al momento della creazione della mappa (effect su
+  // [open]); via ref per non entrare tra le dipendenze dell'effect.
+  const initialRef = useRef(initial)
+  initialRef.current = initial
 
   // Luoghi salvati (Impostazioni → Luoghi, o aggiunti in precedenza da una
   // nota), per riproporli invece di dover ricercare/ridigitare da capo un
@@ -66,6 +74,17 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           attribution: '© OpenStreetMap',
           maxZoom: 19,
         }).addTo(map)
+        // Modifica di un luogo esistente: parti da lì col segnalino posato.
+        const init = initialRef.current
+        if (init && init.lat != null && init.lon != null) {
+          placeMarker(map, L, {
+            id: 'initial',
+            name: init.name || '',
+            shortName: init.name || '',
+            lat: init.lat,
+            lon: init.lon,
+          })
+        }
         map.on('click', async (e) => {
           const { lat, lng } = e.latlng
           setLocating(true)
@@ -147,9 +166,10 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
     if (!selected || !nameOverride.trim()) return
     const place = { name: nameOverride.trim(), lat: selected.lat, lon: selected.lon }
     onAdd(place)
-    // Lo salva anche tra i luoghi curati (Impostazioni → Luoghi), se non
-    // c'è già uno con lo stesso nome — non blocca la chiusura del dialog.
-    upsertPlaceIfMissing(place, savedPlaces).catch(() => {})
+    // In creazione lo salva anche tra i luoghi curati (se non ce n'è già uno
+    // con lo stesso nome). In modifica no: lo aggiorna chi ha aperto il
+    // dialog, che sa quale record toccare e come propagare alle note.
+    if (!initial) upsertPlaceIfMissing(place, savedPlaces).catch(() => {})
     onClose()
   }
 
@@ -163,7 +183,9 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h3 className="text-lg font-extrabold text-ink">Aggiungi luogo</h3>
+          <h3 className="text-lg font-extrabold text-ink">
+            {initial ? 'Modifica luogo' : 'Aggiungi luogo'}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -193,7 +215,7 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
           </button>
         </div>
 
-        {!results.length && savedPlaces.length > 0 && (
+        {!initial && !results.length && savedPlaces.length > 0 && (
           <div className="border-b border-line px-5 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Luoghi salvati
@@ -272,7 +294,9 @@ export default function PlacePickerSheet({ open, onClose, onAdd }) {
             className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95 disabled:opacity-50"
           >
             {selected
-              ? `Aggiungi "${nameOverride.trim() || '…'}"`
+              ? initial
+                ? `Salva "${nameOverride.trim() || '…'}"`
+                : `Aggiungi "${nameOverride.trim() || '…'}"`
               : 'Cerca o tocca un punto sulla mappa'}
           </button>
         </div>
