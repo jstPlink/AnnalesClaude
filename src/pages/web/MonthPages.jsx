@@ -289,7 +289,10 @@ export default function MonthPages({
               </span>
 
               {pg.titles.length > 0 && (
-                <span className="mp-notes">
+                <span
+                  className="mp-notes"
+                  style={{ '--mp-mood': moodColor(pg.mood) }}
+                >
                   {pg.titles.map((t) => (
                     <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
                       {t.text}

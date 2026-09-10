@@ -1006,9 +1006,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 128px;
+  min-height: 110px;
   margin-top: -10px;
-  padding: 10px 24px 18px 58px;
+  /* giorno e cartoncino attaccati in alto a sinistra */
+  padding: 4px 24px 16px 58px;
   font: inherit;
   text-align: left;
   appearance: none;
@@ -1068,9 +1069,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   z-index: 20;
   box-shadow: 0 -6px 14px -8px rgba(20, 12, 4, 0.26),
     0 18px 30px -14px rgba(20, 12, 4, 0.44);
-}
-.mp-page.is-today::before {
-  border-color: rgba(198, 70, 55, 0.5);
 }
 .mp-today-tape {
   position: absolute;
@@ -1134,21 +1132,22 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   opacity: 1;
 }
 /* il contenuto (giorno + cartoncino + colonne) scorre e detta l'altezza;
-   questi sono pavimenti per contenere le polaroid (assolute) e dare respiro */
+   questi sono pavimenti bassi per contenere le polaroid (assolute) e dare un
+   filo di respiro — così il contenuto resta attaccato in alto senza vuoti. */
 .mp-page {
-  min-height: 148px;
+  min-height: 112px;
 }
 .mp-page.has-tapes {
-  min-height: 184px;
+  min-height: 150px;
 }
 .mp-page.has-photo {
-  min-height: 200px;
+  min-height: 190px;
 }
 .mp-page.has-photo.two-photo {
-  min-height: 212px;
+  min-height: 200px;
 }
 .mp-page.has-media {
-  min-height: 236px;
+  min-height: 172px;
 }
 
 /* imperfezioni casuali della pagina (classe assegnata da MonthPages.jsx) */
@@ -1309,6 +1308,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-head {
   position: relative;
   z-index: 2;
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -1350,8 +1350,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   position: relative;
   z-index: 1;
   width: 33%;
-  margin: 0.15rem 0 0;
-  padding: 12px 18px 22px 16px;
+  margin: 0.2rem 0 0;
+  padding: 11px 18px 20px 16px;
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -1384,6 +1384,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   );
   filter: url(#annales-paper) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.42));
 }
+/* Il colore del cartoncino arriva da MonthPages.jsx come --mp-mood inline
+   (moodColor(), che riflette i colori del mood personalizzati in Impostazioni);
+   questi sono solo un fallback neutro. */
 .mp-page.mood-green .mp-notes {
   --mp-mood: #a6d06e;
 }

@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.23.0',
+    date: '2026-09-11 00:00',
+    changes: [
+      'Skin "Pagine" (vista mese web): il cartoncino della nota segue i colori del mood personalizzati in Impostazioni (prima restava sui colori predefiniti).',
+      'Skin "Pagine": giorno e cartoncino ancorati saldamente in alto a sinistra, senza più il vuoto sotto che li faceva sembrare centrati; tolto il segno rosso ai lati del giorno corrente (basta il nastro "oggi").',
+      'Importa "Da foglio (testo)": ogni passata elabora al massimo 10 giorni per non saturare Gemini; i restanti si lavorano rilanciando con lo stesso file (i giorni già salvati vengono saltati).',
+    ],
+  },
+  {
     version: '0.22.0',
     date: '2026-09-10 23:25',
     changes: [

@@ -44,6 +44,10 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x))
 // Tetto ai riavvii automatici dopo un 429 di Gemini durante la segmentazione
 // di un mese: oltre questo si ferma e si offre "Riprendi".
 const RETRY_CAP = 12
+// Massimo numero di giorni segmentati in una singola passata, per non
+// saturare Gemini: i giorni oltre questo limite si lavorano rilanciando con
+// lo stesso file (il filtro anti-duplicato salta quelli già salvati).
+const BATCH_DAYS = 10
 
 // Costruisce la bozza modificabile abbinando i nomi estratti da Gemini alle
 // persone/tag già in elenco (match sul nome, case-insensitive); quelli senza
@@ -138,6 +142,7 @@ export default function WebImport() {
   const [segProgress, setSegProgress] = useState('')
   const [resumeFrom, setResumeFrom] = useState(null) // indice giorno da cui riprendere
   const [preSkipped, setPreSkipped] = useState(0) // giorni saltati perché già importati
+  const [cappedDays, setCappedDays] = useState(0) // giorni oltre BATCH_DAYS rinviati
   const [partialNotes, setPartialNotes] = useState([]) // note già segmentate prima di un errore
   const [dayText, setDayText] = useState({}) // { 'YYYY-MM-DD': testo grezzo del giorno }
 
@@ -352,7 +357,18 @@ export default function WebImport() {
       )
       return
     }
-    if (!resumeFrom) setPreSkipped(skipped)
+
+    // Limita a BATCH_DAYS giorni per passata: i restanti si lavorano
+    // rilanciando con lo stesso file (verranno saltati quelli già salvati).
+    let overflow = 0
+    if (days.length > BATCH_DAYS) {
+      overflow = days.length - BATCH_DAYS
+      days = days.slice(0, BATCH_DAYS)
+    }
+    if (!resumeFrom) {
+      setPreSkipped(skipped)
+      setCappedDays(overflow)
+    }
 
     setSegmenting(true)
     setError('')
@@ -422,6 +438,7 @@ export default function WebImport() {
       setResults([])
       setResumeFrom(null)
       setPartialNotes([])
+      setCappedDays(0)
       setError('')
     }
     reader.readAsText(file)
@@ -905,6 +922,12 @@ export default function WebImport() {
               {mode === 'text' && preSkipped > 0 && (
                 <span className="ml-2 font-normal">
                   · {preSkipped} giorni già importati, saltati
+                </span>
+              )}
+              {mode === 'text' && cappedDays > 0 && (
+                <span className="ml-2 font-normal">
+                  · altri {cappedDays} giorni: salva questi e rilancia con lo
+                  stesso file
                 </span>
               )}
             </span>
@@ -1408,6 +1431,8 @@ export default function WebImport() {
             {results.filter((r) => r.status === 'skipped').length} saltate.
             {preSkipped > 0 &&
               ` ${preSkipped} giorni non riproposti perché già presenti nel diario.`}
+            {cappedDays > 0 &&
+              ` Altri ${cappedDays} giorni non ancora lavorati: rilancia con lo stesso file per continuare.`}
           </p>
           <ul className="divide-y divide-line-soft border-y border-line-soft text-sm">
             {results.map((r, i) => (
