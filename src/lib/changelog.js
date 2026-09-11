@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.27.0',
+    date: '2026-09-11 08:37',
+    changes: [
+      'Skin "Pagine" (vista mese mobile): il cartoncino dei titoli è spostato verso l\'estremità sinistra del foglio (esce anche un filo dalla pagina) per recuperare spazio, e sta sulla stessa riga di targhette e foto invece che sopra.',
+      'Vista mese mobile: le targhette di luogo e canzone diventano semplici contatori (icona + numero), come quella delle persone, invece di mostrare nome/titolo — occupavano troppo spazio; impilate in verticale fra cartoncino e foto. Luogo in rosso, canzone in verde.',
+    ],
+  },
+  {
     version: '0.26.0',
     date: '2026-09-11 08:18',
     changes: [

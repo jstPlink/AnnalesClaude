@@ -17,18 +17,17 @@ import {
 } from '../../lib/pagesSkin'
 
 // ---- Vista MOBILE: la colonna di persone/luogo/musica/foto della vista
-// desktop non ci sta; sul telefono diventano targhette compatte sotto il
-// cartoncino (persone = icona + numero, luogo/canzone = icona + testo, a
-// carosello se ce n'è più di uno) e UNA sola "diapositiva" per le foto,
-// anche lei a carosello se ce n'è più di una — niente due polaroid
-// sovrapposte: meno realistico ma molto più leggibile in poco spazio. ----
-function MpMiniBadge({ kind, icon, items }) {
-  const idx = useCarouselIndex(items.length, 2600)
-  if (!items.length) return null
+// desktop non ci sta; sul telefono diventano targhette-contatore compatte
+// (icona + numero: persone, luoghi distinti, canzoni distinte) fra
+// cartoncino e foto, e UNA sola "diapositiva" per le foto, a carosello se
+// ce n'è più di una — niente due polaroid sovrapposte: meno realistico ma
+// molto più leggibile in poco spazio. ----
+function MpMiniBadge({ kind, icon, count }) {
+  if (!count) return null
   return (
     <span className={`mp-mini mp-mini--${kind}`} aria-hidden="true">
       <Icon name={icon} size={13} strokeWidth={2.6} />
-      <span className="mp-mini-text">{items[idx]}</span>
+      <span className="mp-mini-text">{count}</span>
     </span>
   )
 }
@@ -275,18 +274,44 @@ export default function MonthPages({
                 </span>
               </span>
 
-              {pg.titles.length > 0 && (
-                <span
-                  className="mp-notes"
-                  style={{ '--mp-mood': moodColor(pg.mood) }}
-                >
-                  {pg.titles.map((t) => (
-                    <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
-                      {t.text}
-                    </span>
-                  ))}
-                </span>
-              )}
+              {/* Cartoncino + (su mobile) targhette e diapositiva foto: un
+                  unico contenitore così la vista mobile può affiancarli in
+                  riga (cartoncino spostato a sinistra, targhette e foto nello
+                  spazio libero). display:contents da desktop: non cambia
+                  nulla, la colonna resta quella di sempre. */}
+              <span className="mp-notes-row">
+                {pg.titles.length > 0 && (
+                  <span
+                    className="mp-notes"
+                    style={{ '--mp-mood': moodColor(pg.mood) }}
+                  >
+                    {pg.titles.map((t) => (
+                      <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
+                        {t.text}
+                      </span>
+                    ))}
+                  </span>
+                )}
+
+                {/* Vista mobile: targhette-contatore compatte impilate in
+                    verticale fra cartoncino e foto (icona + numero: persone,
+                    luoghi distinti, canzoni distinte). Nascoste da desktop. */}
+                {(pg.people.length > 0 || pg.places.length > 0 || pg.songs.length > 0) && (
+                  <span className="mp-side-mobile">
+                    <MpMiniBadge kind="people" icon="user" count={pg.people.length} />
+                    <MpMiniBadge kind="place" icon="map-pin" count={pg.places.length} />
+                    <MpMiniBadge kind="song" icon="cassette" count={pg.songs.length} />
+                  </span>
+                )}
+
+                {/* Vista mobile: UNA sola "diapositiva" per le foto, a
+                    carosello se ce n'è più di una (niente due polaroid
+                    sovrapposte: poco realistico ma molto più leggibile). */}
+                <MpPolaMobile
+                  imgs={pg.imgsCarousel}
+                  rotation={`${tilt(`${pg.key}pm`, 4).toFixed(2)}deg`}
+                />
+              </span>
 
               {pg.scribbles.length > 0 && (
                 <span className="mp-scribbles" aria-hidden="true">
@@ -390,22 +415,6 @@ export default function MonthPages({
                 </span>
               )}
 
-              {/* Vista mobile: targhette compatte al posto della colonna
-                  (persone = icona + numero; luogo/canzone = icona + testo,
-                  a carosello se ce n'è più d'uno). Nascoste da desktop. */}
-              {(pg.people.length > 0 || pg.places.length > 0 || pg.songs.length > 0) && (
-                <span className="mp-side-mobile">
-                  {pg.people.length > 0 && (
-                    <span className="mp-mini mp-mini--people" aria-hidden="true">
-                      <Icon name="user" size={13} strokeWidth={2.6} />
-                      <span className="mp-mini-text">{pg.people.length}</span>
-                    </span>
-                  )}
-                  <MpMiniBadge kind="place" icon="map-pin" items={pg.places} />
-                  <MpMiniBadge kind="song" icon="cassette" items={pg.songs} />
-                </span>
-              )}
-
               {pg.imgs.length > 0 && (
                 <span
                   className={'mp-polas' + (pg.imgs.length > 1 ? ' two' : '')}
@@ -428,13 +437,6 @@ export default function MonthPages({
                   ))}
                 </span>
               )}
-              {/* Vista mobile: UNA sola "diapositiva" per le foto, a
-                  carosello se ce n'è più di una (niente due polaroid
-                  sovrapposte: poco realistico ma molto più leggibile). */}
-              <MpPolaMobile
-                imgs={pg.imgsCarousel}
-                rotation={`${tilt(`${pg.key}pm`, 4).toFixed(2)}deg`}
-              />
             </button>
           )
         })}

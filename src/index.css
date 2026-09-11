@@ -1906,23 +1906,30 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
 }
 
-/* Targhette mobili (persone/luogo/canzone) e diapositiva foto: esistono solo
-   per il telefono, nascoste da desktop qui fuori dalla media query. */
+/* Riga cartoncino+targhette+foto: su desktop non deve cambiare nulla del
+   layout esistente (display:contents la rende "invisibile" ai fratelli), su
+   telefono diventa una riga flessibile — vedi @media qui sotto. Le targhette
+   mobili e la diapositiva foto esistono solo per il telefono. */
+.mp-notes-row {
+  display: contents;
+}
 .mp-side-mobile,
 .mp-pola-mobile {
   display: none;
 }
 
 /* ---- Telefono (PhoneShell ~440px): la skin "pagine" passa a un impaginato
-   VERTICALE. Il cartoncino occupa quasi tutta la larghezza (fino
-   all'estremità sinistra utile della pagina); la colonna desktop
-   (avatar+nome, francobollo+mappa, dischetto CD) lascia il posto a targhette
-   compatte SOTTO il cartoncino — persone: icona + numero; luogo e canzone:
-   icona + testo, a carosello se ce n'è più d'uno (MpMiniBadge). Le foto,
-   invece di due polaroid affiancate, diventano UNA sola "diapositiva" in alto
-   a destra che scorre fra tutte con un carosello (MpPolaMobile) — meno
-   realistico ma molto più leggibile in poco spazio. Attivata anche dalla
-   vista mese mobile (src/pages/MonthView.jsx) quando "Vista mese" = Pagine. */
+   VERTICALE. Cartoncino, targhette e foto stanno sulla STESSA riga
+   (.mp-notes-row, flessibile): il cartoncino si spande a riempire lo spazio
+   libero ed è spostato verso l'estremità sinistra del foglio (esce anche
+   leggermente dalla pagina, recuperando spazio); nello spazio fra cartoncino
+   e foto ci sono le targhette compatte impilate in verticale — persone:
+   icona + numero; luogo (rossa) e canzone (verde): icona + testo, a
+   carosello se ce n'è più d'uno (MpMiniBadge). Le foto, invece di due
+   polaroid affiancate, diventano UNA sola "diapositiva" che scorre fra tutte
+   con un carosello (MpPolaMobile) — meno realistico ma molto più leggibile
+   in poco spazio. Attivata anche dalla vista mese mobile
+   (src/pages/MonthView.jsx) quando "Vista mese" = Pagine. */
 @media (max-width: 480px) {
   .month-pages {
     width: 100%;
@@ -1938,11 +1945,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .mp-page.has-tapes,
   .mp-page.has-media {
-    min-height: 76px;
+    min-height: 86px;
   }
   .mp-page.has-photo,
   .mp-page.has-photo.two-photo {
-    min-height: 108px;
+    min-height: 118px;
   }
   .mp-tab {
     left: -9px;
@@ -1959,17 +1966,22 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-wd {
     font-size: 1.16rem;
   }
-  /* cartoncino esteso fino all'estremità sinistra utile della pagina: tutta
-     la larghezza, meno stretto solo se una foto sporge in alto a destra */
-  .mp-notes {
-    width: 100%;
-    max-width: 100%;
+  /* cartoncino, targhette e foto affiancati sulla stessa riga */
+  .mp-notes-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     margin-top: 0.3rem;
-    padding: 9px 14px 15px 13px;
   }
-  .mp-page.has-photo .mp-notes {
+  /* cartoncino spostato verso l'estremità sinistra del foglio (esce anche
+     un filo dalla pagina) per recuperare spazio; riempie il resto della riga */
+  .mp-notes {
+    flex: 1 1 auto;
+    min-width: 0;
     width: auto;
-    max-width: calc(100% - 84px);
+    max-width: none;
+    margin: 0 0 0 -18px;
+    padding: 9px 14px 15px 13px;
   }
   .mp-n[data-hand='a'] {
     font-size: 1.14rem;
@@ -1993,27 +2005,24 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-polas {
     display: none;
   }
+  /* targhette impilate in verticale, nello spazio fra cartoncino e foto */
   .mp-side-mobile {
     display: flex;
-    position: relative;
-    z-index: 1;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    margin: 9px 0 2px;
+    gap: 6px;
+    padding-top: 2px;
   }
-  .mp-page.has-photo .mp-side-mobile {
-    padding-right: 84px;
-  }
+  /* semplici contatori (icona + numero), non più testo: bastano pochi px */
   .mp-mini {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    max-width: 46%;
-    padding: 5px 11px 5px 8px;
+    gap: 4px;
+    padding: 4px 8px 4px 6px;
     font-family: 'Annales Hand', 'Kalam', sans-serif;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1;
     color: var(--mp-ink-b);
     background: rgba(228, 216, 180, 0.62);
@@ -2022,27 +2031,35 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     box-shadow: 0 2px 4px rgba(20, 12, 4, 0.18);
     filter: url(#annales-wob);
   }
+  /* luogo = rossa, canzone = verde (le persone restano nel tono carta) */
+  .mp-mini--place {
+    color: #5c2a20;
+    background: color-mix(in srgb, #c64637 26%, rgba(228, 216, 180, 0.62));
+    border-left-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
+    border-right-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
+  }
+  .mp-mini--song {
+    color: #34481c;
+    background: color-mix(in srgb, #7fa24e 26%, rgba(228, 216, 180, 0.62));
+    border-left-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
+    border-right-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
+  }
   .mp-mini svg {
     flex: none;
-    opacity: 0.75;
+    opacity: 0.8;
   }
   .mp-mini-text {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .mp-mini--people .mp-mini-text {
     font-variant-numeric: tabular-nums;
   }
-  /* foto: UNA sola diapositiva in alto a destra (carosello se più di una) */
+  /* foto: UNA sola diapositiva, nello spazio dopo le targhette (carosello se
+     più di una) */
   .mp-pola-mobile {
     display: block;
-    position: absolute;
-    right: -6px;
-    top: 12px;
+    position: relative;
+    flex: 0 0 auto;
     z-index: 3;
-    width: 78px;
-    padding: 6px 6px 18px;
+    width: 70px;
+    padding: 6px 6px 16px;
     background: #f7f1e3;
     box-shadow: 0 6px 12px rgba(20, 12, 4, 0.3);
     transform: rotate(var(--pr, 3deg));
@@ -2052,8 +2069,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     position: absolute;
     left: 50%;
     top: -9px;
-    width: 46px;
-    height: 16px;
+    width: 42px;
+    height: 15px;
     transform: translateX(-50%) rotate(-4deg);
     background: rgba(236, 226, 194, 0.86);
     border: 1px solid rgba(176, 158, 112, 0.4);
@@ -2073,7 +2090,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 6px;
+    bottom: 5px;
     z-index: 1;
     display: flex;
     justify-content: center;
