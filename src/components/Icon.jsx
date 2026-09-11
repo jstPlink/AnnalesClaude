@@ -105,6 +105,15 @@ const PATHS = {
       <circle cx="12" cy="10" r="3" />
     </>
   ),
+  cassette: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <circle cx="8" cy="12" r="2.3" />
+      <circle cx="16" cy="12" r="2.3" />
+      <path d="M9.8 12h4.4" />
+      <path d="M6 16h12" />
+    </>
+  ),
   sparkles: (
     <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
   ),

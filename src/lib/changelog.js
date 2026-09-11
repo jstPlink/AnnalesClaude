@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.26.0',
+    date: '2026-09-11 08:18',
+    changes: [
+      'Skin "Pagine" (vista mese mobile): il cartoncino dei titoli si estende a tutta larghezza invece di fermarsi all\'80%/60%.',
+      'Vista mese mobile: persone, luogo e canzone diventano targhette compatte con icona (persone: numero; luogo: nome col segnaposto; canzone: titolo con una musicassetta), al posto di avatar, francobollo e dischetto — se un giorno ha più luoghi o canzoni, il nome scorre a turno nella stessa targhetta.',
+      'Vista mese mobile: le foto diventano sempre una sola diapositiva (prima due polaroid affiancate); con più foto scorrono a carosello nella stessa, con puntini che indicano quante sono.',
+    ],
+  },
+  {
     version: '0.25.0',
     date: '2026-09-11 08:02',
     changes: [

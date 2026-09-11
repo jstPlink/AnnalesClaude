@@ -3,7 +3,27 @@
 // nota/chiave -> sempre lo stesso risultato, così l'aspetto non "salta" tra
 // un render e l'altro.
 
+import { useEffect, useState } from 'react'
+
 const HANDS = ['a', 'b', 'c', 'd']
+
+// Indice che avanza da solo ogni `intervalMs`, per far scorrere più
+// foto/luoghi/canzoni nello stesso piccolo spazio (i badge mobili della
+// skin "Pagine": una sola "diapositiva" per foto, targhetta del luogo,
+// musicassetta). Con 0 o 1 elemento non fa nulla (niente timer sprecati).
+export function useCarouselIndex(length, intervalMs = 2800) {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (length <= 1) return
+    const id = setInterval(() => {
+      setI((v) => (v + 1) % length)
+    }, intervalMs)
+    return () => clearInterval(id)
+  }, [length, intervalMs])
+  // Modulo qui (non nell'effetto): se `length` si riduce fra un render e
+  // l'altro, l'indice resta comunque dentro i limiti senza uno setState in più.
+  return length > 0 ? i % length : 0
+}
 
 // Hash stabile di una stringa (mano, inclinazione, tinta... tutto ne deriva).
 export function hash(str) {
