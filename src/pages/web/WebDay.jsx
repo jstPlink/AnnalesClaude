@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import Icon from '../../components/Icon'
 import MarqueeText from '../../components/MarqueeText'
 import ImageCarousel from '../../components/ImageCarousel'
+import DayPages from './DayPages'
 import {
   listNotesInRange,
   describeError,
   plainText,
 } from '../../lib/notes'
+import { listPeople } from '../../lib/people'
 import { moodColor, moodTextColor } from '../../lib/mood'
 import { fileUrl } from '../../lib/pocketbase'
-import { getSkinDay, setSkinDay } from '../../lib/prefs'
+import { SKIN_DAYS, SKIN_DAY_LABELS, getSkinDay, setSkinDay } from '../../lib/prefs'
 import {
   addDaysKey,
   dayRange,
@@ -87,15 +90,27 @@ function withLanes(items) {
   return placed.map((it) => ({ ...it, lanes: laneEnd.length }))
 }
 
+// Ciclo dei 3 stili: Normale -> Disegnata -> Pagine -> Normale.
+function nextSkin(skin) {
+  const i = SKIN_DAYS.indexOf(skin)
+  return SKIN_DAYS[(i + 1) % SKIN_DAYS.length]
+}
+
 export default function WebDay() {
   const { date } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [notes, setNotes] = useState([])
+  const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const trackRef = useRef(null)
   const [trackH, setTrackH] = useState(0)
   const [skin, setSkin] = useState(getSkinDay())
+  const peopleById = useMemo(
+    () => new Map(people.map((p) => [p.id, p])),
+    [people],
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -115,6 +130,14 @@ export default function WebDay() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Persone (per le targhette coi nomi nella skin "Pagine"). Caricato una
+  // volta; se fallisce, la skin resta senza targhette.
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch(() => setPeople([]))
+  }, [])
 
   const go = useCallback(
     (delta) => navigate(`/day/${addDaysKey(date, delta)}`),
@@ -197,19 +220,19 @@ export default function WebDay() {
             <button
               type="button"
               onClick={() => {
-                const next = skin === 'sketch' ? 'plain' : 'sketch'
+                const next = nextSkin(skin)
                 setSkin(next)
                 setSkinDay(next)
               }}
-              aria-pressed={skin === 'sketch'}
-              title={
-                skin === 'sketch' ? 'Stile normale' : 'Stile diario disegnato'
-              }
+              aria-pressed={skin !== 'plain'}
+              title={`Stile: ${SKIN_DAY_LABELS[skin]} (tocca per cambiare)`}
               className={
                 'flex h-9 w-9 items-center justify-center rounded-full border transition ' +
                 (skin === 'sketch'
                   ? 'border-delete-dark bg-delete/15 text-delete-dark'
-                  : 'border-line text-ink-soft hover:bg-tag hover:text-ink')
+                  : skin === 'pages'
+                    ? 'border-ink bg-ink/10 text-ink'
+                    : 'border-line text-ink-soft hover:bg-tag hover:text-ink')
               }
             >
               <Icon name="edit" size={17} />
@@ -231,6 +254,35 @@ export default function WebDay() {
         </p>
       )}
 
+      {skin === 'pages' ? (
+        // Skin "Pagine": il foglio si scorre come una vera pagina di diario,
+        // non si schiaccia in una schermata (a differenza degli altri stili).
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-10 pr-1">
+          {loading ? (
+            <p className="p-6 text-center text-ink-soft">Carico…</p>
+          ) : !notes.length ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
+              <button
+                type="button"
+                onClick={() => navigate(`/note/new?date=${date}`)}
+                className="rounded-full border border-line bg-tag px-5 py-2.5 text-sm font-bold text-ink transition hover:bg-cream"
+              >
+                Crea la prima nota
+              </button>
+            </div>
+          ) : (
+            <DayPages
+              date={date}
+              notes={notes}
+              onNavigate={navigate}
+              peopleById={peopleById}
+              immichUrl={user?.immichUrl?.trim()}
+              immichApiKey={user?.immichApiKey?.trim()}
+            />
+          )}
+        </div>
+      ) : (
       <div className="day-surface min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
         {loading ? (
           <p className="flex h-full items-center justify-center text-ink-soft">Carico…</p>
@@ -360,6 +412,7 @@ export default function WebDay() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

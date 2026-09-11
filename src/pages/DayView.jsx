@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
@@ -7,10 +8,12 @@ import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import ImageCarousel from '../components/ImageCarousel'
+import DayPages from './web/DayPages'
 import { listNotesInRange, describeError, plainText } from '../lib/notes'
+import { listPeople } from '../lib/people'
 import { fileUrl } from '../lib/pocketbase'
 import { moodColor, moodTextColor } from '../lib/mood'
-import { getSkinDay, setSkinDay } from '../lib/prefs'
+import { SKIN_DAYS, SKIN_DAY_LABELS, getSkinDay, setSkinDay } from '../lib/prefs'
 import {
   addDaysKey,
   dayMonthLabel,
@@ -82,15 +85,27 @@ function withLanes(items) {
   return placed.map((it) => ({ ...it, lanes: laneEnd.length }))
 }
 
+// Ciclo dei 3 stili: Normale -> Disegnata -> Pagine -> Normale.
+function nextSkin(skin) {
+  const i = SKIN_DAYS.indexOf(skin)
+  return SKIN_DAYS[(i + 1) % SKIN_DAYS.length]
+}
+
 export default function DayView() {
   const { date } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [notes, setNotes] = useState([])
+  const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const trackRef = useRef(null)
   const [trackH, setTrackH] = useState(0)
   const [skin, setSkin] = useState(getSkinDay())
+  const peopleById = useMemo(
+    () => new Map(people.map((p) => [p.id, p])),
+    [people],
+  )
 
   const parsed = parseWall(date)
   const year = parsed?.y ?? new Date().getFullYear()
@@ -113,6 +128,14 @@ export default function DayView() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Persone (per le targhette coi nomi nella skin "Pagine"). Caricato una
+  // volta; se fallisce, la skin resta senza targhette.
+  useEffect(() => {
+    listPeople()
+      .then(setPeople)
+      .catch(() => setPeople([]))
+  }, [])
 
   // Navigazione tra giorni: swipe orizzontale (mobile) o frecce ← →.
   const go = useCallback(
@@ -182,16 +205,22 @@ export default function DayView() {
           <div className="flex justify-end">
             <CircleButton
               onClick={() => {
-                const next = skin === 'sketch' ? 'plain' : 'sketch'
+                const next = nextSkin(skin)
                 setSkin(next)
                 setSkinDay(next)
               }}
-              title={skin === 'sketch' ? 'Stile normale' : 'Stile disegnato'}
+              title={`Stile: ${SKIN_DAY_LABELS[skin]} (tocca per cambiare)`}
             >
               <Icon
                 name="edit"
                 size={20}
-                className={skin === 'sketch' ? 'text-delete-dark' : ''}
+                className={
+                  skin === 'sketch'
+                    ? 'text-delete-dark'
+                    : skin === 'pages'
+                      ? 'text-ink'
+                      : ''
+                }
               />
             </CircleButton>
           </div>
@@ -200,7 +229,12 @@ export default function DayView() {
 
       <main
         key={date}
-        className="day-surface anim-page relative flex-1 overflow-hidden bg-panel px-3 py-3"
+        className={
+          'day-surface anim-page relative flex-1 bg-panel ' +
+          (skin === 'pages'
+            ? 'overflow-y-auto overflow-x-hidden px-2 py-3'
+            : 'overflow-hidden px-3 py-3')
+        }
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -211,6 +245,25 @@ export default function DayView() {
           </p>
         )}
 
+        {skin === 'pages' ? (
+          // Skin "Pagine": il foglio si scorre come una vera pagina di
+          // diario, non si schiaccia in una schermata (a differenza degli
+          // altri stili).
+          loading ? (
+            <p className="p-6 text-center text-ink-soft">Carico…</p>
+          ) : !notes.length ? (
+            <p className="pt-10 text-center text-ink-soft">Nessuna nota</p>
+          ) : (
+            <DayPages
+              date={date}
+              notes={notes}
+              onNavigate={navigate}
+              peopleById={peopleById}
+              immichUrl={user?.immichUrl?.trim()}
+              immichApiKey={user?.immichApiKey?.trim()}
+            />
+          )
+        ) : (
         <div ref={trackRef} className="relative h-full w-full">
           {/* Barra oraria: una riga per ogni ora, estesa da qui fino al
               bordo opposto dello schermo (dietro alle note, quando ce ne
@@ -333,6 +386,7 @@ export default function DayView() {
               })}
           </div>
         </div>
+        )}
       </main>
 
       <Footer

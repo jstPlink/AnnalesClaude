@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.25.0',
+    date: '2026-09-11 08:02',
+    changes: [
+      'Skin "Pagine" anche per la vista giorno (web e telefono): il giorno diventa un foglio di diario con una timeline 24h a sinistra (l\'altezza del blocco segue la durata della nota) e le note come cartoncini strappati del colore del mood, titolo evidenziato in nero; a destra persone, luogo, canzone e foto come nella vista mese.',
+      'La skin "Pagine" per la vista giorno scorre come una vera pagina, invece di schiacciarsi in una schermata come "Normale"/"Disegnata".',
+      'Aspetto → Vista giorno: il pulsante dello stile ora cicla tra Normale, Disegnata e Pagine.',
+    ],
+  },
+  {
     version: '0.24.0',
     date: '2026-09-11 00:17',
     changes: [

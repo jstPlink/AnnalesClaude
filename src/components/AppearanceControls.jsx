@@ -266,10 +266,11 @@ export default function AppearanceControls() {
           }}
         />
         <p className="text-xs text-ink-soft">
-          Stili grafici alternativi per una singola vista. “Disegnata” trasforma
-          la vista giorno in un diario tracciato a mano; per il mese “Pagine” lo
-          rende come pagine di diario impilate (web e telefono) e “Bacheca” come
-          un collage (solo da web).
+          Stili grafici alternativi per una singola vista. Per il giorno,
+          “Disegnata” lo trasforma in un diario tracciato a mano e “Pagine” in
+          un foglio con le note come cartoncini lungo la timeline; per il mese
+          “Pagine” lo rende come pagine di diario impilate e “Bacheca” come un
+          collage (solo da web). Web e telefono, tranne dove indicato.
         </p>
       </div>
 

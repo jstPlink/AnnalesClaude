@@ -1,0 +1,280 @@
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { fileUrl } from '../../lib/pocketbase'
+import { plainText, parsePlace } from '../../lib/notes'
+import { MONTHS_IT, durationMinutes, parseWall, weekdayLong } from '../../lib/dates'
+import PersonAvatar from '../../components/PersonAvatar'
+import { hash, handFor, tilt, osmTileFor, moodKind, tapeTint } from '../../lib/pagesSkin'
+
+const DAY_MIN = 24 * 60
+// Altezza dell'intera giornata (24h): un valore FISSO, non legato
+// all'altezza dello schermo. A differenza dello stile "Normale"/"Disegnata"
+// (che comprimono tutto in una schermata), qui il foglio si comporta come un
+// vero foglio di carta: si scorre, non si schiaccia.
+const TRACK_H = 1240
+const MIN_BLOCK_H = 30
+const RAIL_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24]
+const TICK_HOURS = [0, 6, 12, 18, 24]
+
+function startMinutesOf(value) {
+  const p = parseWall(value)
+  return p ? p.h * 60 + p.mi : 0
+}
+
+// Larghezza casuale del cartoncino, stabile per nota: ~38% ± 20% (32–45%).
+function cardWidthFor(id) {
+  const span = (hash(`${id}~cw`) % 1000) / 1000
+  return `${Math.round(32 + span * 13)}%`
+}
+
+// Contenuto della nota: mano casuale, sfumato verso il basso; se il testo non
+// ci sta nel cartoncino aggiunge "…" (misurato via ResizeObserver, non un
+// indovinello sulla lunghezza del testo).
+function DnBody({ text, hand }) {
+  const ref = useRef(null)
+  const [clamped, setClamped] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [text])
+  if (!text) return null
+  return (
+    <span
+      ref={ref}
+      className={'dn-body' + (clamped ? ' is-clamped' : '')}
+      data-hand={hand}
+    >
+      {text}
+    </span>
+  )
+}
+
+// Vista giorno "pagine" (skin `pages`, web + telefono): la giornata come un
+// unico foglio di diario con una timeline 24h compressa a sinistra (altezza
+// del blocco = durata della nota). Ogni nota è un cartoncino strappato del
+// colore del mood, titolo a "penna doppia" evidenziato in nero, contenuto in
+// una delle "mani" casuali; a destra le stesse informazioni della vista
+// mese (persone, luogo, canzone, foto). L'intestazione è un foglietto a
+// quadretti a parte, più scuro, sovrapposto in alto.
+export default function DayPages({
+  date,
+  notes,
+  onNavigate,
+  peopleById,
+  immichUrl,
+  immichApiKey,
+}) {
+  const items = useMemo(() => {
+    const list = notes.map((n) => {
+      const startMin = Math.max(0, Math.min(DAY_MIN, startMinutesOf(n.timeStart)))
+      const dur = durationMinutes(n.timeStart, n.timeEnd)
+      const endMin = Math.min(DAY_MIN, startMin + (dur || 0))
+
+      const people = (n.people || [])
+        .map((id) => peopleById?.get(id))
+        .filter(Boolean)
+
+      const pl = parsePlace(n.place)
+      const placeName = pl?.name?.trim() || ''
+      let placeMap = null
+      if (placeName) {
+        const lat = Number(pl.lat)
+        const lon = Number(pl.lon)
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          placeMap = osmTileFor(lat, lon, 14)
+        }
+      }
+
+      const song = (n.songs || [])[0] || null
+      const imgs = (n.images || []).slice(0, 2).map((fn) => ({
+        url: fileUrl(n, fn, { thumb: '400x400' }),
+      }))
+
+      return {
+        id: n.id,
+        startMin,
+        endMin,
+        title: n.title?.trim() || 'Senza titolo',
+        body: plainText(n.content),
+        hand: handFor(n.id),
+        kind: moodKind(n.mood),
+        cw: cardWidthFor(n.id),
+        cr: `${tilt(`${n.id}~cr`, 0.8).toFixed(2)}deg`,
+        people,
+        placeName,
+        placeMap,
+        song,
+        imgs,
+      }
+    })
+    list.sort((a, b) => a.startMin - b.startMin)
+    return list
+  }, [notes, peopleById])
+
+  // Decori di sfondo più fitti quanto più il giorno ha dati (note, persone,
+  // luoghi, canzoni, foto) — stesso unico asset "natura", solo ripetuto.
+  const deco = useMemo(() => {
+    const extras = items.reduce(
+      (sum, it) =>
+        sum + it.people.length + (it.placeName ? 1 : 0) + (it.song ? 1 : 0),
+      0,
+    )
+    return Math.min(2.1, 1 + items.length * 0.14 + extras * 0.05).toFixed(2)
+  }, [items])
+
+  const pxPerMin = TRACK_H / DAY_MIN
+  const p = parseWall(date)
+  const dayLabel = p ? `${weekdayLong(date)} ${p.d} ${MONTHS_IT[p.mo - 1].toLowerCase()}` : ''
+
+  return (
+    <div className="day-outer">
+      <div className="day-header">
+        <span className="day-wd">
+          <span className="hl" aria-hidden="true" />
+          {dayLabel}
+        </span>
+      </div>
+
+      <div className="day-sheet" style={{ '--deco': deco }}>
+        <div className="day-track" style={{ height: TRACK_H }}>
+          <div className="day-rail" aria-hidden="true">
+            {RAIL_HOURS.map((h) => (
+              <span
+                key={h}
+                className="hr"
+                style={{ top: Math.min(h * 60 * pxPerMin, TRACK_H) }}
+              >
+                {String(h % 24).padStart(2, '0')}.00
+              </span>
+            ))}
+            {TICK_HOURS.map((h) => (
+              <span
+                key={h}
+                className="tickline"
+                style={{ top: Math.min(h * 60 * pxPerMin, TRACK_H - 1) }}
+              />
+            ))}
+          </div>
+
+          {!items.length && (
+            <p className="dp-empty">Nessuna nota per questo giorno.</p>
+          )}
+
+          {items.map((it) => {
+            const top = it.startMin * pxPerMin
+            const rawH = (it.endMin - it.startMin) * pxPerMin
+            const h = Math.max(MIN_BLOCK_H, rawH)
+            const hasMedia = Boolean(it.placeName) || Boolean(it.song)
+            return (
+              <button
+                key={it.id}
+                type="button"
+                onClick={() => onNavigate(`/note/${it.id}`)}
+                className={'day-note' + (it.imgs.length > 0 ? ' has-photo' : '')}
+                style={{ top, height: h }}
+                aria-label={it.title}
+              >
+                <span
+                  className={'dn-card' + (it.kind ? ` mood-${it.kind}` : '')}
+                  style={{ '--cw': it.cw, '--cr': it.cr }}
+                >
+                  <span className="dn-title">
+                    <span className="hl" aria-hidden="true" />
+                    {it.title}
+                  </span>
+                  <DnBody text={it.body} hand={it.hand} />
+                </span>
+
+                {(it.people.length > 0 || hasMedia) && (
+                  <span className="dn-side" aria-hidden="true">
+                    {it.people.length > 0 && (
+                      <span className="dn-tapes">
+                        {it.people.map((person) => {
+                          const tint = tapeTint(person.id)
+                          return (
+                            <span
+                              key={person.id}
+                              className="dn-tape"
+                              style={{ '--tc': tint.edge }}
+                            >
+                              <PersonAvatar
+                                person={person}
+                                immichUrl={immichUrl}
+                                immichApiKey={immichApiKey}
+                                size={18}
+                              />
+                              <span className="dn-tape-name">{person.name}</span>
+                            </span>
+                          )
+                        })}
+                      </span>
+                    )}
+                    {hasMedia && (
+                      <span className="dn-media">
+                        {it.placeName && (
+                          <span className="dn-place">
+                            <span
+                              className={'dn-map' + (it.placeMap ? ' real' : '')}
+                              style={
+                                it.placeMap
+                                  ? {
+                                      '--map-url': `url(${it.placeMap.url})`,
+                                      '--map-pos': it.placeMap.pos,
+                                    }
+                                  : undefined
+                              }
+                            />
+                            <span className="dn-place-name">{it.placeName}</span>
+                          </span>
+                        )}
+                        {it.song && (
+                          <span className="dn-disc-wrap">
+                            <span
+                              className="dn-disc"
+                              style={
+                                it.song.thumbnailUrl
+                                  ? { '--cover': `url(${it.song.thumbnailUrl})` }
+                                  : undefined
+                              }
+                            />
+                            {(it.song.title || it.song.artist) && (
+                              <span className="dn-song">
+                                {it.song.title && <span className="t">{it.song.title}</span>}
+                                {it.song.artist && <span className="a">{it.song.artist}</span>}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                )}
+
+                {it.imgs.length > 0 && (
+                  <span
+                    className={'dn-polas' + (it.imgs.length > 1 ? ' two' : '')}
+                    aria-hidden="true"
+                  >
+                    {it.imgs.map((im, i) => (
+                      <span
+                        key={i}
+                        className="dn-pola"
+                        style={{ '--pr': `${tilt(`${it.id}p${i}`, 4).toFixed(2)}deg` }}
+                      >
+                        <span className="dn-ph" style={{ backgroundImage: `url(${im.url})` }} />
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
