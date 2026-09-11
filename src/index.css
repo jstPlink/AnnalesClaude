@@ -3505,3 +3505,385 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background: repeating-linear-gradient(90deg, #3a3226 0 2px, transparent 2px 5px);
   opacity: 0.5;
 }
+
+/* ===================== Impostazioni web: intestazioni di sezione a
+   quadretti (stesso motivo dell'intestazione a quadretti della vista
+   giorno), sotto-cartoncini per gruppo di parametri, tessera profilo. ===================== */
+
+.ws-section {
+  margin-top: 22px;
+}
+.ws-header {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px;
+  border-radius: 16px 16px 0 0;
+  background-color: var(--dp-header-bg);
+  background-image: repeating-linear-gradient(
+      90deg,
+      var(--dp-header-line) 0 1px,
+      transparent 1px 17px
+    ),
+    repeating-linear-gradient(0deg, var(--dp-header-line) 0 1px, transparent 1px 17px),
+    var(--dp-grain, none);
+  background-size: 17px 17px, 17px 17px, 150px 150px;
+  background-blend-mode: normal, normal, multiply;
+  border: 1px solid var(--dp-header-border);
+  border-bottom: none;
+  box-shadow: 0 5px 12px -6px rgba(20, 12, 4, 0.28);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.ws-header-danger {
+  background-color: color-mix(in srgb, var(--color-delete) 55%, var(--dp-header-bg) 45%);
+  border-color: var(--color-delete-dark);
+  cursor: default;
+}
+.ws-icon {
+  color: var(--color-ink);
+  opacity: 0.82;
+}
+.ws-header-danger .ws-icon {
+  color: var(--color-delete-dark);
+  opacity: 1;
+}
+.ws-htext {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ws-title {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+.ws-desc {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+.ws-chev {
+  color: var(--color-ink-soft);
+  transition: transform 0.15s ease;
+}
+.ws-chev-open {
+  transform: rotate(90deg);
+}
+.ws-card {
+  border: 1px solid var(--dp-header-border);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  background-color: var(--color-tag);
+  padding: 22px 24px 24px;
+  box-shadow: 0 10px 22px -14px rgba(20, 12, 4, 0.3);
+}
+
+/* Sotto-cartoncino: un contenitore per gruppo di parametri dentro una
+   sezione (es. "Tema", "Font dell'app", "Persone"...), con un bordo
+   colorato distintivo. */
+.ws-sub {
+  position: relative;
+  margin: 0 0 14px;
+  border-radius: 4px 12px 12px 4px;
+  border-left: 4px solid var(--sub-c, var(--color-line));
+  background-color: var(--color-cream);
+  box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.18);
+  overflow: hidden;
+}
+.ws-sub:last-child {
+  margin-bottom: 0;
+}
+.ws-sub-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--color-ink);
+}
+.ws-sub-icon {
+  color: var(--sub-c, var(--color-ink-soft));
+}
+.ws-sub-title {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.94rem;
+}
+.ws-sub-chev {
+  color: var(--color-ink-soft);
+  transition: transform 0.15s ease;
+}
+.ws-sub-chev-open {
+  transform: rotate(90deg);
+}
+.ws-sub-body {
+  padding: 0 16px 16px;
+}
+
+/* Tessera profilo in cima alle Impostazioni: stessa identica estetica della
+   .sb-id della barra laterale (timbro in filigrana, firma, striscia),
+   ingrandita, con nome/email/password come campi modificabili sul posto. */
+.pf-card {
+  position: relative;
+  margin: 0 0 26px;
+  padding: 18px 22px 16px;
+  max-width: 640px;
+  background: linear-gradient(160deg, #f3ecd8, #e6dcc0);
+  border-radius: 14px;
+  border: 1px solid rgba(120, 100, 60, 0.35);
+  box-shadow: 0 14px 26px -10px rgba(20, 12, 4, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  transform: rotate(-0.4deg);
+}
+.pf-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 30%,
+      transparent 70%,
+      rgba(255, 255, 255, 0.25) 100%
+    ),
+    repeating-linear-gradient(35deg, rgba(120, 90, 40, 0.05) 0 1px, transparent 1px 5px);
+  pointer-events: none;
+}
+.pf-seal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, rgba(198, 70, 55, 0.07), rgba(198, 70, 55, 0.015) 72%);
+  border: 3px dashed rgba(150, 40, 30, 0.14);
+  color: rgba(140, 38, 28, 0.12);
+  transform: translate(-50%, -46%) rotate(-9deg);
+  pointer-events: none;
+}
+.pf-seal svg {
+  width: 64px;
+  height: 64px;
+}
+.pf-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #8a6d2e;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-bottom: 10px;
+}
+.pf-since {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
+  margin-left: 6px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.86rem;
+}
+.pf-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.pf-photo {
+  position: relative;
+  width: 70px;
+  height: 84px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 11px;
+  border: 3px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(150deg, #8a9fae, #46626f);
+  color: #f3ecd8;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.5rem;
+  box-shadow: 0 0 0 1px rgba(51, 41, 28, 0.25), 0 6px 14px rgba(20, 12, 4, 0.3);
+  cursor: pointer;
+}
+.pf-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pf-photo .edit-badge {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #211a10;
+  background-image: var(--sb-grain, none);
+  background-size: 100px 100px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 8px rgba(10, 6, 0, 0.5);
+}
+.pf-fields {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+}
+.pf-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 2px;
+  border-bottom: 1.5px dashed rgba(120, 100, 60, 0.32);
+}
+.pf-row:last-child {
+  border-bottom: none;
+}
+.pf-flabel {
+  width: 76px;
+  flex: none;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #8a6d2e;
+}
+.pf-fvalue {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.96rem;
+  color: #33291c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-fvalue.dots {
+  letter-spacing: 0.2em;
+}
+.pf-pencil {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed rgba(120, 100, 60, 0.45);
+  background: rgba(255, 255, 255, 0.35);
+  color: #5a4d33;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pf-pencil:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+.pf-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.pf-edit.stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+.pf-edit input {
+  min-width: 0;
+  flex: 1;
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1.5px dashed rgba(120, 100, 60, 0.45);
+  background: rgba(255, 255, 255, 0.55);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.86rem;
+  color: #33291c;
+  outline: none;
+}
+.pf-edit.stack input {
+  width: 100%;
+}
+.pf-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+.pf-edit-btn {
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1.5px dashed rgba(52, 44, 28, 0.5);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
+  color: #33291c;
+}
+.pf-edit-btn.save {
+  background: color-mix(in srgb, var(--color-save) 55%, white);
+  border-color: var(--color-save-dark);
+}
+.pf-edit-btn.save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pf-msg {
+  position: relative;
+  z-index: 2;
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+}
+.pf-msg.ok {
+  color: var(--color-save-dark);
+}
+.pf-msg.err {
+  color: var(--color-delete-dark);
+}
+.pf-foot {
+  position: relative;
+  z-index: 2;
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pf-sig {
+  width: 70px;
+  height: 24px;
+  color: rgba(51, 41, 28, 0.55);
+  transform: rotate(-2deg);
+}
+.pf-strip {
+  flex: 1;
+  height: 8px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, #3a3226 0 2px, transparent 2px 5px);
+  opacity: 0.5;
+}

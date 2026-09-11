@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.32.0',
+    date: '2026-09-11 15:44',
+    changes: [
+      'Impostazioni (vista web): rifatte in stile "Pagine" — l\'intestazione di ogni sezione è ora un cartoncino a quadretti a tutta larghezza (icona, titolo e descrizione insieme), e ogni gruppo di parametri (Tema, Font, Persone, Luoghi...) ha il suo sotto-cartoncino con un bordo colorato.',
+      'Impostazioni: la tessera del profilo in cima ora è la stessa finta carta d\'identità della barra laterale (timbro in filigrana, firma, striscia), con nome, email e una nuova password modificabili sul posto con una matitina.',
+      'Impostazioni: "Elimina account" è ora una sezione vera (cartoncino rosso, sempre visibile) invece di un semplice link in fondo alla pagina.',
+    ],
+  },
+  {
     version: '0.31.0',
     date: '2026-09-11 14:26',
     changes: [

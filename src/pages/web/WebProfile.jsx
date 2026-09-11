@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { pb, fileUrl } from '../../lib/pocketbase'
+import { pb } from '../../lib/pocketbase'
 import {
   describeError,
   listNotesWithPerson,
@@ -39,60 +39,77 @@ import PlacePickerSheet from '../../components/PlacePickerSheet'
 import AppearanceControls from '../../components/AppearanceControls'
 import MoodGradientControls from '../../components/MoodGradientControls'
 import SongsUsageList from '../../components/SongsUsageList'
-import AccountFields from '../../components/AccountFields'
 import ExportButtons from '../../components/ExportButtons'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
+import ProfileCard from '../../components/web/ProfileCard'
 
-// Sezione collassabile in stile web (parità con le Impostazioni mobile).
-// `nested` = riquadro interno più compatto per i raggruppamenti.
-function WebSection({ title, icon, nested = false, defaultOpen = false, children }) {
+// Sezione delle Impostazioni web: intestazione a "cartoncino a quadretti"
+// colorato, larga quanto la sezione, con icona+titolo+descrizione insieme
+// (stesso motivo dell'intestazione della vista giorno). `nested` = un
+// sotto-cartoncino più piccolo, con bordo colorato (`accent`), per un
+// singolo gruppo di parametri dentro la sezione. `noCollapse` = sempre
+// visibile, senza freccia (usato per "Elimina account": nell'app non è mai
+// stata una sezione richiudibile).
+function WebSection({
+  title,
+  icon,
+  description,
+  nested = false,
+  accent,
+  danger = false,
+  noCollapse = false,
+  defaultOpen = false,
+  children,
+}) {
   const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div
-      className={
-        'border border-line ' +
-        (nested ? 'mt-3 rounded-2xl bg-cream' : 'mt-6 rounded-3xl bg-tag')
-      }
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={
-          'flex w-full items-center gap-3 text-left ' +
-          (nested ? 'p-4' : 'p-6 sm:p-8')
-        }
-      >
-        {icon && (
+
+  if (nested) {
+    return (
+      <div className="ws-sub" style={accent ? { '--sub-c': accent } : undefined}>
+        <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
+          {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
+          <span className="ws-sub-title">{title}</span>
           <Icon
-            name={icon}
-            size={nested ? 16 : 18}
-            className="shrink-0 text-ink-soft"
+            name="chevron-right"
+            size={14}
+            className={'ws-sub-chev shrink-0' + (open ? ' ws-sub-chev-open' : '')}
           />
-        )}
-        <h2
-          className={
-            'flex-1 font-serif font-semibold text-ink ' +
-            (nested ? 'text-lg' : 'text-xl')
-          }
-        >
-          {title}
-        </h2>
+        </button>
+        {open && <div className="ws-sub-body">{children}</div>}
+      </div>
+    )
+  }
+
+  const headerCls = 'ws-header' + (danger ? ' ws-header-danger' : '')
+  const headerContent = (
+    <>
+      {icon && <Icon name={icon} size={22} className="ws-icon shrink-0" />}
+      <span className="ws-htext">
+        <span className="ws-title">{title}</span>
+        {description && <span className="ws-desc">{description}</span>}
+      </span>
+      {!noCollapse && (
         <Icon
           name="chevron-right"
           size={16}
-          className={
-            'shrink-0 text-ink-soft transition-transform ' +
-            (open ? 'rotate-90' : '')
-          }
+          className={'ws-chev shrink-0' + (open ? ' ws-chev-open' : '')}
         />
-      </button>
-      {open && (
-        <div className={nested ? 'px-4 pb-4' : 'px-6 pb-6 sm:px-8 sm:pb-8'}>
-          {children}
-        </div>
       )}
+    </>
+  )
+
+  return (
+    <div className="ws-section">
+      {noCollapse ? (
+        <div className={headerCls}>{headerContent}</div>
+      ) : (
+        <button type="button" onClick={() => setOpen((v) => !v)} className={headerCls}>
+          {headerContent}
+        </button>
+      )}
+      {(noCollapse || open) && <div className="ws-card">{children}</div>}
     </div>
   )
 }
@@ -114,32 +131,6 @@ function TokenHelp({ which }) {
 export default function WebProfile() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-
-  const name = user?.name?.trim()
-  const email = user?.email || '—'
-  const initial = (name || email || '?').charAt(0).toUpperCase()
-  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
-
-  const avatarInputRef = useRef(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
-  const [avatarError, setAvatarError] = useState('')
-
-  async function handleAvatarPick(e) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setAvatarUploading(true)
-    setAvatarError('')
-    try {
-      const formData = new FormData()
-      formData.append('avatar', file)
-      await pb.collection('users').update(user.id, formData)
-    } catch (err) {
-      setAvatarError(describeError(err))
-    } finally {
-      setAvatarUploading(false)
-    }
-  }
 
   const [immichUrl, setImmichUrl] = useState(user?.immichUrl || '')
   const [immichApiKey, setImmichApiKey] = useState(user?.immichApiKey || '')
@@ -569,68 +560,26 @@ export default function WebProfile() {
         Profilo
       </h1>
 
-      <div className="rounded-3xl border border-line bg-tag p-8">
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            title="Cambia immagine profilo"
-            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-line bg-cream font-serif text-3xl font-semibold text-ink"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center">
-                {initial}
-              </span>
-            )}
-            <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-ink/70 py-1 text-cream">
-              {avatarUploading ? (
-                <span className="text-[10px] font-semibold">…</span>
-              ) : (
-                <Icon name="edit" size={12} />
-              )}
-            </span>
-          </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleAvatarPick}
-          />
-          <div className="min-w-0">
-            {name && (
-              <p className="font-serif text-2xl font-semibold text-ink">{name}</p>
-            )}
-            <p className="truncate text-ink-soft">{email}</p>
-            {avatarError && (
-              <p className="mt-1 text-xs text-delete-dark">{avatarError}</p>
-            )}
-          </div>
-        </div>
+      <ProfileCard />
 
-        <div className="mt-8 border-t border-line-soft pt-6">
-          <AccountFields />
-        </div>
-      </div>
-
-      <WebSection title="Aspetto" icon="settings">
+      <WebSection
+        title="Aspetto"
+        icon="settings"
+        description="Tema, font, animazioni e sfondo — solo su questo dispositivo."
+      >
         <AppearanceControls />
       </WebSection>
 
-      <WebSection title="Dati utente" icon="list">
-        <p className="text-sm text-ink-soft">
-          Dati unici e personali tuoi, legati all'account e sincronizzati su
-          tutti i dispositivi: i colori con cui vedi l'umore, e le persone, i
-          tag e i luoghi che usi nelle note.
-        </p>
-
-        <WebSection nested title="Colori del mood" icon="sparkles">
+      <WebSection
+        title="Dati utente"
+        icon="list"
+        description="Dati unici e personali tuoi, legati all'account e sincronizzati su tutti i dispositivi."
+      >
+        <WebSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
           <MoodGradientControls />
         </WebSection>
 
-        <WebSection nested title="Persone" icon="user">
+        <WebSection nested title="Persone" icon="user" accent="#8397a6">
         <p className="text-sm text-ink-soft">
           Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
           Immich o creane una nuova qui.
@@ -708,7 +657,7 @@ export default function WebProfile() {
         )}
         </WebSection>
 
-        <WebSection nested title="Tag" icon="tag">
+        <WebSection nested title="Tag" icon="tag" accent="#c9a227">
         <p className="text-sm text-ink-soft">
           Elenco dei tag selezionabili nelle note.
         </p>
@@ -758,7 +707,7 @@ export default function WebProfile() {
         </div>
         </WebSection>
 
-        <WebSection nested title="Luoghi" icon="map-pin">
+        <WebSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
         <p className="text-sm text-ink-soft">
           Elenco dei luoghi selezionabili nelle note. Vengono aggiunti anche
           automaticamente quando ne scegli uno da una nota. Modificando nome o
@@ -868,7 +817,7 @@ export default function WebProfile() {
         </div>
         </WebSection>
 
-        <WebSection nested title="Canzoni" icon="music">
+        <WebSection nested title="Canzoni" icon="music" accent="#8fae5c">
           <p className="text-sm text-ink-soft">
             Le canzoni collegate alle note, con quante note le usano
             ciascuna. Sola lettura: si aggiungono dalle note stesse.
@@ -877,12 +826,12 @@ export default function WebProfile() {
         </WebSection>
       </WebSection>
 
-      <WebSection title="Integrazioni" icon="link">
-        <p className="text-sm text-ink-soft">
-          Chiavi e collegamenti per le funzioni opzionali di Annales.
-        </p>
-
-        <WebSection nested title="Immich" icon="image">
+      <WebSection
+        title="Integrazioni"
+        icon="link"
+        description="Chiavi e collegamenti per le funzioni opzionali di Annales."
+      >
+        <WebSection nested title="Immich" icon="image" accent="#8397a6">
         <p className="text-sm text-ink-soft">
           Collega il tuo server Immich per scegliere le foto da lì quando
           aggiungi immagini a una nota.
@@ -947,7 +896,7 @@ export default function WebProfile() {
         </div>
         </WebSection>
 
-        <WebSection nested title="Spotify" icon="music">
+        <WebSection nested title="Spotify" icon="music" accent="#8fae5c">
         <p className="text-sm text-ink-soft">
           Client ID/Secret di un'app Spotify (Client Credentials) per cercare
           canzoni da aggiungere alle note, senza incollare link a mano.
@@ -1012,7 +961,7 @@ export default function WebProfile() {
         </div>
         </WebSection>
 
-        <WebSection nested title="Gemini (IA)" icon="sparkles">
+        <WebSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
         <p className="text-sm text-ink-soft">
           Chiave API di Google AI Studio per ripulire il testo delle note,
           riconoscere le persone citate e scrivere contenuti con l'IA.
@@ -1062,7 +1011,7 @@ export default function WebProfile() {
           </div>
         </div>
 
-        <WebSection nested title="Istruzioni personalizzate" icon="edit">
+        <WebSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
           <p className="text-sm text-ink-soft">
             Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
             usare, cosa evidenziare o evitare...). Salvate sul tuo account:
@@ -1097,7 +1046,11 @@ export default function WebProfile() {
         </WebSection>
       </WebSection>
 
-      <WebSection title="Import ed export" icon="download">
+      <WebSection
+        title="Import ed export"
+        icon="download"
+        description="Esporta il diario o importa da un'immagine."
+      >
         <button
           type="button"
           onClick={() => navigate('/importa')}
@@ -1109,10 +1062,11 @@ export default function WebProfile() {
         <ExportButtons />
       </WebSection>
 
-      <WebSection title="Supporto" icon="mail">
-        <p className="text-sm text-ink-soft">
-          Domande, problemi o suggerimenti su Annales? Scrivimi pure.
-        </p>
+      <WebSection
+        title="Supporto"
+        icon="mail"
+        description="Domande, problemi o suggerimenti su Annales? Scrivimi pure."
+      >
         <dl className="mt-5 divide-y divide-line-soft border-y border-line-soft text-sm">
           <div className="flex items-center justify-between py-3">
             <dt className="text-ink-soft">Email</dt>
@@ -1141,19 +1095,23 @@ export default function WebProfile() {
         </dl>
       </WebSection>
 
-      <WebSection title="Offrimi un caffè" icon="heart">
-        <p className="text-sm text-ink-soft">
-          Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
-          farlo da qui.
-        </p>
+      <WebSection
+        title="Offrimi un caffè"
+        icon="heart"
+        description="Se Annales ti è utile e vuoi sostenere lo sviluppo."
+      >
         {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando sarà
             pronto, sostituire con il link reale (https://buymeacoffee.com/…). */}
-        <div className="mt-5 flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
+        <div className="flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
           Buy Me a Coffee · presto disponibile
         </div>
       </WebSection>
 
-      <WebSection title="Novità" icon="list">
+      <WebSection
+        title="Novità"
+        icon="list"
+        description="Le ultime versioni e cosa è cambiato."
+      >
         <Changelog />
       </WebSection>
 
@@ -1169,9 +1127,15 @@ export default function WebProfile() {
         Esci
       </button>
 
-      <div className="mt-6 flex justify-center">
+      <WebSection
+        title="Elimina account"
+        icon="alert-triangle"
+        description="Azione permanente: cancella il tuo diario e tutti i dati collegati."
+        danger
+        noCollapse
+      >
         <DeleteAccount />
-      </div>
+      </WebSection>
 
       {immichReady && (
         <ImmichPeoplePicker
