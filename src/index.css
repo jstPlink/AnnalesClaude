@@ -1382,7 +1382,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     2% 92%, 0% 85%, 3% 77%, 0% 70%, 4% 62%, 1% 54%, 3% 46%, 0% 38%, 4% 30%,
     1% 22%, 3% 14%, 0% 7%
   );
-  filter: url(#annales-paper) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.42));
+  /* saturate(): il colore del mood risalta di più, le fasce si distinguono
+     meglio (era troppo simile a se stesso da fascia a fascia) */
+  filter: url(#annales-paper) saturate(1.15)
+    drop-shadow(0 6px 14px rgba(20, 12, 4, 0.42));
 }
 /* Il colore del cartoncino arriva da MonthPages.jsx come --mp-mood inline
    (moodColor(), che riflette i colori del mood personalizzati in Impostazioni);
@@ -2163,8 +2166,28 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 
 .day-outer {
-  width: min(1000px, 100%);
+  width: min(1350px, 100%);
   margin: 0 auto;
+}
+/* Vista giorno WEB: il foglio non si scorre, sta tutto nella vista della
+   pagina (a differenza del telefono, che scorre — vedi DayPages.jsx `fit`).
+   Catena flex ad altezza fissa: .day-outer -> .day-sheet -> .day-track,
+   così .day-track misura la propria altezza disponibile (ResizeObserver in
+   DayPages.jsx) e la usa come "24h" invece del valore fisso TRACK_H. */
+.day-outer.fit {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.day-outer.fit .day-sheet {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.day-outer.fit .day-track {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .dp-empty {
   padding: 20px 4px 0;
@@ -2358,7 +2381,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     2% 92%, 0% 85%, 3% 77%, 0% 70%, 4% 62%, 1% 54%, 3% 46%, 0% 38%, 4% 30%,
     1% 22%, 3% 14%, 0% 7%
   );
-  filter: url(#annales-paper) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
+  /* saturate(): il colore del mood risalta di più, le fasce si distinguono
+     meglio (era troppo simile a se stesso da fascia a fascia) */
+  filter: url(#annales-paper) saturate(1.15)
+    drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
 }
 .dn-card.mood-green {
   --mood: #a6d06e;
@@ -2405,10 +2431,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   min-height: 0;
   overflow: hidden;
   font-size: 0.98rem;
-  line-height: 1.26;
-  color: rgba(45, 34, 20, 0.9);
-  -webkit-mask: linear-gradient(#000 60%, transparent 96%);
-  mask: linear-gradient(#000 60%, transparent 96%);
+  line-height: 1.3;
+  /* più scuro e più opaco del cartoncino: meglio leggibile */
+  color: rgba(32, 24, 13, 0.96);
+  -webkit-mask: linear-gradient(#000 70%, transparent 97%);
+  mask: linear-gradient(#000 70%, transparent 97%);
 }
 .dn-body[data-hand='a'] {
   font-family: 'Annales Marker', 'Caveat', cursive;

@@ -255,9 +255,9 @@ export default function WebDay() {
       )}
 
       {skin === 'pages' ? (
-        // Skin "Pagine": il foglio si scorre come una vera pagina di diario,
-        // non si schiaccia in una schermata (a differenza degli altri stili).
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-10 pr-1">
+        // Skin "Pagine": il foglio NON si scorre, sta tutto nella pagina
+        // (fit) — altezza fissa qui, DayPages misura lo spazio disponibile.
+        <div className="min-h-0 flex-1 overflow-hidden">
           {loading ? (
             <p className="p-6 text-center text-ink-soft">Carico…</p>
           ) : !notes.length ? (
@@ -279,6 +279,7 @@ export default function WebDay() {
               peopleById={peopleById}
               immichUrl={user?.immichUrl?.trim()}
               immichApiKey={user?.immichApiKey?.trim()}
+              fit
             />
           )}
         </div>

@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.29.0',
+    date: '2026-09-11 09:03',
+    changes: [
+      'Skin "Pagine" (vista giorno web): il foglio è più largo del 35% e il cartoncino della nota più largo (40–55% invece di 32–45%), per dare più spazio a titolo e contenuti; il testo del contenuto è più scuro e leggibile, e sfuma più tardi verso il basso.',
+      'Skin "Pagine" (vista giorno web): il foglio non si scorre più, sta tutto nella pagina — le 24h si comprimono nello spazio disponibile invece che in un\'altezza fissa (la vista giorno da telefono continua a scorrere).',
+      'Skin "Pagine": il colore dei cartoncini del mood (vista mese e vista giorno, web e telefono) è il 15% più saturo — le fasce d\'umore si distinguono meglio.',
+    ],
+  },
+  {
     version: '0.28.0',
     date: '2026-09-11 08:46',
     changes: [

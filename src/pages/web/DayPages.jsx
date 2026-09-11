@@ -47,10 +47,11 @@ function DnPolaMobile({ imgs, rotation }) {
 }
 
 const DAY_MIN = 24 * 60
-// Altezza dell'intera giornata (24h): un valore FISSO, non legato
-// all'altezza dello schermo. A differenza dello stile "Normale"/"Disegnata"
-// (che comprimono tutto in una schermata), qui il foglio si comporta come un
-// vero foglio di carta: si scorre, non si schiaccia.
+// Altezza dell'intera giornata (24h) quando il foglio SCORRE (telefono):
+// un valore fisso, il foglio si comporta come un vero foglio di carta più
+// lungo dello schermo. Da web (prop `fit`) il foglio invece NON scorre: sta
+// tutto nella pagina e l'altezza si misura da quanto spazio c'è davvero
+// (vedi il componente).
 const TRACK_H = 1240
 const MIN_BLOCK_H = 30
 const RAIL_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24]
@@ -61,10 +62,12 @@ function startMinutesOf(value) {
   return p ? p.h * 60 + p.mi : 0
 }
 
-// Larghezza casuale del cartoncino, stabile per nota: ~38% ± 20% (32–45%).
+// Larghezza casuale del cartoncino, stabile per nota: ~47% ± 16% (40–55%,
+// più spazio a titolo e contenuti — su mobile è ignorata: il cartoncino
+// riempie lo spazio libero, vedi .dn-card in index.css).
 function cardWidthFor(id) {
   const span = (hash(`${id}~cw`) % 1000) / 1000
-  return `${Math.round(32 + span * 13)}%`
+  return `${Math.round(40 + span * 15)}%`
 }
 
 // Contenuto della nota: mano casuale, sfumato verso il basso; se il testo non
@@ -101,6 +104,11 @@ function DnBody({ text, hand }) {
 // una delle "mani" casuali; a destra le stesse informazioni della vista
 // mese (persone, luogo, canzone, foto). L'intestazione è un foglietto a
 // quadretti a parte, più scuro, sovrapposto in alto.
+//
+// `fit` (solo web, da WebDay.jsx): il foglio non scorre, sta tutto nella
+// pagina — l'altezza delle 24h si misura da quanta ce n'è davvero
+// (ResizeObserver su .day-track, dentro un contenitore ad altezza fissa),
+// invece del TRACK_H fisso usato da telefono (che invece scorre).
 export default function DayPages({
   date,
   notes,
@@ -108,7 +116,21 @@ export default function DayPages({
   peopleById,
   immichUrl,
   immichApiKey,
+  fit = false,
 }) {
+  const trackRef = useRef(null)
+  const [fitH, setFitH] = useState(0)
+  useLayoutEffect(() => {
+    if (!fit) return
+    const el = trackRef.current
+    if (!el) return
+    const update = () => setFitH(el.clientHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fit])
+
   const items = useMemo(() => {
     const list = notes.map((n) => {
       const startMin = Math.max(0, Math.min(DAY_MIN, startMinutesOf(n.timeStart)))
@@ -175,12 +197,13 @@ export default function DayPages({
     return Math.min(2.1, 1 + items.length * 0.14 + extras * 0.05).toFixed(2)
   }, [items])
 
-  const pxPerMin = TRACK_H / DAY_MIN
+  const trackH = fit ? fitH : TRACK_H
+  const pxPerMin = trackH / DAY_MIN
   const p = parseWall(date)
   const dayLabel = p ? `${weekdayLong(date)} ${p.d} ${MONTHS_IT[p.mo - 1].toLowerCase()}` : ''
 
   return (
-    <div className="day-outer">
+    <div className={'day-outer' + (fit ? ' fit' : '')}>
       <div className="day-header">
         <span className="day-wd">
           <span className="hl" aria-hidden="true" />
@@ -189,7 +212,11 @@ export default function DayPages({
       </div>
 
       <div className="day-sheet" style={{ '--deco': deco }}>
-        <div className="day-track" style={{ height: TRACK_H }}>
+        <div
+          className="day-track"
+          ref={trackRef}
+          style={fit ? undefined : { height: TRACK_H }}
+        >
           <div className="day-rail" aria-hidden="true">
             {RAIL_HOURS.map((h) => (
               <span
@@ -213,7 +240,7 @@ export default function DayPages({
             <p className="dp-empty">Nessuna nota per questo giorno.</p>
           )}
 
-          {items.map((it) => {
+          {trackH > 0 && items.map((it) => {
             const top = it.startMin * pxPerMin
             const rawH = (it.endMin - it.startMin) * pxPerMin
             const h = Math.max(MIN_BLOCK_H, rawH)
