@@ -2729,8 +2729,27 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.25);
 }
 
-/* ---- Telefono: stessa impalcatura (timeline ad altezza fissa per nota),
-   solo più stretta — rail, cartoncino e colonna info rimpiccioliti. ---- */
+/* Riga cartoncino+contatori+foto: su desktop non deve cambiare nulla
+   (display:contents la rende "invisibile" ai fratelli), su telefono diventa
+   una riga flessibile — vedi @media qui sotto. I contatori e la diapositiva
+   foto esistono solo per il telefono. */
+.dn-notes-row {
+  display: contents;
+}
+.dn-side-mobile,
+.dn-pola-mobile {
+  display: none;
+}
+
+/* ---- Telefono: cartoncino, contatori e foto stanno sulla STESSA riga
+   (.dn-notes-row, flessibile), come nella vista mese mobile. Il cartoncino
+   si spande a riempire lo spazio libero ed è spostato verso l'estremità
+   sinistra del foglio (esce anche un filo dalla pagina, per recuperare
+   spazio). Nello spazio fra cartoncino e foto: tre contatori compatti
+   impilati in verticale (persone, luogo, canzoni — icona + numero, non i
+   nomi: non c'è spazio) al posto della colonna con targhette-nome,
+   francobollo/mappa e dischetto CD. Le foto diventano UNA sola
+   "diapositiva" a carosello invece di due polaroid affiancate. ---- */
 @media (max-width: 480px) {
   .day-header {
     margin-left: 4px;
@@ -2750,7 +2769,19 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     right: 4px;
     font-size: 0.72rem;
   }
+  /* cartoncino, contatori e foto affiancati sulla stessa riga */
+  .dn-notes-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    height: 100%;
+  }
+  /* cartoncino spostato verso l'estremità sinistra del foglio (esce anche
+     un filo dalla pagina) per recuperare spazio; riempie il resto della riga */
   .dn-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: -14px;
     padding: 8px 12px 11px 11px;
   }
   .dn-title {
@@ -2768,60 +2799,110 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .dn-body[data-hand='d'] {
     font-size: 0.96rem;
   }
-  .dn-side {
-    left: calc(var(--cw, 38%) + 3%);
-    right: 3%;
-    gap: 8px;
-  }
-  .day-note.has-photo .dn-side {
-    right: 96px;
-  }
-  .dn-tape {
-    font-size: 0.78rem;
-    padding: 3px 10px 3px 6px;
-    gap: 4px;
-  }
-  .dn-place {
-    width: 72px;
-    padding: 4px 4px 9px;
-  }
-  .dn-map {
-    height: 50px;
-  }
-  .dn-place-name {
-    font-size: 0.68rem;
-  }
-  .dn-disc {
-    width: 42px;
-    height: 42px;
-  }
-  .dn-song span {
-    max-width: 80px;
-    font-size: 0.7rem;
-  }
-  .dn-song .t {
-    font-size: 0.68rem;
-  }
-  .dn-song .a {
-    font-size: 0.6rem;
-  }
+  /* colonna desktop (targhette persone, francobollo, dischetto): sostituita
+     dai contatori .dn-side-mobile qui sotto */
+  .dn-side,
   .dn-polas {
-    right: -6px;
+    display: none;
   }
-  .dn-pola {
-    width: 84px;
-    padding: 5px 5px 16px;
+  .dn-side-mobile {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding-top: 2px;
   }
-  .dn-polas.two .dn-pola {
-    width: 76px;
+  .dn-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 7px 4px 5px;
+    font-family: 'Annales Hand', 'Kalam', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    line-height: 1;
+    color: var(--dp-ink-b);
+    background: rgba(228, 216, 180, 0.62);
+    border-left: 2px dashed rgba(150, 124, 84, 0.5);
+    border-right: 2px dashed rgba(150, 124, 84, 0.5);
+    box-shadow: 0 2px 4px rgba(20, 12, 4, 0.18);
+    filter: url(#annales-wob);
   }
-  .dn-polas.two .dn-pola:last-child {
-    margin-left: -10px;
+  /* luogo = rosso, canzone = verde (le persone restano nel tono carta) */
+  .dn-mini--place {
+    color: #5c2a20;
+    background: color-mix(in srgb, #c64637 26%, rgba(228, 216, 180, 0.62));
+    border-left-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
+    border-right-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
   }
-  .dn-pola::before {
-    width: 48px;
-    height: 17px;
+  .dn-mini--song {
+    color: #34481c;
+    background: color-mix(in srgb, #7fa24e 26%, rgba(228, 216, 180, 0.62));
+    border-left-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
+    border-right-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
+  }
+  .dn-mini svg {
+    flex: none;
+    opacity: 0.8;
+  }
+  .dn-mini-text {
+    font-variant-numeric: tabular-nums;
+  }
+  /* foto: UNA sola diapositiva, nello spazio dopo i contatori (carosello se
+     la nota ne ha più di una) */
+  .dn-pola-mobile {
+    display: block;
+    position: relative;
+    flex: 0 0 auto;
+    z-index: 3;
+    width: 62px;
+    padding: 5px 5px 14px;
+    background: #f7f1e3;
+    box-shadow: 0 6px 12px rgba(20, 12, 4, 0.3);
+    transform: rotate(var(--pr, 3deg));
+  }
+  .dn-pola-mobile::before {
+    content: '';
+    position: absolute;
+    left: 50%;
     top: -8px;
+    width: 38px;
+    height: 14px;
+    transform: translateX(-50%) rotate(-4deg);
+    background: rgba(236, 226, 194, 0.86);
+    border: 1px solid rgba(176, 158, 112, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+    filter: url(#annales-wob);
+  }
+  .dn-pola-mobile .dn-ph {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-size: cover;
+    background-position: center;
+    filter: saturate(0.82) contrast(0.95);
+    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.25);
+  }
+  .dn-pola-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 4px;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+  }
+  .dn-pola-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(51, 41, 28, 0.32);
+    font-style: normal;
+  }
+  .dn-pola-dots i.on {
+    background: rgba(51, 41, 28, 0.78);
   }
 }
 @media (prefers-reduced-motion: reduce) {

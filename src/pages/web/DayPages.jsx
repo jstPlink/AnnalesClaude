@@ -3,7 +3,48 @@ import { fileUrl } from '../../lib/pocketbase'
 import { plainText, parsePlace } from '../../lib/notes'
 import { MONTHS_IT, durationMinutes, parseWall, weekdayLong } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
-import { hash, handFor, tilt, osmTileFor, moodKind, tapeTint } from '../../lib/pagesSkin'
+import Icon from '../../components/Icon'
+import {
+  hash,
+  handFor,
+  tilt,
+  osmTileFor,
+  moodKind,
+  tapeTint,
+  useCarouselIndex,
+} from '../../lib/pagesSkin'
+
+// ---- Vista MOBILE: come nel mese, la colonna desktop (targhette
+// persone+nome, francobollo+mappa, dischetto CD) non ci sta sul telefono.
+// Diventa una colonna di semplici contatori (icona + numero: persone,
+// luogo, canzoni) fra cartoncino e foto, e la foto UNA sola "diapositiva"
+// a carosello se la nota ne ha più di una. ----
+function DnMiniBadge({ kind, icon, count }) {
+  if (!count) return null
+  return (
+    <span className={`dn-mini dn-mini--${kind}`} aria-hidden="true">
+      <Icon name={icon} size={12} strokeWidth={2.6} />
+      <span className="dn-mini-text">{count}</span>
+    </span>
+  )
+}
+
+function DnPolaMobile({ imgs, rotation }) {
+  const idx = useCarouselIndex(imgs.length, 3200)
+  if (!imgs.length) return null
+  return (
+    <span className="dn-pola-mobile" style={{ '--pr': rotation }} aria-hidden="true">
+      <span className="dn-ph" style={{ backgroundImage: `url(${imgs[idx].url})` }} />
+      {imgs.length > 1 && (
+        <span className="dn-pola-dots">
+          {imgs.map((_, i) => (
+            <i key={i} className={i === idx ? 'on' : undefined} />
+          ))}
+        </span>
+      )}
+    </span>
+  )
+}
 
 const DAY_MIN = 24 * 60
 // Altezza dell'intera giornata (24h): un valore FISSO, non legato
@@ -90,7 +131,13 @@ export default function DayPages({
       }
 
       const song = (n.songs || [])[0] || null
+      const songsCount = (n.songs || []).length
       const imgs = (n.images || []).slice(0, 2).map((fn) => ({
+        url: fileUrl(n, fn, { thumb: '400x400' }),
+      }))
+      // Fino a 5 foto per il carosello a "diapositiva unica" della vista
+      // mobile (imgs resta a 2 per le due polaroid affiancate del desktop).
+      const imgsCarousel = (n.images || []).slice(0, 5).map((fn) => ({
         url: fileUrl(n, fn, { thumb: '400x400' }),
       }))
 
@@ -108,7 +155,9 @@ export default function DayPages({
         placeName,
         placeMap,
         song,
+        songsCount,
         imgs,
+        imgsCarousel,
       }
     })
     list.sort((a, b) => a.startMin - b.startMin)
@@ -178,15 +227,40 @@ export default function DayPages({
                 style={{ top, height: h }}
                 aria-label={it.title}
               >
-                <span
-                  className={'dn-card' + (it.kind ? ` mood-${it.kind}` : '')}
-                  style={{ '--cw': it.cw, '--cr': it.cr }}
-                >
-                  <span className="dn-title">
-                    <span className="hl" aria-hidden="true" />
-                    {it.title}
+                {/* Cartoncino + (su mobile) contatori e diapositiva foto: un
+                    unico contenitore così la vista mobile può affiancarli in
+                    riga (cartoncino spostato a sinistra, contatori e foto
+                    nello spazio libero). display:contents da desktop: non
+                    cambia nulla, la colonna resta quella di sempre. */}
+                <span className="dn-notes-row">
+                  <span
+                    className={'dn-card' + (it.kind ? ` mood-${it.kind}` : '')}
+                    style={{ '--cw': it.cw, '--cr': it.cr }}
+                  >
+                    <span className="dn-title">
+                      <span className="hl" aria-hidden="true" />
+                      {it.title}
+                    </span>
+                    <DnBody text={it.body} hand={it.hand} />
                   </span>
-                  <DnBody text={it.body} hand={it.hand} />
+
+                  {/* Vista mobile: contatori compatti impilati in verticale
+                      fra cartoncino e foto (persone, luogo, canzoni — icona +
+                      numero). Nascosti da desktop. */}
+                  {(it.people.length > 0 || it.placeName || it.songsCount > 0) && (
+                    <span className="dn-side-mobile">
+                      <DnMiniBadge kind="people" icon="user" count={it.people.length} />
+                      <DnMiniBadge kind="place" icon="map-pin" count={it.placeName ? 1 : 0} />
+                      <DnMiniBadge kind="song" icon="cassette" count={it.songsCount} />
+                    </span>
+                  )}
+
+                  {/* Vista mobile: UNA sola "diapositiva" per le foto, a
+                      carosello se la nota ne ha più di una. */}
+                  <DnPolaMobile
+                    imgs={it.imgsCarousel}
+                    rotation={`${tilt(`${it.id}pm`, 4).toFixed(2)}deg`}
+                  />
                 </span>
 
                 {(it.people.length > 0 || hasMedia) && (

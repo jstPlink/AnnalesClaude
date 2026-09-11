@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.28.0',
+    date: '2026-09-11 08:46',
+    changes: [
+      'Skin "Pagine" (vista giorno mobile): stesso stile appena portato per il mese. Il cartoncino della nota è spostato verso l\'estremità sinistra del foglio (esce anche un filo dalla pagina) e sta sulla stessa riga di contatori e foto invece che sopra.',
+      'Vista giorno mobile: persone, luogo e canzoni diventano semplici contatori (icona + numero) impilati in verticale fra cartoncino e foto, al posto delle targhette coi nomi, del francobollo/mappa e del dischetto CD — non c\'è spazio per i nomi. Luogo in rosso, canzone in verde.',
+      'Vista giorno mobile: la foto di una nota diventa sempre una sola diapositiva; con più foto nella stessa nota scorrono a carosello nella stessa, con puntini che indicano quante sono.',
+    ],
+  },
+  {
     version: '0.27.0',
     date: '2026-09-11 08:37',
     changes: [
