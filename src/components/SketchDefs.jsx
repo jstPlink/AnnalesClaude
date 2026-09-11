@@ -61,6 +61,58 @@ export default function SketchDefs() {
             yChannelSelector="G"
           />
         </filter>
+        {/* Variante più mossa, per lo strappo del cartoncino della barra
+            laterale (src/components/web/Sidebar.jsx): due filtri con semi
+            diversi, uno per il foglio davanti e uno per quello che
+            intravede da dietro, così non sembrano stampati dallo stesso
+            timbro. Richiamati con `filter: url(#annales-tear)` /
+            `url(#annales-tear-2)`. */}
+        <filter
+          id="annales-tear"
+          x="-25%"
+          y="-25%"
+          width="150%"
+          height="150%"
+          filterUnits="objectBoundingBox"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.02 0.05"
+            numOctaves="3"
+            seed="7"
+            result="noise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="6"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <filter
+          id="annales-tear-2"
+          x="-25%"
+          y="-25%"
+          width="150%"
+          height="150%"
+          filterUnits="objectBoundingBox"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.024 0.04"
+            numOctaves="3"
+            seed="21"
+            result="noise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="6.5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
       </defs>
     </svg>
   )

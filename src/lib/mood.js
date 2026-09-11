@@ -2,10 +2,15 @@ import { parseWall } from './dates'
 
 // Gestione del valore `mood` (0–1) e della sua rappresentazione a colori.
 
-// Posizioni fisse degli stop del gradiente del mood (0 = pessimo, 1 = ottimo).
-// L'utente può cambiarne i COLORI da Impostazioni → Dati utente (salvati
-// sull'account, campo `moodGradient`); le posizioni restano queste.
-export const MOOD_STOP_POSITIONS = [0, 0.2, 0.4, 0.6, 0.8, 1]
+// Posizioni PREDEFINITE degli stop del gradiente del mood (0 = pessimo,
+// 1 = ottimo). L'utente può personalizzare sia i colori sia le posizioni
+// (le soglie) dei 4 stop interni da Impostazioni → Dati utente (salvati
+// sull'account, campo `moodGradient`); i due estremi (0 e 1) restano fissi.
+// `MOOD_STOP_POSITIONS` resta esportato per compatibilità: è lo stato
+// PREDEFINITO, non quello attivo — per le posizioni attive vedi
+// `getMoodStopPositions()`.
+export const DEFAULT_STOP_POSITIONS = [0, 0.2, 0.4, 0.6, 0.8, 1]
+export const MOOD_STOP_POSITIONS = DEFAULT_STOP_POSITIONS
 
 // Gradiente predefinito, coerente con la palette dell'app:
 // rosso corallo (= delete) → arancio → giallo → verde (= save) → blu → blu-viola.
@@ -34,22 +39,52 @@ export const DEFAULT_MOOD_HEX = DEFAULT_STOPS.map((s) => rgbToHex(s.c))
 // gradiente scelto senza dover passare un parametro in decine di componenti.
 let STOPS = DEFAULT_STOPS
 
-// Imposta il gradiente da 6 colori esadecimali (nell'ordine delle posizioni
-// in MOOD_STOP_POSITIONS). Un valore assente/non valido ripristina il
-// gradiente predefinito. Chiamata all'avvio e a ogni salvataggio dal
-// contesto di autenticazione (src/context/AuthContext.jsx).
-export function setMoodGradient(hexArray) {
-  const arr = Array.isArray(hexArray) ? hexArray.map(hexToRgb) : null
-  if (!arr || arr.length !== MOOD_STOP_POSITIONS.length || arr.some((c) => !c)) {
+// Posizioni valide: 6 numeri crescenti, estremi fissi a 0 e 1 (i 4 stop
+// interni possono stare ovunque in mezzo, con un margine minimo fra loro
+// perché il gradiente non degeneri).
+function isValidPositions(pos) {
+  if (!Array.isArray(pos) || pos.length !== DEFAULT_STOP_POSITIONS.length) {
+    return false
+  }
+  if (pos[0] !== 0 || pos[pos.length - 1] !== 1) return false
+  for (let i = 1; i < pos.length; i++) {
+    if (!(Number.isFinite(pos[i]) && pos[i] > pos[i - 1])) return false
+  }
+  return true
+}
+
+// Imposta il gradiente attivo. `saved` è il valore grezzo del campo
+// `moodGradient` sull'account: null/assente (predefinito), un array di 6
+// esadecimali (formato storico: solo colori, posizioni predefinite), oppure
+// `{ colors, positions }` (formato attuale: colori E soglie personalizzati).
+// Un valore assente/non valido ripristina il gradiente predefinito. Chiamata
+// all'avvio e a ogni salvataggio dal contesto di autenticazione
+// (src/context/AuthContext.jsx).
+export function setMoodGradient(saved) {
+  const colors = Array.isArray(saved)
+    ? saved
+    : Array.isArray(saved?.colors)
+      ? saved.colors
+      : null
+  const positions = isValidPositions(saved?.positions)
+    ? saved.positions
+    : DEFAULT_STOP_POSITIONS
+  const rgbArr = Array.isArray(colors) ? colors.map(hexToRgb) : null
+  if (!rgbArr || rgbArr.length !== positions.length || rgbArr.some((c) => !c)) {
     STOPS = DEFAULT_STOPS
     return
   }
-  STOPS = arr.map((c, i) => ({ t: MOOD_STOP_POSITIONS[i], c }))
+  STOPS = rgbArr.map((c, i) => ({ t: positions[i], c }))
 }
 
 // I 6 colori del gradiente attivo, in esadecimale.
 export function getMoodGradientHex() {
   return STOPS.map((s) => rgbToHex(s.c))
+}
+
+// Le 6 posizioni (soglie) attive, 0–1.
+export function getMoodStopPositions() {
+  return STOPS.map((s) => s.t)
 }
 
 // Stringa CSS `linear-gradient(...)` del gradiente attivo, per le anteprime.

@@ -38,6 +38,7 @@ import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
 import AppearanceControls from '../../components/AppearanceControls'
 import MoodGradientControls from '../../components/MoodGradientControls'
+import SongsUsageList from '../../components/SongsUsageList'
 import AccountFields from '../../components/AccountFields'
 import ExportButtons from '../../components/ExportButtons'
 import Changelog from '../../components/Changelog'
@@ -865,6 +866,14 @@ export default function WebProfile() {
             + Aggiungi luogo
           </button>
         </div>
+        </WebSection>
+
+        <WebSection nested title="Canzoni" icon="music">
+          <p className="text-sm text-ink-soft">
+            Le canzoni collegate alle note, con quante note le usano
+            ciascuna. Sola lettura: si aggiungono dalle note stesse.
+          </p>
+          <SongsUsageList />
         </WebSection>
       </WebSection>
 

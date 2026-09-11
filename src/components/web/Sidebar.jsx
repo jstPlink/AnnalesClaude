@@ -5,16 +5,25 @@ import { fileUrl } from '../../lib/pocketbase'
 import { todayKey } from '../../lib/dates'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
+import { fakeIdNumber, fakeSignature } from '../../lib/idCard'
 import Icon from '../Icon'
 import NewNoteWithGeminiSheet from '../NewNoteWithGeminiSheet'
 
+// Barra laterale web, skin "Pagine": l'intera barra è un cartoncino
+// strappato (con un secondo foglio, più scuro, che intravede da dietro),
+// dentro cui i pulsanti diventano oggetti di carta — "Nuova nota"/Gemini un
+// cartoncino nero pieno, i 3 link principali ritagli chiari col contorno a
+// matita tratteggiato, "Cerca" una lente d'ingrandimento, "Importa"
+// (provvisorio) un post-it giallo. In basso, i dati utente su una finta
+// carta d'identità (numero di tessera e firma generati da nome+email).
 export default function Sidebar() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
   const name = user?.name?.trim() || user?.email || 'Utente'
+  const email = user?.email || ''
   const initial = name.charAt(0).toUpperCase()
-  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '80x80' }) : ''
+  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
 
   const [geminiNoteOpen, setGeminiNoteOpen] = useState(false)
   const [allPeople, setAllPeople] = useState([])
@@ -30,140 +39,135 @@ export default function Sidebar() {
   }, [])
 
   return (
-    <aside className="flex w-[264px] shrink-0 flex-col border-r border-line bg-sand">
-      <div className="flex items-center gap-2.5 px-6 pb-5 pt-7">
-        <img src="/favicon.svg" alt="" className="h-8 w-8" />
-        <span className="font-serif text-2xl font-semibold text-ink">Annales</span>
-      </div>
+    <div className="sb-wrap">
+      <div className="sb-under" aria-hidden="true" />
+      <aside className="sb-sidebar flex w-[300px] shrink-0 flex-col">
+        <div className="sb-logo">
+          <img src="/favicon.svg" alt="" />
+          <span className="sb-logo-name">Annales</span>
+          <span className="sb-logo-v">v{__APP_VERSION__}</span>
+        </div>
 
-      <div className="mx-4 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => navigate(`/note/new?date=${todayKey()}`)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-cream transition hover:brightness-110"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Nuova nota
-        </button>
-        <button
-          type="button"
-          onClick={() => setGeminiNoteOpen(true)}
-          title="Nuova nota con Gemini"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-cream text-ink transition hover:brightness-95"
-        >
-          <Icon name="sparkles" size={18} />
-        </button>
-      </div>
+        <div className="sb-head-row">
+          <button
+            type="button"
+            onClick={() => navigate(`/note/new?date=${todayKey()}`)}
+            className="sb-new"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nuova nota
+          </button>
+          <button
+            type="button"
+            onClick={() => setGeminiNoteOpen(true)}
+            title="Nuova nota con Gemini"
+            className="sb-gemini"
+          >
+            <Icon name="sparkles" size={18} />
+          </button>
+        </div>
 
-      <NewNoteWithGeminiSheet
-        open={geminiNoteOpen}
-        onClose={() => setGeminiNoteOpen(false)}
-        apiKey={user?.geminiApiKey?.trim()}
-        customInstructions={user?.geminiCustomInstructions?.trim()}
-        immichUrl={user?.immichUrl?.trim()}
-        immichApiKey={user?.immichApiKey?.trim()}
-        allPeople={allPeople}
-        allTags={allTags}
-        onGenerated={(draft) =>
-          navigate(`/note/new?date=${draft.dateKey || todayKey()}`, {
-            state: { aiDraft: draft },
-          })
-        }
-      />
+        <NewNoteWithGeminiSheet
+          open={geminiNoteOpen}
+          onClose={() => setGeminiNoteOpen(false)}
+          apiKey={user?.geminiApiKey?.trim()}
+          customInstructions={user?.geminiCustomInstructions?.trim()}
+          immichUrl={user?.immichUrl?.trim()}
+          immichApiKey={user?.immichApiKey?.trim()}
+          allPeople={allPeople}
+          allTags={allTags}
+          onGenerated={(draft) =>
+            navigate(`/note/new?date=${draft.dateKey || todayKey()}`, {
+              state: { aiDraft: draft },
+            })
+          }
+        />
 
-      <nav className="mt-6 flex flex-col gap-1 px-4 text-sm font-semibold">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            'rounded-xl border px-3 py-2 transition ' +
-            (isActive
-              ? 'border-line bg-cream text-ink'
-              : 'border-line text-ink-soft hover:bg-cream/60')
-          }
-        >
-          Calendario
-        </NavLink>
-        <NavLink
-          to="/dati"
-          className={({ isActive }) =>
-            'rounded-xl border px-3 py-2 transition ' +
-            (isActive
-              ? 'border-line bg-cream text-ink'
-              : 'border-line text-ink-soft hover:bg-cream/60')
-          }
-        >
-          Andamento
-        </NavLink>
-        <NavLink
-          to="/statistiche"
-          className={({ isActive }) =>
-            'rounded-xl border px-3 py-2 transition ' +
-            (isActive
-              ? 'border-line bg-cream text-ink'
-              : 'border-line text-ink-soft hover:bg-cream/60')
-          }
-        >
-          Statistiche
-        </NavLink>
+        <nav className="sb-nav">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+          >
+            <Icon name="calendar" size={17} />
+            Calendario
+          </NavLink>
+          <NavLink
+            to="/dati"
+            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+          >
+            <Icon name="chart" size={17} />
+            Andamento
+          </NavLink>
+          <NavLink
+            to="/statistiche"
+            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+          >
+            <Icon name="bar-chart" size={17} />
+            Statistiche
+          </NavLink>
+        </nav>
+
         <NavLink
           to="/filtri"
-          className={({ isActive }) =>
-            'rounded-xl border px-3 py-2 transition ' +
-            (isActive
-              ? 'border-line bg-cream text-ink'
-              : 'border-line text-ink-soft hover:bg-cream/60')
-          }
+          title="Cerca"
+          className={({ isActive }) => 'sb-search' + (isActive ? ' active' : '')}
         >
-          Cerca
+          <span className="sb-handle" />
+          <span className="sb-lens">
+            <span>Cerca</span>
+          </span>
         </NavLink>
+
         <NavLink
           to="/importa"
           title="Funzione provvisoria"
-          className={({ isActive }) =>
-            'flex items-center gap-2 rounded-xl border px-3 py-2 font-semibold transition ' +
-            (isActive
-              ? 'border-warn-dark bg-warn text-ink'
-              : 'border-warn-dark/60 bg-warn/85 text-ink hover:bg-warn')
-          }
+          className={({ isActive }) => 'sb-import' + (isActive ? ' active' : '')}
         >
-          <Icon name="alert-triangle" size={14} className="shrink-0" />
-          Importa
-          <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-ink/55">
-            beta
-          </span>
+          <Icon name="alert-triangle" size={14} />
+          <b>Importa</b>
+          <span className="beta">beta</span>
         </NavLink>
-      </nav>
 
-      <div className="mt-auto border-t border-line p-4">
-        <button
-          type="button"
-          onClick={() => navigate('/profilo')}
-          className="flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-cream/60"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-cream font-serif text-xl font-semibold text-ink">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              initial
-            )}
+        <button type="button" onClick={() => navigate('/profilo')} className="sb-id" title="Profilo">
+          <span className="sb-id-seal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+            </svg>
           </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-ink">
-              {user?.name?.trim() || 'Profilo'}
+          <span className="sb-id-top">
+            <span className="sb-id-label">Diarista</span>
+            <span className="sb-id-num">{fakeIdNumber(name, email)}</span>
+          </span>
+          <span className="sb-id-body">
+            <span className="sb-id-photo">
+              {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{initial}</span>}
             </span>
-            <span className="block truncate text-xs text-ink-soft">
-              {user?.email}
+            <span className="sb-id-info">
+              <span className="sb-id-name">{name}</span>
+              <span className="sb-id-email">{email}</span>
             </span>
+          </span>
+          <span className="sb-id-foot">
+            <svg
+              className="sb-id-sig"
+              viewBox="0 0 56 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d={fakeSignature(name, email)} />
+            </svg>
+            <span className="sb-id-strip" aria-hidden="true" />
           </span>
         </button>
-        <p className="mt-2 px-1.5 text-[11px] text-ink-soft tabular-nums">
-          Annales · v{__APP_VERSION__}
-        </p>
-      </div>
-    </aside>
+      </aside>
+    </div>
   )
 }

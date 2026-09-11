@@ -10,6 +10,7 @@ import CollapsibleSection from '../components/CollapsibleSection'
 import AccountFields from '../components/AccountFields'
 import AppearanceControls from '../components/AppearanceControls'
 import MoodGradientControls from '../components/MoodGradientControls'
+import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
@@ -845,6 +846,14 @@ export default function Profile() {
             >
               + Aggiungi luogo
             </button>
+            </CollapsibleSection>
+
+            <CollapsibleSection title="Canzoni" icon="music">
+              <p className="text-xs text-ink-soft">
+                Le canzoni collegate alle note, con quante note le usano
+                ciascuna. Sola lettura: si aggiungono dalle note stesse.
+              </p>
+              <SongsUsageList />
             </CollapsibleSection>
           </CollapsibleSection>
         </div>

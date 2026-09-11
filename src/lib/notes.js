@@ -238,6 +238,33 @@ export async function placesUsageCounts() {
   return counts
 }
 
+// Canzoni distinte usate nelle note (deduplicate per titolo, case-
+// insensitive) con quante note le collegano ciascuna — { title,
+// thumbnailUrl, count }[], le più usate per prime. Come il luogo, una
+// canzone non è una relazione ma un JSON per nota (songs:
+// [{url, title, thumbnailUrl}]): si aggrega lato client per titolo. Serve a
+// mostrare l'elenco in Impostazioni → Canzoni.
+export async function songsUsageList() {
+  const list = await pb.collection(COLLECTION).getFullList({ fields: 'songs' })
+  const byTitle = new Map()
+  for (const n of list) {
+    for (const s of n.songs || []) {
+      const title = s?.title?.trim()
+      if (!title) continue
+      const key = title.toLowerCase()
+      const entry = byTitle.get(key)
+      if (entry) {
+        entry.count += 1
+      } else {
+        byTitle.set(key, { title, thumbnailUrl: s.thumbnailUrl || '', count: 1 })
+      }
+    }
+  }
+  return [...byTitle.values()].sort(
+    (a, b) => b.count - a.count || a.title.localeCompare(b.title),
+  )
+}
+
 // Luoghi distinti già scritti nelle note (nome + coordinate), deduplicati
 // per nome. Serve alla sincronizzazione una tantum con la collection
 // `places` (lib/places.js: syncPlacesFromNotes) — le note create prima di

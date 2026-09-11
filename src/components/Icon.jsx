@@ -83,6 +83,13 @@ const PATHS = {
       <path d="M7 14l4-5 3 3 5-7" />
     </>
   ),
+  'bar-chart': (
+    <>
+      <rect x="4" y="12" width="4" height="8" rx="1" />
+      <rect x="10" y="6" width="4" height="14" rx="1" />
+      <rect x="16" y="9" width="4" height="11" rx="1" />
+    </>
+  ),
   cloud: (
     <path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-2A5 5 0 0 0 6.5 19h11z" />
   ),

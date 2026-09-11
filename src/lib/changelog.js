@@ -9,6 +9,18 @@
 
 export const CHANGELOG = [
   {
+    version: '0.30.0',
+    date: '2026-09-11 12:29',
+    changes: [
+      'Barra laterale web: rifatta nello stile "Pagine" — tutta la barra è un cartoncino strappato con un secondo foglio che intravede da dietro; "Nuova nota"/Gemini sono cartoncino nero pieno, i 3 link principali ritagli di carta col contorno a matita tratteggiato, "Cerca" una lente d\'ingrandimento, "Importa" un post-it giallo.',
+      'Barra laterale web: i dati utente sono su una finta carta d\'identità in basso, con un numero di tessera e una firma disegnata generati da nome+email (sempre gli stessi per te); la versione dell\'app è accanto al nome "Annales" in alto.',
+      'Impostazioni → Colori del mood: i 6 pallini colorati sopra il gradiente sono ora cliccabili (aprono il selettore colore) e si possono spostare le 4 soglie interne con un numero percento; rimossa la legenda separata sotto.',
+      'Impostazioni → Dati utente: nuova sezione "Canzoni" con l\'elenco delle canzoni collegate alle note e quante note usa ciascuna.',
+      'Skin "Pagine": il colore dei cartoncini del mood è ancora più saturo (altro +15%, ora +32% sul colore originale).',
+      'Skin "Pagine" (vista mese mobile): la foto è ingrandita del 15% e il cartoncino delle note spostato ancora più a sinistra per compensare lo spazio.',
+    ],
+  },
+  {
     version: '0.29.0',
     date: '2026-09-11 09:03',
     changes: [
