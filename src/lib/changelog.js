@@ -9,6 +9,17 @@
 
 export const CHANGELOG = [
   {
+    version: '0.31.0',
+    date: '2026-09-11 14:26',
+    changes: [
+      'Barra laterale web: animazioni al passaggio del mouse su card profilo, Calendario/Andamento/Statistiche e Gemini; "Nuova nota" solleva ed ingrandisce un po\' di più. Nome ed email nella tessera +50%, foto profilo con angoli arrotondati e un contorno.',
+      'Skin "Pagine" (vista mese web): il cartoncino dei titoli si allarga in base a quanto testo contiene invece di una larghezza fissa uguale per ogni giorno.',
+      'Skin "Pagine": rimosso il segnalino sulla mappa del francobollo (si confondeva con la puntina che lo tiene fermo), sia in vista mese che vista giorno.',
+      'Skin "Pagine" (vista giorno web): foglio ancora +35%; testo del contenuto nota più chiaro (meno peso rispetto al titolo); rovinatura del cartoncino più varia (strappi profondi misti a sfilacciature).',
+      'Skin "Pagine": le targhette con il nome delle persone ora hanno lo stesso colore in vista mese e vista giorno (prima la vista giorno perdeva sfondo e testo del colore, restava solo il bordo) — il colore è generato dal nome e salvato sulla persona.',
+    ],
+  },
+  {
     version: '0.30.0',
     date: '2026-09-11 12:29',
     changes: [

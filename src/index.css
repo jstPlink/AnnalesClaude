@@ -1357,7 +1357,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-notes {
   position: relative;
   z-index: 1;
-  width: 33%;
+  /* larghezza in base a quanto testo ha il giorno (--mp-cw da
+     MonthPages.jsx: cardWidthFor), non più una percentuale fissa uguale
+     per ogni giorno */
+  width: var(--mp-cw, 33%);
   margin: 0.2rem 0 0;
   padding: 11px 18px 20px 16px;
   list-style: none;
@@ -1464,10 +1467,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
    canzone. Ordine: giorno+titoli | persone | luogo+musica | foto. */
 .mp-side {
   position: absolute;
-  left: 36%;
+  /* segue il cartoncino (--mp-cw): stesso margine di 3% prima, stessi 18%
+     di riserva per le polaroid dopo, indipendentemente da quanto è largo */
+  left: calc(var(--mp-cw, 33%) + 3%);
   top: 40px;
   z-index: 6;
-  width: 46%;
+  width: calc(79% - var(--mp-cw, 33%));
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -1482,7 +1487,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   min-width: 0;
 }
 .mp-page.has-photo.two-photo .mp-side {
-  width: 40%;
+  width: calc(73% - var(--mp-cw, 33%));
   gap: 12px;
 }
 
@@ -1492,6 +1497,19 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 8px 9px;
+}
+/* Colore della targhetta: UN colore per persona (--tape-c, da
+   personTapeColor() in MonthPages.jsx/DayPages.jsx — src/lib/pagesSkin.js),
+   sfondo/testo/bordo derivati con color-mix. Stessa regola su .mp-tape e
+   .dn-tape: prima la vista giorno applicava solo il bordo e il resto restava
+   un tono neutro fisso, quindi la stessa persona appariva con un colore
+   diverso fra mese e giorno. */
+.mp-tape,
+.dn-tape {
+  color: color-mix(in srgb, var(--tape-c, #8a7c58) 78%, #241c10);
+  background: color-mix(in srgb, var(--tape-c, #8a7c58) 24%, rgba(228, 216, 180, 0.66));
+  border-left: 2px dashed color-mix(in srgb, var(--tape-c, #8a7c58) 55%, #8a7452);
+  border-right: 2px dashed color-mix(in srgb, var(--tape-c, #8a7c58) 55%, #8a7452);
 }
 .mp-tape {
   display: inline-flex;
@@ -1504,11 +1522,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-weight: 700;
   font-size: 0.94rem;
   line-height: 1;
-  color: var(--mp-tape-ink, var(--mp-ink-b));
-  background: var(--mp-tape-bg, rgba(228, 216, 180, 0.66));
-  /* tratteggio a 2px, ora un po' più chiaro */
-  border-left: 2px dashed var(--mp-tape-edge, rgba(150, 124, 84, 0.5));
-  border-right: 2px dashed var(--mp-tape-edge, rgba(150, 124, 84, 0.5));
   box-shadow: 0 2px 4px rgba(20, 12, 4, 0.2);
   filter: url(#annales-wob);
 }
@@ -1610,18 +1623,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background-size: 256px 256px;
   background-position: var(--map-pos, center);
 }
-.mp-map::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 45%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50% 50% 50% 0;
-  background: var(--color-weekend);
-  transform: translate(-50%, -62%) rotate(-45deg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-}
+/* (rimosso il segnalino sulla mappa: si confondeva con la puntina che
+   blocca il francobollo, vedi .mp-place::after — basta quella) */
 /* puntina che "blocca" il francobollo */
 .mp-place::after {
   content: '';
@@ -1895,9 +1898,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .mp-wd {
     font-size: 1.24rem;
-  }
-  .mp-notes {
-    width: 44%;
   }
   .mp-side {
     left: 42%;
@@ -2177,7 +2177,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 
 .day-outer {
-  width: min(1350px, 100%);
+  /* +35% ancora (era 1350px) */
+  width: min(1820px, 100%);
   margin: 0 auto;
 }
 /* Vista giorno WEB: il foglio non si scorre, sta tutto nella vista della
@@ -2382,15 +2383,20 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     );
   background-size: 140px 140px, auto;
   background-blend-mode: multiply, normal;
+  /* rovinatura più mossa: qualche strappo un po' più profondo (fino
+     all'88-91%) mescolato a piccole sfilacciature superficiali, non
+     un'unica onda regolare — stessa idea usata per il cartoncino della
+     barra laterale */
   clip-path: polygon(
-    0% 2%, 8% 0%, 15% 3%, 23% 1%, 31% 2%, 39% 0%, 47% 3%, 50% 1%, 58% 2%,
-    66% 0%, 74% 3%, 82% 1%, 90% 2%, 100% 0%,
-    98% 8%, 96% 15%, 100% 22%, 93% 29%, 98% 36%, 95% 44%, 100% 51%, 96% 58%,
-    99% 66%, 94% 73%, 100% 80%, 97% 88%, 99% 95%, 96% 100%,
-    88% 97%, 80% 100%, 72% 96%, 64% 100%, 56% 97%, 48% 100%, 40% 95%,
-    35% 99%, 28% 100%, 20% 96%, 12% 100%, 5% 97%, 0% 100%,
-    2% 92%, 0% 85%, 3% 77%, 0% 70%, 4% 62%, 1% 54%, 3% 46%, 0% 38%, 4% 30%,
-    1% 22%, 3% 14%, 0% 7%
+    0% 2%, 8% 0%, 15% 4%, 20% 1%, 23% 5%, 31% 2%, 39% 0%, 44% 3%, 47% 0%,
+    50% 3%, 58% 1%, 63% 4%, 66% 0%, 74% 3%, 78% 0%, 82% 2%, 90% 0%, 95% 3%, 100% 0%,
+    97% 6%, 99% 10%, 94% 14%, 98% 18%, 90% 22%, 96% 26%, 100% 30%, 95% 34%,
+    99% 38%, 92% 42%, 97% 46%, 100% 50%, 94% 54%, 98% 58%, 89% 62%, 96% 66%,
+    100% 70%, 93% 74%, 99% 78%, 95% 82%, 100% 86%, 91% 90%, 97% 94%, 99% 97%, 96% 100%,
+    90% 98%, 84% 100%, 78% 96%, 72% 99%, 65% 95%, 60% 100%, 54% 97%, 48% 100%,
+    42% 94%, 36% 99%, 30% 96%, 24% 100%, 18% 95%, 12% 99%, 6% 97%, 0% 100%,
+    2% 94%, 0% 88%, 4% 82%, 0% 76%, 3% 70%, 0% 64%, 5% 58%, 0% 52%, 2% 46%,
+    0% 40%, 4% 34%, 1% 28%, 3% 22%, 0% 16%, 2% 10%, 0% 4%
   );
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
@@ -2444,8 +2450,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   overflow: hidden;
   font-size: 0.98rem;
   line-height: 1.3;
-  /* più scuro e più opaco del cartoncino: meglio leggibile */
-  color: rgba(32, 24, 13, 0.96);
+  /* più chiaro del titolo: prima pesava quasi quanto lui, ora si distingue
+     a colpo d'occhio qual è il titolo e cosa il contenuto */
+  color: rgba(58, 46, 28, 0.72);
   -webkit-mask: linear-gradient(#000 70%, transparent 97%);
   mask: linear-gradient(#000 70%, transparent 97%);
 }
@@ -2501,6 +2508,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   flex: 1 1 auto;
   min-width: 0;
 }
+/* Colore (sfondo/testo/bordo, da --tape-c) condiviso con .mp-tape: vedi la
+   regola combinata ".mp-tape, .dn-tape" vicino a .mp-tape più sopra nel
+   file — qui solo le proprietà che differiscono fra mese e giorno. */
 .dn-tape {
   display: inline-flex;
   align-items: center;
@@ -2510,11 +2520,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-weight: 700;
   font-size: 0.92rem;
   line-height: 1;
-  color: var(--dp-ink-b);
   padding: 5px 15px 5px 8px;
-  background: rgba(228, 216, 180, 0.66);
-  border-left: 2px dashed color-mix(in srgb, var(--tc, #8a7c58) 55%, #8a7452);
-  border-right: 2px dashed color-mix(in srgb, var(--tc, #8a7c58) 55%, #8a7452);
   box-shadow: 0 2px 4px rgba(20, 12, 4, 0.2);
   filter: url(#annales-wob);
 }
@@ -2593,18 +2599,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background-size: 256px 256px;
   background-position: var(--map-pos, center);
 }
-.dn-map::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 45%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50% 50% 50% 0;
-  background: var(--color-weekend);
-  transform: translate(-50%, -62%) rotate(-45deg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-}
+/* (rimosso il segnalino sulla mappa: si confondeva con la puntina che
+   blocca il francobollo, vedi .dn-place::after — basta quella) */
 .dn-place-name {
   display: block;
   padding-top: 4px;
@@ -3100,11 +3096,15 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   cursor: pointer;
   box-shadow: 0 6px 14px -4px rgba(10, 6, 0, 0.5);
   transform: rotate(-0.7deg);
-  transition: transform 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
   filter: url(#annales-wob);
 }
-.sb-new:hover {
-  transform: rotate(0deg);
+/* un po' più marcata del semplice raddrizzarsi: si solleva e si ingrandisce
+   appena, è IL pulsante principale della barra */
+.sb-new:hover,
+.sb-new:focus-visible {
+  transform: rotate(0deg) translateY(-3px) scale(1.035);
+  box-shadow: 0 10px 20px -4px rgba(10, 6, 0, 0.55);
 }
 .sb-gemini {
   width: 46px;
@@ -3122,11 +3122,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   box-shadow: 0 6px 14px -4px rgba(10, 6, 0, 0.5);
   cursor: pointer;
   transform: rotate(1deg);
-  transition: transform 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
   filter: url(#annales-wob);
 }
-.sb-gemini:hover {
-  transform: rotate(0deg);
+.sb-gemini:hover,
+.sb-gemini:focus-visible {
+  transform: rotate(0deg) scale(1.08);
+  box-shadow: 0 8px 16px -3px rgba(10, 6, 0, 0.55);
 }
 .sb-new:focus-visible,
 .sb-gemini:focus-visible {
@@ -3159,6 +3161,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   text-decoration: none;
   cursor: pointer;
   box-shadow: 0 3px 7px rgba(20, 12, 4, 0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 .sb-item:nth-child(1) {
   transform: rotate(-0.8deg);
@@ -3168,6 +3171,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 .sb-item:nth-child(3) {
   transform: rotate(-0.4deg);
+}
+/* si raddrizza e si solleva un filo al passaggio del mouse — dopo gli
+   :nth-child qui sopra apposta, così vince lui a parità di specificità */
+.sb-item:hover,
+.sb-item:focus-visible {
+  transform: rotate(0deg) translateY(-2px);
+  border-color: rgba(52, 44, 28, 0.65);
+  box-shadow: 0 6px 14px rgba(20, 12, 4, 0.22);
 }
 .sb-item.active {
   background-color: #fff9ea;
@@ -3345,6 +3356,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   text-align: left;
   font: inherit;
   display: block;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+/* si raddrizza e si solleva un filo, come se la sollevassi dal tavolo */
+.sb-id:hover,
+.sb-id:focus-visible {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 0 16px 28px -6px rgba(20, 12, 4, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 .sb-id:focus-visible {
   outline: 2px solid #33291c;
@@ -3427,12 +3445,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 3px;
+  /* angoli più stondati + un contorno, invece dello spigolo vivo di prima */
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
   background: linear-gradient(150deg, #8a9fae, #46626f);
   color: #f3ecd8;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
   font-size: 1.1rem;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px rgba(51, 41, 28, 0.25), inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 .sb-id-photo img {
   width: 100%;
@@ -3445,7 +3465,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .sb-id-name {
   display: block;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  font-size: 0.98rem;
+  /* +50% (era 0.98rem) */
+  font-size: 1.47rem;
   line-height: 1.15;
   color: #33291c;
   white-space: nowrap;
@@ -3455,7 +3476,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .sb-id-email {
   display: block;
   font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.62rem;
+  /* +50% (era 0.62rem) */
+  font-size: 0.93rem;
   color: #6b5f47;
   white-space: nowrap;
   overflow: hidden;

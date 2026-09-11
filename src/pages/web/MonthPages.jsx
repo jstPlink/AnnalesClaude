@@ -12,9 +12,17 @@ import {
   rng,
   osmTileFor,
   moodKind,
-  tapeTint,
+  personTapeColor,
   useCarouselIndex,
 } from '../../lib/pagesSkin'
+
+// Larghezza del cartoncino dei titoli in base a quanto testo contiene: poco
+// testo -> cartoncino stretto, molto testo -> più largo (fino a un tetto),
+// invece di una percentuale fissa uguale per ogni giorno.
+function cardWidthFor(titles) {
+  const chars = titles.reduce((sum, t) => sum + t.text.length, 0)
+  return `${Math.min(42, Math.max(24, 22 + Math.round(chars / 6)))}%`
+}
 
 // ---- Vista MOBILE: la colonna di persone/luogo/musica/foto della vista
 // desktop non ci sta; sul telefono diventano targhette-contatore compatte
@@ -206,6 +214,7 @@ export default function MonthPages({
           isToday: c.key === todayKey(),
           // lunghezza linguetta: base ~58px, casualità ± ~10% (52–64px)
           tw: `${52 + (hash(`${c.key}~tw`) % 13)}px`,
+          cw: cardWidthFor(titles),
           titles,
           imgs,
           imgsCarousel,
@@ -233,7 +242,10 @@ export default function MonthPages({
               key={pg.key}
               type="button"
               onClick={() => onNavigate(`/day/${pg.key}`)}
-              style={{ '--r': `${tilt(pg.key, 1.3).toFixed(2)}deg` }}
+              style={{
+                '--r': `${tilt(pg.key, 1.3).toFixed(2)}deg`,
+                '--mp-cw': pg.cw,
+              }}
               className={
                 'mp-page' +
                 (pg.weekend ? ' wknd' : '') +
@@ -346,16 +358,11 @@ export default function MonthPages({
                   {pg.people.length > 0 && (
                     <span className="mp-tapes">
                       {pg.people.map((person) => {
-                        const tint = tapeTint(person.id)
                         return (
                           <span
                             key={person.id}
                             className="mp-tape"
-                            style={{
-                              '--mp-tape-bg': tint.bg,
-                              '--mp-tape-ink': tint.ink,
-                              '--mp-tape-edge': tint.edge,
-                            }}
+                            style={{ '--tape-c': personTapeColor(person) }}
                           >
                             <PersonAvatar
                               person={person}

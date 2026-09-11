@@ -10,7 +10,7 @@ import {
   tilt,
   osmTileFor,
   moodKind,
-  tapeTint,
+  personTapeColor,
   useCarouselIndex,
 } from '../../lib/pagesSkin'
 
@@ -295,12 +295,11 @@ export default function DayPages({
                     {it.people.length > 0 && (
                       <span className="dn-tapes">
                         {it.people.map((person) => {
-                          const tint = tapeTint(person.id)
                           return (
                             <span
                               key={person.id}
                               className="dn-tape"
-                              style={{ '--tc': tint.edge }}
+                              style={{ '--tape-c': personTapeColor(person) }}
                             >
                               <PersonAvatar
                                 person={person}

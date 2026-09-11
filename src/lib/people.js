@@ -1,10 +1,14 @@
 import { pb } from './pocketbase'
+import { colorForName } from './pagesSkin'
 
 // Accesso alla collection `people` di PocketBase: l'elenco (curato dall'utente
 // in Profilo) delle persone selezionabili nelle note. È per-utente: il campo
 // `user` va sempre valorizzato in creazione, altrimenti le regole della
 // collection rifiutano il record.
-// Campi: name, immichPersonId (foto da Immich), user.
+// Campi: name, immichPersonId (foto da Immich), user, tapeColor (colore della
+// targhetta nella skin "Pagine", calcolato dal nome alla creazione — vedi
+// src/lib/pagesSkin.js: colorForName/personTapeColor — "nascosto", non
+// mostrato in nessuna UI).
 
 const COLLECTION = 'people'
 
@@ -17,15 +21,18 @@ export async function createPersonFromImmich(immichPerson) {
     name: immichPerson.name,
     immichPersonId: immichPerson.id,
     user: pb.authStore.record?.id,
+    tapeColor: colorForName(immichPerson.name),
   })
 }
 
 // Persona "locale": solo il nome, nessun collegamento a Immich. Usata quando
 // si aggiunge al volo una persona mentre si scrive una nota.
 export async function createPerson(name) {
+  const trimmed = name.trim()
   return pb.collection(COLLECTION).create({
-    name: name.trim(),
+    name: trimmed,
     user: pb.authStore.record?.id,
+    tapeColor: colorForName(trimmed),
   })
 }
 
