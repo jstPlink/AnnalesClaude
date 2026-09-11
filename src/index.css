@@ -2177,9 +2177,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 
 .day-outer {
-  /* +35% ancora (era 1350px) */
-  width: min(1820px, 100%);
-  margin: 0 auto;
+  /* Stessa larghezza della pagina in vista mese (.mp-stack): niente più un
+     tetto in pixel proprio, riempie il contenitore che lo ospita. */
+  width: 100%;
 }
 /* Vista giorno WEB: il foglio non si scorre, sta tutto nella vista della
    pagina (a differenza del telefono, che scorre — vedi DayPages.jsx `fit`).
@@ -3465,8 +3465,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .sb-id-name {
   display: block;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  /* +50% (era 0.98rem) */
-  font-size: 1.47rem;
+  /* +50% poi -15% (era 0.98rem, poi 1.47rem) */
+  font-size: 1.25rem;
   line-height: 1.15;
   color: #33291c;
   white-space: nowrap;
@@ -3476,8 +3476,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .sb-id-email {
   display: block;
   font-family: 'Annales Hand', 'Kalam', sans-serif;
-  /* +50% (era 0.62rem) */
-  font-size: 0.93rem;
+  /* +50% poi -10% (era 0.62rem, poi 0.93rem) */
+  font-size: 0.84rem;
   color: #6b5f47;
   white-space: nowrap;
   overflow: hidden;
@@ -3538,6 +3538,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   cursor: pointer;
   text-align: left;
   font: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.ws-header:not(.ws-header-danger):hover,
+.ws-header:not(.ws-header-danger):focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -6px rgba(20, 12, 4, 0.36);
 }
 .ws-header-danger {
   background-color: color-mix(in srgb, var(--color-delete) 55%, var(--dp-header-bg) 45%);
@@ -3611,6 +3617,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   text-align: left;
   font: inherit;
   color: var(--color-ink);
+  transition: background-color 0.15s ease;
+}
+.ws-sub-head:hover,
+.ws-sub-head:focus-visible {
+  background-color: color-mix(in srgb, var(--sub-c, var(--color-line)) 12%, transparent);
 }
 .ws-sub-icon {
   color: var(--sub-c, var(--color-ink-soft));
@@ -3658,7 +3669,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
       transparent 70%,
       rgba(255, 255, 255, 0.25) 100%
     ),
-    repeating-linear-gradient(35deg, rgba(120, 90, 40, 0.05) 0 1px, transparent 1px 5px);
+    /* strisce diagonali -10% di visibilità (era 0.05) */
+      repeating-linear-gradient(35deg, rgba(120, 90, 40, 0.045) 0 1px, transparent 1px 5px);
   pointer-events: none;
 }
 .pf-seal {
@@ -3708,12 +3720,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   z-index: 2;
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  /* la foto si allunga fino a combaciare col fondo di .pf-fields (l'ultima
+     riga è "Password") invece di un'altezza fissa. */
+  align-items: stretch;
 }
 .pf-photo {
   position: relative;
   width: 70px;
-  height: 84px;
   flex: none;
   display: flex;
   align-items: center;
@@ -3749,6 +3762,27 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   place-items: center;
   box-shadow: 0 4px 8px rgba(10, 6, 0, 0.5);
 }
+/* 2 nastri adesivi decorativi, come se tenessero ferma la foto sul cartone */
+.pf-tape {
+  position: absolute;
+  z-index: 3;
+  width: 34px;
+  height: 15px;
+  background: rgba(239, 231, 205, 0.62);
+  box-shadow: 0 1px 2px rgba(20, 12, 4, 0.25);
+  border-left: 1px dashed rgba(120, 100, 60, 0.4);
+  border-right: 1px dashed rgba(120, 100, 60, 0.4);
+}
+.pf-tape-a {
+  top: -7px;
+  left: -9px;
+  transform: rotate(-40deg);
+}
+.pf-tape-b {
+  bottom: -7px;
+  right: -9px;
+  transform: rotate(-40deg);
+}
 .pf-fields {
   position: relative;
   z-index: 2;
@@ -3777,7 +3811,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .pf-fvalue {
   flex: 1;
   min-width: 0;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  /* niente più il font a mano libera: nome/email si leggono meglio dritti
+     e in grassetto, non in corsivo. */
+  font-family: system-ui, sans-serif;
+  font-weight: 700;
   font-size: 0.96rem;
   color: #33291c;
   overflow: hidden;

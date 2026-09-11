@@ -70,6 +70,7 @@ export default function WebFilter() {
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
   const [peopleOpen, setPeopleOpen] = useState(false)
+  const [placesOpen, setPlacesOpen] = useState(false)
   const [peopleUsage, setPeopleUsage] = useState(null)
   const [showAllPeople, setShowAllPeople] = useState(false)
   const [filters, setFilters] = useState({
@@ -251,21 +252,42 @@ export default function WebFilter() {
 
           {places.length > 0 && (
             <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-                Luogo
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {places.map((p) => (
-                  <ChipButton
-                    key={p.id}
-                    icon="map-pin"
-                    active={filters.place === p.name}
-                    onClick={() => togglePlace(p.name)}
-                  >
-                    {p.name}
-                  </ChipButton>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setPlacesOpen((v) => !v)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                  Luogo
+                </span>
+                {filters.place && (
+                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
+                    1
+                  </span>
+                )}
+                <Icon
+                  name="chevron-right"
+                  size={14}
+                  className={
+                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    (placesOpen ? 'rotate-90' : '')
+                  }
+                />
+              </button>
+              {placesOpen && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {places.map((p) => (
+                    <ChipButton
+                      key={p.id}
+                      icon="map-pin"
+                      active={filters.place === p.name}
+                      onClick={() => togglePlace(p.name)}
+                    >
+                      {p.name}
+                    </ChipButton>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

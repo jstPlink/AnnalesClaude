@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { pb, fileUrl } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
 import { fakeIdNumber, fakeSignature } from '../../lib/idCard'
+import { MONTHS_IT } from '../../lib/dates'
 import Icon from '../Icon'
 
 const PASSWORD_DOTS = '••••••••••••'
@@ -42,7 +43,12 @@ export default function ProfileCard() {
   const email = user?.email || '—'
   const initial = (name || email || '?').charAt(0).toUpperCase()
   const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
-  const joinYear = user?.created ? new Date(user.created).getFullYear() : null
+  const joinDate = user?.created
+    ? (() => {
+        const d = new Date(user.created)
+        return `${d.getDate()} ${MONTHS_IT[d.getMonth()].toLowerCase()} ${d.getFullYear()}`
+      })()
+    : null
 
   const avatarInputRef = useRef(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
@@ -179,7 +185,7 @@ export default function ProfileCard() {
       <div className="pf-top">
         <span>
           Diarista
-          {joinYear && <span className="pf-since">· dal {joinYear}</span>}
+          {joinDate && <span className="pf-since">· dal {joinDate}</span>}
         </span>
         <span>{fakeIdNumber(name, email)}</span>
       </div>
@@ -191,6 +197,8 @@ export default function ProfileCard() {
           onClick={() => avatarInputRef.current?.click()}
           title="Cambia immagine profilo"
         >
+          <span className="pf-tape pf-tape-a" aria-hidden="true" />
+          <span className="pf-tape pf-tape-b" aria-hidden="true" />
           {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{initial}</span>}
           <span className="edit-badge">
             {avatarUploading ? '…' : <Icon name="edit" size={12} />}

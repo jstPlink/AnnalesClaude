@@ -230,10 +230,8 @@ export default function DayView() {
       <main
         key={date}
         className={
-          'day-surface anim-page relative flex-1 bg-panel ' +
-          (skin === 'pages'
-            ? 'overflow-y-auto overflow-x-hidden px-2 py-3'
-            : 'overflow-hidden px-3 py-3')
+          'day-surface anim-page relative min-h-0 flex-1 overflow-hidden bg-panel ' +
+          (skin === 'pages' ? 'px-2 py-3' : 'px-3 py-3')
         }
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
@@ -246,9 +244,10 @@ export default function DayView() {
         )}
 
         {skin === 'pages' ? (
-          // Skin "Pagine": il foglio si scorre come una vera pagina di
-          // diario, non si schiaccia in una schermata (a differenza degli
-          // altri stili).
+          // Skin "Pagine": le 24h si comprimono per stare tutte nello
+          // schermo (fit), come da web — se il contenuto di una nota non ci
+          // sta viene tagliato, è solo decorativo, non serve scorrere per
+          // vedere le note più tarde.
           loading ? (
             <p className="p-6 text-center text-ink-soft">Carico…</p>
           ) : !notes.length ? (
@@ -261,6 +260,7 @@ export default function DayView() {
               peopleById={peopleById}
               immichUrl={user?.immichUrl?.trim()}
               immichApiKey={user?.immichApiKey?.trim()}
+              fit
             />
           )
         ) : (

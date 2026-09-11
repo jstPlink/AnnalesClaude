@@ -26,8 +26,10 @@ import {
 // Stessa logica della vista giorno mobile (src/pages/DayView.jsx): l'intera
 // giornata (24h) viene compressa per stare tutta nell'altezza disponibile
 // sullo schermo, senza dover scorrere la pagina per vedere le note più
-// tarde. La larghezza della colonna (sul wrapper più sotto) è la stessa
-// delle righe della vista mese (WebMonth), centrata nella pagina.
+// tarde. Solo l'header è centrato a w-3/5 (come quello della vista mese) —
+// il contenuto vero e proprio (skin "Pagine") è a piena larghezza, senza
+// alcun tetto, esattamente come la griglia della vista mese (WebMonth), che
+// non ne ha uno proprio.
 const DAY_MIN = 24 * 60
 const RAIL_W = 48 // px, larghezza della barra oraria a sinistra
 const MIN_BLOCK = 30 // px, altezza minima di un blocco nota
@@ -182,8 +184,8 @@ export default function WebDay() {
   const pxPerMin = trackH / DAY_MIN
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-4rem)] w-3/5 flex-col">
-      <header className="mb-4 shrink-0">
+    <div className="flex h-[calc(100dvh-4rem)] flex-col">
+      <header className="mx-auto mb-4 w-3/5 shrink-0">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -249,7 +251,7 @@ export default function WebDay() {
       </header>
 
       {error && (
-        <p className="mb-3 shrink-0 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
+        <p className="mx-auto mb-3 w-3/5 shrink-0 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
           {error}
         </p>
       )}
@@ -257,11 +259,13 @@ export default function WebDay() {
       {skin === 'pages' ? (
         // Skin "Pagine": il foglio NON si scorre, sta tutto nella pagina
         // (fit) — altezza fissa qui, DayPages misura lo spazio disponibile.
+        // Larghezza piena, non più w-3/5: stessa larghezza della vista mese,
+        // che non ha alcun tetto sulla propria griglia (solo l'header lo ha).
         <div className="min-h-0 flex-1 overflow-hidden">
           {loading ? (
             <p className="p-6 text-center text-ink-soft">Carico…</p>
           ) : !notes.length ? (
-            <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <div className="mx-auto flex w-3/5 flex-col items-center gap-3 py-16 text-center">
               <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
               <button
                 type="button"
@@ -284,7 +288,7 @@ export default function WebDay() {
           )}
         </div>
       ) : (
-      <div className="day-surface min-h-0 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
+      <div className="day-surface mx-auto min-h-0 w-3/5 flex-1 overflow-hidden rounded-3xl border border-line bg-panel p-4">
         {loading ? (
           <p className="flex h-full items-center justify-center text-ink-soft">Carico…</p>
         ) : !notes.length ? (

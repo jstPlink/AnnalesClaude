@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.33.0',
+    date: '2026-09-11 17:33',
+    changes: [
+      'Skin "Pagine" (vista giorno): il foglio è largo quanto la vista mese, senza più un tetto in pixel proprio; da telefono le 24h si comprimono per stare tutte nello schermo (come da web), invece di scorrere.',
+      'Impostazioni: la data di iscrizione nella tessera profilo ora è completa (giorno e mese, non solo l\'anno); la foto profilo si allunga fino alla riga "Password" e ha due nastri adesivi decorativi; nome ed email sono in grassetto invece che a mano libera, per leggerli meglio; le strisce diagonali di sfondo sono più tenui; gli header delle sezioni si sollevano leggermente al passaggio del mouse.',
+      'Barra laterale web: nome ed email nella tessera un po\' più piccoli (erano cresciuti troppo con gli ultimi ritocchi).',
+      'Pagina di ricerca: "Luogo" ora si può richiudere come già "Persone".',
+    ],
+  },
+  {
     version: '0.32.0',
     date: '2026-09-11 15:44',
     changes: [
