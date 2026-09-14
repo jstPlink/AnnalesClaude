@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.36.0',
+    date: '2026-09-14 19:32',
+    changes: [
+      'Andamento (vista mobile): stessi materiali già portati sul web — foglietto a quadretti scuro sovrapposto per "Umore nell\'anno" e "Mese per mese", grafico su carta millimetrata, ogni mese come biglietto — scalati per il telefono (grafico più alto, mesi alterni, niente numeri sull\'asse, come già faceva il grafico).',
+    ],
+  },
+  {
     version: '0.35.1',
     date: '2026-09-14 19:14',
     changes: [

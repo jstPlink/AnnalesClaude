@@ -7,31 +7,29 @@ import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import YearMoodChart from '../components/YearMoodChart'
+import Icon from '../components/Icon'
 import { useNav } from '../context/NavContext'
 import { listNotesInRange, describeError } from '../lib/notes'
 import { yearWeeklyMood, moodColor, moodTextColor } from '../lib/mood'
 import { MONTHS_IT, todayKey } from '../lib/dates'
 
+// Colori delle 3 linee del grafico nella skin "Pagine" — stessi della
+// vista web (WebData.jsx): grafite per il giorno, penna blu per la
+// settimana, evidenziatore corallo per il mese.
+const CHART_LINE_COLORS = { day: '#a9906e', week: '#5ea9d6', month: '#e0655e' }
+
 // Una barretta per ogni giorno del mese.
 function WeekBars({ groups }) {
   return (
-    <div className="flex h-10 min-w-0 flex-1 items-end gap-[1.5px]">
-      {groups.map((g, i) => (
-        <div key={i} className="flex h-full flex-1 items-end">
-          {g.mood == null ? (
-            <div className="h-[3px] w-full rounded-full bg-line" />
-          ) : (
-            <div
-              className="w-full rounded-t-[2px]"
-              style={{
-                height: `${Math.max(8, g.mood * 100)}%`,
-                backgroundColor: moodColor(g.mood),
-              }}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+    <span className="wd-month-bars">
+      {groups.map((g, i) =>
+        g.mood == null ? (
+          <i key={i} style={{ height: '10%', backgroundColor: 'var(--color-line)' }} />
+        ) : (
+          <i key={i} style={{ height: `${Math.max(10, g.mood * 100)}%`, backgroundColor: moodColor(g.mood) }} />
+        ),
+      )}
+    </span>
   )
 }
 
@@ -76,7 +74,7 @@ export default function DataView() {
         />
       </MobileTopBar>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="flex-1 overflow-y-auto no-scrollbar px-3 py-4">
         {error && (
           <p className="mb-3 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
             {error}
@@ -87,48 +85,69 @@ export default function DataView() {
           <p className="py-10 text-center text-ink-soft">Carico…</p>
         ) : (
           <>
-            <YearMoodChart data={data} />
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11px] text-ink-soft">
-              <span>▬ giorno</span>
-              <span className="text-[#4f8fbf]">▬ settimana</span>
-              <span className="text-ink">▬ mese</span>
+            <div className="wd-card-wrap">
+              <div className="wd-header">
+                <Icon name="chart" size={17} />
+                <h2>Umore nell'anno</h2>
+              </div>
+              <div className="wd-card">
+                <div className="wd-legend">
+                  <span className="wd-chip wd-chip-day">giorno</span>
+                  <span className="wd-chip wd-chip-week">settimana</span>
+                  <span className="wd-chip wd-chip-month">mese</span>
+                </div>
+                <div className="wd-chart-body">
+                  <YearMoodChart data={data} bare lineColors={CHART_LINE_COLORS} />
+                </div>
+              </div>
             </div>
 
-            <ul className="mt-5 divide-y divide-line-soft">
-              {data.monthly.map((m) => (
-                <li key={m.month}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCursor({ year, month: m.month })
-                      navigate('/')
-                    }}
-                    className="flex w-full items-center gap-3 py-2.5 text-left transition active:bg-panel"
-                  >
-                    <span className="w-16 shrink-0 text-sm font-semibold text-ink">
-                      {MONTHS_IT[m.month].slice(0, 3)}
-                    </span>
-                    <WeekBars groups={m.groups} />
-                    <span
-                      className="min-w-[2.75rem] rounded-full px-2 py-1 text-center text-sm font-bold tabular-nums"
-                      style={
-                        m.mood == null
-                          ? {
-                              color: 'var(--color-ink-soft)',
-                              border: '1px solid var(--color-line)',
-                            }
-                          : {
-                              backgroundColor: moodColor(m.mood),
-                              color: moodTextColor(m.mood),
-                            }
-                      }
-                    >
-                      {m.mood == null ? '—' : Math.round(m.mood * 100)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="wd-card-wrap alt">
+              <div className="wd-header">
+                <Icon name="calendar" size={17} />
+                <h2>Mese per mese</h2>
+              </div>
+              <div className="wd-card">
+                <p className="wd-intro-solo">
+                  Punteggio medio e andamento dei singoli giorni.
+                </p>
+                <ul>
+                  {data.monthly.map((m) => (
+                    <li key={m.month}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCursor({ year, month: m.month })
+                          navigate('/')
+                        }}
+                        className="wd-month-row"
+                      >
+                        <span className="wd-month-tag">
+                          {MONTHS_IT[m.month].slice(0, 3)}
+                        </span>
+                        <WeekBars groups={m.groups} />
+                        <span
+                          className="wd-month-score"
+                          style={
+                            m.mood == null
+                              ? {
+                                  color: 'var(--color-ink-soft)',
+                                  border: '1px solid var(--color-line)',
+                                }
+                              : {
+                                  backgroundColor: moodColor(m.mood),
+                                  color: moodTextColor(m.mood),
+                                }
+                          }
+                        >
+                          {m.mood == null ? '—' : Math.round(m.mood * 100)}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </>
         )}
       </main>

@@ -4117,6 +4117,57 @@ li:last-child > .wd-month-row {
   font-variant-numeric: tabular-nums;
 }
 
+/* Andamento da telefono (DataView.jsx): stessi materiali/classi della
+   vista web (.wd-*, sopra), solo più compatti — il breakpoint desktop è
+   1024px (useIsWide), quindi questa regola non tocca mai la vista web. Il
+   cartellino del mese usa l'abbreviazione a 3 lettere invece del nome per
+   esteso (non ci sta insieme a barrette e punteggio in una colonna così
+   stretta) — vedi src/pages/DataView.jsx. */
+@media (max-width: 480px) {
+  .wd-header {
+    gap: 7px;
+    margin: 0 0 -16px 12px;
+    padding: 8px 18px 10px 15px;
+    background-size: 14px 14px, 14px 14px, 150px 150px;
+  }
+  .wd-header h2 {
+    font-size: 0.92rem;
+  }
+  .wd-card {
+    padding: 22px 14px 14px;
+  }
+  .wd-legend {
+    flex-wrap: wrap;
+  }
+  .wd-chip {
+    padding: 4px 9px;
+    font-size: 0.64rem;
+  }
+  .wd-chip::before {
+    width: 7px;
+    height: 7px;
+  }
+  .wd-month-row {
+    gap: 8px;
+    padding: 7px 2px;
+  }
+  .wd-month-tag {
+    min-width: 0;
+    width: 2.7rem;
+    padding: 4px 4px;
+    font-size: 0.68rem;
+    text-transform: capitalize;
+  }
+  .wd-month-bars {
+    height: 26px;
+  }
+  .wd-month-score {
+    min-width: 2.4rem;
+    padding: 3px 6px;
+    font-size: 0.74rem;
+  }
+}
+
 /* ===================== Barre mobile (superiore + inferiore): stessi
    materiali della barra laterale web (src/components/web/Sidebar.jsx) —
    cartoncino, grana/fibra, timbro nero pieno, lente in ottone — riproposti
