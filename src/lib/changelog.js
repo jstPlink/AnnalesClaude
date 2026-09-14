@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.39.0',
+    date: '2026-09-14 22:36',
+    changes: [
+      'Cerca (vista mobile): rifatta in stile "Pagine" — stessi sotto-cartoncini per ogni filtro (Periodo, Mood, Testo, Luogo, Persone, Tag, Contenuto, Ordina per, Numero massimo) e le stesse pillole già portate sul web, con contorno a matita che diventa inchiostro nero pieno da selezionate; "Luogo" ora è un accordion chiudibile come "Persone"; i risultati sono una striscia di biglietti invece di card sciolte.',
+    ],
+  },
+  {
     version: '0.38.0',
     date: '2026-09-14 21:24',
     changes: [

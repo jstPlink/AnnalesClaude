@@ -4896,3 +4896,67 @@ li:last-child > .wf-result {
   z-index: 1;
   color: #33291c;
 }
+
+/* Cerca da telefono: stesse classi .wf-* della versione web (nate già
+   abbastanza strette per la colonna filtri 340px del desktop), scalate un
+   filo in più per lo schermo del telefono. */
+@media (max-width: 480px) {
+  .wf-sub {
+    padding: 13px 14px 15px;
+  }
+  .wf-title {
+    font-size: 0.86rem;
+    margin-bottom: 9px;
+  }
+  .wf-title svg {
+    width: 14px;
+    height: 14px;
+  }
+  .wf-title .count {
+    font-size: 0.62rem;
+  }
+  .wf-input {
+    padding: 7px 11px;
+    font-size: 0.82rem;
+  }
+  .wf-chip {
+    padding: 6px 11px;
+    font-size: 0.74rem;
+  }
+  .wf-chip svg {
+    width: 11px;
+    height: 11px;
+  }
+  .wf-more {
+    font-size: 0.72rem;
+  }
+  .wf-mood-bar {
+    height: 7px;
+    margin-bottom: 8px;
+  }
+  .wf-apply {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+  .wf-results-head {
+    font-size: 0.72rem;
+  }
+  .wf-results {
+    padding: 2px 13px;
+  }
+  .wf-result {
+    padding: 10px 1px;
+    gap: 12px;
+  }
+  .wf-result-badge {
+    width: 38px;
+    height: 38px;
+    font-size: 0.78rem;
+  }
+  .wf-result-title {
+    font-size: 0.86rem;
+  }
+  .wf-result-meta {
+    font-size: 0.72rem;
+  }
+}

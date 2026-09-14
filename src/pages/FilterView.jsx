@@ -42,14 +42,18 @@ function sortNotes(list, sort) {
   return arr
 }
 
-function FilterField({ label, children }) {
+const inputCls = 'wf-input'
+
+function ChipButton({ active, onClick, icon, square, children }) {
   return (
-    <div>
-      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-        {label}
-      </p>
+    <button
+      type="button"
+      onClick={onClick}
+      className={'wf-chip' + (square ? ' sq' : '') + (active ? ' active' : '')}
+    >
+      {icon && <Icon name={icon} size={12} />}
       {children}
-    </div>
+    </button>
   )
 }
 
@@ -59,6 +63,7 @@ export default function FilterView() {
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
   const [peopleOpen, setPeopleOpen] = useState(false)
+  const [placesOpen, setPlacesOpen] = useState(false)
   const [peopleUsage, setPeopleUsage] = useState(null)
   const [showAllPeople, setShowAllPeople] = useState(false)
   const [filters, setFilters] = useState({
@@ -176,30 +181,39 @@ export default function FilterView() {
         <span className="w-[34px]" />
       </MobileTopBar>
 
-      <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-4 py-4">
-        <div className="space-y-4 rounded-2xl bg-tag p-4">
-          <FilterField label="Periodo">
-            <div className="flex items-center gap-2">
+      <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-3 py-4">
+        <div className="space-y-2.5">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="calendar" size={15} />
+              Periodo
+            </p>
+            <div className="wf-row">
               <input
                 type="date"
                 aria-label="Da"
                 value={filters.from}
                 onChange={(e) => set({ from: e.target.value })}
-                className="w-full rounded-xl border border-line bg-cream px-2 py-1.5 text-sm text-ink outline-none"
+                className={inputCls}
               />
-              <span className="text-ink-soft">–</span>
+              <span className="wf-sep">–</span>
               <input
                 type="date"
                 aria-label="A"
                 value={filters.to}
                 onChange={(e) => set({ to: e.target.value })}
-                className="w-full rounded-xl border border-line bg-cream px-2 py-1.5 text-sm text-ink outline-none"
+                className={inputCls}
               />
             </div>
-          </FilterField>
+          </div>
 
-          <FilterField label="Mood (0–100)">
-            <div className="flex items-center gap-2">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="sparkles" size={15} />
+              Mood (0–100)
+            </p>
+            <div className="wf-mood-bar" aria-hidden="true" />
+            <div className="wf-row">
               <input
                 type="number"
                 min={0}
@@ -208,9 +222,9 @@ export default function FilterView() {
                 aria-label="Mood minimo"
                 value={filters.moodMin}
                 onChange={(e) => set({ moodMin: Number(e.target.value) })}
-                className="w-full rounded-xl border border-line bg-cream px-2 py-1.5 text-sm text-ink outline-none"
+                className={inputCls}
               />
-              <span className="text-ink-soft">–</span>
+              <span className="wf-sep">–</span>
               <input
                 type="number"
                 min={0}
@@ -219,87 +233,105 @@ export default function FilterView() {
                 aria-label="Mood massimo"
                 value={filters.moodMax}
                 onChange={(e) => set({ moodMax: Number(e.target.value) })}
-                className="w-full rounded-xl border border-line bg-cream px-2 py-1.5 text-sm text-ink outline-none"
+                className={inputCls}
               />
             </div>
-          </FilterField>
+          </div>
 
-          <FilterField label="Testo (titolo e contenuto)">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="search" size={15} />
+              Testo (titolo e contenuto)
+            </p>
             <input
               type="text"
               placeholder="Cerca nel testo…"
               value={filters.text}
               onChange={(e) => set({ text: e.target.value })}
-              className="w-full rounded-xl border border-line bg-cream px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-soft"
+              className={inputCls}
             />
-          </FilterField>
+          </div>
 
           {placesError && (
-            <FilterField label="Luogo">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="map-pin" size={15} />
+                Luogo
+              </p>
               <p className="text-xs text-delete-dark">{placesError}</p>
-            </FilterField>
+            </div>
           )}
 
           {places.length > 0 && (
-            <FilterField label="Luogo">
-              <div className="flex flex-wrap gap-1.5">
-                {places.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => togglePlace(p.name)}
-                    className={
-                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                      (filters.place === p.name
-                        ? 'bg-ink text-cream'
-                        : 'border border-line bg-cream text-ink')
-                    }
-                  >
-                    <Icon
-                      name="map-pin"
-                      size={12}
-                      className={filters.place === p.name ? 'text-cream' : 'text-ink-soft'}
-                    />
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            </FilterField>
+            <div className="wf-sub">
+              <button
+                type="button"
+                onClick={() => setPlacesOpen((v) => !v)}
+                className="wf-title w-full"
+              >
+                <Icon name="map-pin" size={15} />
+                Luogo
+                {filters.place && <span className="count">1</span>}
+                <Icon
+                  name="chevron-right"
+                  size={14}
+                  className={
+                    'ml-auto shrink-0 transition-transform ' +
+                    (placesOpen ? 'rotate-90' : '')
+                  }
+                />
+              </button>
+              {placesOpen && (
+                <div className="wf-chips">
+                  {places.map((p) => (
+                    <ChipButton
+                      key={p.id}
+                      icon="map-pin"
+                      active={filters.place === p.name}
+                      onClick={() => togglePlace(p.name)}
+                    >
+                      {p.name}
+                    </ChipButton>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {peopleError && (
-            <FilterField label="Persone">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="user" size={15} />
+                Persone
+              </p>
               <p className="text-xs text-delete-dark">{peopleError}</p>
-            </FilterField>
+            </div>
           )}
 
           {people.length > 0 && (
-            <div>
+            <div className="wf-sub">
               <button
                 type="button"
                 onClick={() => setPeopleOpen((v) => !v)}
-                className="flex w-full items-center gap-2 text-left"
+                className="wf-title w-full"
               >
-                <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                  Persone
-                </span>
+                <Icon name="user" size={15} />
+                Persone
                 {filters.personIds.length > 0 && (
-                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
-                    {filters.personIds.length}
-                  </span>
+                  <span className="count">{filters.personIds.length}</span>
                 )}
                 <Icon
                   name="chevron-right"
                   size={14}
                   className={
-                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    'ml-auto shrink-0 transition-transform ' +
                     (peopleOpen ? 'rotate-90' : '')
                   }
                 />
               </button>
               {peopleOpen && (
                 <>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     {(showAllPeople
                       ? people
                       : topByUsage(people, peopleUsage, filters.personIds, 10)
@@ -310,12 +342,7 @@ export default function FilterView() {
                           key={p.id}
                           type="button"
                           onClick={() => togglePerson(p.id)}
-                          className={
-                            'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition active:scale-95 ' +
-                            (active
-                              ? 'bg-ink text-cream'
-                              : 'border border-line bg-cream text-ink')
-                          }
+                          className={'wf-chip' + (active ? ' active' : '')}
                         >
                           <PersonAvatar
                             person={p}
@@ -332,7 +359,7 @@ export default function FilterView() {
                     <button
                       type="button"
                       onClick={() => setShowAllPeople((v) => !v)}
-                      className="mt-1.5 text-xs font-bold text-ink-soft underline underline-offset-2"
+                      className="wf-more"
                     >
                       {showAllPeople
                         ? 'Mostra solo le più frequenti'
@@ -345,107 +372,92 @@ export default function FilterView() {
           )}
 
           {tagsError && (
-            <FilterField label="Tag">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="tag" size={15} />
+                Tag
+              </p>
               <p className="text-xs text-delete-dark">{tagsError}</p>
-            </FilterField>
+            </div>
           )}
 
           {tags.length > 0 && (
-            <FilterField label="Tag">
-              <div className="flex flex-wrap gap-1.5">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="tag" size={15} />
+                Tag
+              </p>
+              <div className="wf-chips">
                 {tags.map((t) => (
-                  <button
+                  <ChipButton
                     key={t.id}
-                    type="button"
+                    square
+                    icon="tag"
+                    active={filters.tagIds.includes(t.id)}
                     onClick={() => toggleTag(t.id)}
-                    className={
-                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                      (filters.tagIds.includes(t.id)
-                        ? 'bg-ink text-cream'
-                        : 'border border-line bg-cream text-ink')
-                    }
                   >
-                    <Icon
-                      name="tag"
-                      size={12}
-                      className={filters.tagIds.includes(t.id) ? 'text-cream' : 'text-ink-soft'}
-                    />
                     {t.name}
-                  </button>
+                  </ChipButton>
                 ))}
               </div>
-            </FilterField>
+            </div>
           )}
 
-          <FilterField label="Contenuto">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="music" size={15} />
+              Contenuto
+            </p>
+            <div className="wf-chips">
+              <ChipButton
+                icon="music"
+                active={filters.hasSongs}
                 onClick={() => {
                   haptic()
                   set({ hasSongs: !filters.hasSongs })
                 }}
-                className={
-                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                  (filters.hasSongs
-                    ? 'bg-ink text-cream'
-                    : 'border border-line bg-cream text-ink')
-                }
               >
-                <Icon
-                  name="music"
-                  size={13}
-                  className={filters.hasSongs ? 'text-cream' : 'text-ink-soft'}
-                />
                 Note con canzoni
-              </button>
-              <button
-                type="button"
+              </ChipButton>
+              <ChipButton
+                icon="map-pin"
+                active={filters.hasPlace}
                 onClick={() => {
                   haptic()
                   set({ hasPlace: !filters.hasPlace })
                 }}
-                className={
-                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                  (filters.hasPlace
-                    ? 'bg-ink text-cream'
-                    : 'border border-line bg-cream text-ink')
-                }
               >
-                <Icon
-                  name="map-pin"
-                  size={13}
-                  className={filters.hasPlace ? 'text-cream' : 'text-ink-soft'}
-                />
                 Note con luoghi
-              </button>
+              </ChipButton>
             </div>
-          </FilterField>
+          </div>
 
-          <FilterField label="Ordina per">
-            <div className="flex flex-wrap gap-1.5">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="chart" size={15} />
+              Ordina per
+            </p>
+            <div className="wf-chips">
               {SORTS.map((s) => (
-                <button
+                <ChipButton
                   key={s.key}
-                  type="button"
+                  active={filters.sort === s.key}
                   onClick={() => {
                     haptic()
                     set({ sort: s.key })
                   }}
-                  className={
-                    'rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
-                    (filters.sort === s.key
-                      ? 'bg-ink text-cream'
-                      : 'border border-line bg-cream text-ink')
-                  }
                 >
                   {s.label}
-                </button>
+                </ChipButton>
               ))}
             </div>
-          </FilterField>
+          </div>
 
-          <FilterField label="Numero massimo di risultati (vuoto = tutte)">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="list" size={15} />
+              Numero massimo di risultati
+            </p>
             <input
               type="number"
               min={1}
@@ -454,16 +466,11 @@ export default function FilterView() {
               value={filters.limit}
               onChange={(e) => set({ limit: e.target.value })}
               placeholder="Tutte"
-              className="w-full rounded-xl border border-line bg-cream px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-soft"
+              className={inputCls}
             />
-          </FilterField>
+          </div>
 
-          <button
-            type="button"
-            onClick={applyFilters}
-            disabled={loading}
-            className="w-full rounded-full bg-ink py-2.5 text-sm font-bold text-cream transition active:scale-[0.99] disabled:opacity-50"
-          >
+          <button type="button" onClick={applyFilters} disabled={loading} className="wf-apply">
             {loading ? 'Cerco…' : 'Applica filtri'}
           </button>
         </div>
@@ -476,51 +483,54 @@ export default function FilterView() {
           )}
 
           {results === null && !error && (
-            <p className="py-6 text-center text-sm text-ink-soft">
+            <p className="wf-empty">
               Imposta i filtri e premi "Applica filtri".
             </p>
           )}
 
           {results !== null && (
             <>
-              <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              <p className="wf-results-head">
                 {results.length} nota{results.length === 1 ? '' : 'e'} trovat
                 {results.length === 1 ? 'a' : 'e'}
               </p>
-              <ul className="space-y-2">
-                {results.map((n, i) => (
-                  <li key={n.id} className="anim-row" style={{ '--i': i }}>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/note/${n.id}`)}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-line-soft bg-panel px-3 py-2.5 text-left transition active:brightness-95"
-                    >
-                      <span
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
-                        style={{
-                          backgroundColor: moodColor(n.mood),
-                          color: moodTextColor(n.mood),
-                        }}
+              <div className="wf-results">
+                <ul>
+                  {results.map((n, i) => (
+                    <li key={n.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/note/${n.id}`)}
+                        style={{ '--i': i }}
+                        className="anim-row wf-result"
                       >
-                        {Math.round(Number(n.mood) * 100)}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <MarqueeText className="text-sm font-semibold text-ink">
-                          {n.title || (
-                            <span className="italic text-ink-soft">
-                              Senza titolo
-                            </span>
-                          )}
-                        </MarqueeText>
-                        <span className="block text-xs text-ink-soft">
-                          {dayMonthLabel(dayKey(n.date))} · {timeLabel(n.timeStart)}–
-                          {timeLabel(n.timeEnd)}
+                        <span
+                          className="wf-result-badge"
+                          style={{
+                            backgroundColor: moodColor(n.mood),
+                            color: moodTextColor(n.mood),
+                          }}
+                        >
+                          {Math.round(Number(n.mood) * 100)}
                         </span>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                        <span className="min-w-0 flex-1">
+                          <MarqueeText className="wf-result-title">
+                            {n.title || (
+                              <span className="italic text-ink-soft">
+                                Senza titolo
+                              </span>
+                            )}
+                          </MarqueeText>
+                          <span className="wf-result-meta block">
+                            {dayMonthLabel(dayKey(n.date))} · {timeLabel(n.timeStart)}–
+                            {timeLabel(n.timeEnd)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </>
           )}
         </div>
