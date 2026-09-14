@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.39.1',
+    date: '2026-09-14 22:52',
+    changes: [
+      'Fix: rimosso il filtro decorativo rimasto su altri elementi delle note (contatori compatti persone/luogo/canzone e nastro della polaroid in vista mese e vista giorno da telefono, striscia dietro il numero del giorno, sfondo del cartoncino in vista giorno) — i due interventi precedenti (v0.35.1 e v0.37.1) avevano coperto solo bordo-cella, sfondo-nota ed etichetta-mood della vista mese, non bastava: il glitch grafico su alcune note in WebView Android dovrebbe ora sparire del tutto.',
+    ],
+  },
+  {
     version: '0.39.0',
     date: '2026-09-14 22:36',
     changes: [

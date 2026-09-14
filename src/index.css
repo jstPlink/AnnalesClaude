@@ -1344,7 +1344,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   bottom: 0.05em;
   height: 0.58em;
   background: var(--mp-wd-hl);
-  filter: url(#annales-wob);
+  /* niente filter: url(#annales-wob) qui — striscia dietro il numero del
+     giorno, presente su TUTTE le celle del mese (fino a 31 insieme),
+     causa nota di glitch grafico in WebView Android su telefono. */
   transform: skewX(-11deg) rotate(-1.2deg);
   mix-blend-mode: multiply;
   z-index: -1;
@@ -2052,7 +2054,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     border-left: 2px dashed rgba(150, 124, 84, 0.5);
     border-right: 2px dashed rgba(150, 124, 84, 0.5);
     box-shadow: 0 2px 4px rgba(20, 12, 4, 0.18);
-    filter: url(#annales-wob);
+    /* niente filter: url(#annales-wob) qui — fino a 3 per nota (persone/
+       luogo/canzone) su tutte le note del mese, causa nota di glitch
+       grafico in WebView Android; i bordi tratteggiati bastano a dare
+       l'idea del ritaglio a mano. */
   }
   /* luogo = rossa, canzone = verde (le persone restano nel tono carta) */
   .mp-mini--place {
@@ -2098,7 +2103,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     background: rgba(236, 226, 194, 0.86);
     border: 1px solid rgba(176, 158, 112, 0.4);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-    filter: url(#annales-wob);
+    /* niente filter: url(#annales-wob) qui — un'istanza per ogni nota con
+       foto nel mese, stesso motivo del .mp-mini qui sopra. */
   }
   .mp-pola-mobile .mp-ph {
     display: block;
@@ -2409,9 +2415,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   );
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
-     +15% sopra il precedente 1.15 (1.15 * 1.15) */
-  filter: url(#annales-paper) saturate(1.32)
-    drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
+     +15% sopra il precedente 1.15 (1.15 * 1.15).
+     Niente più filter: url(#annales-paper) — un'istanza per ogni nota del
+     giorno, mai toccata nei giri precedenti (quelli avevano corretto solo
+     la vista mese): stessa causa nota di glitch grafico in WebView Android
+     su telefono. Il ritaglio clip-path qui sopra, già molto mosso, basta a
+     dare il bordo strappato a mano senza la deformazione aggiuntiva. */
+  filter: saturate(1.32) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
 }
 .dn-card.mood-green {
   --mood: #a6d06e;
@@ -2871,7 +2881,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     border-left: 2px dashed rgba(150, 124, 84, 0.5);
     border-right: 2px dashed rgba(150, 124, 84, 0.5);
     box-shadow: 0 2px 4px rgba(20, 12, 4, 0.18);
-    filter: url(#annales-wob);
+    /* niente filter: url(#annales-wob) qui — fino a 3 per nota (persone/
+       luogo/canzone), stessa causa nota di glitch grafico in WebView
+       Android su telefono (vedi .mp-mini in vista mese). */
   }
   /* luogo = rosso, canzone = verde (le persone restano nel tono carta) */
   .dn-mini--place {
@@ -2917,7 +2929,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     background: rgba(236, 226, 194, 0.86);
     border: 1px solid rgba(176, 158, 112, 0.4);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-    filter: url(#annales-wob);
+    /* niente filter: url(#annales-wob) qui — vedi .mp-pola-mobile::before
+       in vista mese, stesso motivo. */
   }
   .dn-pola-mobile .dn-ph {
     display: block;
