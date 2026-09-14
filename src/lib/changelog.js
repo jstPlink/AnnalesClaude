@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.34.0',
+    date: '2026-09-14 12:22',
+    changes: [
+      'Andamento (vista web): rifatta in stile "Pagine" — il grafico dell\'umore e l\'elenco mese-per-mese sono ora due fogli con un\'etichetta a quadretti sovrapposta (come l\'intestazione della vista giorno), non più un riquadro semplice.',
+      'Andamento: il grafico ha uno sfondo a quadretti da carta millimetrata e 3 nuovi colori per le linee (grafite/penna blu/evidenziatore corallo); ogni mese nell\'elenco è un biglietto col nome per esteso e una mini-barra per ogni giorno.',
+    ],
+  },
+  {
     version: '0.33.0',
     date: '2026-09-11 17:33',
     changes: [

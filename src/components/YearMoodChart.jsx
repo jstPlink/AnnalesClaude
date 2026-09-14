@@ -5,12 +5,21 @@ import { MONTHS_IT } from '../lib/dates'
 // adattarsi a mobile (alto, senza valori sull'asse, mesi alterni) e web
 // (più basso, con valori sull'asse, tutti i mesi) tramite le props.
 // data = risultato di yearWeeklyMood(): { daily, weekly, monthlySeries, hasData }
+// `bare` e `lineColors` esistono solo per la skin "Pagine" (WebData.jsx: il
+// cartoncino/bordo diventano lo sfondo a quadretti del chiamante, e le 3
+// linee un altro colore) — di default il componente resta quello di sempre.
 export default function YearMoodChart({
   data,
   aspectRatio = 0.82, // altezza / larghezza del grafico
   monthFontSize = 22,
   alternateMonths = true, // true = un mese sì e uno no (schermi stretti)
   showAxisValues = false,
+  bare = false,
+  lineColors = {
+    day: 'var(--color-ink-soft)',
+    week: '#4f8fbf',
+    month: 'var(--color-ink)',
+  },
 }) {
   const W = 1000
   const H = Math.round(W * aspectRatio)
@@ -43,7 +52,12 @@ export default function YearMoodChart({
 
   if (!data?.hasData) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border border-line bg-tag px-4 py-16 text-sm text-ink-soft">
+      <div
+        className={
+          'flex items-center justify-center px-4 py-16 text-sm text-ink-soft ' +
+          (bare ? '' : 'rounded-2xl border border-line bg-tag')
+        }
+      >
         Nessun dato per quest'anno.
       </div>
     )
@@ -53,7 +67,7 @@ export default function YearMoodChart({
     <svg
       viewBox={`0 0 ${W} ${H}`}
       style={{ width: '100%', height: 'auto', display: 'block' }}
-      className="rounded-2xl border border-line bg-tag"
+      className={bare ? '' : 'rounded-2xl border border-line bg-tag'}
     >
       {/* Griglia orizzontale, con valori numerici a sinistra solo se richiesti */}
       {[0, 0.25, 0.5, 0.75, 1].map((m) => (
@@ -105,7 +119,7 @@ export default function YearMoodChart({
       <path
         d={line(data.daily)}
         fill="none"
-        stroke="var(--color-ink-soft)"
+        stroke={lineColors.day}
         strokeWidth="1.2"
         strokeLinecap="round"
         opacity="0.55"
@@ -115,7 +129,7 @@ export default function YearMoodChart({
       <path
         d={line(data.weekly)}
         fill="none"
-        stroke="#4f8fbf"
+        stroke={lineColors.week}
         strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -126,7 +140,7 @@ export default function YearMoodChart({
       <path
         d={line(data.monthlySeries)}
         fill="none"
-        stroke="var(--color-ink)"
+        stroke={lineColors.month}
         strokeWidth="4.6"
         strokeLinecap="round"
         strokeLinejoin="round"

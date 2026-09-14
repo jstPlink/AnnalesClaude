@@ -3924,3 +3924,195 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background: repeating-linear-gradient(90deg, #3a3226 0 2px, transparent 2px 5px);
   opacity: 0.5;
 }
+
+/* ===================== Andamento (vista web): un foglietto a quadretti
+   sovrapposto per ogni cartoncino — stessa idea del ".day-header" della
+   vista giorno — invece del cartoncino cliccabile a tutta larghezza delle
+   Impostazioni: qui i titoli sono solo etichette, non pulsanti. ===================== */
+.wd-card-wrap {
+  margin-bottom: 30px;
+}
+.wd-header {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 -20px 18px;
+  padding: 11px 24px 13px 20px;
+  background-color: #2b2015;
+  background-image: repeating-linear-gradient(
+      90deg,
+      rgba(230, 220, 195, 0.1) 0 1px,
+      transparent 1px 17px
+    ),
+    repeating-linear-gradient(0deg, rgba(230, 220, 195, 0.1) 0 1px, transparent 1px 17px),
+    var(--sb-grain, none);
+  background-size: 17px 17px, 17px 17px, 150px 150px;
+  background-blend-mode: normal, normal, overlay;
+  border: 1px solid #4c4636;
+  box-shadow: 0 7px 15px -6px rgba(20, 12, 4, 0.42);
+  transform: rotate(-1.3deg);
+  filter: url(#annales-wob);
+}
+.wd-card-wrap.alt .wd-header {
+  transform: rotate(1deg);
+}
+.wd-header svg {
+  flex: none;
+  color: #efe7d4;
+  opacity: 0.85;
+}
+.wd-header h2 {
+  margin: 0;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.15rem;
+  color: #efe7d4;
+  white-space: nowrap;
+}
+.wd-card {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  background-color: var(--color-cream);
+  padding: 30px 22px 22px;
+  box-shadow: 0 10px 22px -14px rgba(20, 12, 4, 0.3);
+}
+.wd-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.wd-intro p {
+  margin: 0;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  max-width: 44ch;
+}
+.wd-intro-solo {
+  margin: 0 0 10px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+.wd-legend {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.wd-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-tag);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--color-ink);
+}
+.wd-chip::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+/* matita/pennarello: grafite per il giorno, penna blu per la settimana,
+   evidenziatore corallo per il mese — la linea principale */
+.wd-chip-day {
+  --dot: #a9906e;
+}
+.wd-chip-week {
+  --dot: #5ea9d6;
+}
+.wd-chip-month {
+  --dot: #e0655e;
+}
+
+.wd-chart-body {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: var(--color-tag);
+  background-image: repeating-linear-gradient(0deg, rgba(79, 143, 191, 0.12) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(79, 143, 191, 0.12) 0 1px, transparent 1px 24px);
+}
+.wd-chart-body svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.wd-month-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-bottom: 1.5px dashed var(--color-line-soft);
+  border-radius: 8px;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+li:last-child > .wd-month-row {
+  border-bottom: none;
+}
+.wd-month-row:hover,
+.wd-month-row:focus-visible {
+  background-color: color-mix(in srgb, #5ea9d6 8%, transparent);
+  transform: translateX(2px);
+}
+.wd-month-tag {
+  flex: none;
+  min-width: 8.6rem;
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--color-tag);
+  border: 1.5px dashed var(--color-line);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--color-ink);
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.1);
+}
+.wd-month-bars {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+}
+.wd-month-bars i {
+  flex: 1;
+  min-width: 1px;
+  border-radius: 1px 1px 0 0;
+  display: block;
+}
+.wd-month-score {
+  flex: none;
+  min-width: 2.9rem;
+  text-align: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
