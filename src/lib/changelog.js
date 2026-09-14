@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.35.1',
+    date: '2026-09-14 19:14',
+    changes: [
+      'Barre mobile: risolti due bug della v0.35.0 — i pulsanti del footer (profilo/cerca/Gemini/nuova nota) erano impilati uno sopra l\'altro invece che in riga (mancava una regola CSS), e il pulsante della lente ora è un cerchio pulito in ogni caso.',
+      'Vista mese/giorno da telefono: tolto un filtro decorativo dalle nuove barre superiore e inferiore (restavano comunque un filo irregolari) — troppi filtri SVG attivi insieme causavano un artefatto grafico ("glitch") sulle note in alcuni telefoni Android.',
+    ],
+  },
+  {
     version: '0.35.0',
     date: '2026-09-14 18:56',
     changes: [

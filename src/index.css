@@ -4120,12 +4120,18 @@ li:last-child > .wd-month-row {
 /* ===================== Barre mobile (superiore + inferiore): stessi
    materiali della barra laterale web (src/components/web/Sidebar.jsx) —
    cartoncino, grana/fibra, timbro nero pieno, lente in ottone — riproposti
-   in orizzontale. Due fogli sovrapposti: quello davanti quasi dritto (solo
-   un filo irregolare), quello dietro spunta poco, con un bordo seghettato
-   irregolare (denti di larghezza/profondità diverse), non un'ombra piatta
-   né uno strappo organico. Tono fisso, non legato al tema chiaro/scuro —
-   stessa scelta della barra laterale: è carta vera, non uno sfondo
-   dell'interfaccia. ===================== */
+   in orizzontale. Due fogli sovrapposti: quello davanti quasi dritto,
+   quello dietro spunta poco con un bordo seghettato irregolare (denti di
+   larghezza/profondità diverse), niente clip-path a strappo organico.
+   Niente `filter: url(#annales-tear...)` qui (a differenza della barra
+   laterale web): questi due elementi sono sempre a schermo, non scorrono
+   via come le pagine del mese/giorno — troppi filtri SVG feDisplacementMap
+   attivi insieme causavano artefatti grafici sulle note in WebView Android
+   (issue osservata da telefono dopo l'introduzione di queste barre). Il
+   bordo seghettato resta comunque visibile: lo dà il clip-path, non il
+   filtro. Tono fisso, non legato al tema chiaro/scuro — stessa scelta
+   della barra laterale: è carta vera, non uno sfondo dell'interfaccia.
+   ===================== */
 .mtop-wrap {
   position: relative;
   flex: none;
@@ -4148,7 +4154,6 @@ li:last-child > .wd-month-row {
     44% 89%, 40% 100%, 37% 92%, 33% 99%, 29% 87%, 26% 96%, 22% 90%, 19% 100%,
     15% 93%, 12% 88%, 8% 98%, 5% 91%, 2% 100%, 0 89%
   );
-  filter: url(#annales-tear-2);
 }
 .mtop {
   position: relative;
@@ -4164,10 +4169,6 @@ li:last-child > .wd-month-row {
   background-blend-mode: soft-light, soft-light;
   border-radius: 0 0 15px 15px;
   box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.12), 0 4px 8px rgba(20, 12, 4, 0.18);
-  filter: url(#annales-tear);
-}
-.mtop > * {
-  filter: none;
 }
 .mtop-day {
   justify-content: space-between;
@@ -4196,7 +4197,6 @@ li:last-child > .wd-month-row {
     85% 0, 89% 11%, 92% 3%, 96% 8%, 100% 4%,
     100% 100%, 0 100%
   );
-  filter: url(#annales-tear-2);
 }
 .mbottom {
   position: relative;
@@ -4207,11 +4207,7 @@ li:last-child > .wd-month-row {
   background-blend-mode: soft-light, soft-light;
   border-radius: 15px 15px 0 0;
   box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.12), 0 -4px 8px rgba(20, 12, 4, 0.18);
-  filter: url(#annales-tear);
   padding: 20px 16px max(14px, env(safe-area-inset-bottom));
-}
-.mbottom > * {
-  filter: none;
 }
 
 /* piccoli ritagli di carta rotondi (indietro / cambia aspetto): stessa
@@ -4352,14 +4348,30 @@ li:last-child > .wd-month-row {
   color: #2b2015;
 }
 
+/* riga del footer: profilo/cerca a sinistra, Gemini/nuova nota a destra. */
+.mfooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mfooter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* pulsanti circolari del footer: profilo (tessera/foto), cerca (lente in
    ottone senza manico), Gemini/nuova nota (cartoncino nero pieno) — stessi
-   materiali della barra web, formato compatto. */
+   materiali della barra web, formato compatto. `overflow: hidden` +
+   `box-sizing: border-box` così restano un cerchio perfetto qualunque sia
+   il contenuto (foto, riflesso del vetro...), mai un ovale. */
 .mcircle {
+  box-sizing: border-box;
   width: 48px;
   height: 48px;
   flex: none;
   border-radius: 50%;
+  overflow: hidden;
   display: grid;
   place-items: center;
   box-shadow: 0 4px 10px rgba(20, 12, 4, 0.22);
