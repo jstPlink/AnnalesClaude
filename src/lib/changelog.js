@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.37.1',
+    date: '2026-09-14 20:06',
+    changes: [
+      'Vista mese da telefono (skin "Pagine"): rimosso il filtro decorativo dai tre elementi che si ripetono più spesso a schermo (bordo cella, sfondo nota, etichetta mood) — il precedente intervento (v0.35.1) ne aveva tolti solo 4 sulla barra, non bastava: con fino a 25-30 note visibili insieme il numero di filtri SVG attivi contemporaneamente restava troppo alto e causava il glitch grafico su alcuni telefoni Android.',
+      'Vista mese: la larghezza dell\'etichetta del mood ora tiene conto del numero di cifre, per evitare che un punteggio "100" venga tagliato dal ritaglio decorativo dell\'etichetta.',
+    ],
+  },
+  {
     version: '0.37.0',
     date: '2026-09-14 19:44',
     changes: [

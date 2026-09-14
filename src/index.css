@@ -1061,10 +1061,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   box-shadow: inset 0 0 40px rgba(84, 62, 30, 0.05);
   pointer-events: none;
 }
-/* bordi appena irregolari, come tagliati a mano (non sui fogli strappati) */
-.mp-page:not(.torn)::before {
-  filter: url(#annales-paper);
-}
+/* bordi appena irregolari, come tagliati a mano (non sui fogli strappati).
+   Niente filter qui: questo si ripete su OGNI cella del mese (fino a 31
+   alla volta) — troppe istanze di feDisplacementMap insieme causavano un
+   artefatto grafico ("glitch") sulle note in WebView Android. Il
+   background-image sotto (var(--mp-nature)/--mp-doodle/grain/fiber) dà
+   comunque abbastanza carattere. */
 .mp-page:first-child {
   margin-top: 0;
 }
@@ -1259,7 +1261,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   box-shadow: 2px 3px 6px rgba(20, 12, 4, 0.2),
     inset 0 0 0 1px rgba(255, 255, 255, 0.18);
   transform: rotate(-2.5deg);
-  filter: url(#annales-wob);
+  /* niente più filter: si ripete su ogni giorno CON note (fino a ~25 alla
+     volta) — una delle cause più probabili del glitch grafico da telefono
+     (vedi .mp-page::before/.mp-notes::before più sopra). Appena percettibile
+     su un'etichetta così piccola comunque. */
 }
 .mp-tab b {
   font-family: 'Annales Marker', 'Caveat', cursive;
@@ -1395,9 +1400,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   );
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
-     +15% sopra il precedente 1.15 (1.15 * 1.15) */
-  filter: url(#annales-paper) saturate(1.32)
-    drop-shadow(0 6px 14px rgba(20, 12, 4, 0.42));
+     +15% sopra il precedente 1.15 (1.15 * 1.15). Niente più
+     url(#annales-paper): questo si ripete una volta per ogni giorno CON
+     note (fino a ~25 alla volta) — insieme a .mp-page::before è la causa
+     più probabile del glitch grafico in WebView Android. Il clip-path
+     sopra (52 punti, già molto irregolare) basta a dare il bordo strappato
+     senza bisogno del filtro. */
+  filter: saturate(1.32) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.42));
 }
 /* Il colore del cartoncino arriva da MonthPages.jsx come --mp-mood inline
    (moodColor(), che riflette i colori del mood personalizzati in Impostazioni);

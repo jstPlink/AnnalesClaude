@@ -212,8 +212,11 @@ export default function MonthPages({
           kind: has ? moodKind(mood) : null,
           flaw: flawFor(c.key),
           isToday: c.key === todayKey(),
-          // lunghezza linguetta: base ~58px, casualità ± ~10% (52–64px)
-          tw: `${52 + (hash(`${c.key}~tw`) % 13)}px`,
+          // lunghezza linguetta: base + casualità, ma con più margine per i
+          // punteggi a 3 cifre (100) — la larghezza era pura casualità senza
+          // rapporto col numero di cifre, e le silhouette ritagliate
+          // (mp-tab--green/yellow/coral) a volte tagliavano l'ultima cifra.
+          tw: `${(Math.round(mood * 100) >= 100 ? 68 : 56) + (hash(`${c.key}~tw`) % 13)}px`,
           cw: cardWidthFor(titles),
           titles,
           imgs,
