@@ -32,18 +32,14 @@ export default function RecapCard({ label, notes, apiKey, className = '' }) {
   }
 
   return (
-    <section className={'rounded-2xl border border-line bg-tag p-4 ' + className}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          <Icon name="sparkles" size={13} className="shrink-0" />
+    <section className={'st-recap ' + className}>
+      <div className="st-recap-head">
+        <p className="st-recap-title">
+          <Icon name="sparkles" size={14} className="shrink-0" />
           Recap {label}
         </p>
         {!loading && (
-          <button
-            type="button"
-            onClick={run}
-            className="shrink-0 rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition active:scale-95"
-          >
+          <button type="button" onClick={run} className="st-recap-btn">
             {text ? 'Rigenera' : 'Genera'}
           </button>
         )}
@@ -51,11 +47,9 @@ export default function RecapCard({ label, notes, apiKey, className = '' }) {
       {loading ? (
         <GeminiWait label="Preparo il recap…" />
       ) : text ? (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-          {text}
-        </p>
+        <p className="st-recap-text">{text}</p>
       ) : (
-        <p className="text-sm text-ink-soft">
+        <p className="st-recap-empty">
           {notes.length} {notes.length === 1 ? 'nota' : 'note'}. Genera un
           riassunto con Gemini.
         </p>

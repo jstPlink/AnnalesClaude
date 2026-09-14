@@ -4361,6 +4361,14 @@ li:last-child > .wd-month-row {
   justify-content: space-between;
   padding-bottom: 16px;
 }
+/* editor nota: due righe impilate (indietro/anno/salva, poi orario-data-
+   orario) invece della singola riga centrata delle altre viste. */
+.mtop-note {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 14px 14px 16px;
+}
 
 .mbottom-wrap {
   position: relative;
@@ -4395,6 +4403,11 @@ li:last-child > .wd-month-row {
   border-radius: 15px 15px 0 0;
   box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.12), 0 -4px 8px rgba(20, 12, 4, 0.18);
   padding: 20px 16px max(14px, env(safe-area-inset-bottom));
+}
+/* editor nota: 6 pulsanti in riga (Gemini + 5 azioni rapide), padding più
+   compatto per farceli stare. */
+.mbottom-note {
+  padding: 12px 12px max(12px, env(safe-area-inset-bottom));
 }
 
 /* piccoli ritagli di carta rotondi (indietro / cambia aspetto): stessa
@@ -4971,5 +4984,984 @@ li:last-child > .wf-result {
   }
   .wf-result-meta {
     font-size: 0.72rem;
+  }
+}
+
+/* ===================== Statistiche (vista web): le 3 metriche in cima
+   diventano scontrini staccati da un blocchetto (foro + riga tratteggiata
+   fra etichetta e numero), il recap IA è un sotto-cartoncino con bordo
+   colorato come quelli di Impostazioni/Cerca, le sezioni hanno
+   un'etichetta-cartellino invece dell'header a tutta larghezza di Andamento
+   (qui ce ne sono 6, troppi per quel trattamento), le liste di giorni/note
+   sono strisce di biglietti come in Cerca. ===================== */
+.st-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.st-tile {
+  position: relative;
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 140px 140px, 210px 210px;
+  background-blend-mode: multiply, soft-light;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 8px 18px -12px rgba(20, 12, 4, 0.32);
+}
+.st-tile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52px;
+  height: 0;
+  border-top: 1.5px dashed rgba(120, 100, 60, 0.35);
+}
+.st-tile::after {
+  content: '';
+  position: absolute;
+  top: 46px;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-sand);
+  box-shadow: inset 0 1px 3px rgba(20, 12, 4, 0.25);
+}
+.st-tile-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin-bottom: 18px;
+}
+.st-tile-label svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+  flex: none;
+}
+.st-tile-value {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 2.3rem;
+  line-height: 1;
+  color: var(--color-ink);
+}
+.st-tile-sub {
+  margin-top: 4px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+}
+
+/* recap IA: sotto-cartoncino con bordo colorato, stesso linguaggio dei
+   sotto-cartoncini di Impostazioni/Cerca (.ws-sub/.wf-sub) */
+.st-recap {
+  position: relative;
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 130px 130px, 200px 200px;
+  background-blend-mode: multiply, soft-light;
+  border-radius: 4px 14px 14px 4px;
+  border-left: 4px solid #a889a0;
+  border-top: 1px solid var(--color-line);
+  border-right: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  padding: 16px 20px 18px;
+  box-shadow: 0 4px 12px -6px rgba(20, 12, 4, 0.2);
+}
+.st-recap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.st-recap-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--color-ink);
+}
+.st-recap-title svg {
+  color: #a889a0;
+}
+.st-recap-btn {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-tag);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: var(--color-ink);
+}
+.st-recap-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-ink);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  white-space: pre-wrap;
+}
+.st-recap-empty {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-ink-soft);
+}
+
+/* etichetta di sezione: cartellino di carta ritagliato, non un header a
+   tutta larghezza (troppo pesante ripetuto 6 volte in questa pagina) */
+.st-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  margin-bottom: 12px;
+  background: var(--color-cream);
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  border-radius: 999px;
+  transform: rotate(-0.6deg);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink);
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.12);
+}
+.st-label svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+.st-label.alt {
+  transform: rotate(0.6deg);
+}
+
+/* persone più presenti: striscia di biglietti numerati, stesso cartoncino
+   cream+grana delle liste (.st-rows più sotto) */
+.st-people {
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 220px 220px;
+  background-blend-mode: multiply, soft-light;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px -14px rgba(20, 12, 4, 0.3);
+  padding: 4px 16px;
+}
+.st-person-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 2px;
+  border-bottom: 1.5px dashed var(--color-line-soft);
+}
+li:last-child > .st-person-row {
+  border-bottom: none;
+}
+.st-rank {
+  flex: none;
+  width: 20px;
+  text-align: center;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+}
+.st-person-name {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-person-count {
+  flex: none;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.76rem;
+  color: var(--color-ink-soft);
+}
+
+/* mini-targhette secondarie (settimana migliore, tag più usato...):
+   variante orizzontale di .st-tile, con icona invece del foro-perforazione */
+.st-minitiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.st-minitile {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 4px 10px -6px rgba(20, 12, 4, 0.18);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.st-minitile.static {
+  cursor: default;
+}
+.st-minitile:not(.static):hover,
+.st-minitile:not(.static):focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 14px -6px rgba(20, 12, 4, 0.26);
+}
+.st-mt-label {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+}
+.st-mt-value {
+  margin-top: 2px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-ink);
+}
+.st-mt-sub {
+  margin-top: 1px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.74rem;
+  color: var(--color-ink-soft);
+}
+.st-mt-icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+}
+
+/* giorni/note migliori e peggiori: righe con targhetta-mood, stesso
+   linguaggio di .wf-result in Cerca */
+.st-rows {
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 220px 220px;
+  background-blend-mode: multiply, soft-light;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px -14px rgba(20, 12, 4, 0.3);
+  padding: 4px 18px;
+}
+.st-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 2px;
+  border-bottom: 1.5px dashed var(--color-line-soft);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+li:last-child > .st-row {
+  border-bottom: none;
+}
+.st-row:hover,
+.st-row:focus-visible {
+  background-color: color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+.st-row-badge {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.2), inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.st-row-title {
+  display: block;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+}
+.st-row-meta {
+  display: block;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+}
+
+/* Statistiche da telefono (StatsView.jsx): stesse classi .st-* della
+   versione web, scalate — 2 colonne per le metriche in cima invece di 3 (i
+   numeri restano leggibili), il resto già a colonna singola di suo. */
+@media (max-width: 480px) {
+  .st-tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .st-tile {
+    padding: 13px 14px 12px;
+    border-radius: 13px;
+  }
+  .st-tile:last-child {
+    grid-column: 1 / -1;
+  }
+  .st-tile::before {
+    top: 41px;
+  }
+  .st-tile::after {
+    top: 36px;
+    width: 11px;
+    height: 11px;
+  }
+  .st-tile-label {
+    font-size: 0.62rem;
+    margin-bottom: 13px;
+  }
+  .st-tile-label svg {
+    width: 11px;
+    height: 11px;
+  }
+  .st-tile-value {
+    font-size: 1.7rem;
+  }
+  .st-tile-sub {
+    font-size: 0.7rem;
+  }
+  .st-recap {
+    padding: 13px 15px 15px;
+    border-radius: 4px 13px 13px 4px;
+  }
+  .st-recap-title {
+    font-size: 0.8rem;
+  }
+  .st-recap-btn {
+    padding: 5px 12px;
+    font-size: 0.7rem;
+  }
+  .st-recap-text,
+  .st-recap-empty {
+    font-size: 0.84rem;
+  }
+  .st-label {
+    padding: 4px 11px;
+    margin-bottom: 9px;
+    font-size: 0.7rem;
+  }
+  .st-people {
+    padding: 3px 13px;
+    border-radius: 13px;
+  }
+  .st-person-row {
+    padding: 8px 1px;
+  }
+  .st-rank {
+    width: 16px;
+    font-size: 0.72rem;
+  }
+  .st-person-name {
+    font-size: 0.84rem;
+  }
+  .st-person-count {
+    font-size: 0.7rem;
+  }
+  .st-minitile {
+    padding: 11px 13px;
+    border-radius: 11px;
+  }
+  .st-mt-label {
+    font-size: 0.6rem;
+  }
+  .st-mt-value {
+    font-size: 0.92rem;
+  }
+  .st-mt-sub {
+    font-size: 0.68rem;
+  }
+  .st-mt-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .st-rows {
+    padding: 2px 15px;
+    border-radius: 13px;
+  }
+  .st-row {
+    padding: 10px 1px;
+    gap: 11px;
+  }
+  .st-row-badge {
+    width: 38px;
+    height: 38px;
+    font-size: 0.78rem;
+  }
+  .st-row-title {
+    font-size: 0.86rem;
+  }
+  .st-row-meta {
+    font-size: 0.72rem;
+  }
+}
+
+/* ===================== Editor nota (vista web, WebNote.jsx): la colonna
+   meta diventa una pila di sotto-cartoncini (stesso linguaggio di
+   Impostazioni/Cerca, senza bordo colorato — sono targhette per aggiungere
+   dati, non collezioni con un colore fisso), la colonna di scrittura è lo
+   stesso rettangolo con margine e righe già usato per il foglio della
+   vista giorno (.day-sheet), senza grana, con due pezzi di nastro adesivo
+   in alto. ===================== */
+.ne-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.ne-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
+  font-size: 0.86rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.ne-back:hover {
+  color: var(--color-ink);
+}
+.ne-save {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 140px 140px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 6px 14px -3px rgba(10, 6, 0, 0.5);
+  transition: filter 0.15s ease;
+}
+.ne-save:hover {
+  filter: brightness(1.1);
+}
+.ne-save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ne-delete {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-delete-dark);
+  background: var(--color-delete);
+  color: var(--color-ink);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.ne-delete:hover {
+  filter: brightness(1.05);
+}
+.ne-delete:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ne-grid {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 26px;
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .ne-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ne-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ne-sub {
+  position: relative;
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 130px 130px, 200px 200px;
+  background-blend-mode: multiply, soft-light;
+  border-radius: 10px;
+  border: 1px solid var(--color-line);
+  padding: 12px 14px 13px;
+  box-shadow: 0 4px 10px -6px rgba(20, 12, 4, 0.2);
+}
+.ne-sub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.ne-sub-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+}
+.ne-sub-title svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+  color: var(--color-ink-soft);
+  flex: none;
+}
+.ne-add {
+  flex: none;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--color-line);
+  background: rgba(255, 255, 255, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.68rem;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.ne-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+}
+
+.ne-date {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.15rem;
+  color: var(--color-ink);
+  margin: 0 0 6px;
+}
+.ne-date-link {
+  max-width: 100%;
+}
+
+.ne-time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ne-time-input {
+  min-width: 0;
+  flex: 1;
+  padding: 6px 9px;
+  border-radius: 9px;
+  border: 1.5px dashed var(--color-line);
+  background: rgba(255, 255, 255, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.82rem;
+  color: var(--color-ink);
+  outline: none;
+}
+.ne-sep {
+  color: var(--color-ink-soft);
+}
+
+.ne-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.ne-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--color-panel-2);
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.2);
+}
+.ne-thumb-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(20, 12, 4, 0.6);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  border: none;
+  cursor: pointer;
+}
+.ne-thumb.is-new {
+  box-shadow: 0 0 0 2px var(--color-save), 0 2px 5px rgba(20, 12, 4, 0.2);
+}
+
+.ne-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ne-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--color-line);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: var(--color-ink);
+}
+.ne-chip.sq {
+  border-radius: 8px;
+  padding: 5px 9px;
+}
+.ne-chip svg {
+  width: 11px;
+  height: 11px;
+  opacity: 0.7;
+  flex: none;
+}
+.ne-chip .rm {
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  padding: 0 2px 0 0;
+  cursor: pointer;
+  flex: none;
+}
+
+.ne-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ne-song {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 5px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--color-line);
+}
+.ne-song-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex: none;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--color-panel-2);
+  display: grid;
+  place-items: center;
+  color: var(--color-ink-soft);
+}
+.ne-song-title {
+  min-width: 0;
+  flex: 1;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ne-song-rm {
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+/* ---- foglio di scrittura: stesso rettangolo con margine e righe già
+   usato per il foglio della vista giorno (.day-sheet), senza grana né
+   bordo strappato — qui è dove scrivi. ---- */
+.ne-sheet {
+  position: relative;
+  padding: 30px 40px 40px 64px;
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  transform: rotate(-0.35deg);
+  box-shadow: 0 18px 34px -18px rgba(20, 12, 4, 0.4);
+}
+.ne-sheet::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-radius: inherit;
+  background-color: var(--color-cream);
+  background-image: linear-gradient(
+      90deg,
+      transparent 46px,
+      var(--paper-margin) 46px 47px,
+      transparent 47px
+    ),
+    repeating-linear-gradient(transparent 0 27px, var(--paper-rule) 27px 28px);
+  background-repeat: no-repeat, repeat;
+  pointer-events: none;
+}
+.ne-sheet > * {
+  position: relative;
+  z-index: 1;
+}
+.ne-tape {
+  position: absolute;
+  z-index: 2;
+  width: 60px;
+  height: 22px;
+  background: rgba(239, 231, 205, 0.7);
+  box-shadow: 0 1px 3px rgba(20, 12, 4, 0.25);
+  border-left: 1px dashed rgba(120, 100, 60, 0.4);
+  border-right: 1px dashed rgba(120, 100, 60, 0.4);
+}
+.ne-tape-a {
+  top: -10px;
+  left: 40px;
+  transform: rotate(-4deg);
+}
+.ne-tape-b {
+  top: -10px;
+  right: 60px;
+  transform: rotate(3deg);
+}
+.ne-title {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 2rem;
+  color: var(--color-ink);
+  margin-bottom: 6px;
+}
+.ne-title::placeholder {
+  color: color-mix(in srgb, var(--color-ink-soft) 70%, transparent);
+}
+.ne-body {
+  min-height: 380px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 1.05rem;
+  line-height: 27px;
+  color: var(--color-ink);
+}
+
+/* ===================== Editor nota (vista mobile, NoteView.jsx): stesse
+   classi .ne-* della versione web (foglio di scrittura, sotto-cartoncini),
+   più gli elementi propri della UX mobile — barra superiore a 2 righe con
+   targhette dorate per orario/data, barra inferiore con Gemini e le 5
+   azioni rapide (persone/tag/canzoni/luogo/immagini) come ritagli di
+   carta con pallino-conteggio, stesso materiale delle altre barre mobile.
+   ===================== */
+.mtop-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.mtop-year {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.15rem;
+  color: #33291c;
+}
+.mcircle-action {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 7px rgba(20, 12, 4, 0.25);
+  transform: rotate(6deg);
+  border: none;
+}
+.mcircle-action.save {
+  background: var(--color-save);
+  border: 2px solid var(--color-save-dark);
+  color: #2d3a1a;
+}
+.mcircle-action.delete {
+  background: var(--color-delete);
+  border: 2px solid var(--color-delete-dark);
+  color: #3a1712;
+}
+.mcircle-action:disabled {
+  opacity: 0.5;
+}
+
+.mtop-row2 {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.mplaque-time {
+  flex: 0 0 auto;
+  width: 74px;
+  justify-content: center;
+}
+.mplaque-time .mplaque-label {
+  width: 100%;
+  text-align: center;
+  padding: 7px 4px;
+}
+.mplaque-date {
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+.mplaque-date .mplaque-label {
+  width: 100%;
+  text-align: center;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 0.86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* cartoncino unico con tutti gli extra (persone/foto/luogo/tag/canzoni),
+   stesso sotto-cartoncino neutro del web (.ne-sub), separati da righe
+   tratteggiate invece di card distinte — meno scroll su schermo piccolo. */
+.ne-extras {
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 130px 130px, 200px 200px;
+  background-blend-mode: multiply, soft-light;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  padding: 3px 14px;
+  box-shadow: 0 4px 10px -6px rgba(20, 12, 4, 0.2);
+}
+.ne-extra-block {
+  padding: 11px 0;
+  border-bottom: 1.5px dashed var(--color-line-soft);
+}
+.ne-extra-block:last-child {
+  border-bottom: none;
+}
+
+.mnote-fab-wrap {
+  position: relative;
+}
+.mcircle-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--color-save);
+  border: 2px solid var(--color-sand);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #2d3a1a;
+}
+.mextra-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .ne-sheet {
+    padding: 22px 20px 24px 40px;
+    transform: rotate(-0.3deg);
+    box-shadow: 0 14px 26px -16px rgba(20, 12, 4, 0.4);
+  }
+  .ne-sheet::before {
+    background-image: linear-gradient(
+        90deg,
+        transparent 26px,
+        var(--paper-margin) 26px 27px,
+        transparent 27px
+      ),
+      repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  }
+  .ne-tape {
+    width: 42px;
+    height: 17px;
+  }
+  .ne-tape-a {
+    top: -8px;
+    left: 22px;
+  }
+  .ne-tape-b {
+    top: -8px;
+    right: 30px;
+  }
+  .ne-title {
+    font-size: 1.5rem;
+  }
+  .ne-body {
+    min-height: 220px;
+    font-size: 1rem;
+    line-height: 25px;
+  }
+  .ne-chip {
+    padding: 5px 6px 5px 5px;
+    font-size: 0.78rem;
+  }
+  .ne-song-title {
+    font-size: 0.82rem;
   }
 }

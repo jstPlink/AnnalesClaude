@@ -6,6 +6,7 @@ import RecapCard from '../../components/RecapCard'
 import CountUp from '../../components/CountUp'
 import PersonAvatar from '../../components/PersonAvatar'
 import NotesListSheet from '../../components/NotesListSheet'
+import Icon from '../../components/Icon'
 import { listNotesInRange, countAllNotes, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
@@ -33,56 +34,69 @@ function NavArrow({ dir, onClick, label }) {
   )
 }
 
-function StatCard({ label, value, sub, onClick }) {
-  const Tag = onClick ? 'button' : 'div'
+// variant 'tile' = i 3 scontrini in cima (numero grande, senza icona a
+// parte l'etichetta); variant 'mini' = le targhette secondarie (settimana
+// migliore, tag più usato...), orizzontali con icona a destra.
+function StatCard({ label, value, sub, icon, onClick, variant = 'tile' }) {
+  if (variant === 'mini') {
+    const Tag = onClick ? 'button' : 'div'
+    return (
+      <Tag
+        type={onClick ? 'button' : undefined}
+        onClick={onClick}
+        className={'st-minitile' + (onClick ? '' : ' static')}
+      >
+        <div className="min-w-0">
+          <p className="st-mt-label">{label}</p>
+          <p className="st-mt-value truncate">
+            <CountUp value={value} />
+          </p>
+          {sub && <p className="st-mt-sub truncate">{sub}</p>}
+        </div>
+        {icon && (
+          <span className="st-mt-icon">
+            <Icon name={icon} size={16} />
+          </span>
+        )}
+      </Tag>
+    )
+  }
+
   return (
-    <Tag
-      type={onClick ? 'button' : undefined}
-      onClick={onClick}
-      className={
-        'rounded-2xl border border-line bg-tag p-5 text-left' +
-        (onClick ? ' transition hover:-translate-y-0.5 hover:shadow-md' : '')
-      }
-    >
-      <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+    <div className="st-tile">
+      <p className="st-tile-label">
+        {icon && <Icon name={icon} size={13} />}
         {label}
       </p>
-      <p className="mt-1 truncate font-serif text-3xl font-semibold text-ink">
+      <p className="st-tile-value truncate">
         <CountUp value={value} />
       </p>
-      {sub && <p className="mt-0.5 truncate text-sm text-ink-soft">{sub}</p>}
-    </Tag>
+      {sub && <p className="st-tile-sub truncate">{sub}</p>}
+    </div>
   )
 }
 
 function DayRow({ day, onClick, style }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={style}
-      className="anim-row flex w-full items-start gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-    >
+    <button type="button" onClick={onClick} style={style} className="anim-row st-row">
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
+        className="st-row-badge"
         style={{ backgroundColor: moodColor(day.mood), color: moodTextColor(day.mood) }}
       >
         {Math.round(day.mood * 100)}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">
-          {dayMonthLabel(day.key)}
-        </span>
+        <span className="st-row-title truncate">{dayMonthLabel(day.key)}</span>
         {day.titles?.length ? (
           <span className="mt-0.5 flex flex-col gap-0.5">
             {day.titles.map((t, i) => (
-              <span key={i} className="block truncate text-xs text-ink-soft">
+              <span key={i} className="st-row-meta truncate">
                 {t}
               </span>
             ))}
           </span>
         ) : (
-          <span className="block text-xs text-ink-soft">
+          <span className="st-row-meta">
             {day.count} {day.count === 1 ? 'nota' : 'note'}
           </span>
         )}
@@ -93,14 +107,9 @@ function DayRow({ day, onClick, style }) {
 
 function NoteRow({ note, onClick, style }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={style}
-      className="anim-row flex w-full items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-    >
+    <button type="button" onClick={onClick} style={style} className="anim-row st-row">
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
+        className="st-row-badge"
         style={{
           backgroundColor: moodColor(note.mood),
           color: moodTextColor(note.mood),
@@ -109,10 +118,10 @@ function NoteRow({ note, onClick, style }) {
         {Math.round(Number(note.mood) * 100)}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">
+        <span className="st-row-title truncate">
           {note.title || <span className="italic text-ink-soft">Senza titolo</span>}
         </span>
-        <span className="block truncate text-xs text-ink-soft">
+        <span className="st-row-meta truncate">
           {dayMonthLabel(dayKey(note.date))} · {timeLabel(note.timeStart)}–
           {timeLabel(note.timeEnd)}
         </span>
@@ -239,12 +248,13 @@ export default function WebStats() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatCard label="Note totali" value={allTimeCount ?? '—'} />
-        <StatCard label={`Note nel ${year}`} value={stats.noteCount} />
+      <div className="st-tiles">
+        <StatCard label="Note totali" value={allTimeCount ?? '—'} icon="list" />
+        <StatCard label={`Note nel ${year}`} value={stats.noteCount} icon="calendar" />
         <StatCard
           label="Mood medio"
           value={stats.avgMood != null ? Math.round(stats.avgMood * 100) : '—'}
+          icon="sparkles"
         />
       </div>
 
@@ -263,28 +273,22 @@ export default function WebStats() {
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
           {stats.topPeople.length > 0 && (
             <section>
-              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+              <span className="st-label">
+                <Icon name="user" size={12} />
                 Persone più presenti
-              </p>
-              <ol className="space-y-2">
+              </span>
+              <ol className="st-people">
                 {stats.topPeople.map((p, i) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2"
-                  >
-                    <span className="w-4 shrink-0 text-xs font-bold tabular-nums text-ink-soft">
-                      {i + 1}
-                    </span>
+                  <li key={p.id} className="st-person-row">
+                    <span className="st-rank">{i + 1}</span>
                     <PersonAvatar
                       person={p.person || { name: p.name }}
                       immichUrl={immichUrl}
                       immichApiKey={immichApiKey}
                       size={28}
                     />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-                      {p.name}
-                    </span>
-                    <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                    <span className="st-person-name">{p.name}</span>
+                    <span className="st-person-count">
                       {p.count} {p.count === 1 ? 'nota' : 'note'}
                     </span>
                   </li>
@@ -294,37 +298,51 @@ export default function WebStats() {
           )}
 
           {(stats.bestWeek || stats.bestWeekday || stats.topTag || stats.topPlace) && (
-            <section className="space-y-4">
-              {stats.bestWeek && (
-                <StatCard
-                  label="Settimana migliore"
-                  value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
-                  sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
-                  onClick={openWeekNotes}
-                />
-              )}
-              {stats.bestWeekday && (
-                <StatCard
-                  label="Giorno più su di morale"
-                  value={stats.bestWeekday.name}
-                  sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
-                  onClick={openWeekdayNotes}
-                />
-              )}
-              {stats.topTag && (
-                <StatCard
-                  label="Tag più usato"
-                  value={stats.topTag.name}
-                  sub={`in ${stats.topTag.count} note`}
-                />
-              )}
-              {stats.topPlace && (
-                <StatCard
-                  label="Luogo più frequente"
-                  value={stats.topPlace.name}
-                  sub={`in ${stats.topPlace.count} note`}
-                />
-              )}
+            <section>
+              <span className="st-label alt">
+                <Icon name="layers" size={12} />
+                In evidenza
+              </span>
+              <div className="st-minitiles">
+                {stats.bestWeek && (
+                  <StatCard
+                    variant="mini"
+                    icon="calendar"
+                    label="Settimana migliore"
+                    value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
+                    sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
+                    onClick={openWeekNotes}
+                  />
+                )}
+                {stats.bestWeekday && (
+                  <StatCard
+                    variant="mini"
+                    icon="sparkles"
+                    label="Giorno più su di morale"
+                    value={stats.bestWeekday.name}
+                    sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
+                    onClick={openWeekdayNotes}
+                  />
+                )}
+                {stats.topTag && (
+                  <StatCard
+                    variant="mini"
+                    icon="tag"
+                    label="Tag più usato"
+                    value={stats.topTag.name}
+                    sub={`in ${stats.topTag.count} note`}
+                  />
+                )}
+                {stats.topPlace && (
+                  <StatCard
+                    variant="mini"
+                    icon="map-pin"
+                    label="Luogo più frequente"
+                    value={stats.topPlace.name}
+                    sub={`in ${stats.topPlace.count} note`}
+                  />
+                )}
+              </div>
             </section>
           )}
         </div>
@@ -333,36 +351,44 @@ export default function WebStats() {
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {stats.topDays.length > 0 && (
           <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <span className="st-label">
+              <Icon name="sparkles" size={12} />
               Giorni migliori
-            </p>
-            <div className="space-y-2">
-              {stats.topDays.map((d, i) => (
-                <DayRow
-                  key={d.key}
-                  day={d}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/day/${d.key}`)}
-                />
-              ))}
+            </span>
+            <div className="st-rows">
+              <ul>
+                {stats.topDays.map((d, i) => (
+                  <li key={d.key}>
+                    <DayRow
+                      day={d}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/day/${d.key}`)}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}
 
         {stats.bottomDays.length > 0 && (
           <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <span className="st-label alt">
+              <Icon name="cloud" size={12} />
               Giorni più difficili
-            </p>
-            <div className="space-y-2">
-              {stats.bottomDays.map((d, i) => (
-                <DayRow
-                  key={d.key}
-                  day={d}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/day/${d.key}`)}
-                />
-              ))}
+            </span>
+            <div className="st-rows">
+              <ul>
+                {stats.bottomDays.map((d, i) => (
+                  <li key={d.key}>
+                    <DayRow
+                      day={d}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/day/${d.key}`)}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}
@@ -371,36 +397,44 @@ export default function WebStats() {
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {stats.topNotes.length > 0 && (
           <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <span className="st-label">
+              <Icon name="heart" size={12} />
               Note migliori
-            </p>
-            <div className="space-y-2">
-              {stats.topNotes.map((n, i) => (
-                <NoteRow
-                  key={n.id}
-                  note={n}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/note/${n.id}`)}
-                />
-              ))}
+            </span>
+            <div className="st-rows">
+              <ul>
+                {stats.topNotes.map((n, i) => (
+                  <li key={n.id}>
+                    <NoteRow
+                      note={n}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/note/${n.id}`)}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}
 
         {stats.bottomNotes.length > 0 && (
           <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <span className="st-label alt">
+              <Icon name="cloud" size={12} />
               Note peggiori
-            </p>
-            <div className="space-y-2">
-              {stats.bottomNotes.map((n, i) => (
-                <NoteRow
-                  key={n.id}
-                  note={n}
-                  style={{ '--i': i }}
-                  onClick={() => navigate(`/note/${n.id}`)}
-                />
-              ))}
+            </span>
+            <div className="st-rows">
+              <ul>
+                {stats.bottomNotes.map((n, i) => (
+                  <li key={n.id}>
+                    <NoteRow
+                      note={n}
+                      style={{ '--i': i }}
+                      onClick={() => navigate(`/note/${n.id}`)}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}

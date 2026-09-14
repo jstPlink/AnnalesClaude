@@ -30,6 +30,7 @@ export default function DatePickerPopover({
   onChange,
   className = '',
   textClassName = 'text-sm font-semibold',
+  buttonClassName = 'max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-ink transition active:scale-95',
 }) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(null)
@@ -64,10 +65,7 @@ export default function DatePickerPopover({
       <button
         type="button"
         onClick={openPicker}
-        className={
-          'max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-ink transition active:scale-95 ' +
-          textClassName
-        }
+        className={buttonClassName + ' ' + textClassName}
       >
         {dayMonthLabel(dateKey)}
       </button>

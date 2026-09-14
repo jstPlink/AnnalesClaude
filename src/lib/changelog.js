@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.40.0',
+    date: '2026-09-14 23:55',
+    changes: [
+      'Statistiche (web e mobile): rifatta in stile "Pagine" — le 3 metriche in cima sono scontrini con foro e riga tratteggiata, il recap IA è un sotto-cartoncino con bordo colorato, "Persone più presenti" e le liste di giorni/note migliori e peggiori sono strisce di biglietti come in Cerca.',
+      'Editor nota (web e mobile): rifatto in stile "Pagine" — la colonna con data/orario/mood/immagini/persone/tag/canzoni/luogo è una pila di sotto-cartoncini, e dove si scrive è un vero foglio con margine e righe come in vista giorno, con due nastri adesivi in alto. Da telefono, orario e data sono targhette dorate e la barra in basso riusa lo stesso materiale delle altre barre mobile.',
+    ],
+  },
+  {
     version: '0.39.1',
     date: '2026-09-14 22:52',
     changes: [

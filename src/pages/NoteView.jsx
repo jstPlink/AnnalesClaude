@@ -1,8 +1,9 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
+import MobileTopBar from '../components/MobileTopBar'
+import MobileBottomBar from '../components/MobileBottomBar'
 import DatePickerPopover from '../components/DatePickerPopover'
-import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
 import RichText from '../components/RichText'
@@ -31,6 +32,7 @@ import { fileUrl } from '../lib/pocketbase'
 import { fetchImmichOriginalAsFile } from '../lib/immich'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
+import { haptic } from '../lib/haptics'
 import { useAuth } from '../context/AuthContext'
 import {
   dayKey,
@@ -42,13 +44,25 @@ import {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
-// Pallino con conteggio sopra un pulsante di aggiunta contenuto: rende
-// visibile a colpo d'occhio che c'è già almeno un elemento di quel tipo.
-function CountBadge({ count }) {
-  if (!count) return null
+// Pulsante circolare (ritaglio di carta, stesso materiale di .mcircle-paper
+// della barra inferiore) con un pallino-conteggio sopra quando c'è già
+// almeno un elemento di quel tipo.
+function FabButton({ icon, iconSize = 19, active, count, onClick, title }) {
   return (
-    <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-sand bg-save px-1 text-[10px] font-extrabold text-ink">
-      {count}
+    <span className="mnote-fab-wrap">
+      <button
+        type="button"
+        onClick={() => {
+          haptic()
+          onClick()
+        }}
+        title={title}
+        aria-label={title}
+        className={'mcircle mcircle-paper' + (active ? ' active' : '')}
+      >
+        <Icon name={icon} size={iconSize} />
+      </button>
+      {count > 0 && <span className="mcircle-badge">{count}</span>}
     </span>
   )
 }
@@ -396,54 +410,53 @@ export default function NoteView() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 pb-2">
-          <CircleButton onClick={() => navigate(-1)} title="Indietro">
-            <Icon name="chevron-left" size={22} />
-          </CircleButton>
-          <span className="text-center text-2xl font-extrabold text-ink tabular-nums">
-            {year}
-          </span>
-          <CircleButton
-            variant={mode}
+      <MobileTopBar className="mtop-note">
+        <div className="mtop-row1">
+          <button type="button" onClick={() => navigate(-1)} className="mchev" title="Indietro" aria-label="Indietro">
+            <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+          </button>
+          <span className="mtop-year">{year}</span>
+          <button
+            type="button"
             disabled={busy}
             onClick={mode === 'save' ? handleSave : handleDelete}
             title={mode === 'save' ? 'Salva' : 'Elimina nota'}
+            className={'mcircle-action ' + mode}
           >
-            <Icon name={mode === 'save' ? 'check' : 'trash'} size={22} />
-          </CircleButton>
+            <Icon name={mode === 'save' ? 'check' : 'trash'} size={16} strokeWidth={2.8} />
+          </button>
         </div>
 
-        <div className="grid grid-cols-[auto_1fr_auto] items-stretch gap-2 px-3 pb-3">
-          <label className="flex items-center justify-center rounded-full border border-line bg-tag px-3">
+        <div className="mtop-row2">
+          <span className="mplaque mplaque-time">
             <input
               type="time"
               aria-label="Orario di inizio"
               value={form.timeStart}
               onChange={(e) => set({ timeStart: e.target.value })}
-              className="time-compact w-[5rem] bg-transparent text-center text-base font-extrabold tabular-nums text-ink outline-none"
+              className="mplaque-label"
             />
-          </label>
+          </span>
 
-          <div className="flex items-center justify-center">
-            <DatePickerPopover
-              dateKey={form.dateKey}
-              onChange={(dateKey) => set({ dateKey })}
-              textClassName="text-base font-bold"
-            />
-          </div>
+          <DatePickerPopover
+            dateKey={form.dateKey}
+            onChange={(dateKey) => set({ dateKey })}
+            className="mplaque mplaque-date"
+            buttonClassName="mplaque-label"
+            textClassName=""
+          />
 
-          <label className="flex items-center justify-center rounded-full border border-line bg-tag px-3">
+          <span className="mplaque mplaque-time">
             <input
               type="time"
               aria-label="Orario di fine"
               value={form.timeEnd}
               onChange={(e) => set({ timeEnd: e.target.value })}
-              className="time-compact w-[5rem] bg-transparent text-center text-base font-extrabold tabular-nums text-ink outline-none"
+              className="mplaque-label"
             />
-          </label>
+          </span>
         </div>
-      </header>
+      </MobileTopBar>
 
       <main className="anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
         {loadError && (
@@ -454,27 +467,27 @@ export default function NoteView() {
 
         <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
 
-        {/* Titolo + contenuto in un unico riquadro: nessun bordo esterno,
-            solo il divisorio tra titolo e contenuto. Almeno il 35% dello
-            schermo anche da vuoto, ma NON si comprime mai (flex-none) e non
-            ha scroll interno (niente overflow-hidden): cresce quanto serve a
-            mostrare tutto il contenuto ed è la pagina intera (main) a
-            scorrere. */}
-        <div className="mt-4 flex min-h-[35dvh] flex-none flex-col rounded-2xl bg-cream">
+        {/* Foglio di scrittura: stesse classi della versione web (.ne-sheet),
+            scalate per il telefono. Almeno il 35% dello schermo anche da
+            vuoto, ma NON si comprime mai (flex-none) e non ha scroll interno
+            (niente overflow-hidden): cresce quanto serve a mostrare tutto il
+            contenuto ed è la pagina intera (main) a scorrere. */}
+        <div className="ne-sheet mt-4 flex min-h-[35dvh] flex-none flex-col">
+          <span className="ne-tape ne-tape-a" aria-hidden="true" />
+          <span className="ne-tape ne-tape-b" aria-hidden="true" />
           <input
             type="text"
             placeholder="Titolo della nota"
             value={form.title}
             onChange={(e) => set({ title: e.target.value })}
-            className="w-full shrink-0 bg-transparent px-4 pb-2 pt-3 text-xl font-extrabold text-ink outline-none placeholder:text-ink-soft"
+            className="ne-title shrink-0"
           />
-          <div className="mx-4 shrink-0 border-t border-line-soft" />
           <RichText
             ref={editorRef}
             value={form.content}
             onChange={(html) => set({ content: html })}
             placeholder="Scrivi qui la nota…"
-            className="flex-1 px-4 py-3 text-[15px] leading-relaxed text-ink"
+            className="ne-body flex-1"
           />
         </div>
 
@@ -487,28 +500,23 @@ export default function NoteView() {
 
             if (selectedPeople.length > 0) {
               sections.push(
-                <div key="people" className="grid grid-cols-2 gap-1.5">
+                <div key="people" className="ne-chips">
                   {selectedPeople.map((person) => (
-                    <span
-                      key={person.id}
-                      className="flex w-full items-center gap-2 rounded-full border border-line bg-tag py-1 pl-1 pr-2"
-                    >
+                    <span key={person.id} className="ne-chip">
                       <PersonAvatar
                         person={person}
                         immichUrl={immichUrl}
                         immichApiKey={immichApiKey}
-                        size={24}
+                        size={20}
                       />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                        {person.name}
-                      </span>
+                      {person.name}
                       <button
                         type="button"
                         title="Rimuovi"
                         onClick={() => togglePerson(person.id)}
-                        className="shrink-0 text-ink-soft"
+                        className="rm"
                       >
-                        <Icon name="x" size={14} />
+                        <Icon name="x" size={12} />
                       </button>
                     </span>
                   ))}
@@ -518,24 +526,23 @@ export default function NoteView() {
 
             if (!noImages) {
               sections.push(
-                <div key="images" className="grid grid-cols-3 gap-2">
+                <div key="images" className="ne-thumbs">
                   {existingImages.map((fn, i) => (
                     <div
                       key={fn}
-                      className="relative aspect-square overflow-hidden rounded-xl bg-panel-2"
+                      className="ne-thumb"
+                      style={{
+                        backgroundImage: record
+                          ? `url(${fileUrl(record, fn, { thumb: '300x300' })})`
+                          : undefined,
+                      }}
                     >
                       <button
                         type="button"
                         title="Visualizza"
                         onClick={() => setViewerIndex(i)}
-                        className="block h-full w-full"
-                      >
-                        <img
-                          src={record ? fileUrl(record, fn, { thumb: '300x300' }) : ''}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      </button>
+                        className="absolute inset-0"
+                      />
                       <button
                         type="button"
                         title="Rimuovi"
@@ -543,34 +550,33 @@ export default function NoteView() {
                           setExistingImages((prev) => prev.filter((x) => x !== fn))
                           setRemovedImages((prev) => [...prev, fn])
                         }}
-                        className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                        className="ne-thumb-x"
                       >
-                        <Icon name="x" size={14} />
+                        <Icon name="x" size={12} />
                       </button>
                     </div>
                   ))}
                   {previews.map((p, i) => (
                     <div
                       key={p.url}
-                      className="relative aspect-square overflow-hidden rounded-xl bg-panel-2 ring-2 ring-save"
+                      className="ne-thumb is-new"
+                      style={{ backgroundImage: `url(${p.url})` }}
                     >
                       <button
                         type="button"
                         title="Visualizza"
                         onClick={() => setViewerIndex(existingImages.length + i)}
-                        className="block h-full w-full"
-                      >
-                        <img src={p.url} alt="" className="h-full w-full object-cover" />
-                      </button>
+                        className="absolute inset-0"
+                      />
                       <button
                         type="button"
                         title="Rimuovi"
                         onClick={() =>
                           setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
                         }
-                        className="absolute right-1 top-1 rounded-full bg-black/55 p-1 text-white"
+                        className="ne-thumb-x"
                       >
-                        <Icon name="x" size={14} />
+                        <Icon name="x" size={12} />
                       </button>
                     </div>
                   ))}
@@ -590,23 +596,18 @@ export default function NoteView() {
 
             if (selectedTags.length > 0) {
               sections.push(
-                <div key="tags" className="grid grid-cols-2 gap-1.5">
+                <div key="tags" className="ne-chips">
                   {selectedTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="flex w-full items-center gap-1.5 rounded-lg border border-line bg-cream py-1 pl-2 pr-2"
-                    >
-                      <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                        {tag.name}
-                      </span>
+                    <span key={tag.id} className="ne-chip sq">
+                      <Icon name="tag" size={11} />
+                      {tag.name}
                       <button
                         type="button"
                         title="Rimuovi"
                         onClick={() => toggleTag(tag.id)}
-                        className="shrink-0 text-ink-soft"
+                        className="rm"
                       >
-                        <Icon name="x" size={14} />
+                        <Icon name="x" size={12} />
                       </button>
                     </span>
                   ))}
@@ -616,20 +617,16 @@ export default function NoteView() {
 
             if (form.songs.length > 0) {
               sections.push(
-                <div key="songs" className="flex flex-col gap-1.5">
+                <div key="songs" className="flex flex-col gap-2">
                   {form.songs.map((song, i) => (
-                    <div
-                      key={i}
-                      className="flex min-h-[3.25rem] w-full items-center gap-2 rounded-lg border border-[#12c150]/45 bg-[#e3f8e9] px-2 py-2"
-                    >
+                    <div key={i} className="ne-song">
                       {song.thumbnailUrl ? (
-                        <img
-                          src={song.thumbnailUrl}
-                          alt=""
-                          className="h-9 w-9 shrink-0 rounded object-cover"
+                        <div
+                          className="ne-song-thumb"
+                          style={{ backgroundImage: `url(${song.thumbnailUrl})` }}
                         />
                       ) : (
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-[#12c150]/20 text-[#0e9440]">
+                        <span className="ne-song-thumb">
                           <Icon name="music" size={14} />
                         </span>
                       )}
@@ -637,7 +634,7 @@ export default function NoteView() {
                         href={song.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                        className="ne-song-title"
                       >
                         {song.title}
                       </a>
@@ -645,7 +642,7 @@ export default function NoteView() {
                         type="button"
                         title="Rimuovi"
                         onClick={() => removeSong(i)}
-                        className="shrink-0 text-ink-soft"
+                        className="ne-song-rm"
                       >
                         <Icon name="x" size={14} />
                       </button>
@@ -656,12 +653,11 @@ export default function NoteView() {
             }
 
             return (
-              <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-panel p-3">
-                {sections.map((node, i) => (
-                  <Fragment key={node.key}>
-                    {i > 0 && <div className="border-t border-line-soft" />}
+              <div className="ne-extras mt-4">
+                {sections.map((node) => (
+                  <div key={node.key} className="ne-extra-block">
                     {node}
-                  </Fragment>
+                  </div>
                 ))}
               </div>
             )
@@ -679,74 +675,63 @@ export default function NoteView() {
         onChange={onPickFiles}
       />
 
-      <div className="sticky bottom-0 z-20 flex items-center justify-between gap-2 border-t border-line bg-sand px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-        <CircleButton
-          size={52}
-          variant="active"
-          onClick={() => setGeminiSheetOpen(true)}
-          title="Gemini"
-        >
-          <Icon name="sparkles" size={20} />
-        </CircleButton>
+      <MobileBottomBar className="mbottom-note">
+        <div className="mfooter">
+          <button
+            type="button"
+            onClick={() => {
+              haptic()
+              setGeminiSheetOpen(true)
+            }}
+            title="Gemini"
+            aria-label="Gemini"
+            className="mcircle mgemini"
+          >
+            <Icon name="sparkles" size={19} />
+          </button>
 
-        <div className="flex items-center gap-2">
-        <div className="relative">
-          <CircleButton
-            size={52}
-            variant={selectedPeople.length ? 'filled' : 'light'}
-            onClick={() => setPeopleSheetOpen(true)}
-            title="Aggiungi persone"
-          >
-            <Icon name="user" size={20} />
-          </CircleButton>
-          <CountBadge count={selectedPeople.length} />
+          <div className="mextra-group">
+            <FabButton
+              icon="user"
+              active={selectedPeople.length > 0}
+              count={selectedPeople.length}
+              onClick={() => setPeopleSheetOpen(true)}
+              title="Aggiungi persone"
+            />
+            <FabButton
+              icon="tag"
+              active={selectedTags.length > 0}
+              count={selectedTags.length}
+              onClick={() => setTagSheetOpen(true)}
+              title="Aggiungi tag"
+            />
+            <FabButton
+              icon="music"
+              active={form.songs.length > 0}
+              count={form.songs.length}
+              onClick={() => setSongSheetOpen(true)}
+              title="Aggiungi canzone"
+            />
+            <FabButton
+              icon="map-pin"
+              active={Boolean(form.place)}
+              count={form.place ? 1 : 0}
+              onClick={() => setPlaceSheetOpen(true)}
+              title="Aggiungi luogo"
+            />
+            <FabButton
+              icon="image-plus"
+              iconSize={21}
+              active={existingImages.length + previews.length > 0}
+              count={existingImages.length + previews.length}
+              onClick={() =>
+                immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
+              }
+              title="Aggiungi immagini"
+            />
+          </div>
         </div>
-        <div className="relative">
-          <CircleButton
-            size={52}
-            variant={selectedTags.length ? 'filled' : 'light'}
-            onClick={() => setTagSheetOpen(true)}
-            title="Aggiungi tag"
-          >
-            <Icon name="tag" size={20} />
-          </CircleButton>
-          <CountBadge count={selectedTags.length} />
-        </div>
-        <div className="relative">
-          <CircleButton
-            size={52}
-            variant={form.songs.length ? 'filled' : 'light'}
-            onClick={() => setSongSheetOpen(true)}
-            title="Aggiungi canzone"
-          >
-            <Icon name="music" size={20} />
-          </CircleButton>
-          <CountBadge count={form.songs.length} />
-        </div>
-        <div className="relative">
-          <CircleButton
-            size={52}
-            variant={form.place ? 'filled' : 'light'}
-            onClick={() => setPlaceSheetOpen(true)}
-            title="Aggiungi luogo"
-          >
-            <Icon name="map-pin" size={20} />
-          </CircleButton>
-          <CountBadge count={form.place ? 1 : 0} />
-        </div>
-        <div className="relative">
-          <CircleButton
-            size={52}
-            variant={existingImages.length + previews.length ? 'filled' : 'light'}
-            onClick={() => (immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click())}
-            title="Aggiungi immagini"
-          >
-            <Icon name="image-plus" size={22} />
-          </CircleButton>
-          <CountBadge count={existingImages.length + previews.length} />
-        </div>
-        </div>
-      </div>
+      </MobileBottomBar>
 
       <Dialog
         open={Boolean(dialog)}

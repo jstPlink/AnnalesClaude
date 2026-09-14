@@ -31,7 +31,6 @@ import { useAuth } from '../../context/AuthContext'
 import {
   dayKey,
   fullDayLabel,
-  parseWall,
   timeInputValue,
 } from '../../lib/dates'
 
@@ -70,9 +69,6 @@ const snapshot = (f) =>
     timeStart: f.timeStart,
     timeEnd: f.timeEnd,
   })
-
-const inputCls =
-  'w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none transition focus:border-ink-soft'
 
 export default function WebNote() {
   const { id } = useParams()
@@ -348,12 +344,8 @@ export default function WebNote() {
 
   return (
     <div>
-      <header className="mb-6 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-ink"
-        >
+      <div className="ne-head">
+        <button type="button" onClick={() => navigate(-1)} className="ne-back">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -361,25 +353,15 @@ export default function WebNote() {
         </button>
 
         {mode === 'save' ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleSave}
-            className="rounded-full border border-save-dark bg-save px-6 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
-          >
+          <button type="button" disabled={busy} onClick={handleSave} className="ne-save">
             {existsOnServer ? 'Salva modifiche' : 'Crea nota'}
           </button>
         ) : (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleDelete}
-            className="rounded-full border border-delete-dark bg-delete px-6 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
-          >
+          <button type="button" disabled={busy} onClick={handleDelete} className="ne-delete">
             Elimina nota
           </button>
         )}
-      </header>
+      </div>
 
       {loadError && (
         <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
@@ -387,78 +369,82 @@ export default function WebNote() {
         </p>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+      <div className="ne-grid">
         {/* Colonna meta */}
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Data
-            </p>
-            <p className="mb-2 font-serif text-lg text-ink">
-              {fullDayLabel(form.dateKey)}
-            </p>
+        <div className="ne-meta">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">Data</span>
+            </div>
+            <p className="ne-date">{fullDayLabel(form.dateKey)}</p>
             <DatePickerPopover
               dateKey={form.dateKey}
               onChange={(dateKey) => set({ dateKey })}
+              buttonClassName="ne-date-link"
+              textClassName="text-xs font-bold underline underline-offset-2 text-ink-soft"
             />
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Orario
-            </p>
-            <div className="flex items-center gap-2">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">Orario</span>
+            </div>
+            <div className="ne-time-row">
               <input
                 type="time"
                 aria-label="Inizio"
                 value={form.timeStart}
                 onChange={(e) => set({ timeStart: e.target.value })}
-                className={inputCls}
+                className="ne-time-input"
               />
-              <span className="text-ink-soft">–</span>
+              <span className="ne-sep">–</span>
               <input
                 type="time"
                 aria-label="Fine"
                 value={form.timeEnd}
                 onChange={(e) => set({ timeEnd: e.target.value })}
-                className={inputCls}
+                className="ne-time-input"
               />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">Mood</span>
+            </div>
             <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">
+                <Icon name="image" size={13} />
                 Immagini
-              </p>
+              </span>
               <button
                 type="button"
                 onClick={() =>
                   immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
                 }
-                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
+                className="ne-add"
               >
                 + Aggiungi
               </button>
             </div>
             {noImages ? (
-              <p className="text-sm italic text-ink-soft">Nessuna immagine</p>
+              <p className="ne-empty">Nessuna immagine</p>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="ne-thumbs">
                 {existingImages.map((fn) => (
                   <div
                     key={fn}
-                    className="relative aspect-square overflow-hidden rounded-lg bg-panel-2"
+                    className="ne-thumb"
+                    style={{
+                      backgroundImage: record
+                        ? `url(${fileUrl(record, fn, { thumb: '200x200' })})`
+                        : undefined,
+                    }}
                   >
-                    <img
-                      src={record ? fileUrl(record, fn, { thumb: '200x200' }) : ''}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
                     <button
                       type="button"
                       title="Rimuovi"
@@ -466,7 +452,7 @@ export default function WebNote() {
                         setExistingImages((p) => p.filter((x) => x !== fn))
                         setRemovedImages((p) => [...p, fn])
                       }}
-                      className="absolute right-1 top-1 rounded-full bg-black/55 px-1.5 text-xs text-white"
+                      className="ne-thumb-x"
                     >
                       ×
                     </button>
@@ -475,16 +461,16 @@ export default function WebNote() {
                 {previews.map((p, i) => (
                   <div
                     key={p.url}
-                    className="relative aspect-square overflow-hidden rounded-lg bg-panel-2 ring-2 ring-save"
+                    className="ne-thumb is-new"
+                    style={{ backgroundImage: `url(${p.url})` }}
                   >
-                    <img src={p.url} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       title="Rimuovi"
                       onClick={() =>
                         setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
                       }
-                      className="absolute right-1 top-1 rounded-full bg-black/55 px-1.5 text-xs text-white"
+                      className="ne-thumb-x"
                     >
                       ×
                     </button>
@@ -494,40 +480,34 @@ export default function WebNote() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">
+                <Icon name="user" size={13} />
                 Persone
-              </p>
-              <button
-                type="button"
-                onClick={() => setPeopleSheetOpen(true)}
-                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
-              >
+              </span>
+              <button type="button" onClick={() => setPeopleSheetOpen(true)} className="ne-add">
                 + Aggiungi
               </button>
             </div>
             {selectedPeople.length === 0 ? (
-              <p className="text-sm italic text-ink-soft">Nessuna persona</p>
+              <p className="ne-empty">Nessuna persona</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="ne-chips">
                 {selectedPeople.map((person) => (
-                  <span
-                    key={person.id}
-                    className="flex items-center gap-2 rounded-full border border-line bg-cream py-1 pl-1 pr-3"
-                  >
+                  <span key={person.id} className="ne-chip">
                     <PersonAvatar
                       person={person}
                       immichUrl={immichUrl}
                       immichApiKey={immichApiKey}
-                      size={22}
+                      size={20}
                     />
-                    <span className="text-sm font-semibold text-ink">{person.name}</span>
+                    {person.name}
                     <button
                       type="button"
                       title="Rimuovi"
                       onClick={() => togglePerson(person.id)}
-                      className="text-ink-soft"
+                      className="rm"
                     >
                       ×
                     </button>
@@ -537,35 +517,29 @@ export default function WebNote() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">
+                <Icon name="tag" size={13} />
                 Tag
-              </p>
-              <button
-                type="button"
-                onClick={() => setTagSheetOpen(true)}
-                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
-              >
+              </span>
+              <button type="button" onClick={() => setTagSheetOpen(true)} className="ne-add">
                 + Aggiungi
               </button>
             </div>
             {selectedTags.length === 0 ? (
-              <p className="text-sm italic text-ink-soft">Nessun tag</p>
+              <p className="ne-empty">Nessun tag</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="ne-chips">
                 {selectedTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-line bg-panel py-1 pl-2 pr-2"
-                  >
-                    <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                    <span className="text-sm font-semibold text-ink">{tag.name}</span>
+                  <span key={tag.id} className="ne-chip sq">
+                    <Icon name="tag" size={11} />
+                    {tag.name}
                     <button
                       type="button"
                       title="Rimuovi"
                       onClick={() => toggleTag(tag.id)}
-                      className="text-ink-soft"
+                      className="rm"
                     >
                       ×
                     </button>
@@ -575,44 +549,37 @@ export default function WebNote() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">
+                <Icon name="music" size={13} />
                 Canzoni
-              </p>
-              <button
-                type="button"
-                onClick={() => setSongSheetOpen(true)}
-                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
-              >
+              </span>
+              <button type="button" onClick={() => setSongSheetOpen(true)} className="ne-add">
                 + Aggiungi
               </button>
             </div>
             {form.songs.length === 0 ? (
-              <p className="text-sm italic text-ink-soft">Nessuna canzone</p>
+              <p className="ne-empty">Nessuna canzone</p>
             ) : (
-              <div className="space-y-2">
+              <div className="ne-songs">
                 {form.songs.map((song, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 rounded-xl border border-line bg-cream px-2 py-1.5"
-                  >
+                  <div key={i} className="ne-song">
                     {song.thumbnailUrl ? (
-                      <img
-                        src={song.thumbnailUrl}
-                        alt=""
-                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                      <div
+                        className="ne-song-thumb"
+                        style={{ backgroundImage: `url(${song.thumbnailUrl})` }}
                       />
                     ) : (
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-ink-soft">
-                        <Icon name="music" size={16} />
+                      <span className="ne-song-thumb">
+                        <Icon name="music" size={14} />
                       </span>
                     )}
                     <a
                       href={song.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+                      className="ne-song-title"
                     >
                       {song.title}
                     </a>
@@ -620,7 +587,7 @@ export default function WebNote() {
                       type="button"
                       title="Rimuovi"
                       onClick={() => removeSong(i)}
-                      className="shrink-0 text-ink-soft"
+                      className="ne-song-rm"
                     >
                       ×
                     </button>
@@ -630,43 +597,41 @@ export default function WebNote() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="ne-sub">
+            <div className="ne-sub-head">
+              <span className="ne-sub-title">
+                <Icon name="map-pin" size={13} />
                 Luogo
-              </p>
-              <button
-                type="button"
-                onClick={() => setPlaceSheetOpen(true)}
-                className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-bold text-ink transition hover:bg-tag"
-              >
+              </span>
+              <button type="button" onClick={() => setPlaceSheetOpen(true)} className="ne-add">
                 {form.place ? 'Cambia' : '+ Aggiungi'}
               </button>
             </div>
             {form.place ? (
               <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
             ) : (
-              <p className="text-sm italic text-ink-soft">Nessun luogo</p>
+              <p className="ne-empty">Nessun luogo</p>
             )}
           </div>
         </div>
 
-        {/* Colonna editor */}
-        <div className="rounded-2xl border border-line bg-cream">
+        {/* Colonna editor: foglio di scrittura */}
+        <div className="ne-sheet">
+          <span className="ne-tape ne-tape-a" aria-hidden="true" />
+          <span className="ne-tape ne-tape-b" aria-hidden="true" />
           <input
             type="text"
             placeholder="Titolo della nota"
             value={form.title}
             onChange={(e) => set({ title: e.target.value })}
-            className="w-full bg-transparent px-6 pb-3 pt-5 font-serif text-3xl font-semibold text-ink outline-none placeholder:text-ink-soft/70"
+            className="ne-title"
           />
-          <div className="mx-6 border-t border-line-soft" />
           <RichText
             ref={editorRef}
             value={form.content}
             onChange={(html) => set({ content: html })}
             placeholder="Scrivi qui la nota…"
-            className="min-h-[440px] px-6 py-4 text-[15px] leading-relaxed text-ink"
+            className="ne-body"
           />
         </div>
       </div>
