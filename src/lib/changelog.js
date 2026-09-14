@@ -9,6 +9,17 @@
 
 export const CHANGELOG = [
   {
+    version: '0.35.0',
+    date: '2026-09-14 18:56',
+    changes: [
+      'Barre mobile (superiore e inferiore): rifatte in stile "Pagine" — due fogli di cartoncino sovrapposti, come la barra laterale web, con un bordo seghettato irregolare sul foglio dietro invece di un\'ombra piatta.',
+      'Mese, anno e la data in vista giorno sono ora targhette uniche di plastica giallo ocra con le frecce incorporate (tocca per aprire il selettore come prima, oppure usa le frecce per spostarti di un mese/anno/giorno alla volta).',
+      'Vista giorno: l\'icona per cambiare aspetto della pagina non è più una matita (sembrava "scrivi qui") — ora due foglietti sovrapposti.',
+      'Selettore Calendario/Andamento/Statistiche: un\'unica striscia di cartoncino bianco, con una targhetta in metallo dorato che inquadra la scheda attiva invece di uno sfondo scuro che trasla.',
+      'Footer: "Opzioni" è ora la tua foto profilo (come la tessera in barra laterale), "Filtri" una lente d\'ingrandimento in ottone; "Nuova nota"/Gemini restano cartoncino nero pieno.',
+    ],
+  },
+  {
     version: '0.34.0',
     date: '2026-09-14 12:22',
     changes: [

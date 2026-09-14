@@ -2,9 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
+import MobileTopBar from '../components/MobileTopBar'
+import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
-import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import ImageCarousel from '../components/ImageCarousel'
@@ -194,38 +195,43 @@ export default function DayView() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center px-4 pb-3">
-          <CircleButton onClick={() => navigate('/')} title="Indietro">
-            <Icon name="chevron-left" size={22} />
-          </CircleButton>
-          <div className="flex justify-center">
-            <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" />
-          </div>
-          <div className="flex justify-end">
-            <CircleButton
-              onClick={() => {
-                const next = nextSkin(skin)
-                setSkin(next)
-                setSkinDay(next)
-              }}
-              title={`Stile: ${SKIN_DAY_LABELS[skin]} (tocca per cambiare)`}
-            >
-              <Icon
-                name="edit"
-                size={20}
-                className={
-                  skin === 'sketch'
-                    ? 'text-delete-dark'
-                    : skin === 'pages'
-                      ? 'text-ink'
-                      : ''
-                }
-              />
-            </CircleButton>
-          </div>
-        </div>
-      </header>
+      <MobileTopBar className="mtop-day">
+        <button
+          type="button"
+          className="mchev"
+          onClick={() => navigate('/')}
+          title="Indietro"
+          aria-label="Indietro"
+        >
+          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+        </button>
+        <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" onStep={go} />
+        {/* Non più una matita (fa pensare "scrivi qui") — due foglietti
+            sovrapposti, coerente con "cambia aspetto della pagina". */}
+        <button
+          type="button"
+          className="mchev"
+          onClick={() => {
+            const next = nextSkin(skin)
+            setSkin(next)
+            setSkinDay(next)
+          }}
+          title={`Stile: ${SKIN_DAY_LABELS[skin]} (tocca per cambiare)`}
+          aria-label="Cambia aspetto della pagina"
+        >
+          <Icon
+            name="layers"
+            size={16}
+            className={
+              skin === 'sketch'
+                ? 'text-delete-dark'
+                : skin === 'pages'
+                  ? 'text-ink'
+                  : ''
+            }
+          />
+        </button>
+      </MobileTopBar>
 
       <main
         key={date}
@@ -389,11 +395,13 @@ export default function DayView() {
         )}
       </main>
 
-      <Footer
-        primaryIcon="plus"
-        primaryTitle="Nuova nota in questo giorno"
-        onPrimary={() => navigate(`/note/new?date=${date}`)}
-      />
+      <MobileBottomBar>
+        <Footer
+          primaryIcon="plus"
+          primaryTitle="Nuova nota in questo giorno"
+          onPrimary={() => navigate(`/note/new?date=${date}`)}
+        />
+      </MobileBottomBar>
     </PhoneShell>
   )
 }

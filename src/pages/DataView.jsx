@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
+import MobileTopBar from '../components/MobileTopBar'
+import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
@@ -66,14 +68,13 @@ export default function DataView() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex justify-center px-4 pb-3">
-          <YearPill
-            year={year}
-            onChange={(y) => setCursor((c) => ({ ...c, year: y }))}
-          />
-        </div>
-      </header>
+      <MobileTopBar>
+        <YearPill
+          year={year}
+          onChange={(y) => setCursor((c) => ({ ...c, year: y }))}
+          onStep={(delta) => setCursor((c) => ({ ...c, year: c.year + delta }))}
+        />
+      </MobileTopBar>
 
       <main className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         {error && (
@@ -132,10 +133,9 @@ export default function DataView() {
         )}
       </main>
 
-      <div className="sticky bottom-0 z-20">
+      <MobileBottomBar>
         <ViewTabs active="data" />
         <Footer
-          sticky={false}
           items={[
             {
               icon: 'settings',
@@ -152,7 +152,7 @@ export default function DataView() {
           primaryTitle="Nuova nota (oggi)"
           onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
         />
-      </div>
+      </MobileBottomBar>
     </PhoneShell>
   )
 }

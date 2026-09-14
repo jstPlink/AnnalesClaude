@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
+import MobileTopBar from '../components/MobileTopBar'
+import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
-import CircleButton from '../components/CircleButton'
 import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import PersonAvatar from '../components/PersonAvatar'
@@ -159,17 +160,21 @@ export default function FilterView() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2 px-4 pb-3">
-          <CircleButton size={40} onClick={() => navigate(-1)} title="Indietro">
-            <Icon name="chevron-left" size={20} />
-          </CircleButton>
-          <h2 className="flex-1 text-center text-2xl font-extrabold text-ink">
-            Filtri
-          </h2>
-          <span className="w-10" />
-        </div>
-      </header>
+      <MobileTopBar className="mtop-day">
+        <button
+          type="button"
+          className="mchev"
+          onClick={() => navigate(-1)}
+          title="Indietro"
+          aria-label="Indietro"
+        >
+          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+        </button>
+        <h2 className="flex-1 text-center font-serif text-xl font-extrabold text-ink">
+          Filtri
+        </h2>
+        <span className="w-[34px]" />
+      </MobileTopBar>
 
       <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         <div className="space-y-4 rounded-2xl bg-tag p-4">
@@ -521,16 +526,18 @@ export default function FilterView() {
         </div>
       </main>
 
-      <Footer
-        items={[
-          { icon: 'settings', title: 'Opzioni', onClick: () => navigate('/profilo') },
-          { icon: 'calendar', title: 'Calendario', onClick: () => navigate('/') },
-          { icon: 'search', title: 'Filtri', active: true },
-        ]}
-        primaryIcon="plus"
-        primaryTitle="Nuova nota (oggi)"
-        onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
-      />
+      <MobileBottomBar>
+        <Footer
+          items={[
+            { icon: 'settings', title: 'Opzioni', onClick: () => navigate('/profilo') },
+            { icon: 'calendar', title: 'Calendario', onClick: () => navigate('/') },
+            { icon: 'search', title: 'Filtri', active: true },
+          ]}
+          primaryIcon="plus"
+          primaryTitle="Nuova nota (oggi)"
+          onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
+        />
+      </MobileBottomBar>
     </PhoneShell>
   )
 }

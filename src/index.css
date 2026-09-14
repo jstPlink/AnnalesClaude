@@ -4116,3 +4116,337 @@ li:last-child > .wd-month-row {
   font-size: 0.86rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* ===================== Barre mobile (superiore + inferiore): stessi
+   materiali della barra laterale web (src/components/web/Sidebar.jsx) —
+   cartoncino, grana/fibra, timbro nero pieno, lente in ottone — riproposti
+   in orizzontale. Due fogli sovrapposti: quello davanti quasi dritto (solo
+   un filo irregolare), quello dietro spunta poco, con un bordo seghettato
+   irregolare (denti di larghezza/profondità diverse), non un'ombra piatta
+   né uno strappo organico. Tono fisso, non legato al tema chiaro/scuro —
+   stessa scelta della barra laterale: è carta vera, non uno sfondo
+   dell'interfaccia. ===================== */
+.mtop-wrap {
+  position: relative;
+  flex: none;
+  z-index: 20;
+}
+.mtop-under {
+  position: absolute;
+  inset: 3px -5px -9px 5px;
+  z-index: 0;
+  background-color: #b8a982;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  transform: rotate(-1.8deg);
+  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16), 0 4px 8px rgba(20, 12, 4, 0.22);
+  clip-path: polygon(
+    0 0, 100% 0,
+    100% 90%, 97% 100%, 94% 92%, 91% 99%, 87% 95%, 84% 100%, 79% 88%, 76% 97%,
+    73% 93%, 69% 100%, 65% 90%, 62% 98%, 58% 86%, 55% 100%, 51% 94%, 48% 97%,
+    44% 89%, 40% 100%, 37% 92%, 33% 99%, 29% 87%, 26% 96%, 22% 90%, 19% 100%,
+    15% 93%, 12% 88%, 8% 98%, 5% 91%, 2% 100%, 0 89%
+  );
+  filter: url(#annales-tear-2);
+}
+.mtop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: max(14px, env(safe-area-inset-top)) 18px 20px;
+  background-color: #c7ba95;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  border-radius: 0 0 15px 15px;
+  box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.12), 0 4px 8px rgba(20, 12, 4, 0.18);
+  filter: url(#annales-tear);
+}
+.mtop > * {
+  filter: none;
+}
+.mtop-day {
+  justify-content: space-between;
+  padding-bottom: 16px;
+}
+
+.mbottom-wrap {
+  position: relative;
+  flex: none;
+  z-index: 20;
+}
+.mbottom-under {
+  position: absolute;
+  inset: -9px -5px 3px 5px;
+  z-index: 0;
+  background-color: #b8a982;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  transform: rotate(1.6deg);
+  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16), 0 -4px 8px rgba(20, 12, 4, 0.22);
+  clip-path: polygon(
+    0 10%, 3% 0, 6% 8%, 9% 1%, 13% 11%, 16% 2%, 20% 7%, 24% 12%,
+    27% 1%, 31% 9%, 35% 0, 38% 10%, 42% 3%, 45% 12%, 49% 1%, 52% 7%,
+    56% 11%, 60% 0, 63% 9%, 67% 2%, 71% 8%, 74% 12%, 78% 1%, 82% 10%,
+    85% 0, 89% 11%, 92% 3%, 96% 8%, 100% 4%,
+    100% 100%, 0 100%
+  );
+  filter: url(#annales-tear-2);
+}
+.mbottom {
+  position: relative;
+  z-index: 1;
+  background-color: #c7ba95;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  border-radius: 15px 15px 0 0;
+  box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.12), 0 -4px 8px rgba(20, 12, 4, 0.18);
+  filter: url(#annales-tear);
+  padding: 20px 16px max(14px, env(safe-area-inset-bottom));
+}
+.mbottom > * {
+  filter: none;
+}
+
+/* piccoli ritagli di carta rotondi (indietro / cambia aspetto): stessa
+   materia dei link della barra web (.sb-item), ognuno ruotato un po'
+   diversamente come se fossero stati tagliati a mano uno alla volta. */
+.mchev {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  border: 2px dashed rgba(52, 44, 28, 0.45);
+  color: #33291c;
+  box-shadow: 0 3px 7px rgba(20, 12, 4, 0.2);
+}
+.mtop-day .mchev:first-child {
+  transform: rotate(-6deg);
+}
+.mtop-day .mchev:last-child {
+  transform: rotate(5deg);
+}
+
+/* mese / anno / data: non più carta con frecce a parte — una targhetta
+   unica di plastica giallo ocra, lucida, con le frecce incorporate nella
+   stessa targhetta. Il "vetro" (label) apre il selettore esistente quando
+   è un pulsante; da sola (senza dropdown, es. vista giorno) resta testo. */
+.mplaque {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: 999px;
+  background: linear-gradient(160deg, #f4cd58, #dda522 55%, #ad7d17);
+  border: 1px solid rgba(108, 72, 10, 0.45);
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 5px rgba(110, 74, 10, 0.35);
+  overflow: hidden;
+}
+.mplaque::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    transparent 32%,
+    transparent 68%,
+    rgba(255, 255, 255, 0.22) 100%
+  );
+  pointer-events: none;
+}
+.mplaque-arrow {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: #4a3208;
+}
+.mplaque-arrow:disabled {
+  opacity: 0.4;
+}
+.mplaque-label {
+  position: relative;
+  z-index: 1;
+  padding: 7px 3px;
+  background: none;
+  border: none;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1rem;
+  color: #3d2a06;
+  white-space: nowrap;
+}
+.mplaque-year .mplaque-label {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.mplaque-day .mplaque-label {
+  font-size: 0.88rem;
+}
+
+/* selettore Calendario/Andamento/Statistiche: un'unica striscia di
+   cartoncino bianco, senza contorni tratteggiati né icone — una targhetta
+   rettangolare in metallo dorato inquadra l'opzione attiva e scivola sopra
+   di essa quando cambi scheda. */
+.mtabs {
+  position: relative;
+  display: flex;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  background-color: #fdfaf0;
+  background-image: var(--sb-grain);
+  background-size: 130px 130px;
+  background-blend-mode: multiply;
+  border: 1.5px solid rgba(52, 44, 28, 0.22);
+  border-radius: 11px;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+.mtab-plaque {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: calc(33.333% - 6px);
+  margin: 0 3px;
+  border-radius: 6px;
+  background: linear-gradient(155deg, #f5e2a0, #cda233 50%, #8f6c17);
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.35), inset 0 0 0 1px rgba(255, 245, 210, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mtab {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  padding: 11px 4px;
+  background: none;
+  border: none;
+  color: #4a3f2c;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  transition: color 0.2s ease;
+}
+.mtab.active {
+  color: #2b2015;
+}
+
+/* pulsanti circolari del footer: profilo (tessera/foto), cerca (lente in
+   ottone senza manico), Gemini/nuova nota (cartoncino nero pieno) — stessi
+   materiali della barra web, formato compatto. */
+.mcircle {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.22);
+}
+/* voce generica del footer senza materiale dedicato: stesso ritaglio di
+   carta chiara di .mchev, solo alla dimensione di .mcircle. */
+.mcircle-paper {
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  border: 2px dashed rgba(52, 44, 28, 0.45);
+  color: #33291c;
+}
+.mcircle-paper.active {
+  background-color: #fff9ea;
+  border-color: rgba(52, 44, 28, 0.75);
+}
+.mid-btn {
+  background: linear-gradient(160deg, #f3ecd8, #e6dcc0);
+  border: 1.5px dashed rgba(120, 100, 60, 0.55);
+  padding: 3px;
+  overflow: hidden;
+  color: #f3ecd8;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+}
+.mid-btn img,
+.mid-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.6);
+}
+.mid-photo {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(150deg, #8a9fae, #46626f);
+}
+.msearch-btn {
+  position: relative;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), transparent 30%),
+    radial-gradient(circle at 68% 78%, rgba(0, 0, 0, 0.28), transparent 42%),
+    linear-gradient(155deg, #e2c07a, #9c7328 55%, #7a5a1e);
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.28), inset 0 0 0 2px rgba(255, 241, 204, 0.3);
+}
+.msearch-btn.active {
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.28), inset 0 0 0 2px rgba(255, 241, 204, 0.3),
+    0 0 0 3px rgba(198, 70, 55, 0.4);
+}
+.msearch-btn::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  box-shadow: inset 0 0 10px rgba(60, 44, 10, 0.3);
+}
+.msearch-btn::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  width: 13px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.8), transparent 70%);
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+.msearch-btn svg {
+  position: relative;
+  z-index: 1;
+  color: #33291c;
+}
+.mgemini,
+.mfab {
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+}
+.mfab {
+  width: 58px;
+  height: 58px;
+}

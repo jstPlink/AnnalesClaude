@@ -1,19 +1,38 @@
 import { useEffect, useRef, useState } from 'react'
+import Icon from './Icon'
 import { MONTHS_IT } from '../lib/dates'
 
-// Pillola arrotondata con l'anno. Tap → selezione rapida di un altro anno.
+// Freccia ai lati della targhetta: renderizzata dal chiamante solo quando
+// passa uno stepper (`onYearStep`/`onMonthStep`/`onStep`) — altrimenti la
+// targhetta resta senza, invariata per chi non ne ha bisogno.
+function PlaqueArrow({ dir, onClick, label }) {
+  return (
+    <button type="button" className="mplaque-arrow" onClick={onClick} aria-label={label}>
+      <Icon
+        name={dir === 'prev' ? 'chevron-left' : 'chevron-right'}
+        size={11}
+        strokeWidth={3}
+      />
+    </button>
+  )
+}
+
+// Targhetta di plastica giallo ocra con anno (e, se presenti `month`+
+// `onMonthChange`, anche il mese come seconda targhetta separata). Tap sul
+// "vetro" → apre il selettore esistente; le frecce (quando passati
+// `onYearStep`/`onMonthStep`/`onStep`) spostano di ±1 senza aprirlo.
 // Se `subtitle` è presente (es. "20 Settembre") viene mostrato accanto
 // (layout="row") o sotto (layout="column", default) l'anno.
-// Se sono presenti anche `month` (0–11) e `onMonthChange`, il sottotitolo
-// diventa un pulsante separato e cliccabile per scegliere il mese.
 export default function YearPill({
   year,
   onChange,
   subtitle = null,
   month = null,
   onMonthChange,
+  onYearStep,
+  onMonthStep,
+  onStep,
   span = 8,
-  minWidth = 128,
   layout = 'column',
 }) {
   const [openYear, setOpenYear] = useState(false)
@@ -57,27 +76,43 @@ export default function YearPill({
   // con il proprio menu.
   if (monthSelectable) {
     return (
-      <div className="relative flex items-center gap-2" ref={ref} style={{ minWidth }}>
-        <button
-          type="button"
-          onClick={() => {
-            setOpenYear((v) => !v)
-            setOpenMonth(false)
-          }}
-          className="rounded-full border border-line bg-tag px-4 py-1.5 text-xl font-bold text-ink shadow-sm transition active:scale-95"
-        >
-          {year}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setOpenMonth((v) => !v)
-            setOpenYear(false)
-          }}
-          className="max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-xl font-bold text-ink shadow-sm transition active:scale-95"
-        >
-          {subtitle}
-        </button>
+      <div className="relative flex items-center gap-2" ref={ref}>
+        <span className="mplaque mplaque-month">
+          {onMonthStep && (
+            <PlaqueArrow dir="prev" label="Mese precedente" onClick={() => onMonthStep(-1)} />
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setOpenMonth((v) => !v)
+              setOpenYear(false)
+            }}
+            className="mplaque-label"
+          >
+            {subtitle}
+          </button>
+          {onMonthStep && (
+            <PlaqueArrow dir="next" label="Mese successivo" onClick={() => onMonthStep(1)} />
+          )}
+        </span>
+        <span className="mplaque mplaque-year">
+          {onYearStep && (
+            <PlaqueArrow dir="prev" label="Anno precedente" onClick={() => onYearStep(-1)} />
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setOpenYear((v) => !v)
+              setOpenMonth(false)
+            }}
+            className="mplaque-label"
+          >
+            {year}
+          </button>
+          {onYearStep && (
+            <PlaqueArrow dir="next" label="Anno successivo" onClick={() => onYearStep(1)} />
+          )}
+        </span>
 
         {openYear && (
           <div className="absolute left-0 top-full z-30 mt-2 max-h-64 w-32 overflow-y-auto rounded-2xl border border-line bg-cream p-2 shadow-xl no-scrollbar">
@@ -124,47 +159,33 @@ export default function YearPill({
     )
   }
 
+  const LabelTag = readOnly ? 'span' : 'button'
+
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        disabled={readOnly}
-        onClick={() => !readOnly && setOpenYear((v) => !v)}
-        style={{ minWidth }}
-        className={
-          'flex max-w-full items-center justify-center px-5 py-1.5 ' +
-          (layout === 'row' ? 'flex-row gap-2' : 'flex-col') +
-          ' ' +
-          (readOnly
-            ? ''
-            : 'rounded-full border border-line bg-tag shadow-sm transition active:scale-95')
-        }
-      >
-        <span
-          className={
-            'leading-tight text-ink ' +
-            (layout === 'row'
-              ? 'text-xl font-bold'
-              : subtitle
-                ? 'text-base font-semibold'
-                : 'text-2xl font-semibold')
-          }
+      <span className={'mplaque' + (subtitle ? ' mplaque-day' : ' mplaque-year')}>
+        {onStep && <PlaqueArrow dir="prev" label="Precedente" onClick={() => onStep(-1)} />}
+        <LabelTag
+          type={readOnly ? undefined : 'button'}
+          onClick={readOnly ? undefined : () => setOpenYear((v) => !v)}
+          className="mplaque-label"
         >
-          {year}
-        </span>
-        {subtitle && (
-          <span
-            className={
-              'max-w-full truncate leading-tight ' +
-              (layout === 'row'
-                ? 'text-xl font-bold text-ink'
-                : 'text-base font-extrabold text-ink-soft')
-            }
-          >
-            {subtitle}
-          </span>
-        )}
-      </button>
+          {layout === 'row' && subtitle ? (
+            <>
+              {subtitle} {year}
+            </>
+          ) : subtitle ? (
+            <>
+              {year}
+              <br />
+              {subtitle}
+            </>
+          ) : (
+            year
+          )}
+        </LabelTag>
+        {onStep && <PlaqueArrow dir="next" label="Successivo" onClick={() => onStep(1)} />}
+      </span>
 
       {openYear && (
         <div className="absolute left-1/2 z-30 mt-2 max-h-64 w-40 -translate-x-1/2 overflow-y-auto rounded-2xl border border-line bg-cream p-2 shadow-xl no-scrollbar">

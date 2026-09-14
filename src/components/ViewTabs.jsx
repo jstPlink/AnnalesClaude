@@ -7,10 +7,12 @@ const TABS = [
   { key: 'stats', path: '/statistiche', label: 'Statistiche' },
 ]
 
-// Selettore di vista (Calendario / Andamento / Statistiche): tab switcher,
-// esteticamente distinto dai pulsanti solo-cliccabili del footer sottostante.
+// Selettore di vista (Calendario / Andamento / Statistiche): un'unica
+// striscia di cartoncino bianco — una targhetta rettangolare in metallo
+// dorato inquadra l'opzione attiva e scivola sopra quella scelta.
 export default function ViewTabs({ active }) {
   const navigate = useNavigate()
+  const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === active))
 
   function go(path) {
     haptic()
@@ -18,22 +20,22 @@ export default function ViewTabs({ active }) {
   }
 
   return (
-    <div className="flex justify-center border-t border-line bg-sand px-3 pt-3">
-      <div className="mb-2 flex gap-1 rounded-full bg-panel p-1">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => go(tab.path)}
-            className={
-              'rounded-full px-4 py-1.5 text-sm font-bold transition ' +
-              (active === tab.key ? 'bg-ink text-cream shadow-sm' : 'text-ink-soft')
-            }
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <div className="mtabs">
+      <div
+        className="mtab-plaque"
+        style={{ left: `calc(${activeIndex} * 33.333%)` }}
+        aria-hidden="true"
+      />
+      {TABS.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => go(tab.path)}
+          className={'mtab' + (tab.key === active ? ' active' : '')}
+        >
+          {tab.label}
+        </button>
+      ))}
     </div>
   )
 }

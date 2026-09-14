@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useNav } from '../context/NavContext'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
+import MobileTopBar from '../components/MobileTopBar'
+import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
@@ -149,29 +151,32 @@ export default function MonthView() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div
-          className="flex min-h-14 select-none items-center justify-center px-4 pb-3"
-          style={{ touchAction: 'pan-y' }}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-        >
-          <YearPill
-            year={cursor.year}
-            subtitle={MONTHS_IT[cursor.month]}
-            month={cursor.month}
-            layout="row"
-            onChange={(year) => {
-              setDir(0)
-              setCursor((c) => ({ ...c, year }))
-            }}
-            onMonthChange={(month) => {
-              setDir(0)
-              setCursor((c) => ({ ...c, month }))
-            }}
-          />
-        </div>
-      </header>
+      <MobileTopBar
+        className="select-none"
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+      >
+        <YearPill
+          year={cursor.year}
+          subtitle={MONTHS_IT[cursor.month]}
+          month={cursor.month}
+          layout="row"
+          onChange={(year) => {
+            setDir(0)
+            setCursor((c) => ({ ...c, year }))
+          }}
+          onMonthChange={(month) => {
+            setDir(0)
+            setCursor((c) => ({ ...c, month }))
+          }}
+          onYearStep={(delta) => {
+            setDir(0)
+            setCursor((c) => ({ ...c, year: c.year + delta }))
+          }}
+          onMonthStep={go}
+        />
+      </MobileTopBar>
 
       <main
         key={`${cursor.year}-${cursor.month}`}
@@ -291,10 +296,9 @@ export default function MonthView() {
         <div className="h-4" />
       </main>
 
-      <div className="sticky bottom-0 z-20">
+      <MobileBottomBar>
         <ViewTabs active="calendar" />
         <Footer
-          sticky={false}
           items={[
             {
               icon: 'settings',
@@ -314,7 +318,7 @@ export default function MonthView() {
           secondaryTitle="Nuova nota con Gemini"
           onSecondary={() => setGeminiNoteOpen(true)}
         />
-      </div>
+      </MobileBottomBar>
 
       <NewNoteWithGeminiSheet
         open={geminiNoteOpen}
