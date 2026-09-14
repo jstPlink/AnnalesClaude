@@ -3934,6 +3934,120 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   opacity: 0.5;
 }
 
+/* Impostazioni da telefono: stesse classi .ws-*/.pf-* della versione web
+   (Aspetto/Dati utente/Integrazioni... e la tessera profilo), scalate per lo
+   schermo stretto. La foto profilo diventa quadrata invece di allungarsi
+   quanto la colonna dei campi (era pensata per lo spazio extra del layout
+   web). */
+@media (max-width: 480px) {
+  .pf-card {
+    padding: 13px 15px 12px;
+  }
+  .pf-seal {
+    width: 120px;
+    height: 120px;
+  }
+  .pf-seal svg {
+    width: 52px;
+    height: 52px;
+  }
+  .pf-top {
+    font-size: 0.56rem;
+    margin-bottom: 8px;
+  }
+  .pf-since {
+    font-size: 0.74rem;
+  }
+  .pf-body {
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .pf-photo {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+  }
+  .pf-tape {
+    width: 28px;
+    height: 12px;
+  }
+  .pf-row {
+    padding: 5.5px 1px;
+  }
+  .pf-flabel {
+    width: 54px;
+    font-size: 0.56rem;
+  }
+  .pf-fvalue {
+    font-size: 0.82rem;
+  }
+  .pf-pencil {
+    width: 22px;
+    height: 22px;
+  }
+  .pf-foot {
+    margin-top: 9px;
+  }
+  .pf-sig {
+    width: 58px;
+    height: 20px;
+  }
+  .pf-strip {
+    height: 7px;
+  }
+
+  .ws-section {
+    margin-top: 16px;
+  }
+  .ws-header {
+    padding: 13px 16px;
+    gap: 11px;
+    border-radius: 14px 14px 0 0;
+    background-size: 15px 15px, 15px 15px, 150px 150px;
+  }
+  .ws-icon {
+    width: 19px;
+    height: 19px;
+  }
+  .ws-title {
+    font-size: 1.05rem;
+  }
+  .ws-desc {
+    font-size: 0.72rem;
+  }
+  .ws-chev {
+    width: 15px;
+    height: 15px;
+  }
+  .ws-card {
+    padding: 16px 15px 17px;
+    border-radius: 0 0 14px 14px;
+  }
+  .ws-sub {
+    margin-bottom: 11px;
+    border-radius: 4px 11px 11px 4px;
+  }
+  .ws-sub-head {
+    padding: 9px 12px;
+    gap: 7px;
+  }
+  .ws-sub-icon {
+    width: 15px;
+    height: 15px;
+  }
+  .ws-sub-title {
+    font-size: 0.86rem;
+  }
+  .ws-sub-chev {
+    width: 13px;
+    height: 13px;
+  }
+  .ws-sub-body {
+    padding: 0 13px 13px;
+  }
+}
+
 /* ===================== Andamento (vista web): un foglietto a quadretti
    sovrapposto per ogni cartoncino — stessa idea del ".day-header" della
    vista giorno — invece del cartoncino cliccabile a tutta larghezza delle

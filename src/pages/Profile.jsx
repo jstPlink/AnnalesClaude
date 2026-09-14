@@ -1,21 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
-import CircleButton from '../components/CircleButton'
+import MobileTopBar from '../components/MobileTopBar'
 import Icon from '../components/Icon'
 import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../components/PlacePickerSheet'
-import CollapsibleSection from '../components/CollapsibleSection'
-import AccountFields from '../components/AccountFields'
+import SettingsSection from '../components/SettingsSection'
 import AppearanceControls from '../components/AppearanceControls'
 import MoodGradientControls from '../components/MoodGradientControls'
 import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
+import ProfileCard from '../components/web/ProfileCard'
 import { useAuth } from '../context/AuthContext'
-import { pb, fileUrl } from '../lib/pocketbase'
+import { pb } from '../lib/pocketbase'
 import {
   describeError,
   listNotesWithPerson,
@@ -66,32 +66,6 @@ function TokenHelp({ which }) {
 export default function Profile() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-
-  const name = user?.name?.trim()
-  const email = user?.email || '—'
-  const initial = (name || email || '?').charAt(0).toUpperCase()
-  const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
-
-  const avatarInputRef = useRef(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
-  const [avatarError, setAvatarError] = useState('')
-
-  async function handleAvatarPick(e) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setAvatarUploading(true)
-    setAvatarError('')
-    try {
-      const formData = new FormData()
-      formData.append('avatar', file)
-      await pb.collection('users').update(user.id, formData)
-    } catch (err) {
-      setAvatarError(describeError(err))
-    } finally {
-      setAvatarUploading(false)
-    }
-  }
 
   const [immichUrl, setImmichUrl] = useState(user?.immichUrl || '')
   const [immichApiKey, setImmichApiKey] = useState(user?.immichApiKey || '')
@@ -532,80 +506,43 @@ export default function Profile() {
 
   return (
     <PhoneShell>
-      <header className="sticky top-0 z-20 border-b border-line bg-sand pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="grid grid-cols-[3rem_1fr_3rem] items-center px-4 pb-3">
-          <CircleButton size={40} onClick={() => navigate('/')} title="Indietro">
-            <Icon name="chevron-left" size={20} />
-          </CircleButton>
-          <h2 className="text-center text-2xl font-extrabold text-ink">Profilo</h2>
-          <span />
-        </div>
-      </header>
+      <MobileTopBar className="mtop-day">
+        <button
+          type="button"
+          className="mchev"
+          onClick={() => navigate(-1)}
+          title="Indietro"
+          aria-label="Indietro"
+        >
+          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+        </button>
+        <h2 className="flex-1 text-center font-serif text-xl font-extrabold text-ink">
+          Profilo
+        </h2>
+        <span className="w-[34px]" />
+      </MobileTopBar>
 
-      <main className="anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-6 py-8">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            title="Cambia immagine profilo"
-            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-line bg-sand text-3xl font-extrabold text-ink"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center">
-                {initial}
-              </span>
-            )}
-            <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-ink/70 py-1 text-cream">
-              {avatarUploading ? (
-                <span className="text-[10px] font-semibold">…</span>
-              ) : (
-                <Icon name="edit" size={12} />
-              )}
-            </span>
-          </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleAvatarPick}
-          />
-          <div className="min-w-0 flex-1">
-            {name && <p className="truncate text-xl font-bold text-ink">{name}</p>}
-            <p className="truncate text-ink-soft">{email}</p>
-            {avatarError && (
-              <p className="mt-1 text-xs text-delete-dark">{avatarError}</p>
-            )}
-          </div>
-        </div>
+      <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-3 py-4">
+        <ProfileCard />
 
-        <div className="mt-10">
-          <CollapsibleSection title="Account" icon="user">
-            <AccountFields />
-          </CollapsibleSection>
-        </div>
+        <SettingsSection
+          title="Aspetto"
+          icon="settings"
+          description="Tema, font, animazioni e sfondo — solo su questo dispositivo."
+        >
+          <AppearanceControls />
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Aspetto" icon="settings">
-            <AppearanceControls />
-          </CollapsibleSection>
-        </div>
+        <SettingsSection
+          title="Dati utente"
+          icon="list"
+          description="Dati unici e personali tuoi, sincronizzati su tutti i dispositivi."
+        >
+          <SettingsSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
+            <MoodGradientControls />
+          </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Dati utente" icon="list">
-            <p className="text-xs text-ink-soft">
-              Dati unici e personali tuoi, legati all'account e sincronizzati su
-              tutti i dispositivi: i colori con cui vedi l'umore, e le persone,
-              i tag e i luoghi che usi nelle note.
-            </p>
-
-            <CollapsibleSection title="Colori del mood" icon="sparkles">
-              <MoodGradientControls />
-            </CollapsibleSection>
-
-            <CollapsibleSection title="Persone" icon="user">
+          <SettingsSection nested title="Persone" icon="user" accent="#8397a6">
             <p className="text-xs text-ink-soft">
               Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
               Immich o creane una nuova qui.
@@ -691,9 +628,9 @@ export default function Profile() {
                 ))}
               </div>
             )}
-          </CollapsibleSection>
+          </SettingsSection>
 
-            <CollapsibleSection title="Tag" icon="tag">
+          <SettingsSection nested title="Tag" icon="tag" accent="#c9a227">
             <p className="text-xs text-ink-soft">
               Elenco dei tag selezionabili nelle note.
             </p>
@@ -738,9 +675,9 @@ export default function Profile() {
                 {creatingTag ? '…' : 'Crea'}
               </button>
             </div>
-          </CollapsibleSection>
+          </SettingsSection>
 
-            <CollapsibleSection title="Luoghi" icon="map-pin">
+          <SettingsSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
             <p className="text-xs text-ink-soft">
               Elenco dei luoghi selezionabili nelle note. Vengono aggiunti
               anche automaticamente quando ne scegli uno da una nota.
@@ -846,21 +783,23 @@ export default function Profile() {
             >
               + Aggiungi luogo
             </button>
-            </CollapsibleSection>
+          </SettingsSection>
 
-            <CollapsibleSection title="Canzoni" icon="music">
-              <p className="text-xs text-ink-soft">
-                Le canzoni collegate alle note, con quante note le usano
-                ciascuna. Sola lettura: si aggiungono dalle note stesse.
-              </p>
-              <SongsUsageList />
-            </CollapsibleSection>
-          </CollapsibleSection>
-        </div>
+          <SettingsSection nested title="Canzoni" icon="music" accent="#8fae5c">
+            <p className="text-xs text-ink-soft">
+              Le canzoni collegate alle note, con quante note le usano
+              ciascuna. Sola lettura: si aggiungono dalle note stesse.
+            </p>
+            <SongsUsageList />
+          </SettingsSection>
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Integrazioni" icon="link">
-            <CollapsibleSection title="Immich" icon="image">
+        <SettingsSection
+          title="Integrazioni"
+          icon="link"
+          description="Immich, Gemini (IA), Spotify."
+        >
+            <SettingsSection nested title="Immich" icon="image" accent="#8397a6">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
               aggiungi immagini a una nota.
@@ -918,9 +857,9 @@ export default function Profile() {
                 {saving ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-            </CollapsibleSection>
+            </SettingsSection>
 
-            <CollapsibleSection title="Gemini (IA)" icon="sparkles">
+            <SettingsSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
               <p className="text-xs text-ink-soft">
                 Chiave API di Google AI Studio per ripulire il testo delle note,
                 riconoscere le persone citate e scrivere contenuti con l'IA.
@@ -966,7 +905,7 @@ export default function Profile() {
                 </button>
               </div>
 
-              <CollapsibleSection title="Istruzioni personalizzate" icon="edit">
+              <SettingsSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
                 <p className="text-xs text-ink-soft">
                   Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
                   usare, cosa evidenziare o evitare...). Salvate sul tuo
@@ -999,10 +938,10 @@ export default function Profile() {
                 >
                   {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
                 </button>
-              </CollapsibleSection>
-            </CollapsibleSection>
+              </SettingsSection>
+            </SettingsSection>
 
-            <CollapsibleSection title="Spotify" icon="music">
+            <SettingsSection nested title="Spotify" icon="music" accent="#8fae5c">
             <p className="text-xs text-ink-soft">
               Client ID/Secret di un'app Spotify (Client Credentials) per
               cercare canzoni da aggiungere alle note, senza incollare link a
@@ -1061,78 +1000,81 @@ export default function Profile() {
                 {savingSpotify ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-          </CollapsibleSection>
-          </CollapsibleSection>
-        </div>
+          </SettingsSection>
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Import ed export" icon="download">
-            <p className="text-xs text-ink-soft">
-              L'importazione da immagine è disponibile solo dalla versione web.
-            </p>
+        <SettingsSection
+          title="Import ed export"
+          icon="download"
+          description="L'importazione da immagine è disponibile solo dalla versione web."
+        >
             <ExportButtons />
-          </CollapsibleSection>
-        </div>
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Supporto" icon="mail">
-            <p className="text-xs text-ink-soft">
-              Domande, problemi o suggerimenti su Annales? Scrivimi pure.
-            </p>
-            <a
-              href="mailto:fp.dignazio@gmail.com"
-              className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
-            >
-              <span className="text-xs font-semibold text-ink-soft">Email</span>
-              <span className="text-sm font-medium text-ink">
-                fp.dignazio@gmail.com
-              </span>
-            </a>
-            <a
-              href="https://t.me/fplinio"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
-            >
-              <span className="text-xs font-semibold text-ink-soft">Telegram</span>
-              <span className="text-sm font-medium text-ink">@fplinio</span>
-            </a>
-          </CollapsibleSection>
-        </div>
+        <SettingsSection
+          title="Supporto"
+          icon="mail"
+          description="Domande, problemi o suggerimenti su Annales?"
+        >
+          <a
+            href="mailto:fp.dignazio@gmail.com"
+            className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
+          >
+            <span className="text-xs font-semibold text-ink-soft">Email</span>
+            <span className="text-sm font-medium text-ink">
+              fp.dignazio@gmail.com
+            </span>
+          </a>
+          <a
+            href="https://t.me/fplinio"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
+          >
+            <span className="text-xs font-semibold text-ink-soft">Telegram</span>
+            <span className="text-sm font-medium text-ink">@fplinio</span>
+          </a>
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Offrimi un caffè" icon="heart">
-            <p className="text-xs text-ink-soft">
-              Se Annales ti è utile e vuoi sostenere lo sviluppo, presto potrai
-              farlo da qui.
-            </p>
-            {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando
-                sarà pronto, sostituire con il link reale
-                (https://buymeacoffee.com/…). */}
-            <div className="flex items-center justify-center rounded-xl border border-dashed border-line bg-cream px-3 py-4 text-center text-xs font-semibold text-ink-soft">
-              Buy Me a Coffee · presto disponibile
-            </div>
-          </CollapsibleSection>
-        </div>
+        <SettingsSection
+          title="Offrimi un caffè"
+          icon="heart"
+          description="Se Annales ti è utile e vuoi sostenere lo sviluppo."
+        >
+          {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando
+              sarà pronto, sostituire con il link reale
+              (https://buymeacoffee.com/…). */}
+          <div className="flex items-center justify-center rounded-xl border border-dashed border-line bg-cream px-3 py-4 text-center text-xs font-semibold text-ink-soft">
+            Buy Me a Coffee · presto disponibile
+          </div>
+        </SettingsSection>
 
-        <div className="mt-6">
-          <CollapsibleSection title="Novità" icon="list">
-            <Changelog />
-          </CollapsibleSection>
-        </div>
+        <SettingsSection
+          title="Novità"
+          icon="list"
+          description="Le ultime versioni e cosa è cambiato."
+        >
+          <Changelog />
+        </SettingsSection>
 
         <button
           type="button"
           onClick={onLogout}
-          className="mt-6 flex items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
         >
           <Icon name="logout" size={18} />
           Esci
         </button>
 
-        <div className="mt-6 flex justify-center">
+        <SettingsSection
+          title="Elimina account"
+          icon="alert-triangle"
+          description="Azione permanente: cancella il tuo diario e tutti i dati collegati."
+          danger
+          noCollapse
+        >
           <DeleteAccount />
-        </div>
+        </SettingsSection>
 
         <p className="mt-3 text-center text-xs text-ink-soft">
           Annales · versione {__APP_VERSION__}

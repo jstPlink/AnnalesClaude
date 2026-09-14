@@ -44,75 +44,7 @@ import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
 import ProfileCard from '../../components/web/ProfileCard'
-
-// Sezione delle Impostazioni web: intestazione a "cartoncino a quadretti"
-// colorato, larga quanto la sezione, con icona+titolo+descrizione insieme
-// (stesso motivo dell'intestazione della vista giorno). `nested` = un
-// sotto-cartoncino più piccolo, con bordo colorato (`accent`), per un
-// singolo gruppo di parametri dentro la sezione. `noCollapse` = sempre
-// visibile, senza freccia (usato per "Elimina account": nell'app non è mai
-// stata una sezione richiudibile).
-function WebSection({
-  title,
-  icon,
-  description,
-  nested = false,
-  accent,
-  danger = false,
-  noCollapse = false,
-  defaultOpen = false,
-  children,
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-
-  if (nested) {
-    return (
-      <div className="ws-sub" style={accent ? { '--sub-c': accent } : undefined}>
-        <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
-          {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
-          <span className="ws-sub-title">{title}</span>
-          <Icon
-            name="chevron-right"
-            size={14}
-            className={'ws-sub-chev shrink-0' + (open ? ' ws-sub-chev-open' : '')}
-          />
-        </button>
-        {open && <div className="ws-sub-body">{children}</div>}
-      </div>
-    )
-  }
-
-  const headerCls = 'ws-header' + (danger ? ' ws-header-danger' : '')
-  const headerContent = (
-    <>
-      {icon && <Icon name={icon} size={22} className="ws-icon shrink-0" />}
-      <span className="ws-htext">
-        <span className="ws-title">{title}</span>
-        {description && <span className="ws-desc">{description}</span>}
-      </span>
-      {!noCollapse && (
-        <Icon
-          name="chevron-right"
-          size={16}
-          className={'ws-chev shrink-0' + (open ? ' ws-chev-open' : '')}
-        />
-      )}
-    </>
-  )
-
-  return (
-    <div className="ws-section">
-      {noCollapse ? (
-        <div className={headerCls}>{headerContent}</div>
-      ) : (
-        <button type="button" onClick={() => setOpen((v) => !v)} className={headerCls}>
-          {headerContent}
-        </button>
-      )}
-      {(noCollapse || open) && <div className="ws-card">{children}</div>}
-    </div>
-  )
-}
+import SettingsSection from '../../components/SettingsSection'
 
 // Link a una guida .md scaricabile su come ottenere il token/credenziali.
 function TokenHelp({ which }) {
@@ -562,24 +494,24 @@ export default function WebProfile() {
 
       <ProfileCard />
 
-      <WebSection
+      <SettingsSection
         title="Aspetto"
         icon="settings"
         description="Tema, font, animazioni e sfondo — solo su questo dispositivo."
       >
         <AppearanceControls />
-      </WebSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Dati utente"
         icon="list"
         description="Dati unici e personali tuoi, legati all'account e sincronizzati su tutti i dispositivi."
       >
-        <WebSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
+        <SettingsSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
           <MoodGradientControls />
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Persone" icon="user" accent="#8397a6">
+        <SettingsSection nested title="Persone" icon="user" accent="#8397a6">
         <p className="text-sm text-ink-soft">
           Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
           Immich o creane una nuova qui.
@@ -655,9 +587,9 @@ export default function WebProfile() {
             ))}
           </div>
         )}
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Tag" icon="tag" accent="#c9a227">
+        <SettingsSection nested title="Tag" icon="tag" accent="#c9a227">
         <p className="text-sm text-ink-soft">
           Elenco dei tag selezionabili nelle note.
         </p>
@@ -705,9 +637,9 @@ export default function WebProfile() {
             {creatingTag ? '…' : 'Crea'}
           </button>
         </div>
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
+        <SettingsSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
         <p className="text-sm text-ink-soft">
           Elenco dei luoghi selezionabili nelle note. Vengono aggiunti anche
           automaticamente quando ne scegli uno da una nota. Modificando nome o
@@ -815,23 +747,23 @@ export default function WebProfile() {
             + Aggiungi luogo
           </button>
         </div>
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Canzoni" icon="music" accent="#8fae5c">
+        <SettingsSection nested title="Canzoni" icon="music" accent="#8fae5c">
           <p className="text-sm text-ink-soft">
             Le canzoni collegate alle note, con quante note le usano
             ciascuna. Sola lettura: si aggiungono dalle note stesse.
           </p>
           <SongsUsageList />
-        </WebSection>
-      </WebSection>
+        </SettingsSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Integrazioni"
         icon="link"
         description="Chiavi e collegamenti per le funzioni opzionali di Annales."
       >
-        <WebSection nested title="Immich" icon="image" accent="#8397a6">
+        <SettingsSection nested title="Immich" icon="image" accent="#8397a6">
         <p className="text-sm text-ink-soft">
           Collega il tuo server Immich per scegliere le foto da lì quando
           aggiungi immagini a una nota.
@@ -894,9 +826,9 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Spotify" icon="music" accent="#8fae5c">
+        <SettingsSection nested title="Spotify" icon="music" accent="#8fae5c">
         <p className="text-sm text-ink-soft">
           Client ID/Secret di un'app Spotify (Client Credentials) per cercare
           canzoni da aggiungere alle note, senza incollare link a mano.
@@ -959,9 +891,9 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
-        </WebSection>
+        </SettingsSection>
 
-        <WebSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
+        <SettingsSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
         <p className="text-sm text-ink-soft">
           Chiave API di Google AI Studio per ripulire il testo delle note,
           riconoscere le persone citate e scrivere contenuti con l'IA.
@@ -1011,7 +943,7 @@ export default function WebProfile() {
           </div>
         </div>
 
-        <WebSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
+        <SettingsSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
           <p className="text-sm text-ink-soft">
             Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
             usare, cosa evidenziare o evitare...). Salvate sul tuo account:
@@ -1042,11 +974,11 @@ export default function WebProfile() {
           >
             {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
           </button>
-        </WebSection>
-        </WebSection>
-      </WebSection>
+        </SettingsSection>
+        </SettingsSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Import ed export"
         icon="download"
         description="Esporta il diario o importa da un'immagine."
@@ -1060,9 +992,9 @@ export default function WebProfile() {
           Importa da immagine
         </button>
         <ExportButtons />
-      </WebSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Supporto"
         icon="mail"
         description="Domande, problemi o suggerimenti su Annales? Scrivimi pure."
@@ -1093,9 +1025,9 @@ export default function WebProfile() {
             </dd>
           </div>
         </dl>
-      </WebSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Offrimi un caffè"
         icon="heart"
         description="Se Annales ti è utile e vuoi sostenere lo sviluppo."
@@ -1105,15 +1037,15 @@ export default function WebProfile() {
         <div className="flex items-center justify-center rounded-2xl border border-dashed border-line bg-cream px-4 py-6 text-center text-sm font-semibold text-ink-soft">
           Buy Me a Coffee · presto disponibile
         </div>
-      </WebSection>
+      </SettingsSection>
 
-      <WebSection
+      <SettingsSection
         title="Novità"
         icon="list"
         description="Le ultime versioni e cosa è cambiato."
       >
         <Changelog />
-      </WebSection>
+      </SettingsSection>
 
       <button
         type="button"
@@ -1127,7 +1059,7 @@ export default function WebProfile() {
         Esci
       </button>
 
-      <WebSection
+      <SettingsSection
         title="Elimina account"
         icon="alert-triangle"
         description="Azione permanente: cancella il tuo diario e tutti i dati collegati."
@@ -1135,7 +1067,7 @@ export default function WebProfile() {
         noCollapse
       >
         <DeleteAccount />
-      </WebSection>
+      </SettingsSection>
 
       {immichReady && (
         <ImmichPeoplePicker

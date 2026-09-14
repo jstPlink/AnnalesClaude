@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.38.0',
+    date: '2026-09-14 21:24',
+    changes: [
+      'Impostazioni (vista mobile): rifatta in stile "Pagine" — tessera profilo identica a quella web (con nome, email e password modificabili sul posto, prima non c\'era), sezioni a cartoncino a quadretti apri/chiudi, sotto-cartoncini colorati per Persone/Tag/Luoghi/Canzoni/Immich/Gemini/Spotify, "Elimina account" ora è un cartoncino rosso sempre visibile invece di un semplice link.',
+    ],
+  },
+  {
     version: '0.37.1',
     date: '2026-09-14 20:06',
     changes: [
