@@ -4513,3 +4513,263 @@ li:last-child > .wd-month-row {
   width: 58px;
   height: 58px;
 }
+
+/* ===================== Cerca (vista web, WebFilter.jsx): ogni gruppo di
+   filtri è un sotto-cartoncino, le pillole ritagli di carta col contorno a
+   matita (inchiostro nero pieno quando attive, stesso materiale di
+   "Nuova nota"), i risultati una striscia di biglietti. Token del tema
+   (si adatta a chiaro/scuro), non un oggetto fisso come la tessera/barra
+   laterale. ===================== */
+.wf-sub {
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 130px 130px, 200px 200px;
+  background-blend-mode: multiply, soft-light;
+  border-radius: 10px;
+  border: 1px solid var(--color-line);
+  box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.18);
+  padding: 14px 16px 16px;
+}
+/* usata sia su <p> (titolo statico) sia su <button> (Luogo/Persone,
+   richiudibili) — i reset qui sotto non hanno effetto sui <p>. */
+.wf-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.wf-title svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-ink-soft);
+  flex: none;
+}
+.wf-title .count {
+  margin-left: auto;
+  background: var(--color-ink);
+  color: var(--color-cream);
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 1px 7px;
+}
+.wf-input {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-tag);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.86rem;
+  color: var(--color-ink);
+  width: 100%;
+  outline: none;
+}
+.wf-input:focus {
+  border-color: var(--color-ink-soft);
+}
+.wf-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wf-sep {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+.wf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wf-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-tag);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--color-ink);
+}
+.wf-chip.sq {
+  border-radius: 8px;
+}
+.wf-chip svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.8;
+}
+.wf-chip .av {
+  flex: none;
+}
+.wf-chip.active {
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  border-style: solid;
+  border-color: #211a10;
+}
+.wf-more {
+  margin-top: 8px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.wf-mood-bar {
+  height: 8px;
+  border-radius: 999px;
+  margin-bottom: 9px;
+  background: linear-gradient(
+    to right,
+    #e0655e 0%,
+    #e79a4d 20%,
+    #e6cf5c 40%,
+    #a6d06e 60%,
+    #5ea9d6 80%,
+    #8b8fd6 100%
+  );
+  border: 1px solid var(--color-line);
+}
+.wf-apply {
+  width: 100%;
+  padding: 13px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 140px 140px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.96rem;
+  box-shadow: 0 6px 14px -3px rgba(10, 6, 0, 0.5);
+}
+.wf-apply:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.wf-results-head {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin: 0 2px 10px;
+}
+.wf-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 1.1rem;
+}
+.wf-results {
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 220px 220px;
+  background-blend-mode: multiply, soft-light;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px -14px rgba(20, 12, 4, 0.3);
+  padding: 4px 16px;
+}
+.wf-result {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 2px;
+  border-bottom: 1.5px dashed var(--color-line-soft);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+li:last-child > .wf-result {
+  border-bottom: none;
+}
+.wf-result:hover,
+.wf-result:focus-visible {
+  background-color: color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+.wf-result-badge {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.2), inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.wf-result-title {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
+  font-size: 0.94rem;
+  color: var(--color-ink);
+}
+.wf-result-meta {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+}
+/* piccola lente accanto al titolo, stesso ottone (fisso, non legato al
+   tema) della lente "Cerca" in barra laterale. */
+.wf-head-lens {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(155deg, #e2c07a, #9c7328 55%, #7a5a1e);
+  box-shadow: 0 3px 7px rgba(20, 12, 4, 0.28), inset 0 0 0 2px rgba(255, 241, 204, 0.3);
+}
+.wf-head-lens::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+}
+.wf-head-lens svg {
+  position: relative;
+  z-index: 1;
+  color: #33291c;
+}

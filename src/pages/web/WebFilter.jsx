@@ -40,25 +40,16 @@ function sortNotes(list, sort) {
   return arr
 }
 
-const inputCls =
-  'w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none transition focus:border-ink-soft'
+const inputCls = 'wf-input'
 
 function ChipButton({ active, onClick, icon, square, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={
-        'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition ' +
-        (square ? 'rounded-lg ' : 'rounded-full ') +
-        (active
-          ? 'bg-ink text-cream'
-          : 'border border-line bg-cream text-ink hover:bg-cream/70')
-      }
+      className={'wf-chip' + (square ? ' sq' : '') + (active ? ' active' : '')}
     >
-      {icon && (
-        <Icon name={icon} size={12} className={active ? 'text-cream' : 'text-ink-soft'} />
-      )}
+      {icon && <Icon name={icon} size={12} />}
       {children}
     </button>
   )
@@ -168,19 +159,23 @@ export default function WebFilter() {
 
   return (
     <div>
-      <header className="mb-6">
+      <header className="mb-6 flex items-center gap-3">
+        <span className="wf-head-lens" aria-hidden="true">
+          <Icon name="search" size={16} strokeWidth={2.6} />
+        </span>
         <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
           Cerca
         </h1>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+        <div className="space-y-3">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="calendar" size={15} />
               Periodo
             </p>
-            <div className="flex items-center gap-2">
+            <div className="wf-row">
               <input
                 type="date"
                 aria-label="Da"
@@ -188,7 +183,7 @@ export default function WebFilter() {
                 onChange={(e) => set({ from: e.target.value })}
                 className={inputCls}
               />
-              <span className="text-ink-soft">–</span>
+              <span className="wf-sep">–</span>
               <input
                 type="date"
                 aria-label="A"
@@ -199,11 +194,13 @@ export default function WebFilter() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="sparkles" size={15} />
               Mood (0–100)
             </p>
-            <div className="flex items-center gap-2">
+            <div className="wf-mood-bar" aria-hidden="true" />
+            <div className="wf-row">
               <input
                 type="number"
                 min={0}
@@ -214,7 +211,7 @@ export default function WebFilter() {
                 onChange={(e) => set({ moodMin: Number(e.target.value) })}
                 className={inputCls}
               />
-              <span className="text-ink-soft">–</span>
+              <span className="wf-sep">–</span>
               <input
                 type="number"
                 min={0}
@@ -228,8 +225,9 @@ export default function WebFilter() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="search" size={15} />
               Testo (titolo e contenuto)
             </p>
             <input
@@ -242,8 +240,9 @@ export default function WebFilter() {
           </div>
 
           {placesError && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="map-pin" size={15} />
                 Luogo
               </p>
               <p className="text-xs text-delete-dark">{placesError}</p>
@@ -251,31 +250,26 @@ export default function WebFilter() {
           )}
 
           {places.length > 0 && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
+            <div className="wf-sub">
               <button
                 type="button"
                 onClick={() => setPlacesOpen((v) => !v)}
-                className="flex w-full items-center gap-2 text-left"
+                className="wf-title w-full"
               >
-                <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
-                  Luogo
-                </span>
-                {filters.place && (
-                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
-                    1
-                  </span>
-                )}
+                <Icon name="map-pin" size={15} />
+                Luogo
+                {filters.place && <span className="count">1</span>}
                 <Icon
                   name="chevron-right"
                   size={14}
                   className={
-                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    'ml-auto shrink-0 transition-transform ' +
                     (placesOpen ? 'rotate-90' : '')
                   }
                 />
               </button>
               {placesOpen && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="wf-chips">
                   {places.map((p) => (
                     <ChipButton
                       key={p.id}
@@ -292,8 +286,9 @@ export default function WebFilter() {
           )}
 
           {peopleError && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="user" size={15} />
                 Persone
               </p>
               <p className="text-xs text-delete-dark">{peopleError}</p>
@@ -301,25 +296,22 @@ export default function WebFilter() {
           )}
 
           {people.length > 0 && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
+            <div className="wf-sub">
               <button
                 type="button"
                 onClick={() => setPeopleOpen((v) => !v)}
-                className="flex w-full items-center gap-2 text-left"
+                className="wf-title w-full"
               >
-                <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
-                  Persone
-                </span>
+                <Icon name="user" size={15} />
+                Persone
                 {filters.personIds.length > 0 && (
-                  <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-cream">
-                    {filters.personIds.length}
-                  </span>
+                  <span className="count">{filters.personIds.length}</span>
                 )}
                 <Icon
                   name="chevron-right"
                   size={14}
                   className={
-                    'ml-auto shrink-0 text-ink-soft transition-transform ' +
+                    'ml-auto shrink-0 transition-transform ' +
                     (peopleOpen ? 'rotate-90' : '')
                   }
                 />
@@ -337,12 +329,7 @@ export default function WebFilter() {
                           key={p.id}
                           type="button"
                           onClick={() => togglePerson(p.id)}
-                          className={
-                            'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-semibold transition ' +
-                            (active
-                              ? 'bg-ink text-cream'
-                              : 'border border-line bg-cream text-ink hover:bg-cream/70')
-                          }
+                          className={'wf-chip' + (active ? ' active' : '')}
                         >
                           <PersonAvatar
                             person={p}
@@ -359,7 +346,7 @@ export default function WebFilter() {
                     <button
                       type="button"
                       onClick={() => setShowAllPeople((v) => !v)}
-                      className="mt-2 text-xs font-bold text-ink-soft underline underline-offset-2 hover:text-ink"
+                      className="wf-more"
                     >
                       {showAllPeople
                         ? 'Mostra solo le più frequenti'
@@ -372,8 +359,9 @@ export default function WebFilter() {
           )}
 
           {tagsError && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="tag" size={15} />
                 Tag
               </p>
               <p className="text-xs text-delete-dark">{tagsError}</p>
@@ -381,11 +369,12 @@ export default function WebFilter() {
           )}
 
           {tags.length > 0 && (
-            <div className="rounded-2xl border border-line bg-tag p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="tag" size={15} />
                 Tag
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="wf-chips">
                 {tags.map((t) => (
                   <ChipButton
                     key={t.id}
@@ -401,11 +390,12 @@ export default function WebFilter() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="music" size={15} />
               Contenuto
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="wf-chips">
               <ChipButton
                 icon="music"
                 active={filters.hasSongs}
@@ -423,11 +413,12 @@ export default function WebFilter() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="chart" size={15} />
               Ordina per
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="wf-chips">
               {SORTS.map((s) => (
                 <ChipButton
                   key={s.key}
@@ -440,8 +431,9 @@ export default function WebFilter() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-tag p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-soft">
+          <div className="wf-sub">
+            <p className="wf-title">
+              <Icon name="list" size={15} />
               Numero massimo di risultati
             </p>
             <input
@@ -456,12 +448,7 @@ export default function WebFilter() {
             />
           </div>
 
-          <button
-            type="button"
-            onClick={applyFilters}
-            disabled={loading}
-            className="w-full rounded-full bg-ink py-3 text-sm font-bold text-cream transition hover:brightness-110 disabled:opacity-50"
-          >
+          <button type="button" onClick={applyFilters} disabled={loading} className="wf-apply">
             {loading ? 'Cerco…' : 'Applica filtri'}
           </button>
         </div>
@@ -474,48 +461,51 @@ export default function WebFilter() {
           )}
 
           {results === null && !error && (
-            <p className="py-16 text-center text-ink-soft">
+            <p className="wf-empty">
               Imposta i filtri e premi "Applica filtri".
             </p>
           )}
 
           {results !== null && (
             <>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              <p className="wf-results-head">
                 {results.length} nota{results.length === 1 ? '' : 'e'} trovat
                 {results.length === 1 ? 'a' : 'e'}
               </p>
-              <div className="flex flex-col gap-3">
-                {results.map((n, i) => (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => navigate(`/note/${n.id}`)}
-                    style={{ '--i': i }}
-                    className="anim-row flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <span
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-extrabold tabular-nums"
-                      style={{
-                        backgroundColor: moodColor(n.mood),
-                        color: moodTextColor(n.mood),
-                      }}
-                    >
-                      {Math.round(Number(n.mood) * 100)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-ink">
-                        {n.title || (
-                          <span className="italic text-ink-soft">Senza titolo</span>
-                        )}
-                      </span>
-                      <span className="block text-xs text-ink-soft">
-                        {dayMonthLabel(dayKey(n.date))} · {timeLabel(n.timeStart)}–
-                        {timeLabel(n.timeEnd)}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+              <div className="wf-results">
+                <ul>
+                  {results.map((n, i) => (
+                    <li key={n.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/note/${n.id}`)}
+                        style={{ '--i': i }}
+                        className="anim-row wf-result"
+                      >
+                        <span
+                          className="wf-result-badge"
+                          style={{
+                            backgroundColor: moodColor(n.mood),
+                            color: moodTextColor(n.mood),
+                          }}
+                        >
+                          {Math.round(Number(n.mood) * 100)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="wf-result-title block truncate">
+                            {n.title || (
+                              <span className="italic text-ink-soft">Senza titolo</span>
+                            )}
+                          </span>
+                          <span className="wf-result-meta block">
+                            {dayMonthLabel(dayKey(n.date))} · {timeLabel(n.timeStart)}–
+                            {timeLabel(n.timeEnd)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </>
           )}

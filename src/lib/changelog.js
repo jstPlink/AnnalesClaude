@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.37.0',
+    date: '2026-09-14 19:44',
+    changes: [
+      'Cerca (vista web): rifatta in stile "Pagine" — ogni gruppo di filtri (Periodo, Mood, Testo, Luogo, Persone, Tag, Contenuto, Ordina per, Numero massimo) è un sotto-cartoncino invece di un riquadro grigio anonimo.',
+      'Cerca: le pillole (luoghi/persone/tag/mood/ordinamento) sono ritagli di carta col contorno a matita, che diventano inchiostro nero pieno quando selezionate; "Applica filtri" è lo stesso cartoncino nero degli altri pulsanti principali.',
+      'Cerca: i risultati sono un\'unica striscia di biglietti invece di card sciolte una sotto l\'altra.',
+    ],
+  },
+  {
     version: '0.36.0',
     date: '2026-09-14 19:32',
     changes: [
