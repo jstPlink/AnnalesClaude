@@ -10,7 +10,6 @@ import PersonAvatar from '../../components/PersonAvatar'
 import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
-import PlaceCard from '../../components/PlaceCard'
 import DatePickerPopover from '../../components/DatePickerPopover'
 import Icon from '../../components/Icon'
 import {
@@ -23,6 +22,7 @@ import {
   parsePlace,
   peopleUsageCounts,
 } from '../../lib/notes'
+import { personTapeColor, osmTileFor, tilt } from '../../lib/pagesSkin'
 import { fileUrl } from '../../lib/pocketbase'
 import { fetchImmichOriginalAsFile } from '../../lib/immich'
 import { listPeople } from '../../lib/people'
@@ -35,6 +35,28 @@ import {
 } from '../../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+// Targhetta rettangolare per aggiungere un tipo di contenuto: da vuota è un
+// ritaglio di carta tratteggiato con l'icona e l'etichetta; appena c'è
+// almeno un elemento viene "coperta" da una targhetta in legno col
+// conteggio, restando comunque cliccabile per aprire il selettore.
+function AddTag({ icon, label, count, onClick }) {
+  return (
+    <span className="ne-addtag-wrap">
+      <span className="ne-addtag-underlay" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        className={'ne-addtag' + (count > 0 ? ' filled' : '')}
+      >
+        <Icon name={icon} size={14} />
+        <span className="label">{label}</span>
+        {count > 0 && <span className="count">{count}</span>}
+      </button>
+    </span>
+  )
+}
 
 const emptyForm = (dKey) => ({
   title: '',
@@ -341,6 +363,19 @@ export default function WebNote() {
   }
 
   const noImages = existingImages.length === 0 && previews.length === 0
+  const hasMedia =
+    !noImages ||
+    selectedPeople.length > 0 ||
+    selectedTags.length > 0 ||
+    form.songs.length > 0 ||
+    Boolean(form.place)
+
+  const placeLat = Number(form.place?.lat)
+  const placeLon = Number(form.place?.lon)
+  const placeMap =
+    Number.isFinite(placeLat) && Number.isFinite(placeLon)
+      ? osmTileFor(placeLat, placeLon, 14)
+      : null
 
   return (
     <div>
@@ -412,210 +447,59 @@ export default function WebNote() {
             <div className="ne-sub-head">
               <span className="ne-sub-title">Mood</span>
             </div>
-            <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
+            <div className="mnote-mood-frame">
+              <MoodSlider
+                value={form.mood}
+                onChange={(mood) => set({ mood })}
+                className="mnote-mood"
+              />
+            </div>
           </div>
 
           <div className="ne-sub">
             <div className="ne-sub-head">
-              <span className="ne-sub-title">
-                <Icon name="image" size={13} />
-                Immagini
-              </span>
-              <button
-                type="button"
+              <span className="ne-sub-title">Aggiungi</span>
+            </div>
+            <div className="ne-addrow">
+              <AddTag
+                icon="image"
+                label="Immagini"
+                count={existingImages.length + previews.length}
                 onClick={() =>
                   immichReady ? setAddSheetOpen(true) : fileInputRef.current?.click()
                 }
-                className="ne-add"
-              >
-                + Aggiungi
-              </button>
+              />
+              <AddTag
+                icon="user"
+                label="Persone"
+                count={selectedPeople.length}
+                onClick={() => setPeopleSheetOpen(true)}
+              />
+              <AddTag
+                icon="tag"
+                label="Tag"
+                count={selectedTags.length}
+                onClick={() => setTagSheetOpen(true)}
+              />
+              <AddTag
+                icon="music"
+                label="Canzoni"
+                count={form.songs.length}
+                onClick={() => setSongSheetOpen(true)}
+              />
+              <AddTag
+                icon="map-pin"
+                label="Luogo"
+                count={form.place ? 1 : 0}
+                onClick={() => setPlaceSheetOpen(true)}
+              />
             </div>
-            {noImages ? (
-              <p className="ne-empty">Nessuna immagine</p>
-            ) : (
-              <div className="ne-thumbs">
-                {existingImages.map((fn) => (
-                  <div
-                    key={fn}
-                    className="ne-thumb"
-                    style={{
-                      backgroundImage: record
-                        ? `url(${fileUrl(record, fn, { thumb: '200x200' })})`
-                        : undefined,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => {
-                        setExistingImages((p) => p.filter((x) => x !== fn))
-                        setRemovedImages((p) => [...p, fn])
-                      }}
-                      className="ne-thumb-x"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {previews.map((p, i) => (
-                  <div
-                    key={p.url}
-                    className="ne-thumb is-new"
-                    style={{ backgroundImage: `url(${p.url})` }}
-                  >
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() =>
-                        setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
-                      }
-                      className="ne-thumb-x"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="ne-sub">
-            <div className="ne-sub-head">
-              <span className="ne-sub-title">
-                <Icon name="user" size={13} />
-                Persone
-              </span>
-              <button type="button" onClick={() => setPeopleSheetOpen(true)} className="ne-add">
-                + Aggiungi
-              </button>
-            </div>
-            {selectedPeople.length === 0 ? (
-              <p className="ne-empty">Nessuna persona</p>
-            ) : (
-              <div className="ne-chips">
-                {selectedPeople.map((person) => (
-                  <span key={person.id} className="ne-chip">
-                    <PersonAvatar
-                      person={person}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                      size={20}
-                    />
-                    {person.name}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => togglePerson(person.id)}
-                      className="rm"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="ne-sub">
-            <div className="ne-sub-head">
-              <span className="ne-sub-title">
-                <Icon name="tag" size={13} />
-                Tag
-              </span>
-              <button type="button" onClick={() => setTagSheetOpen(true)} className="ne-add">
-                + Aggiungi
-              </button>
-            </div>
-            {selectedTags.length === 0 ? (
-              <p className="ne-empty">Nessun tag</p>
-            ) : (
-              <div className="ne-chips">
-                {selectedTags.map((tag) => (
-                  <span key={tag.id} className="ne-chip sq">
-                    <Icon name="tag" size={11} />
-                    {tag.name}
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => toggleTag(tag.id)}
-                      className="rm"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="ne-sub">
-            <div className="ne-sub-head">
-              <span className="ne-sub-title">
-                <Icon name="music" size={13} />
-                Canzoni
-              </span>
-              <button type="button" onClick={() => setSongSheetOpen(true)} className="ne-add">
-                + Aggiungi
-              </button>
-            </div>
-            {form.songs.length === 0 ? (
-              <p className="ne-empty">Nessuna canzone</p>
-            ) : (
-              <div className="ne-songs">
-                {form.songs.map((song, i) => (
-                  <div key={i} className="ne-song">
-                    {song.thumbnailUrl ? (
-                      <div
-                        className="ne-song-thumb"
-                        style={{ backgroundImage: `url(${song.thumbnailUrl})` }}
-                      />
-                    ) : (
-                      <span className="ne-song-thumb">
-                        <Icon name="music" size={14} />
-                      </span>
-                    )}
-                    <a
-                      href={song.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="ne-song-title"
-                    >
-                      {song.title}
-                    </a>
-                    <button
-                      type="button"
-                      title="Rimuovi"
-                      onClick={() => removeSong(i)}
-                      className="ne-song-rm"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="ne-sub">
-            <div className="ne-sub-head">
-              <span className="ne-sub-title">
-                <Icon name="map-pin" size={13} />
-                Luogo
-              </span>
-              <button type="button" onClick={() => setPlaceSheetOpen(true)} className="ne-add">
-                {form.place ? 'Cambia' : '+ Aggiungi'}
-              </button>
-            </div>
-            {form.place ? (
-              <PlaceCard place={form.place} onRemove={() => set({ place: null })} />
-            ) : (
-              <p className="ne-empty">Nessun luogo</p>
-            )}
           </div>
         </div>
 
-        {/* Colonna editor: foglio di scrittura */}
+        {/* Colonna editor: foglio di scrittura + (sotto) persone/luogo/
+            canzoni/foto aggiunte, con l'estetica della vista mese. */}
+        <div className="flex flex-col">
         <div className="ne-sheet">
           <span className="ne-tape ne-tape-a" aria-hidden="true" />
           <span className="ne-tape ne-tape-b" aria-hidden="true" />
@@ -633,6 +517,170 @@ export default function WebNote() {
             placeholder="Scrivi qui la nota…"
             className="ne-body"
           />
+        </div>
+
+        {hasMedia && (
+          <div className="ne-media">
+            {!noImages && (
+              <span className="ne-media-col">
+                <span className="ne-media-polas">
+                  {existingImages.map((fn, i) => (
+                    <span
+                      key={fn}
+                      className="mp-pola ne-media-pola"
+                      style={{ '--pr': `${tilt(`${fn}p${i}`, 4).toFixed(2)}deg` }}
+                    >
+                      <span
+                        className="mp-ph"
+                        style={{
+                          backgroundImage: record
+                            ? `url(${fileUrl(record, fn, { thumb: '300x300' })})`
+                            : undefined,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => {
+                          setExistingImages((p) => p.filter((x) => x !== fn))
+                          setRemovedImages((p) => [...p, fn])
+                        }}
+                        className="ne-media-x"
+                      >
+                        <Icon name="x" size={11} />
+                      </button>
+                    </span>
+                  ))}
+                  {previews.map((p, i) => (
+                    <span
+                      key={p.url}
+                      className="mp-pola ne-media-pola"
+                      style={{ '--pr': `${tilt(`${p.url}p${i}`, 4).toFixed(2)}deg` }}
+                    >
+                      <span className="mp-ph" style={{ backgroundImage: `url(${p.url})` }} />
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() =>
+                          setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
+                        }
+                        className="ne-media-x"
+                      >
+                        <Icon name="x" size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </span>
+              </span>
+            )}
+
+            {selectedPeople.length > 0 && (
+              <span className="ne-media-col">
+                <span className="mp-tapes">
+                  {selectedPeople.map((person) => (
+                    <span
+                      key={person.id}
+                      className="mp-tape ne-media-tape"
+                      style={{ '--tape-c': personTapeColor(person) }}
+                    >
+                      <PersonAvatar
+                        person={person}
+                        immichUrl={immichUrl}
+                        immichApiKey={immichApiKey}
+                        size={19}
+                      />
+                      <span className="mp-tape-name">{person.name}</span>
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => togglePerson(person.id)}
+                        className="ne-media-x static"
+                      >
+                        <Icon name="x" size={10} />
+                      </button>
+                    </span>
+                  ))}
+                </span>
+              </span>
+            )}
+
+            {selectedTags.length > 0 && (
+              <span className="ne-media-col">
+                <span className="ne-media-tags">
+                  {selectedTags.map((tag) => (
+                    <span key={tag.id} className="ne-chip sq">
+                      <Icon name="tag" size={11} />
+                      {tag.name}
+                      <button
+                        type="button"
+                        title="Rimuovi"
+                        onClick={() => toggleTag(tag.id)}
+                        className="rm"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </span>
+              </span>
+            )}
+
+            {form.songs.length > 0 && (
+              <span className="ne-media-col">
+                {form.songs.map((song, i) => (
+                  <span key={i} className="mp-disc-wrap ne-media-pola">
+                    <span
+                      className="mp-disc"
+                      style={
+                        song.thumbnailUrl
+                          ? { '--cover': `url(${song.thumbnailUrl})` }
+                          : undefined
+                      }
+                    />
+                    {(song.title || song.artist) && (
+                      <span className="mp-song">
+                        {song.title && <span className="t">{song.title}</span>}
+                        {song.artist && <span className="a">{song.artist}</span>}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      title="Rimuovi"
+                      onClick={() => removeSong(i)}
+                      className="ne-media-x"
+                    >
+                      <Icon name="x" size={11} />
+                    </button>
+                  </span>
+                ))}
+              </span>
+            )}
+
+            {form.place && (
+              <span className="ne-media-col">
+                <span className="mp-place ne-media-pola">
+                  <span
+                    className={'mp-map' + (placeMap ? ' real' : '')}
+                    style={
+                      placeMap
+                        ? { '--map-url': `url(${placeMap.url})`, '--map-pos': placeMap.pos }
+                        : undefined
+                    }
+                  />
+                  <span className="mp-place-name">{form.place.name}</span>
+                  <button
+                    type="button"
+                    title="Rimuovi"
+                    onClick={() => set({ place: null })}
+                    className="ne-media-x"
+                  >
+                    <Icon name="x" size={11} />
+                  </button>
+                </span>
+              </span>
+            )}
+          </div>
+        )}
         </div>
       </div>
 

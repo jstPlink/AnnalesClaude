@@ -28,6 +28,7 @@ import {
   parsePlace,
   peopleUsageCounts,
 } from '../lib/notes'
+import { personTapeColor, tilt } from '../lib/pagesSkin'
 import { fileUrl } from '../lib/pocketbase'
 import { fetchImmichOriginalAsFile } from '../lib/immich'
 import { listPeople } from '../lib/people'
@@ -45,11 +46,16 @@ import {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 // Pulsante circolare (ritaglio di carta, stesso materiale di .mcircle-paper
-// della barra inferiore) con un pallino-conteggio sopra quando c'è già
-// almeno un elemento di quel tipo.
+// della barra inferiore): appena c'è già almeno un elemento di quel tipo,
+// l'intero cerchio viene coperto da un dischetto in legno — leggermente
+// disallineato per lasciar intravedere il ritaglio tratteggiato sotto
+// (stesso sottofondo reale, non uno pseudo-elemento, di .sb-item-underlay/
+// .ne-addtag-underlay) — con l'icona della categoria al centro e il
+// conteggio in un angolo, non al posto dell'icona.
 function FabButton({ icon, iconSize = 19, active, count, onClick, title }) {
   return (
     <span className="mnote-fab-wrap">
+      <span className="mnote-fab-underlay" aria-hidden="true" />
       <button
         type="button"
         onClick={() => {
@@ -62,7 +68,10 @@ function FabButton({ icon, iconSize = 19, active, count, onClick, title }) {
       >
         <Icon name={icon} size={iconSize} />
       </button>
-      {count > 0 && <span className="mcircle-badge">{count}</span>}
+      {/* fuori dal bottone: .mcircle ha overflow:hidden (per restare un
+          cerchio perfetto), taglierebbe via il pallino se sporge oltre il
+          bordo. */}
+      {active && <span className="mcircle-count">{count}</span>}
     </span>
   )
 }
@@ -413,7 +422,7 @@ export default function NoteView() {
       <MobileTopBar className="mtop-note">
         <div className="mtop-row1">
           <button type="button" onClick={() => navigate(-1)} className="mchev" title="Indietro" aria-label="Indietro">
-            <Icon name="chevron-left" size={21} strokeWidth={2.8} />
+            <Icon name="chevron-left" size={27} strokeWidth={2.8} />
           </button>
           <span className="mtop-year">{year}</span>
           <button
@@ -423,7 +432,7 @@ export default function NoteView() {
             title={mode === 'save' ? 'Salva' : 'Elimina nota'}
             className={'mcircle-action ' + mode}
           >
-            <Icon name={mode === 'save' ? 'check' : 'trash'} size={16} strokeWidth={2.8} />
+            <Icon name={mode === 'save' ? 'check' : 'trash'} size={27} strokeWidth={2.8} />
           </button>
         </div>
 
@@ -458,14 +467,20 @@ export default function NoteView() {
         </div>
       </MobileTopBar>
 
-      <main className="anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
+      <main className="mnote-main anim-page flex flex-1 flex-col overflow-y-auto no-scrollbar px-4 py-4">
         {loadError && (
           <p className="mb-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
             {loadError}
           </p>
         )}
 
-        <MoodSlider value={form.mood} onChange={(mood) => set({ mood })} />
+        <div className="mnote-mood-frame">
+          <MoodSlider
+            value={form.mood}
+            onChange={(mood) => set({ mood })}
+            className="mnote-mood"
+          />
+        </div>
 
         {/* Foglio di scrittura: stesse classi della versione web (.ne-sheet),
             scalate per il telefono. Almeno il 35% dello schermo anche da
@@ -500,23 +515,27 @@ export default function NoteView() {
 
             if (selectedPeople.length > 0) {
               sections.push(
-                <div key="people" className="ne-chips">
+                <div key="people" className="mp-tapes">
                   {selectedPeople.map((person) => (
-                    <span key={person.id} className="ne-chip">
+                    <span
+                      key={person.id}
+                      className="mp-tape ne-media-tape"
+                      style={{ '--tape-c': personTapeColor(person) }}
+                    >
                       <PersonAvatar
                         person={person}
                         immichUrl={immichUrl}
                         immichApiKey={immichApiKey}
-                        size={20}
+                        size={19}
                       />
-                      {person.name}
+                      <span className="mp-tape-name">{person.name}</span>
                       <button
                         type="button"
                         title="Rimuovi"
                         onClick={() => togglePerson(person.id)}
-                        className="rm"
+                        className="ne-media-x static"
                       >
-                        <Icon name="x" size={12} />
+                        <Icon name="x" size={10} />
                       </button>
                     </span>
                   ))}
@@ -526,17 +545,21 @@ export default function NoteView() {
 
             if (!noImages) {
               sections.push(
-                <div key="images" className="ne-thumbs">
+                <div key="images" className="ne-media-polas">
                   {existingImages.map((fn, i) => (
-                    <div
+                    <span
                       key={fn}
-                      className="ne-thumb"
-                      style={{
-                        backgroundImage: record
-                          ? `url(${fileUrl(record, fn, { thumb: '300x300' })})`
-                          : undefined,
-                      }}
+                      className="mp-pola ne-media-pola"
+                      style={{ '--pr': `${tilt(`${fn}p${i}`, 4).toFixed(2)}deg` }}
                     >
+                      <span
+                        className="mp-ph"
+                        style={{
+                          backgroundImage: record
+                            ? `url(${fileUrl(record, fn, { thumb: '300x300' })})`
+                            : undefined,
+                        }}
+                      />
                       <button
                         type="button"
                         title="Visualizza"
@@ -550,18 +573,19 @@ export default function NoteView() {
                           setExistingImages((prev) => prev.filter((x) => x !== fn))
                           setRemovedImages((prev) => [...prev, fn])
                         }}
-                        className="ne-thumb-x"
+                        className="ne-media-x"
                       >
-                        <Icon name="x" size={12} />
+                        <Icon name="x" size={11} />
                       </button>
-                    </div>
+                    </span>
                   ))}
                   {previews.map((p, i) => (
-                    <div
+                    <span
                       key={p.url}
-                      className="ne-thumb is-new"
-                      style={{ backgroundImage: `url(${p.url})` }}
+                      className="mp-pola ne-media-pola"
+                      style={{ '--pr': `${tilt(`${p.url}p${i}`, 4).toFixed(2)}deg` }}
                     >
+                      <span className="mp-ph" style={{ backgroundImage: `url(${p.url})` }} />
                       <button
                         type="button"
                         title="Visualizza"
@@ -574,11 +598,11 @@ export default function NoteView() {
                         onClick={() =>
                           setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
                         }
-                        className="ne-thumb-x"
+                        className="ne-media-x"
                       >
-                        <Icon name="x" size={12} />
+                        <Icon name="x" size={11} />
                       </button>
-                    </div>
+                    </span>
                   ))}
                 </div>,
               )

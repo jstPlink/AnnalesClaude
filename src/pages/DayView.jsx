@@ -7,9 +7,12 @@ import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
 import Icon from '../components/Icon'
+import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
+import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
 import DayPages from './web/DayPages'
 import { listNotesInRange, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
+import { listTags } from '../lib/tags'
 import { addDaysKey, dayMonthLabel, dayRange, parseWall } from '../lib/dates'
 
 const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
@@ -25,8 +28,11 @@ export default function DayView() {
   const { user } = useAuth()
   const [notes, setNotes] = useState([])
   const [people, setPeople] = useState([])
+  const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [geminiNoteOpen, setGeminiNoteOpen] = useState(false)
+  const [noteChoiceOpen, setNoteChoiceOpen] = useState(false)
   const peopleById = useMemo(
     () => new Map(people.map((p) => [p.id, p])),
     [people],
@@ -60,6 +66,9 @@ export default function DayView() {
     listPeople()
       .then(setPeople)
       .catch(() => setPeople([]))
+    listTags()
+      .then(setTags)
+      .catch(() => setTags([]))
   }, [])
 
   // Navigazione tra giorni: swipe orizzontale (mobile) o frecce ← →.
@@ -143,9 +152,38 @@ export default function DayView() {
         <Footer
           primaryIcon="plus"
           primaryTitle="Nuova nota in questo giorno"
-          onPrimary={() => navigate(`/note/new?date=${date}`)}
+          onPrimary={() => setNoteChoiceOpen(true)}
         />
       </MobileBottomBar>
+
+      <NewNoteChoiceSheet
+        open={noteChoiceOpen}
+        onClose={() => setNoteChoiceOpen(false)}
+        onGemini={() => {
+          setNoteChoiceOpen(false)
+          setGeminiNoteOpen(true)
+        }}
+        onManual={() => {
+          setNoteChoiceOpen(false)
+          navigate(`/note/new?date=${date}`)
+        }}
+      />
+
+      <NewNoteWithGeminiSheet
+        open={geminiNoteOpen}
+        onClose={() => setGeminiNoteOpen(false)}
+        apiKey={user?.geminiApiKey?.trim()}
+        customInstructions={user?.geminiCustomInstructions?.trim()}
+        immichUrl={user?.immichUrl?.trim()}
+        immichApiKey={user?.immichApiKey?.trim()}
+        allPeople={people}
+        allTags={tags}
+        onGenerated={(draft) =>
+          navigate(`/note/new?date=${draft.dateKey || date}`, {
+            state: { aiDraft: draft },
+          })
+        }
+      />
     </PhoneShell>
   )
 }

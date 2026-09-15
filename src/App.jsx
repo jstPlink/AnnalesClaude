@@ -33,8 +33,16 @@ import WebImport from './pages/web/WebImport'
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
   const { pathname } = useLocation()
+  // Nota: sfondo un filo più scuro del cream standard — altrimenti si
+  // confonde col foglio della nota (stesso tono).
+  const isNotePage = pathname.startsWith('/note')
   return (
-    <div className="app-paper flex h-dvh w-full overflow-hidden bg-cream text-ink">
+    <div
+      className={
+        'app-paper flex h-dvh w-full overflow-hidden text-ink ' +
+        (isNotePage ? 'webnote-bg' : 'bg-cream')
+      }
+    >
       <Sidebar />
       <main className="min-w-0 flex-1 overflow-y-auto">
         <div

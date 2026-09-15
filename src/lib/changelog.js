@@ -9,6 +9,19 @@
 
 export const CHANGELOG = [
   {
+    version: '0.48.0',
+    date: '2026-09-16 12:00',
+    changes: [
+      'Vista giorno da telefono: "nuova nota" ora offre la scelta fra Gemini e manuale, come nelle altre viste. Il cartoncino della nota non copre più gli orari né la riga rossa del margine, le foto sono più grandi e il bordo strappato è meno caotico (esteso anche alla vista web).',
+      'Vista giorno da web: risolto un bug per cui le targhette con i nomi delle persone potevano sovrapporsi al cartoncino della nota; ora hanno anche la stessa leggera rotazione della vista mese.',
+      'Vista nota da telefono: risolto il calendario che si "schiacciava" dentro il pulsante invece di aprirsi sopra il resto; pulsanti indietro/elimina più grandi; orari e data non si troncano più; font più leggibile; foto in stile polaroid come in vista mese.',
+      'Vista nota da web: il foglio ha i forellini di un raccoglitore ad anelli; i pulsanti per aggiungere foto/persone/tag/canzoni/luogo sono ora targhette rettangolari in colonna che diventano una targhetta in legno una volta aggiunto un contenuto; il contenuto aggiunto compare sotto il foglio in colonne separate, con la stessa estetica della vista mese (targhette persona, francobollo, disco, polaroid).',
+      'Barra dell\'umore (mobile e web): ridisegnata più volte nel corso della giornata, ora è un bastoncino colorato semplice, senza bagliore eccessivo, uguale su entrambe le viste.',
+      'Pulsanti "aggiungi" da telefono (persone/tag/canzoni/luogo/foto): una volta aggiunto un elemento diventano un dischetto in legno leggermente sfasato (non più un indicatore piccolo), con icona e conteggio.',
+      'Sfondo delle viste nota (telefono e web) leggermente più scuro del foglio, per distinguerli meglio.',
+    ],
+  },
+  {
     version: '0.47.0',
     date: '2026-09-15 19:10',
     changes: [

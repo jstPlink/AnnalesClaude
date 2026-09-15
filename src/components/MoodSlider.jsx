@@ -4,13 +4,16 @@ import { moodColor, moodTextColor } from '../lib/mood'
 // corrispondente al valore attuale: spostando il cursore il colore cambia.
 // Etichetta e valore vivono dentro la barra, alle estremità, per risparmiare
 // spazio verticale.
-export default function MoodSlider({ value, onChange }) {
+export default function MoodSlider({ value, onChange, className = '' }) {
   const color = moodColor(value)
   const textColor = moodTextColor(value)
   return (
     <div
-      className="relative flex h-[1.6rem] items-center rounded-full px-3 transition-colors duration-200 ease-out"
-      style={{ backgroundColor: color }}
+      className={
+        'relative flex h-[1.6rem] items-center rounded-full px-3 transition-colors duration-200 ease-out ' +
+        className
+      }
+      style={{ backgroundColor: color, '--mood-color': color }}
     >
       <span
         className="pointer-events-none absolute left-3 text-[10px] font-bold uppercase tracking-wide"

@@ -251,7 +251,15 @@ export default function DayPages({
                 type="button"
                 onClick={() => onNavigate(`/note/${it.id}`)}
                 className={'day-note' + (it.imgs.length > 0 ? ' has-photo' : '')}
-                style={{ top, height: h }}
+                // --cw qui (non solo su .dn-card): .dn-side ne ha bisogno per
+                // calcolare la propria posizione ("cw + 4%") ed è un fratello
+                // di .dn-card, non un discendente — una custom property in
+                // style su .dn-card da sola non gli arriva. Senza questo,
+                // .dn-side ricadeva sempre sul default (38%) invece del vero
+                // valore casuale (40-55%), e la targhetta coi nomi finiva
+                // per sovrapporsi al cartoncino ogni volta che quest'ultimo
+                // era più largo del default.
+                style={{ top, height: h, '--cw': it.cw }}
                 aria-label={it.title}
               >
                 {/* Cartoncino + (su mobile) contatori e diapositiva foto: un
@@ -262,7 +270,7 @@ export default function DayPages({
                 <span className="dn-notes-row">
                   <span
                     className="dn-card"
-                    style={{ '--cw': it.cw, '--cr': it.cr, '--mood': moodColor(it.mood) }}
+                    style={{ '--cr': it.cr, '--mood': moodColor(it.mood) }}
                   >
                     <span className="dn-title">
                       <span className="hl" aria-hidden="true" />

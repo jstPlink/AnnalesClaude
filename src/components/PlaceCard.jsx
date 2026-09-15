@@ -53,7 +53,7 @@ export default function PlaceCard({ place, onRemove }) {
   if (!place) return null
 
   return (
-    <div className="isolate relative aspect-[1/0.49] w-full overflow-hidden rounded-xl border border-line bg-panel-2">
+    <div className="isolate relative aspect-[1/0.39] w-full overflow-hidden rounded-xl border border-line bg-panel-2">
       {place.lat != null && <div ref={mapElRef} className="h-full w-full" />}
       {/* z-index esplicito: i pannelli interni di Leaflet arrivano a 700 e,
           pur isolati dal resto della pagina, coprirebbero questa fascia

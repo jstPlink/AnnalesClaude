@@ -562,6 +562,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .app-paper {
   background-repeat: repeat;
 }
+/* vista nota da web: sfondo un filo più scuro del cream standard, altrimenti
+   si confonde col foglio della nota (stesso tono) — come già fatto per la
+   vista mobile (.mnote-main). */
+.webnote-bg {
+  background-color: var(--color-sand);
+}
 :root[data-paper='puntini'] .app-paper {
   background-image: var(--tex-puntini);
   background-size: 20px 20px;
@@ -2157,20 +2163,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     );
   background-size: 140px 140px, auto;
   background-blend-mode: multiply, normal;
-  /* rovinatura più mossa: qualche strappo un po' più profondo (fino
-     all'88-91%) mescolato a piccole sfilacciature superficiali, non
-     un'unica onda regolare — stessa idea usata per il cartoncino della
-     barra laterale */
+  /* bordo strappato calmo: scarto piccolo (2-3%), non l'ondata esagerata di
+     prima (fino all'11%, ~60 punti) che sui cartoncini reali sembrava un
+     effetto posticcio invece che carta strappata a mano. */
   clip-path: polygon(
-    0% 2%, 8% 0%, 15% 4%, 20% 1%, 23% 5%, 31% 2%, 39% 0%, 44% 3%, 47% 0%,
-    50% 3%, 58% 1%, 63% 4%, 66% 0%, 74% 3%, 78% 0%, 82% 2%, 90% 0%, 95% 3%, 100% 0%,
-    97% 6%, 99% 10%, 94% 14%, 98% 18%, 90% 22%, 96% 26%, 100% 30%, 95% 34%,
-    99% 38%, 92% 42%, 97% 46%, 100% 50%, 94% 54%, 98% 58%, 89% 62%, 96% 66%,
-    100% 70%, 93% 74%, 99% 78%, 95% 82%, 100% 86%, 91% 90%, 97% 94%, 99% 97%, 96% 100%,
-    90% 98%, 84% 100%, 78% 96%, 72% 99%, 65% 95%, 60% 100%, 54% 97%, 48% 100%,
-    42% 94%, 36% 99%, 30% 96%, 24% 100%, 18% 95%, 12% 99%, 6% 97%, 0% 100%,
-    2% 94%, 0% 88%, 4% 82%, 0% 76%, 3% 70%, 0% 64%, 5% 58%, 0% 52%, 2% 46%,
-    0% 40%, 4% 34%, 1% 28%, 3% 22%, 0% 16%, 2% 10%, 0% 4%
+    0% 1%, 12% 0%, 25% 2%, 38% 0%, 50% 2%, 62% 0%, 75% 2%, 88% 0%, 100% 1%,
+    98% 12%, 100% 25%, 97% 38%, 100% 50%, 98% 62%, 100% 75%, 97% 88%, 100% 100%,
+    88% 99%, 75% 100%, 62% 98%, 50% 100%, 38% 98%, 25% 100%, 12% 99%, 0% 100%,
+    2% 88%, 0% 75%, 2% 62%, 0% 50%, 2% 38%, 0% 25%, 2% 12%, 0% 0%
   );
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
@@ -2297,6 +2297,20 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+/* stessa leggera rotazione alternata di .mp-tape in vista mese — qui
+   mancava, le targhette restavano sempre dritte (meno "fatte a mano"). */
+.dn-tape:nth-child(4n) {
+  transform: rotate(-2deg);
+}
+.dn-tape:nth-child(4n + 1) {
+  transform: rotate(1.5deg);
+}
+.dn-tape:nth-child(4n + 2) {
+  transform: rotate(-0.6deg);
+}
+.dn-tape:nth-child(4n + 3) {
+  transform: rotate(1deg);
 }
 .dn-media {
   display: flex;
@@ -2576,19 +2590,25 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     gap: 6px;
     height: 100%;
   }
-  /* cartoncino spostato verso l'estremità sinistra del foglio (esce anche
-     un filo dalla pagina) per recuperare spazio; riempie il resto della riga */
+  /* cartoncino spostato verso l'estremità sinistra del foglio per
+     recuperare spazio, ma non troppo: a -14px copriva gli orari della
+     timeline a sinistra (.day-rail) — spostato di 10px, poi di altri 15px,
+     poi di altri 10px più a destra (a 11px toccava ancora la riga rossa
+     del margine del foglio, .day-sheet::before, ferma a 64px). */
   .dn-card {
     flex: 1 1 auto;
     min-width: 0;
-    margin-left: -14px;
+    margin-left: 21px;
     padding: 8px 12px 11px 11px;
   }
   .dn-title {
     font-size: 0.94rem;
   }
+  /* contenuto ancora più chiaro (-10% di opacità) che non è il titolo: si
+     distingue meglio a colpo d'occhio. */
   .dn-body {
     font-size: 0.86rem;
+    color: rgba(58, 46, 28, 0.65);
   }
   .dn-body[data-hand='a'] {
     font-size: 1.02rem;
@@ -2658,7 +2678,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     position: relative;
     flex: 0 0 auto;
     z-index: 3;
-    width: 62px;
+    width: 78px;
     padding: 5px 5px 14px;
     background: #f7f1e3;
     box-shadow: 0 6px 12px rgba(20, 12, 4, 0.3);
@@ -4189,6 +4209,11 @@ li:last-child > .wd-month-row {
   gap: 0;
   padding: 14px 14px 16px;
 }
+/* sfondo pagina leggermente più scuro del cream standard: era identico al
+   colore del foglio della nota (.ne-sheet), i due si confondevano. */
+.mnote-main {
+  background-color: var(--color-sand);
+}
 
 .mbottom-wrap {
   position: relative;
@@ -4252,6 +4277,12 @@ li:last-child > .wd-month-row {
   color: #33291c;
   box-shadow: 0 3px 7px rgba(20, 12, 4, 0.2);
 }
+/* Vista nota: indietro ed elimina/salva +30% (erano rimasti più piccoli
+   che nelle altre viste mobile, mese e giorno comprese). */
+.mtop-note .mchev {
+  width: 57px;
+  height: 57px;
+}
 .mtop-day .mchev:first-child {
   transform: rotate(-6deg);
 }
@@ -4276,7 +4307,6 @@ li:last-child > .wd-month-row {
   border: none;
   box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 245, 210, 0.5),
     inset 0 1px 2px rgba(255, 255, 255, 0.4);
-  overflow: hidden;
 }
 .mplaque-arrow {
   position: relative;
@@ -4437,9 +4467,63 @@ li:last-child > .wd-month-row {
   border: 2px dashed rgba(52, 44, 28, 0.45);
   color: #33291c;
 }
+/* "già aggiunto": l'intero cerchio diventa un dischetto in legno chiaro,
+   leggermente ruotato per lasciar intravedere il ritaglio tratteggiato
+   sotto (.mnote-fab-underlay, un vero fratello nel DOM — uno pseudo-
+   elemento con z-index negativo dentro un contesto di stacking proprio
+   dipingerebbe comunque sopra al proprio sfondo, mai sotto). */
+.mnote-fab-wrap {
+  position: relative;
+}
+.mnote-fab-underlay {
+  display: none;
+}
+.mnote-fab-underlay:has(+ .mcircle-paper.active) {
+  display: block;
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  border-radius: 50%;
+  border: 2px dashed rgba(52, 44, 28, 0.42);
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  transform: rotate(10deg);
+}
 .mcircle-paper.active {
-  background-color: #fff9ea;
-  border-color: rgba(52, 44, 28, 0.75);
+  position: relative;
+  z-index: 1;
+  /* sfasato dal centro (non solo ruotato: un cerchio ruotato sul proprio
+     centro resta identico) così il ritaglio tratteggiato sotto intravede
+     di più da un lato che dall'altro, come incollato un po' storto. */
+  transform: translate(-2.5px, 2px) rotate(-7deg);
+  background-color: #e3cca4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='220' viewBox='0 0 140 220'%3E%3Cg fill='none' stroke='%23a5794c' stroke-linecap='round'%3E%3Cpath d='M4 0 Q8 25 2 48 T6 96 T1 145 T5 220' stroke-width='0.9' opacity='0.2'/%3E%3Cpath d='M13 0 Q9 22 15 46 T10 94 T16 142 T9 220' stroke-width='1.2' opacity='0.24'/%3E%3Cpath d='M23 0 Q28 28 20 52 T26 100 T19 148 T25 220' stroke-width='0.8' opacity='0.16'/%3E%3Cpath d='M32 0 Q27 20 34 44 T28 92 T35 140 T27 220' stroke-width='1.1' opacity='0.22'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(120deg, #f0dab3, #e6c599 55%, #d3aa7c);
+  background-size: 90px 140px, auto;
+  background-repeat: repeat, no-repeat;
+  border: none;
+  color: #4a341c;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 250, 235, 0.6);
+}
+.mcircle-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  z-index: 2;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--color-sand);
+  border: 1.5px solid rgba(52, 44, 28, 0.5);
+  display: grid;
+  place-items: center;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 800;
+  font-size: 9px;
+  color: #33291c;
 }
 .mid-btn {
   background: linear-gradient(160deg, #f3ecd8, #e6dcc0);
@@ -5624,6 +5708,160 @@ li:last-child > .st-row {
   font-family: 'Annales Hand', 'Kalam', sans-serif;
 }
 
+/* riga di targhette rettangolari per aggiungere contenuto (immagini,
+   persone, tag, canzoni, luogo): ritaglio di carta tratteggiato finché è
+   vuota, poi (quando c'è almeno un elemento) il pulsante viene "coperto" da
+   una targhetta in legno con il conteggio — stessa venatura delle targhette
+   attive del menu principale (.sb-item.active/.mtab-plaque). */
+.ne-addrow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+/* wrapper + sottofondo tratteggiato REALE (non uno pseudo-elemento con
+   z-index negativo: dentro un contesto di stacking proprio dipingerebbe
+   comunque sopra al proprio sfondo, mai sotto — stesso problema/soluzione
+   già visto per .sb-item-underlay nella barra laterale). Compare solo
+   quando la targhetta è "filled" (:has), lasciandone intravedere un lembo
+   perché ruotato in verso opposto. */
+.ne-addtag-wrap {
+  position: relative;
+}
+.ne-addtag-underlay {
+  display: none;
+}
+.ne-addtag-underlay:has(+ .ne-addtag.filled) {
+  display: block;
+  position: absolute;
+  inset: -3px -4px -4px -3px;
+  z-index: 0;
+  border: 1.5px dashed rgba(52, 44, 28, 0.42);
+  border-radius: 8px 10px 9px 11px;
+  background-color: var(--color-cream);
+  background-image: var(--sb-grain, none);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  transform: rotate(2deg);
+}
+.ne-addtag {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: var(--color-cream);
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.ne-addtag:hover {
+  transform: translateY(-1px);
+}
+.ne-addtag.filled:hover {
+  transform: rotate(-1.5deg) translateY(-1px);
+}
+.ne-addtag svg {
+  opacity: 0.75;
+  flex: none;
+}
+.ne-addtag .label {
+  flex: 1;
+  text-align: left;
+}
+.ne-addtag.filled {
+  transform: rotate(-1.5deg);
+  background-color: #d3b88f;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='220' viewBox='0 0 140 220'%3E%3Cg fill='none' stroke='%238f5a2c' stroke-linecap='round'%3E%3Cpath d='M4 0 Q8 25 2 48 T6 96 T1 145 T5 220' stroke-width='0.9' opacity='0.22'/%3E%3Cpath d='M13 0 Q9 22 15 46 T10 94 T16 142 T9 220' stroke-width='1.2' opacity='0.26'/%3E%3Cpath d='M23 0 Q28 28 20 52 T26 100 T19 148 T25 220' stroke-width='0.8' opacity='0.18'/%3E%3Cpath d='M32 0 Q27 20 34 44 T28 92 T35 140 T27 220' stroke-width='1.1' opacity='0.24'/%3E%3Cpath d='M42 0 Q47 26 40 50 T46 98 T39 146 T45 220' stroke-width='0.9' opacity='0.2'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(120deg, #e7c391, #dab07e 55%, #c39667);
+  background-size: 90px 140px, auto;
+  background-repeat: repeat, no-repeat;
+  border: none;
+  color: #3d2a16;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 245, 210, 0.5);
+}
+.ne-addtag .count {
+  margin-left: auto;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* foto/persone/tag/canzoni/luogo aggiunti: non più elenchi dentro riquadri
+   a sinistra, ma sotto al foglio con la stessa estetica della vista mese
+   (targhette persona, francobollo, disco, polaroid) — qui però restano
+   rimovibili (piccola "x", assente nella vista mese perché lì è sola
+   lettura). Una colonna per tipo (impilato in verticale), le colonne
+   affiancate in orizzontale — non più tutto impilato in un'unica colonna. */
+.ne-media {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 36px;
+  margin-top: 29px;
+  padding: 0 6px;
+}
+.ne-media-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+/* .mp-tapes è condivisa con mese/giorno (riga che va a capo): qui invece
+   è la sua colonna dedicata, sempre impilata in verticale. */
+.ne-media-col .mp-tapes {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+.ne-media-polas {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ne-media-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ne-media-pola {
+  position: relative;
+}
+.ne-media-x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 4;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(20, 12, 4, 0.65);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  border: 1.5px solid rgba(255, 253, 246, 0.8);
+  cursor: var(--cursor-pointer);
+}
+/* dentro una targhetta persona (.mp-tape): in linea, non più a badge
+   fluttuante sopra un'immagine. */
+.ne-media-x.static {
+  position: static;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  background: rgba(20, 12, 4, 0.28);
+  border: none;
+  margin-left: 1px;
+}
+
 .ne-date {
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
   font-size: 1.15rem;
@@ -5655,39 +5893,6 @@ li:last-child > .st-row {
   color: var(--color-ink-soft);
 }
 
-.ne-thumbs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-.ne-thumb {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 8px;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  background-color: var(--color-panel-2);
-  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.2);
-}
-.ne-thumb-x {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(20, 12, 4, 0.6);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  border: none;
-  cursor: var(--cursor-pointer);
-}
-.ne-thumb.is-new {
-  box-shadow: 0 0 0 2px var(--color-save), 0 2px 5px rgba(20, 12, 4, 0.2);
-}
 
 .ne-chips {
   display: flex;
@@ -5803,6 +6008,37 @@ li:last-child > .st-row {
   position: relative;
   z-index: 1;
 }
+/* 3 forellini sul margine sinistro, come se il foglio fosse infilato in un
+   raccoglitore ad anelli — solo ombra/rilievo (nessun colore di riempimento:
+   così funziona sia con lo sfondo chiaro che scuro dietro il foglio). */
+.ne-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image: radial-gradient(
+      circle 7px at 32px 15%,
+      rgba(20, 12, 4, 0.32),
+      rgba(20, 12, 4, 0.32) 55%,
+      rgba(20, 12, 4, 0.1) 70%,
+      transparent 85%
+    ),
+    radial-gradient(
+      circle 7px at 32px 50%,
+      rgba(20, 12, 4, 0.32),
+      rgba(20, 12, 4, 0.32) 55%,
+      rgba(20, 12, 4, 0.1) 70%,
+      transparent 85%
+    ),
+    radial-gradient(
+      circle 7px at 32px 85%,
+      rgba(20, 12, 4, 0.32),
+      rgba(20, 12, 4, 0.32) 55%,
+      rgba(20, 12, 4, 0.1) 70%,
+      transparent 85%
+    );
+}
 .ne-tape {
   position: absolute;
   z-index: 2;
@@ -5859,12 +6095,13 @@ li:last-child > .st-row {
 }
 .mtop-year {
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  font-size: 1.15rem;
+  font-size: 1.32rem;
   color: #33291c;
 }
+/* stessa dimensione del pulsante indietro (.mtop-note .mchev, 57px). */
 .mcircle-action {
-  width: 34px;
-  height: 34px;
+  width: 57px;
+  height: 57px;
   flex: none;
   border-radius: 50%;
   display: grid;
@@ -5890,27 +6127,34 @@ li:last-child > .st-row {
 .mtop-row2 {
   display: flex;
   align-items: stretch;
+  justify-content: space-between;
   gap: 6px;
 }
 .mplaque-time {
   flex: 0 0 auto;
-  width: 74px;
+  width: 89px;
   justify-content: center;
 }
 .mplaque-time .mplaque-label {
   width: 100%;
   text-align: center;
   padding: 7px 4px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
 }
+/* larghezza fissa invece di flex:1 — riempiva tutto lo spazio residuo
+   lasciando le targhette orario troppo strette per il loro contenuto
+   ("08:3" invece di "08:30"). */
 .mplaque-date {
-  flex: 1;
+  flex: 0 1 121px;
   justify-content: center;
   min-width: 0;
 }
 .mplaque-date .mplaque-label {
   width: 100%;
   text-align: center;
-  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
   font-size: 0.86rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5931,38 +6175,58 @@ li:last-child > .st-row {
 }
 .ne-extra-block {
   padding: 11px 0;
-  border-bottom: 1.5px dashed var(--color-line-soft);
+  border-bottom: 1.5px dashed color-mix(in srgb, var(--color-line-soft) 80%, var(--color-ink) 20%);
 }
 .ne-extra-block:last-child {
   border-bottom: none;
 }
 
-.mnote-fab-wrap {
-  position: relative;
-}
-.mcircle-badge {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: var(--color-save);
-  border: 2px solid var(--color-sand);
-  display: grid;
-  place-items: center;
-  font-size: 9px;
-  font-weight: 800;
-  color: #2d3a1a;
-}
 .mextra-group {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+/* barra mood: pensata per staccare nettamente da tutto il resto (carta,
+   cartoncino, legno) — niente più cornice "di carta" o effetto vetro a più
+   strati, solo il bastoncino colorato luminoso (bloom via box-shadow
+   diffuso nel colore del mood) e una bolla di luce come maniglia. Uguale
+   da mobile e da web (WebNote.jsx usa la stessa .mnote-mood-frame). */
+.mnote-mood-frame {
+  margin: 14px 0 22px;
+}
+.mnote-mood {
+  border-radius: 999px;
+  box-shadow: 0 3px 7px rgba(20, 12, 4, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    inset 0 -5px 9px rgba(0, 0, 0, 0.35);
+  filter: saturate(1.6) brightness(1.1);
+}
+.mnote-mood .mood-range::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #eaffe6 35%, rgba(255, 255, 255, 0.7) 72%);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.mnote-mood .mood-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #eaffe6 35%, rgba(255, 255, 255, 0.7) 72%);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
 @media (max-width: 480px) {
+  /* foto della nota, come le polaroid della vista mese: qui però a riga
+     (con ritorno a capo) invece che impilate in colonna come da web, dove
+     c'è una colonna dedicata — da telefono le note stanno una sotto
+     l'altra, una colonna lunga quanto le foto non ci sta bene. */
+  .ne-media-polas {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
   .ne-sheet {
     padding: 22px 20px 24px 40px;
     transform: rotate(-0.3deg);
@@ -5976,6 +6240,33 @@ li:last-child > .st-row {
         transparent 27px
       ),
       repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  }
+  /* i forellini vanno riposizionati: da telefono la riga rossa è molto più
+     vicina al bordo (26px, non 46px come da web) — a x:32px (calibrato per
+     il margine largo del desktop) finivano OLTRE la riga rossa, dentro
+     l'area di testo, e sembravano punti elenco invece che fori. */
+  .ne-sheet::after {
+    background-image: radial-gradient(
+        circle 5px at 13px 15%,
+        rgba(20, 12, 4, 0.32),
+        rgba(20, 12, 4, 0.32) 55%,
+        rgba(20, 12, 4, 0.1) 70%,
+        transparent 85%
+      ),
+      radial-gradient(
+        circle 5px at 13px 50%,
+        rgba(20, 12, 4, 0.32),
+        rgba(20, 12, 4, 0.32) 55%,
+        rgba(20, 12, 4, 0.1) 70%,
+        transparent 85%
+      ),
+      radial-gradient(
+        circle 5px at 13px 85%,
+        rgba(20, 12, 4, 0.32),
+        rgba(20, 12, 4, 0.32) 55%,
+        rgba(20, 12, 4, 0.1) 70%,
+        transparent 85%
+      );
   }
   .ne-tape {
     width: 42px;
@@ -6019,6 +6310,7 @@ li:last-child > .st-row {
 .wl-stage {
   display: grid;
   grid-template-columns: minmax(340px, 440px) 1fr;
+  width: 100%;
   min-height: 100dvh;
 }
 
