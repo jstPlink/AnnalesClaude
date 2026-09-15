@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.46.0',
+    date: '2026-09-15 18:20',
+    changes: [
+      'Cursore del mouse a forma di matitina in tutta l\'app, con varianti diverse a seconda di cosa c\'è sotto: normale, un piccolo scintillio quando si passa su un elemento cliccabile, in verticale con la punta in basso sui campi di testo, e con un anello tratteggiato attorno alla punta sui pulsanti mentre un\'operazione è in corso.',
+      'Barra laterale web: il colore della targhetta in legno della voce selezionata è più chiaro.',
+    ],
+  },
+  {
     version: '0.45.0',
     date: '2026-09-15 15:45',
     changes: [
