@@ -12,6 +12,7 @@ import ImageCarousel from '../components/ImageCarousel'
 import MarqueeText from '../components/MarqueeText'
 import OnThisDay from '../components/OnThisDay'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
+import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
 import MonthPages from './web/MonthPages'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
@@ -41,6 +42,7 @@ export default function MonthView() {
   const [error, setError] = useState('')
   const [dir, setDir] = useState(0) // -1 / 1: direzione ultima transizione
   const [geminiNoteOpen, setGeminiNoteOpen] = useState(false)
+  const [noteChoiceOpen, setNoteChoiceOpen] = useState(false)
   const [allPeople, setAllPeople] = useState([])
   const [allTags, setAllTags] = useState([])
 
@@ -312,13 +314,23 @@ export default function MonthView() {
             },
           ]}
           primaryIcon="plus"
-          primaryTitle="Nuova nota (oggi)"
-          onPrimary={() => navigate(`/note/new?date=${todayKey()}`)}
-          secondaryIcon="sparkles"
-          secondaryTitle="Nuova nota con Gemini"
-          onSecondary={() => setGeminiNoteOpen(true)}
+          primaryTitle="Nuova nota"
+          onPrimary={() => setNoteChoiceOpen(true)}
         />
       </MobileBottomBar>
+
+      <NewNoteChoiceSheet
+        open={noteChoiceOpen}
+        onClose={() => setNoteChoiceOpen(false)}
+        onGemini={() => {
+          setNoteChoiceOpen(false)
+          setGeminiNoteOpen(true)
+        }}
+        onManual={() => {
+          setNoteChoiceOpen(false)
+          navigate(`/note/new?date=${todayKey()}`)
+        }}
+      />
 
       <NewNoteWithGeminiSheet
         open={geminiNoteOpen}

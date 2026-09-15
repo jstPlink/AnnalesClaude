@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.43.0',
+    date: '2026-09-15 13:29',
+    changes: [
+      'Vista mese da telefono, skin "Pagine": contatori persone/luogo/canzone più leggibili (testo e sfondo più marcati), numero dell\'umore spostato di un filo a sinistra così le targhette a punta non lo tagliano più, barra superiore e inferiore non sembrano più "staccate" dal cartoncino sotto (mancava l\'ombra a terra).',
+      'Barra inferiore da telefono: il pulsante "nuova nota" è ora centrato con una texture di cartone chiaro e un bordo tratteggiato bianco, la lente di ricerca è tutta a sinistra e il profilo tutto a destra. Il pulsante Gemini separato è sparito: "nuova nota" ora apre una scelta fra Gemini e manuale.',
+    ],
+  },
+  {
     version: '0.42.0',
     date: '2026-09-15 11:44',
     changes: [

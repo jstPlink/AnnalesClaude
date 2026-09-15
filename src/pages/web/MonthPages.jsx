@@ -34,7 +34,7 @@ function MpMiniBadge({ kind, icon, count }) {
   if (!count) return null
   return (
     <span className={`mp-mini mp-mini--${kind}`} aria-hidden="true">
-      <Icon name={icon} size={13} strokeWidth={2.6} />
+      <Icon name={icon} size={14} strokeWidth={2.6} />
       <span className="mp-mini-text">{count}</span>
     </span>
   )

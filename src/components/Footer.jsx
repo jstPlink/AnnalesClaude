@@ -77,77 +77,58 @@ function SearchCircle({ onClick, title, active }) {
   )
 }
 
-// Footer con pulsanti circolari: a sinistra fino a 3 voci opzionali
-// `items` ({ icon, onClick, title, active }), a destra l'azione principale.
-// Le voci non passate non occupano spazio (nessun placeholder). "settings"
-// e "search" hanno un materiale dedicato (tessera/lente); le altre restano
+// Footer con pulsanti circolari, in 3 colonne fisse così l'azione
+// principale resta sempre centrata in basso: a sinistra "cerca" e le altre
+// voci opzionali (meno frequenti), a destra "profilo" (più comodo da
+// raggiungere col pollice), al centro il pulsante "nuova nota". Le voci
+// non passate non occupano spazio (nessun placeholder). "settings" e
+// "search" hanno un materiale dedicato (tessera/lente); le altre restano
 // un ritaglio di carta generico.
-export default function Footer({
-  items = [],
-  onPrimary,
-  primaryIcon = 'plus',
-  primaryTitle,
-  onSecondary,
-  secondaryIcon,
-  secondaryTitle,
-}) {
+export default function Footer({ items = [], onPrimary, primaryIcon = 'plus', primaryTitle }) {
   const visible = items.filter(Boolean)
+  const left = visible.filter((it) => it.icon !== 'settings')
+  const right = visible.filter((it) => it.icon === 'settings')
   const [popPrimary, setPopPrimary] = useState(false)
 
+  function renderCircle(it, i) {
+    return it.icon === 'settings' ? (
+      <ProfileCircle key={it.title ?? i} onClick={it.onClick} title={it.title} />
+    ) : it.icon === 'search' ? (
+      <SearchCircle key={it.title ?? i} onClick={it.onClick} title={it.title} active={it.active} />
+    ) : (
+      <PaperCircle
+        key={it.title ?? i}
+        icon={it.icon}
+        onClick={it.onClick}
+        title={it.title}
+        active={it.active}
+      />
+    )
+  }
+
   return (
-    <div className="mfooter">
-      <div className="mfooter-group">
-        {visible.map((it, i) =>
-          it.icon === 'settings' ? (
-            <ProfileCircle key={it.title ?? i} onClick={it.onClick} title={it.title} />
-          ) : it.icon === 'search' ? (
-            <SearchCircle key={it.title ?? i} onClick={it.onClick} title={it.title} active={it.active} />
-          ) : (
-            <PaperCircle
-              key={it.title ?? i}
-              icon={it.icon}
-              onClick={it.onClick}
-              title={it.title}
-              active={it.active}
-            />
-          ),
-        )}
-      </div>
-      <div className="mfooter-group">
-        {onSecondary && (
-          <button
-            type="button"
-            onClick={() => {
-              haptic()
-              onSecondary()
-            }}
-            title={secondaryTitle}
-            aria-label={secondaryTitle}
-            className="mcircle mgemini"
-          >
-            <Icon name={secondaryIcon} size={18} />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={
-            onPrimary
-              ? () => {
-                  haptic()
-                  setPopPrimary(false)
-                  requestAnimationFrame(() => setPopPrimary(true))
-                  onPrimary()
-                }
-              : undefined
-          }
-          onAnimationEnd={() => setPopPrimary(false)}
-          title={primaryTitle}
-          aria-label={primaryTitle}
-          className={'mcircle mfab' + (popPrimary ? ' anim-pop' : '')}
-        >
-          <Icon name={primaryIcon} size={24} />
-        </button>
-      </div>
+    <div className="mnav-footer">
+      <div className="mnav-footer-side left">{left.map(renderCircle)}</div>
+      <button
+        type="button"
+        onClick={
+          onPrimary
+            ? () => {
+                haptic()
+                setPopPrimary(false)
+                requestAnimationFrame(() => setPopPrimary(true))
+                onPrimary()
+              }
+            : undefined
+        }
+        onAnimationEnd={() => setPopPrimary(false)}
+        title={primaryTitle}
+        aria-label={primaryTitle}
+        className={'mcircle mfab' + (popPrimary ? ' anim-pop' : '')}
+      >
+        <Icon name={primaryIcon} size={24} />
+      </button>
+      <div className="mnav-footer-side right">{right.map(renderCircle)}</div>
     </div>
   )
 }

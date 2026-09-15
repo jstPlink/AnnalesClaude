@@ -1270,6 +1270,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-family: 'Annales Marker', 'Caveat', cursive;
   font-weight: 700;
   font-size: 1.5rem;
+  /* le varianti a punta (--coral, --yellow) intaccano il bordo destro con
+     il clip-path proprio all'altezza del centro: un margine spinge il
+     numero, centrato dal flex del genitore, un po' a sinistra così il
+     ritaglio non lo taglia più. */
+  margin-right: 4px;
 }
 .mp-tab.is-empty {
   background-color: color-mix(in srgb, var(--color-line-soft) 60%, #efe6d0);
@@ -1903,6 +1908,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .mp-tab b {
     font-size: 1.3rem;
+    margin-right: 3px;
   }
   .mp-page {
     padding-left: 50px;
@@ -1982,6 +1988,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .mp-tab b {
     font-size: 1.16rem;
+    margin-right: 3px;
   }
   .mp-head {
     gap: 7px;
@@ -2039,21 +2046,24 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     gap: 6px;
     padding-top: 2px;
   }
-  /* semplici contatori (icona + numero), non più testo: bastano pochi px */
+  /* semplici contatori (icona + numero), non più testo: bastano pochi px.
+     Sfondo più opaco e testo più grande del primo tentativo: alla prova su
+     telefono reale, in mezzo a cartoncino+foto nella stessa riga stretta,
+     le targhette risultavano leggibili a stento (quasi invisibili). */
   .mp-mini {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px 4px 6px;
+    gap: 5px;
+    padding: 5px 9px 5px 7px;
     font-family: 'Annales Hand', 'Kalam', sans-serif;
     font-weight: 700;
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     line-height: 1;
     color: var(--mp-ink-b);
-    background: rgba(228, 216, 180, 0.62);
-    border-left: 2px dashed rgba(150, 124, 84, 0.5);
-    border-right: 2px dashed rgba(150, 124, 84, 0.5);
-    box-shadow: 0 2px 4px rgba(20, 12, 4, 0.18);
+    background: rgba(228, 216, 180, 0.92);
+    border-left: 2px dashed rgba(110, 90, 56, 0.7);
+    border-right: 2px dashed rgba(110, 90, 56, 0.7);
+    box-shadow: 0 2px 5px rgba(20, 12, 4, 0.26);
     /* niente filter: url(#annales-wob) qui — fino a 3 per nota (persone/
        luogo/canzone) su tutte le note del mese, causa nota di glitch
        grafico in WebView Android; i bordi tratteggiati bastano a dare
@@ -2062,19 +2072,19 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   /* luogo = rossa, canzone = verde (le persone restano nel tono carta) */
   .mp-mini--place {
     color: #5c2a20;
-    background: color-mix(in srgb, #c64637 26%, rgba(228, 216, 180, 0.62));
-    border-left-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
-    border-right-color: color-mix(in srgb, #c64637 55%, rgba(150, 124, 84, 0.5));
+    background: color-mix(in srgb, #c64637 32%, rgba(228, 216, 180, 0.92));
+    border-left-color: color-mix(in srgb, #c64637 62%, rgba(110, 90, 56, 0.7));
+    border-right-color: color-mix(in srgb, #c64637 62%, rgba(110, 90, 56, 0.7));
   }
   .mp-mini--song {
     color: #34481c;
-    background: color-mix(in srgb, #7fa24e 26%, rgba(228, 216, 180, 0.62));
-    border-left-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
-    border-right-color: color-mix(in srgb, #7fa24e 55%, rgba(150, 124, 84, 0.5));
+    background: color-mix(in srgb, #7fa24e 32%, rgba(228, 216, 180, 0.92));
+    border-left-color: color-mix(in srgb, #7fa24e 62%, rgba(110, 90, 56, 0.7));
+    border-right-color: color-mix(in srgb, #7fa24e 62%, rgba(110, 90, 56, 0.7));
   }
   .mp-mini svg {
     flex: none;
-    opacity: 0.8;
+    opacity: 0.95;
   }
   .mp-mini-text {
     font-variant-numeric: tabular-nums;
@@ -4333,7 +4343,12 @@ li:last-child > .wd-month-row {
   background-size: 150px 150px, 230px 230px;
   background-blend-mode: soft-light, soft-light;
   transform: rotate(-1.8deg);
-  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16), 0 4px 8px rgba(20, 12, 4, 0.22);
+  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16);
+  /* l'ombra verso il basso è un filter, non un box-shadow: il clip-path
+     seghettato ritaglierebbe via anche l'ombra (segue lo stesso contorno
+     della forma), lasciando il foglio "staccato" dal contenuto sotto senza
+     alcuna ombra a terra. drop-shadow segue invece la sagoma ritagliata. */
+  filter: drop-shadow(0 5px 6px rgba(20, 12, 4, 0.38));
   clip-path: polygon(
     0 0, 100% 0,
     100% 90%, 97% 100%, 94% 92%, 91% 99%, 87% 95%, 84% 100%, 79% 88%, 76% 97%,
@@ -4384,7 +4399,10 @@ li:last-child > .wd-month-row {
   background-size: 150px 150px, 230px 230px;
   background-blend-mode: soft-light, soft-light;
   transform: rotate(1.6deg);
-  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16), 0 -4px 8px rgba(20, 12, 4, 0.22);
+  box-shadow: inset 0 0 40px rgba(50, 36, 8, 0.16);
+  /* vedi .mtop-under: box-shadow verrebbe ritagliato dal clip-path
+     seghettato, drop-shadow no. */
+  filter: drop-shadow(0 -5px 6px rgba(20, 12, 4, 0.38));
   clip-path: polygon(
     0 10%, 3% 0, 6% 8%, 9% 1%, 13% 11%, 16% 2%, 20% 7%, 24% 12%,
     27% 1%, 31% 9%, 35% 0, 38% 10%, 42% 3%, 45% 12%, 49% 1%, 52% 7%,
@@ -4548,7 +4566,8 @@ li:last-child > .wd-month-row {
   color: #2b2015;
 }
 
-/* riga del footer: profilo/cerca a sinistra, Gemini/nuova nota a destra. */
+/* riga del footer generica (Footer.jsx compone .mfooter da sé; NoteView.jsx
+   la riusa direttamente per la sua barra Gemini + azioni rapide). */
 .mfooter {
   display: flex;
   align-items: center;
@@ -4558,6 +4577,26 @@ li:last-child > .wd-month-row {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Barra di navigazione (Footer.jsx): 3 colonne fisse così il pulsante
+   principale resta SEMPRE centrato in basso a prescindere da quante voci
+   ci sono a sinistra o a destra — cerca in fondo a sinistra (meno
+   frequente), profilo in fondo a destra (più comodo da raggiungere col
+   pollice). */
+.mnav-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.mnav-footer-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mnav-footer-side.right {
+  justify-content: flex-end;
 }
 
 /* pulsanti circolari del footer: profilo (tessera/foto), cerca (lente in
@@ -4650,17 +4689,26 @@ li:last-child > .wd-month-row {
   z-index: 1;
   color: #33291c;
 }
-.mgemini,
-.mfab {
+.mgemini {
   background-color: #211a10;
   background-image: var(--sb-grain);
   background-size: 100px 100px;
   background-blend-mode: overlay;
   color: #efe7d4;
 }
+/* pulsante "nuova nota": ritaglio di cartone chiaro (leggero, non il timbro
+   nero di .mgemini) con un filo tratteggiato bianco tutto intorno, per
+   distinguerlo bene come azione principale al centro della barra. */
 .mfab {
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
+  background-color: #d9c79a;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 100px 100px, 160px 160px;
+  background-blend-mode: multiply, soft-light;
+  border: 2px dashed rgba(255, 252, 240, 0.85);
+  color: #33291c;
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.26), inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
 /* ===================== Cerca (vista web, WebFilter.jsx): ogni gruppo di
