@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.41.0',
+    date: '2026-09-15 11:23',
+    changes: [
+      'Pagina di accesso (web): rifatta in stile "Pagine" — pannello sinistro di cartoncino strappato con un assaggio di nota/foto/persone, modulo a destra tenuto da nastro adesivo e una puntina, schede Accedi/Registrati "a matita" che diventano inchiostro pieno da selezionate.',
+    ],
+  },
+  {
     version: '0.40.0',
     date: '2026-09-14 23:55',
     changes: [

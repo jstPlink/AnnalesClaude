@@ -5965,3 +5965,638 @@ li:last-child > .st-row {
     font-size: 0.82rem;
   }
 }
+
+/* ============ Pagina di accesso (web) ============
+   src/pages/web/WebLogin.jsx. Stesso linguaggio della barra laterale e
+   della skin "Pagine": a sinistra un pannello di cartoncino strappato,
+   sempre "di carta" (stesso tono in chiaro e in scuro, come la barra
+   laterale — vedi il commento su --sb-grain più sopra); a destra il
+   modulo, sui token del tema (si adatta a chiaro/scuro). Fili e cornici
+   riusano i filtri #annales-wob/#annales-tear/#annales-tear-2, montati una
+   sola volta in SketchDefs.jsx (src/components/SketchDefs.jsx, App.jsx).
+   Renderizza solo da larghezza desktop (Screen sceglie Login.jsx sotto i
+   1024px, vedi useIsWide), quindi nessun adattamento per schermi stretti. */
+.wl-stage {
+  display: grid;
+  grid-template-columns: minmax(340px, 440px) 1fr;
+  min-height: 100dvh;
+}
+
+/* ---------- pannello sinistro: cartoncino strappato, carta fissa ---------- */
+.wl-wrap {
+  position: relative;
+  padding: 8px;
+}
+.wl-under {
+  position: absolute;
+  inset: 10px -14px -16px 6px;
+  z-index: 0;
+  background-color: #b8a982;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  background-repeat: repeat;
+  transform: rotate(-1.6deg);
+  box-shadow: inset 0 0 50px rgba(50, 36, 8, 0.16);
+  clip-path: polygon(
+    1.5% 0, 6% 1.2%, 11% 0, 17% 1.4%, 23% 0.3%, 29% 1.6%, 35% 0, 41% 1.3%,
+    47% 0.2%, 53% 1.5%, 59% 0, 65% 1.2%, 71% 0.4%, 77% 1.6%, 83% 0, 89% 1.3%,
+    95% 0.2%, 98.5% 1.8%,
+    100% 4%, 97% 7%, 92% 10%, 96% 13%, 100% 16%, 98% 19%, 94% 22%,
+    99% 25%, 100% 28%, 96.5% 31%, 91% 34%, 95% 37%, 100% 40%, 98% 43%,
+    93% 46%, 97% 49%, 100% 52%, 96% 55%, 90% 58%, 95% 61%, 99% 64%,
+    100% 67%, 97% 70%, 93% 73%, 98% 76%, 100% 79%, 96% 82%, 91% 85%,
+    95% 88%, 100% 91%, 98% 94%, 100% 97%, 96% 99%,
+    92% 100%, 86% 98%, 80% 100%, 74% 97.5%, 68% 99.5%, 62% 96.5%, 56% 99%,
+    50% 100%, 44% 97%, 38% 99.5%, 32% 96%, 26% 99%, 20% 100%, 14% 97%,
+    8% 99%, 3% 100%,
+    0 96%, 1.6% 92%, 0 88%, 1.4% 84%, 0 80%, 1.7% 76%, 0 72%, 1.3% 68%,
+    0 64%, 1.5% 60%, 0 56%, 1.6% 52%, 0 48%, 1.3% 44%, 0 40%, 1.4% 36%,
+    0 32%, 1.7% 28%, 0 24%, 1.5% 20%, 0 16%, 1.6% 12%, 0 8%, 1.3% 4%
+  );
+  filter: url(#annales-tear-2);
+}
+.wl-sheet {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: calc(100dvh - 16px);
+  display: flex;
+  flex-direction: column;
+  padding: 34px 34px 24px 30px;
+  color: #342c20;
+}
+.wl-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: #c7ba95;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  background-repeat: repeat;
+  box-shadow: inset 0 0 60px rgba(60, 44, 10, 0.14), 6px 0 18px -8px rgba(20, 14, 4, 0.3),
+    inset -7px 0 12px -7px rgba(40, 28, 8, 0.4);
+  clip-path: polygon(
+    0 0, 100% 0,
+    99% 1.5%, 100% 3%, 98.5% 4%, 97% 4.5%,
+    99% 6%, 100% 7.5%, 98% 8.5%,
+    99.5% 10%, 100% 11.5%, 97.5% 13%, 96% 15%, 97.8% 16.5%,
+    99% 18%, 100% 19.5%, 98.3% 20.5%,
+    99.6% 21%, 100% 22.5%, 97.5% 24%, 99% 26%, 97% 28%, 98.3% 30%,
+    99.4% 31.5%, 100% 33%, 98% 34%, 100% 35%,
+    97.3% 36.5%, 99% 38%, 96.6% 40%, 95.5% 42%, 97.3% 43.5%,
+    98.5% 45%, 99.7% 46.5%, 98.1% 47.5%, 100% 49%, 98% 51%, 96.9% 53%, 97.8% 55%, 100% 56%,
+    98% 57.5%, 99.5% 59%, 97.5% 61%, 99% 63%, 100% 64%, 96% 66%, 97.8% 68%, 99% 69.5%,
+    100% 71%, 98.4% 72.5%, 99% 74%, 97.8% 76%, 96.3% 77%, 98.2% 78.5%, 99% 80%,
+    100% 81.5%, 98.5% 83%, 97.8% 84%, 100% 85%, 98.4% 87%, 99.5% 89%, 96.5% 91%, 98.2% 92.5%,
+    100% 94%, 98.5% 95.5%, 100% 97%, 98.2% 98%, 96.5% 99%, 100% 100%,
+    0 100%
+  );
+  filter: url(#annales-tear);
+}
+.wl-sheet > * {
+  position: relative;
+  z-index: 1;
+}
+
+.wl-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.wl-logo img {
+  width: 32px;
+  height: 32px;
+}
+.wl-logo-name {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.7rem;
+  color: rgba(30, 22, 8, 0.84);
+}
+
+.wl-headline {
+  margin: 0;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-weight: 400;
+  font-size: clamp(1.8rem, 2.2vw, 2.15rem);
+  line-height: 1.28;
+  color: rgba(30, 22, 8, 0.9);
+  text-wrap: balance;
+  max-width: 16ch;
+}
+.wl-hl-wrap {
+  position: relative;
+  display: inline-block;
+}
+.wl-hl-wrap .hl {
+  position: absolute;
+  left: -5px;
+  right: -7px;
+  bottom: 0.05em;
+  height: 0.56em;
+  background: rgba(214, 182, 64, 0.55);
+  filter: url(#annales-wob);
+  transform: skewX(-10deg) rotate(-1deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+.wl-sub {
+  margin: 16px 0 0;
+  max-width: 32ch;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgba(30, 22, 8, 0.62);
+}
+
+/* "Reperti" veri dell'app: nota (cartoncino tagliato, colore dal vero
+   moodColor(); titolo a penna + evidenziatore nero come .dn-title; corpo in
+   una delle "mani" come .dn-body), polaroid (nastro + foto) e targhette
+   persona (stessa resa di .mp-tape/.dn-tape, colore per persona). Nessun
+   utente è ancora connesso su questa pagina: sono un esempio fisso di cosa
+   diventano note/foto/persone nell'app, non dati di qualcuno. */
+.wl-artifacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 14px;
+  margin: 28px 0 0;
+}
+.wl-people {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px 9px;
+  width: 100%;
+  margin: 14px 0 0;
+}
+
+.wl-note {
+  position: relative;
+  z-index: 1;
+  width: 168px;
+  min-height: 88px;
+  padding: 11px 14px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #33291c;
+  transform: rotate(-2.2deg);
+}
+.wl-note::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  background: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--mood, #8fc46a) 52%, #efe6d0),
+    color-mix(in srgb, var(--mood, #8fc46a) 33%, #efe6d0)
+  );
+  clip-path: polygon(
+    0% 2%, 8% 0%, 15% 4%, 20% 1%, 23% 5%, 31% 2%, 39% 0%, 44% 3%, 47% 0%,
+    50% 3%, 58% 1%, 63% 4%, 66% 0%, 74% 3%, 78% 0%, 82% 2%, 90% 0%, 95% 3%, 100% 0%,
+    97% 6%, 99% 10%, 94% 14%, 98% 18%, 90% 22%, 96% 26%, 100% 30%, 95% 34%,
+    99% 38%, 92% 42%, 97% 46%, 100% 50%, 94% 54%, 98% 58%, 89% 62%, 96% 66%,
+    100% 70%, 93% 74%, 99% 78%, 95% 82%, 100% 86%, 91% 90%, 97% 94%, 99% 97%, 96% 100%,
+    90% 98%, 84% 100%, 78% 96%, 72% 99%, 65% 95%, 60% 100%, 54% 97%, 48% 100%,
+    42% 94%, 36% 99%, 30% 96%, 24% 100%, 18% 95%, 12% 99%, 6% 97%, 0% 100%,
+    2% 94%, 0% 88%, 4% 82%, 0% 76%, 3% 70%, 0% 64%, 5% 58%, 0% 52%, 2% 46%,
+    0% 40%, 4% 34%, 1% 28%, 3% 22%, 0% 16%, 2% 10%, 0% 4%
+  );
+  filter: saturate(1.32) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
+}
+.wl-note-mood {
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--mood, #8fc46a);
+  color: #20170d;
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 0.86rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.wl-note-title-wrap {
+  position: relative;
+  display: inline-block;
+}
+.wl-note-title {
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.15;
+  color: #2b2015;
+}
+.wl-note-title-wrap .hl {
+  position: absolute;
+  left: -5px;
+  right: -6px;
+  bottom: 0.04em;
+  height: 0.5em;
+  background: rgba(26, 20, 10, 0.18);
+  filter: url(#annales-wob);
+  transform: skewX(-11deg) rotate(-1.4deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+.wl-note-body {
+  font-family: 'Annales Hand Gochi', 'Gochi Hand', cursive;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: rgba(58, 46, 28, 0.75);
+}
+
+.wl-pola {
+  position: relative;
+  z-index: 1;
+  width: 150px;
+  margin: 0;
+  padding: 9px 9px 28px;
+  background: #f7f1e3;
+  box-shadow: 0 9px 18px rgba(20, 12, 4, 0.3);
+  transform: rotate(var(--pr, 3.2deg));
+  transition: box-shadow 0.18s ease;
+}
+.wl-pola-tape {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 78px;
+  height: 27px;
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(236, 226, 194, 0.86);
+  border: 1px solid rgba(176, 158, 112, 0.4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  filter: url(#annales-wob);
+}
+.wl-pola-ph {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  filter: saturate(0.82) contrast(0.95);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.25);
+}
+.wl-pola-ph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.wl-pola-cap {
+  display: block;
+  margin: 0;
+  padding-top: 5px;
+  font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
+  font-size: 0.86rem;
+  color: #4a4234;
+  text-align: center;
+}
+/* oscillazione leggera al passaggio del mouse, come una foto appesa */
+@keyframes wlSway {
+  0%, 100% { transform: rotate(var(--pr, 3.2deg)); }
+  50% { transform: rotate(calc(var(--pr, 3.2deg) - 5deg)); }
+}
+.wl-pola:hover,
+.wl-pola:focus-visible {
+  animation: wlSway 1.3s ease-in-out infinite;
+  box-shadow: 0 12px 22px rgba(20, 12, 4, 0.36);
+}
+
+.wl-person {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 15px 5px 7px;
+  color: color-mix(in srgb, var(--tape-c, #8a7c58) 78%, #241c10);
+  background: color-mix(in srgb, var(--tape-c, #8a7c58) 24%, rgba(228, 216, 180, 0.66));
+  border-left: 2px dashed color-mix(in srgb, var(--tape-c, #8a7c58) 55%, #8a7452);
+  border-right: 2px dashed color-mix(in srgb, var(--tape-c, #8a7c58) 55%, #8a7452);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(20, 12, 4, 0.2);
+  filter: url(#annales-wob);
+  transform: rotate(var(--pr, 1.6deg));
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.wl-person:hover,
+.wl-person:focus-visible {
+  transform: rotate(0deg) translateY(-3px) scale(1.06);
+  box-shadow: 0 6px 12px rgba(20, 12, 4, 0.3);
+}
+.wl-person-face {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.5px rgba(255, 253, 246, 0.8), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.wl-person-face svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.wl-person-name {
+  white-space: nowrap;
+}
+
+.wl-postit {
+  width: 176px;
+  margin: 26px 0 0 6px;
+  padding: 13px 15px 17px;
+  background: #f2b01e;
+  color: #3d2c02;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  box-shadow: 0 6px 12px rgba(20, 12, 4, 0.22);
+  transform: rotate(3deg);
+  filter: url(#annales-wob);
+}
+
+.wl-foot {
+  margin-top: auto;
+  padding-top: 24px;
+}
+.wl-version {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: rgba(30, 22, 8, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- colonna destra: il modulo, sui token del tema ---------- */
+/* Sfondo pagina: lo stesso foglio delle note vere — righe, riga di margine
+   rossa (--paper-rule/--paper-margin, gli stessi token globali), disegnini
+   (--wl-doodle, identico a --mp-doodle della skin "Pagine"), grana e fibra
+   — qui ripetuto a coprire tutta la colonna invece di una singola nota; si
+   vede nei margini intorno al cartoncino del modulo. */
+.wl-form-wrap {
+  --wl-doodle: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='610'%20height='1160'%3E%3Cg%20fill='none'%20stroke='%23564e3c'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.08'%3E%3Cg%20transform='translate(292%2074)%20rotate(-12)'%3E%3Cpath%20d='M0%200q0-14-14-14q-18%200-18%2020q0%2024%2026%2024q30%200%2030-36'/%3E%3C/g%3E%3Cg%20transform='translate(120%20152)%20rotate(7)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(332%20192)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(192%20120)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(95%20300)%20rotate(14)'%3E%3Cpath%20d='M0%200q0-10-10-10q-14%200-14%2015q0%2018%2020%2018q22%200%2022-28'/%3E%3C/g%3E%3Cg%20transform='translate(300%20332)%20rotate(-5)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(150%20402)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(300%20432)%20rotate(8)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3C/g%3E%3Cg%20fill='none'%20stroke='%23564e3c'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.14'%3E%3Cg%20transform='translate(110%20500)%20rotate(10)'%3E%3Cpath%20d='M0%200q0-12-12-12q-16%200-16%2016q0%2020%2022%2020q26%200%2026-30'/%3E%3C/g%3E%3Cg%20transform='translate(290%20520)%20rotate(-5)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(185%20585)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(90%20120)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(320%20260)%20rotate(-5)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(210%20200)%20rotate(6)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(250%20380)%20rotate(10)'%3E%3Cpath%20d='M0%200q0-9-9-9q-12%200-12%2012q0%2015%2017%2015q20%200%2020-23'/%3E%3C/g%3E%3Cg%20transform='translate(90%20430)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(180%20470)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(320%20400)%20rotate(8)'%3E%3Cpath%20d='M0%200q0-12-12-12q-16%200-16%2016q0%2020%2022%2020q26%200%2026-30'/%3E%3C/g%3E%3Cg%20transform='translate(150%20320)%20rotate(-4)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(300%20180)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(430%20150)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(450%20440)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(260%20760)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(120%20820)%20rotate(12)'%3E%3Cpath%20d='M0%200q0-9-9-9q-12%200-12%2012q0%2015%2017%2015q20%200%2020-23'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 22px;
+  /* Niente --sb-grain qui: alla scala di un cartoncino è una texture
+     discreta, ma ripetuta per tutta l'altezza della pagina diventa un
+     "rumore" televisivo fastidioso. La fibra (più a bassa frequenza) basta
+     a dare carattere di carta. */
+  background-color: var(--color-cream);
+  background-image:
+    var(--wl-doodle),
+    var(--sb-fiber),
+    linear-gradient(90deg, transparent 46px, var(--paper-margin) 46px 47px, transparent 47px),
+    repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  background-size: 610px 1160px, 200px 200px, auto, auto;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-blend-mode: multiply, soft-light, normal, normal;
+}
+.wl-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px 0 0;
+  background-color: var(--color-tag);
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 130px 130px, 200px 200px;
+  background-blend-mode: multiply, soft-light;
+  border: 1px solid var(--color-line);
+  border-radius: 20px 15px 22px 13px;
+  box-shadow: 0 20px 40px -16px rgba(20, 12, 4, 0.38), 0 6px 14px -6px rgba(20, 12, 4, 0.22);
+  padding: 34px 28px 28px;
+  transform: rotate(-1.4deg);
+}
+/* Nastro tutto intorno al cartoncino: 2 sopra (rosso, verde), 2 a destra
+   (blu, rosso), 1 sotto (verde), 1 a sinistra (blu) — come se il foglio
+   fosse fermato da più lati, non solo appoggiato. Colori fissi (nastro
+   vero), non legati al tema. */
+.wl-tape {
+  position: absolute;
+  z-index: 3;
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.25);
+  filter: url(#annales-wob);
+}
+.wl-tape.h {
+  width: 58px;
+  height: 24px;
+  background-image: repeating-linear-gradient(
+    100deg, rgba(255, 255, 255, 0.16) 0 3px, transparent 3px 8px
+  );
+}
+.wl-tape.v {
+  width: 24px;
+  height: 58px;
+  background-image: repeating-linear-gradient(
+    12deg, rgba(255, 255, 255, 0.16) 0 3px, transparent 3px 8px
+  );
+}
+.wl-tape.red { background-color: rgba(212, 91, 79, 0.62); }
+.wl-tape.green { background-color: rgba(140, 178, 108, 0.58); }
+.wl-tape.blue { background-color: rgba(108, 150, 196, 0.58); }
+.wl-tape.top-a { top: -12px; left: 10%; transform: rotate(-8deg); }
+.wl-tape.top-b { top: -12px; left: 58%; transform: rotate(5deg); }
+.wl-tape.right-a { right: -12px; top: 16%; transform: rotate(7deg); }
+.wl-tape.right-b { right: -12px; top: 64%; transform: rotate(-6deg); }
+.wl-tape.bottom-a { bottom: -12px; left: 40%; transform: rotate(4deg); }
+.wl-tape.left-a { left: -12px; top: 46%; transform: rotate(-5deg); }
+
+/* puntina: dentro il cartoncino, non sul bordo/angolo */
+.wl-card-pin {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  z-index: 4;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  transform: rotate(10deg);
+  background: radial-gradient(circle at 36% 34%, #ff8f7f, #d84b3a 55%, #9c2f22);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -2px 3px rgba(0, 0, 0, 0.28),
+    inset 0 2px 2px rgba(255, 255, 255, 0.45);
+}
+.wl-card > *:not(.wl-tape):not(.wl-card-pin) {
+  position: relative;
+  z-index: 2;
+}
+.wl-title {
+  margin: 0;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-weight: 400;
+  font-size: 1.7rem;
+  color: var(--color-ink);
+}
+.wl-title-wrap {
+  position: relative;
+  display: inline-block;
+}
+.wl-title-wrap .hl {
+  position: absolute;
+  left: -6px;
+  right: -8px;
+  bottom: 0.06em;
+  height: 0.56em;
+  background: rgba(228, 198, 86, 0.5);
+  filter: url(#annales-wob);
+  transform: skewX(-10deg) rotate(-1deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+:root[data-theme='dark'] .wl-title-wrap .hl {
+  background: rgba(228, 198, 86, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .wl-title-wrap .hl {
+    background: rgba(228, 198, 86, 0.28);
+  }
+}
+.wl-desc {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.wl-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0 20px;
+}
+.wl-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-cream);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--color-ink);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.15s ease, box-shadow 0.15s ease;
+}
+.wl-tab:hover,
+.wl-tab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px -3px rgba(20, 12, 4, 0.28);
+}
+.wl-tab[aria-selected='true'] {
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  border-style: solid;
+  border-color: #211a10;
+}
+
+.wl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.wl-label {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: var(--color-ink-soft);
+}
+.wl-label .opt {
+  font-weight: 400;
+}
+.wl-input {
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--color-line);
+  background: var(--color-cream);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+.wl-input:focus {
+  border-style: solid;
+  border-color: var(--color-ink-soft);
+}
+
+.wl-error {
+  margin: 2px 0 14px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-delete) 16%, var(--color-tag));
+  border: 1.5px dashed var(--color-delete-dark);
+  color: var(--color-delete-dark);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.wl-submit {
+  margin-top: 4px;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 999px;
+  border: none;
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 130px 130px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.96rem;
+  cursor: pointer;
+  box-shadow: 0 6px 14px -4px rgba(10, 6, 0, 0.45);
+  transform: rotate(-0.5deg);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  filter: url(#annales-wob);
+}
+.wl-submit:hover,
+.wl-submit:focus-visible {
+  transform: rotate(0deg) translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 18px -4px rgba(10, 6, 0, 0.5);
+}
+.wl-submit:disabled {
+  opacity: 0.72;
+  cursor: default;
+  transform: none;
+}
+
+.wl-switch {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.wl-switch:hover,
+.wl-switch:focus-visible {
+  transform: translateY(-1px);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-submit, .wl-tab, .wl-switch, .wl-person, .wl-pola {
+    transition: none;
+  }
+  .wl-pola:hover, .wl-pola:focus-visible {
+    animation: none;
+  }
+}
