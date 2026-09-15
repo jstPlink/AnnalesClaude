@@ -6600,3 +6600,88 @@ li:last-child > .st-row {
     animation: none;
   }
 }
+
+/* ============ Pagina di accesso (mobile) ============
+   src/pages/Login.jsx. Stessa identità della versione web (WebLogin.jsx,
+   vedi il blocco .wl-* qui sopra): il cartoncino del modulo, il nastro, la
+   puntina, le schede a matita e i campi tratteggiati sono GLI STESSI (.wl-
+   *, ci si appoggiano direttamente, non sono duplicati). Qui solo due cose
+   proprie del mobile: un'intestazione di carta strappata più corta (un
+   solo foglio, strappo in basso — non il doppio foglio della barra
+   laterale, pensato per una colonna alta) e lo sfondo scorrevole della
+   pagina. Niente nota/foto/persone di esempio: sul telefono lo spazio
+   verticale è poco e il modulo deve restare la cosa più in vista. */
+.ml-scroll {
+  --wl-doodle: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='610'%20height='1160'%3E%3Cg%20fill='none'%20stroke='%23564e3c'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.08'%3E%3Cg%20transform='translate(292%2074)%20rotate(-12)'%3E%3Cpath%20d='M0%200q0-14-14-14q-18%200-18%2020q0%2024%2026%2024q30%200%2030-36'/%3E%3C/g%3E%3Cg%20transform='translate(120%20152)%20rotate(7)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(332%20192)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(192%20120)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(95%20300)%20rotate(14)'%3E%3Cpath%20d='M0%200q0-10-10-10q-14%200-14%2015q0%2018%2020%2018q22%200%2022-28'/%3E%3C/g%3E%3Cg%20transform='translate(300%20332)%20rotate(-5)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(150%20402)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(300%20432)%20rotate(8)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3C/g%3E%3Cg%20fill='none'%20stroke='%23564e3c'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.14'%3E%3Cg%20transform='translate(110%20500)%20rotate(10)'%3E%3Cpath%20d='M0%200q0-12-12-12q-16%200-16%2016q0%2020%2022%2020q26%200%2026-30'/%3E%3C/g%3E%3Cg%20transform='translate(290%20520)%20rotate(-5)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(185%20585)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(90%20120)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(320%20260)%20rotate(-5)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(210%20200)%20rotate(6)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(250%20380)%20rotate(10)'%3E%3Cpath%20d='M0%200q0-9-9-9q-12%200-12%2012q0%2015%2017%2015q20%200%2020-23'/%3E%3C/g%3E%3Cg%20transform='translate(90%20430)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(180%20470)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(320%20400)%20rotate(8)'%3E%3Cpath%20d='M0%200q0-12-12-12q-16%200-16%2016q0%2020%2022%2020q26%200%2026-30'/%3E%3C/g%3E%3Cg%20transform='translate(150%20320)%20rotate(-4)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(300%20180)'%3E%3Ccircle%20r='11'/%3E%3C/g%3E%3Cg%20transform='translate(430%20150)'%3E%3Ccircle%20r='16'/%3E%3C/g%3E%3Cg%20transform='translate(450%20440)%20rotate(-6)'%3E%3Cpath%20d='M-22%200q7-11%2014%200t14%200'/%3E%3C/g%3E%3Cg%20transform='translate(260%20760)'%3E%3Cpath%20d='M-18%20-8h36M-18%200h36M-18%208h36'/%3E%3C/g%3E%3Cg%20transform='translate(120%20820)%20rotate(12)'%3E%3Cpath%20d='M0%200q0-9-9-9q-12%200-12%2012q0%2015%2017%2015q20%200%2020-23'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  padding: 0 18px 28px;
+  background-color: var(--color-cream);
+  background-image:
+    var(--wl-doodle),
+    var(--sb-fiber),
+    linear-gradient(90deg, transparent 30px, var(--paper-margin) 30px 31px, transparent 31px),
+    repeating-linear-gradient(transparent 0 25px, var(--paper-rule) 25px 26px);
+  background-size: 420px 800px, 200px 200px, auto, auto;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-blend-mode: multiply, soft-light, normal, normal;
+}
+
+.ml-wrap {
+  position: relative;
+  margin: 0 -18px;
+  padding-bottom: 10px;
+}
+.ml-sheet {
+  position: relative;
+  z-index: 1;
+  padding: max(22px, env(safe-area-inset-top)) 24px 36px;
+}
+.ml-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: #c7ba95;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  background-repeat: repeat;
+  box-shadow: inset 0 0 40px rgba(60, 44, 10, 0.14), 0 6px 14px -6px rgba(20, 14, 4, 0.35);
+  clip-path: polygon(
+    0 0, 100% 0, 100% 93%,
+    96% 97%, 92% 94%, 88% 98%, 84% 95%, 80% 99%, 76% 94%, 72% 97%,
+    68% 100%, 64% 95%, 60% 98%, 56% 94%, 52% 97%, 48% 100%, 44% 95%,
+    40% 98%, 36% 94%, 32% 97%, 28% 100%, 24% 95%, 20% 98%, 16% 94%,
+    12% 97%, 8% 100%, 4% 95%, 0 98%
+  );
+  filter: url(#annales-wob);
+}
+
+.ml-form-area {
+  padding: 0 18px;
+}
+
+.ml-postit {
+  width: 168px;
+  margin: 22px auto 0;
+  padding: 12px 14px 16px;
+  background: #f2b01e;
+  color: #3d2c02;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 6px 12px rgba(20, 12, 4, 0.22);
+  transform: rotate(-2.5deg);
+  filter: url(#annales-wob);
+}
+
+.ml-version {
+  margin: 22px 0 0;
+  text-align: center;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+}

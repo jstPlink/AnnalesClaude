@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.42.0',
+    date: '2026-09-15 11:44',
+    changes: [
+      'Pagina di accesso (mobile): stesso modulo della versione web — cartoncino tenuto da nastro adesivo e una puntina, schede Accedi/Registrati "a matita" che diventano inchiostro pieno da selezionate — con un\'intestazione di carta strappata più corta al posto del pannello a due fogli, pensata per lo schermo stretto.',
+    ],
+  },
+  {
     version: '0.41.0',
     date: '2026-09-15 11:23',
     changes: [

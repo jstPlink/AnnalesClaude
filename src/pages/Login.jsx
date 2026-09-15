@@ -7,6 +7,13 @@ import PhoneShell from '../components/PhoneShell'
 
 const MIN_PASSWORD = 8
 
+// Pagina di accesso mobile, skin "Pagine": stessa identità della versione
+// web (WebLogin.jsx) — il modulo (cartoncino, nastro, puntina, schede a
+// matita) è esattamente lo stesso, classi .wl-* condivise. Qui solo
+// un'intestazione di carta più corta (un foglio solo, strappo in basso) al
+// posto del pannello a due fogli della barra laterale, e niente
+// nota/foto/persone di esempio: sul telefono lo spazio verticale è poco e
+// il modulo deve restare la cosa più in vista.
 export default function Login() {
   const { login, signup, isAuthed, ready } = useAuth()
   const navigate = useNavigate()
@@ -64,126 +71,161 @@ export default function Login() {
 
   return (
     <PhoneShell>
-      <div className="flex flex-1 flex-col justify-center px-7 py-10">
-        <div className="mb-9 flex flex-col items-center gap-3">
-          <img src="/favicon.svg" alt="" className="h-16 w-16" />
-          <h1 className="text-3xl font-extrabold text-ink">Annales</h1>
-          <p className="text-ink-soft">
-            {isSignup ? 'Crea il tuo diario personale' : 'Il tuo diario personale'}
-          </p>
-        </div>
+      <main className="anim-page ml-scroll flex-1 overflow-y-auto no-scrollbar">
+        <div className="ml-wrap">
+          <div className="ml-sheet">
+            <div className="wl-logo">
+              <img src="/favicon.svg" alt="" />
+              <span className="wl-logo-name">Annales</span>
+            </div>
 
-        <div className="mb-6 flex rounded-full border border-line bg-panel p-1 text-sm font-semibold">
-          <button
-            type="button"
-            onClick={() => mode !== 'login' && switchMode()}
-            className={
-              'flex-1 rounded-full py-2 transition ' +
-              (!isSignup ? 'bg-sand text-ink shadow-sm' : 'text-ink-soft')
-            }
-          >
-            Accedi
-          </button>
-          <button
-            type="button"
-            onClick={() => mode !== 'signup' && switchMode()}
-            className={
-              'flex-1 rounded-full py-2 transition ' +
-              (isSignup ? 'bg-sand text-ink shadow-sm' : 'text-ink-soft')
-            }
-          >
-            Registrati
-          </button>
-        </div>
-
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          {isSignup && (
-            <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-              Nome <span className="font-normal">(facoltativo)</span>
-              <input
-                type="text"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="rounded-2xl border border-line bg-panel px-4 py-3 text-base text-ink outline-none focus:border-ink-soft"
-              />
-            </label>
-          )}
-
-          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-            Email
-            <input
-              type="email"
-              autoComplete={isSignup ? 'email' : 'username'}
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded-2xl border border-line bg-panel px-4 py-3 text-base text-ink outline-none focus:border-ink-soft"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-            Password
-            <input
-              type="password"
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              required
-              minLength={isSignup ? MIN_PASSWORD : undefined}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="rounded-2xl border border-line bg-panel px-4 py-3 text-base text-ink outline-none focus:border-ink-soft"
-            />
-          </label>
-
-          {isSignup && (
-            <label className="flex flex-col gap-1 text-sm font-semibold text-ink-soft">
-              Conferma password
-              <input
-                type="password"
-                autoComplete="new-password"
-                required
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                className="rounded-2xl border border-line bg-panel px-4 py-3 text-base text-ink outline-none focus:border-ink-soft"
-              />
-            </label>
-          )}
-
-          {error && (
-            <p className="rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
-              {error}
+            <h1 className="wl-headline">
+              Il diario che tiene il{' '}
+              <span className="wl-hl-wrap">
+                <span className="hl" aria-hidden="true" />
+                ritmo
+              </span>{' '}
+              delle tue giornate.
+            </h1>
+            <p className="wl-sub">
+              Annota momenti, umore e immagini. Rivedi il mese a colpo
+              d'occhio, un giorno alla volta.
             </p>
-          )}
+          </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-2 rounded-full bg-ink px-6 py-3 text-base font-bold text-cream shadow-sm transition active:scale-95 disabled:opacity-50"
-          >
-            {busy
-              ? isSignup
-                ? 'Creazione…'
-                : 'Accesso…'
-              : isSignup
-                ? 'Crea account'
-                : 'Entra'}
-          </button>
-        </form>
+        <div className="ml-form-area">
+          <div className="wl-card">
+            <span className="wl-tape h red top-a" aria-hidden="true" />
+            <span className="wl-tape h green top-b" aria-hidden="true" />
+            <span className="wl-tape v blue right-a" aria-hidden="true" />
+            <span className="wl-tape v red right-b" aria-hidden="true" />
+            <span className="wl-tape h green bottom-a" aria-hidden="true" />
+            <span className="wl-tape v blue left-a" aria-hidden="true" />
+            <span className="wl-card-pin" aria-hidden="true" />
 
-        <button
-          type="button"
-          onClick={switchMode}
-          className="mt-6 text-center text-sm text-ink-soft underline underline-offset-2"
-        >
-          {isSignup
-            ? 'Hai già un account? Accedi'
-            : 'Non hai un account? Registrati'}
-        </button>
+            <div className="wl-title-wrap">
+              <span className="hl" aria-hidden="true" />
+              <h2 className="wl-title">
+                {isSignup ? 'Crea il tuo account' : 'Bentornato'}
+              </h2>
+            </div>
+            <p className="wl-desc">
+              {isSignup
+                ? 'Bastano email e password.'
+                : 'Accedi per continuare il tuo diario.'}
+            </p>
 
-        <p className="mt-6 text-center text-xs text-ink-soft tabular-nums">
-          Annales · v{__APP_VERSION__}
-        </p>
-      </div>
+            <div className="wl-tabs" role="tablist" aria-label="Modalità">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!isSignup}
+                onClick={() => mode !== 'login' && switchMode()}
+                className="wl-tab"
+              >
+                Accedi
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isSignup}
+                onClick={() => mode !== 'signup' && switchMode()}
+                className="wl-tab"
+              >
+                Registrati
+              </button>
+            </div>
+
+            <form onSubmit={onSubmit}>
+              {isSignup && (
+                <div className="wl-field">
+                  <label className="wl-label" htmlFor="mlName">
+                    Nome <span className="opt">(facoltativo)</span>
+                  </label>
+                  <input
+                    id="mlName"
+                    type="text"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="wl-input"
+                  />
+                </div>
+              )}
+              <div className="wl-field">
+                <label className="wl-label" htmlFor="mlEmail">
+                  Email
+                </label>
+                <input
+                  id="mlEmail"
+                  type="email"
+                  autoComplete={isSignup ? 'email' : 'username'}
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="wl-input"
+                />
+              </div>
+              <div className="wl-field">
+                <label className="wl-label" htmlFor="mlPass">
+                  Password
+                </label>
+                <input
+                  id="mlPass"
+                  type="password"
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                  required
+                  minLength={isSignup ? MIN_PASSWORD : undefined}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="wl-input"
+                />
+              </div>
+              {isSignup && (
+                <div className="wl-field">
+                  <label className="wl-label" htmlFor="mlPass2">
+                    Conferma password
+                  </label>
+                  <input
+                    id="mlPass2"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={passwordConfirm}
+                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    className="wl-input"
+                  />
+                </div>
+              )}
+
+              {error && <p className="wl-error">{error}</p>}
+
+              <button type="submit" disabled={busy} className="wl-submit">
+                {busy
+                  ? isSignup
+                    ? 'Creazione…'
+                    : 'Accesso…'
+                  : isSignup
+                    ? 'Crea account'
+                    : 'Entra'}
+              </button>
+            </form>
+
+            <button type="button" onClick={switchMode} className="wl-switch">
+              {isSignup
+                ? 'Hai già un account? Accedi'
+                : 'Non hai un account? Registrati'}
+            </button>
+          </div>
+
+          <p className="ml-postit">
+            Per registrarti bastano email e password. Il resto lo scrivi tu.
+          </p>
+
+          <p className="ml-version">Annales · v{__APP_VERSION__}</p>
+        </div>
+      </main>
     </PhoneShell>
   )
 }
