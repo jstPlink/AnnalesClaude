@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { pb, fileUrl } from '../../lib/pocketbase'
+import { pb, fileUrl, getPbUrl, setPbUrl, DEFAULT_PB_URL } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
 import { fakeIdNumber, fakeSignature } from '../../lib/idCard'
 import { MONTHS_IT } from '../../lib/dates'
@@ -39,6 +40,7 @@ function FieldRow({ label, value, dots, editing, onEdit, children }) {
 // posto tramite le matitine, invece che come semplice link al profilo.
 export default function ProfileCard() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const name = user?.name?.trim() || ''
   const email = user?.email || '—'
   const initial = (name || email || '?').charAt(0).toUpperCase()
@@ -86,6 +88,8 @@ export default function ProfileCard() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
 
+  const [serverDraft, setServerDraft] = useState(getPbUrl())
+
   function openEdit(field) {
     setEditingField(field)
     setFieldMsg(null)
@@ -94,6 +98,7 @@ export default function ProfileCard() {
     setOldPassword('')
     setNewPassword('')
     setNewPasswordConfirm('')
+    setServerDraft(getPbUrl())
   }
 
   function closeEdit() {
@@ -164,6 +169,20 @@ export default function ProfileCard() {
     } finally {
       setSavingPassword(false)
     }
+  }
+
+  // Cambiare server = disconnettersi: il token attuale è firmato dal
+  // vecchio server e non vale su quello nuovo. Applica l'indirizzo, sloga e
+  // rimanda al login (dell'installazione appena impostata).
+  function saveServer() {
+    const next = serverDraft.trim() || DEFAULT_PB_URL
+    if (next === getPbUrl()) {
+      setEditingField(null)
+      return
+    }
+    setPbUrl(next)
+    pb.authStore.clear()
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -316,6 +335,41 @@ export default function ProfileCard() {
                   onClick={savePassword}
                 >
                   {savingPassword ? '…' : 'Salva'}
+                </button>
+                <button type="button" className="pf-edit-btn" onClick={closeEdit}>
+                  Annulla
+                </button>
+              </div>
+            </div>
+          </FieldRow>
+
+          <FieldRow
+            label="Server"
+            value={getPbUrl()}
+            editing={editingField === 'server'}
+            onEdit={() => openEdit('server')}
+          >
+            <div className="pf-edit stack">
+              <input
+                type="text"
+                autoFocus
+                value={serverDraft}
+                onChange={(e) => setServerDraft(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveServer()}
+                placeholder={DEFAULT_PB_URL}
+              />
+              <p className="pf-hint">
+                Cambiando server verrai disconnesso: dovrai accedere di nuovo
+                (anche con un altro account, se il nuovo server ne ha uno diverso).
+              </p>
+              <div className="pf-edit-actions">
+                <button
+                  type="button"
+                  className="pf-edit-btn save"
+                  disabled={!serverDraft.trim()}
+                  onClick={saveServer}
+                >
+                  Cambia e disconnetti
                 </button>
                 <button type="button" className="pf-edit-btn" onClick={closeEdit}>
                   Annulla

@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.44.0',
+    date: '2026-09-15 13:37',
+    changes: [
+      'Indirizzo del server PocketBase modificabile senza ricompilare: visibile e cambiabile dalla pagina di accesso (web e mobile) e da Impostazioni → tessera profilo. Cambiarlo da Impostazioni disconnette (il token vale solo per il server precedente): si rimanda al login. Non compare nella tessera della barra laterale.',
+    ],
+  },
+  {
     version: '0.43.0',
     date: '2026-09-15 13:29',
     changes: [

@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { describeError } from '../../lib/notes'
 import { moodColor } from '../../lib/mood'
+import ServerUrlField from '../../components/ServerUrlField'
 
 const MIN_PASSWORD = 8
 
@@ -365,6 +366,8 @@ export default function WebLogin() {
                 ? 'Hai già un account? Accedi'
                 : 'Non hai un account? Registrati'}
             </button>
+
+            <ServerUrlField />
           </div>
         </div>
       </div>
