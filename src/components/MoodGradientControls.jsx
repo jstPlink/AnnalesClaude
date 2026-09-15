@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { pb } from '../lib/pocketbase'
 import { describeError } from '../lib/notes'
@@ -13,6 +13,9 @@ import {
 const STOP_LABELS = ['Pessimo', 'Giù', 'Sotto la media', 'Sopra la media', 'Bene', 'Ottimo']
 // Distanza minima fra due soglie vicine, perché il gradiente non degeneri.
 const MIN_GAP = 0.03
+// Sotto questo spostamento (in pixel) un tap sul pallino apre il selettore
+// colore; sopra, è un trascinamento che sposta la soglia.
+const DRAG_THRESHOLD_PX = 4
 
 function isValidHexArray(v) {
   return (
@@ -21,7 +24,8 @@ function isValidHexArray(v) {
 }
 function isValidPositions(v) {
   if (!Array.isArray(v) || v.length !== STOP_LABELS.length) return false
-  if (v[0] !== 0 || v[v.length - 1] !== 1) return false
+  if (!Number.isFinite(v[0]) || v[0] < 0) return false
+  if (v[v.length - 1] > 1) return false
   for (let i = 1; i < v.length; i++) {
     if (!(Number.isFinite(v[i]) && v[i] > v[i - 1])) return false
   }
@@ -46,12 +50,11 @@ function gradientCss(colors, positions) {
   return `linear-gradient(to right, ${stops.join(', ')})`
 }
 
-// Editor del gradiente del mood: colori E soglie dei 4 stop interni (gli
-// estremi, 0 e 1, restano fissi). Salvato sull'account (campo
-// `moodGradient`), quindi vale su tutti i dispositivi. Gli slot colorati
-// sono cliccabili direttamente sopra il gradiente (aprono il selettore
-// colore nativo, posizionati sulla propria soglia) — niente più legenda
-// separata sotto.
+// Editor del gradiente del mood: colori E soglie di tutti e 6 gli stop,
+// estremi compresi. Salvato sull'account (campo `moodGradient`), quindi
+// vale su tutti i dispositivi. I pallini sopra il gradiente si trascinano
+// per spostare la soglia, oppure si toccano (senza trascinare) per aprire
+// il selettore colore nativo — il valore sotto è di sola lettura.
 export default function MoodGradientControls() {
   const { user } = useAuth()
   const saved = normalize(user?.moodGradient)
@@ -59,6 +62,9 @@ export default function MoodGradientControls() {
   const [positions, setPositions] = useState(saved.positions)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState(null)
+  const barRef = useRef(null)
+  const colorInputRefs = useRef([])
+  const dragRef = useRef(null) // { i, startClientX, moved }
 
   // Riallinea se l'utente (quindi il gradiente salvato) cambia da fuori.
   useEffect(() => {
@@ -79,17 +85,43 @@ export default function MoodGradientControls() {
     setStatus(null)
   }
 
-  // Sposta la soglia interna i (1..4), restando fra le due vicine con un
-  // margine minimo — così l'ordine e gli estremi fissi (0 e 1) non si rompono
-  // mai, senza dover validare via HTML min/max dinamici sull'input.
+  // Sposta la soglia i (0..5, estremi compresi), restando fra le due vicine
+  // (o 0/1 per gli estremi) con un margine minimo — così l'ordine non si
+  // rompe mai, senza dover validare via HTML min/max dinamici sull'input.
   function setPosition(i, value) {
     setPositions((prev) => {
-      const lo = prev[i - 1] + MIN_GAP
-      const hi = prev[i + 1] - MIN_GAP
+      const lo = i === 0 ? 0 : prev[i - 1] + MIN_GAP
+      const hi = i === prev.length - 1 ? 1 : prev[i + 1] - MIN_GAP
       const clamped = Math.min(hi, Math.max(lo, value))
       return prev.map((p, idx) => (idx === i ? clamped : p))
     })
     setStatus(null)
+  }
+
+  function fracFromClientX(clientX) {
+    const rect = barRef.current?.getBoundingClientRect()
+    if (!rect || rect.width === 0) return 0
+    return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+  }
+
+  function onHandlePointerDown(i, e) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = { i, startClientX: e.clientX, moved: false }
+  }
+  function onHandlePointerMove(i, e) {
+    const drag = dragRef.current
+    if (!drag || drag.i !== i) return
+    if (!drag.moved && Math.abs(e.clientX - drag.startClientX) < DRAG_THRESHOLD_PX) return
+    drag.moved = true
+    setPosition(i, fracFromClientX(e.clientX))
+  }
+  function onHandlePointerUp(i) {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (drag?.i === i && !drag.moved) {
+      // Tap senza trascinamento: apre il selettore colore nativo.
+      colorInputRefs.current[i]?.click()
+    }
   }
 
   async function save(nextColors = colors, nextPositions = positions) {
@@ -121,63 +153,61 @@ export default function MoodGradientControls() {
     <div className="space-y-4">
       <p className="text-xs text-ink-soft">
         I colori e le soglie con cui l’app rappresenta l’umore delle note
-        (barra del mood, pagine del mese, statistiche). Tocca un pallino per
-        cambiarne il colore; i 4 numeri sotto spostano le soglie intermedie
-        (gli estremi, “pessimo” e “ottimo”, restano fissi). Valgono su tutti i
-        tuoi dispositivi.
+        (barra del mood, pagine del mese, statistiche). Trascina un pallino
+        per spostarne la soglia, toccalo senza trascinare per cambiarne il
+        colore. Valgono su tutti i tuoi dispositivi.
       </p>
 
-      {/* Gradiente + slot colorati cliccabili, posizionati sulla propria
-          soglia: tocca un pallino per aprire il selettore colore nativo. */}
+      {/* Gradiente + pallini trascinabili, posizionati sulla propria soglia:
+          un tocco (senza trascinamento) apre il selettore colore nativo. */}
       <div className="relative py-3">
         <div
+          ref={barRef}
           className="h-6 w-full rounded-full border border-line-soft"
           style={{ background: gradientCss(colors, positions) }}
         />
         <div className="absolute inset-x-0 top-0 h-full">
           {colors.map((h, i) => (
-            <label
+            <div
               key={i}
-              className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-cream shadow-md transition active:scale-95"
+              onPointerDown={(e) => onHandlePointerDown(i, e)}
+              onPointerMove={(e) => onHandlePointerMove(i, e)}
+              onPointerUp={() => onHandlePointerUp(i)}
+              className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-cream shadow-md transition active:scale-95 active:cursor-grabbing"
               style={{ left: `${positions[i] * 100}%`, backgroundColor: h }}
-              title={`${STOP_LABELS[i]} — tocca per cambiare colore`}
+              title={`${STOP_LABELS[i]} — trascina per spostare, tocca per cambiare colore`}
             >
               <input
+                ref={(el) => {
+                  colorInputRefs.current[i] = el
+                }}
                 type="color"
                 value={h}
                 onChange={(e) => setColor(i, e.target.value)}
                 className="h-0 w-0 opacity-0"
+                tabIndex={-1}
                 aria-label={`Colore per "${STOP_LABELS[i]}"`}
               />
-            </label>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Soglie dei 4 stop interni (gli estremi sono fissi a 0 e 100) */}
-      <div className="grid grid-cols-4 gap-2">
-        {[1, 2, 3, 4].map((i) => (
-          <label
+      {/* Valore di ogni soglia: sola lettura (si sposta trascinando il
+          pallino sopra, non scrivendo un numero). */}
+      <div className="grid grid-cols-3 gap-2">
+        {STOP_LABELS.map((label, i) => (
+          <div
             key={i}
             className="flex flex-col gap-1 rounded-xl border border-line bg-cream px-2 py-1.5"
           >
             <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
-              {STOP_LABELS[i]}
+              {label}
             </span>
-            <span className="flex items-center gap-0.5">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step={1}
-                value={Math.round(positions[i] * 100)}
-                onChange={(e) => setPosition(i, Number(e.target.value) / 100)}
-                className="w-full min-w-0 rounded-lg border border-line-soft bg-tag px-1.5 py-1 text-sm font-bold tabular-nums text-ink"
-                aria-label={`Soglia per "${STOP_LABELS[i]}" (percento)`}
-              />
-              <span className="text-xs text-ink-soft">%</span>
+            <span className="text-sm font-bold tabular-nums text-ink">
+              {Math.round(positions[i] * 100)}%
             </span>
-          </label>
+          </div>
         ))}
       </div>
 

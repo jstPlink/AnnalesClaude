@@ -347,6 +347,7 @@ export async function listNotesFiltered({
   moodMin,
   moodMax,
   place,
+  song,
   text,
   personIds,
   tagIds,
@@ -388,6 +389,12 @@ export async function listNotesFiltered({
   }
   if (hasPlace) {
     list = list.filter((n) => Boolean(n.place))
+  }
+  if (song && song.trim()) {
+    const q = song.trim().toLowerCase()
+    list = list.filter((n) =>
+      (n.songs || []).some((s) => (s?.title || '').trim().toLowerCase() === q),
+    )
   }
   // Ricerca testo su titolo + contenuto (lato client sul testo semplice: il
   // campo `content` è HTML, un `~` sul server matcherebbe anche i tag).

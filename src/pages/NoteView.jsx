@@ -413,7 +413,7 @@ export default function NoteView() {
       <MobileTopBar className="mtop-note">
         <div className="mtop-row1">
           <button type="button" onClick={() => navigate(-1)} className="mchev" title="Indietro" aria-label="Indietro">
-            <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+            <Icon name="chevron-left" size={21} strokeWidth={2.8} />
           </button>
           <span className="mtop-year">{year}</span>
           <button

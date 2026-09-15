@@ -8,8 +8,6 @@ import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
-import ImageCarousel from '../components/ImageCarousel'
-import MarqueeText from '../components/MarqueeText'
 import OnThisDay from '../components/OnThisDay'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
@@ -17,19 +15,7 @@ import MonthPages from './web/MonthPages'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
-import { dayMood, moodColor, moodTextColor, moodTitleOpacity } from '../lib/mood'
-import { getSkinMonth } from '../lib/prefs'
-import { fileUrl } from '../lib/pocketbase'
-import {
-  MONTHS_IT,
-  addMonths,
-  isWeekend,
-  monthDayKeys,
-  monthRange,
-  parseWall,
-  todayKey,
-  weekdayShort,
-} from '../lib/dates'
+import { MONTHS_IT, addMonths, monthDayKeys, monthRange, todayKey } from '../lib/dates'
 
 const SWIPE_THRESHOLD = 55
 
@@ -102,54 +88,20 @@ export default function MonthView() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  const todayK = todayKey()
-
-  // Skin "Pagine" anche da telefono: quando la vista mese è impostata su
-  // "pages" (Aspetto), i giorni diventano pagine di diario impilate come sul
-  // web. Riusa il componente MonthPages; l'impaginato passa a verticale grazie
-  // al blocco @media (max-width: 480px) in index.css.
-  const skinPages = getSkinMonth() === 'pages'
-  const pagesData = useMemo(() => {
-    if (!skinPages) return null
-    return {
+  // Skin "Pagine", unica rimasta: i giorni sono pagine di diario impilate,
+  // come sul web. Riusa il componente MonthPages; l'impaginato passa a
+  // verticale grazie al blocco @media (max-width: 480px) in index.css.
+  const pagesData = useMemo(
+    () => ({
       grid: monthDayKeys(cursor.year, cursor.month).map((key) => ({
         key,
         inMonth: true,
       })),
       byDay: groupByDay(notes),
       peopleById: new Map(allPeople.map((p) => [p.id, p])),
-    }
-  }, [skinPages, notes, cursor.year, cursor.month, allPeople])
-
-  // Tutti i giorni del mese, con o senza note.
-  const days = useMemo(() => {
-    const grouped = groupByDay(notes)
-    return monthDayKeys(cursor.year, cursor.month).map((key) => {
-      const dayNotes = grouped.get(key) || []
-      const images = dayNotes.flatMap((n) =>
-        (n.images || []).map((fn) => ({
-          url: fileUrl(n, fn, { thumb: '200x200' }),
-          alt: n.title || '',
-        })),
-      )
-      // Titoli di tutte le note del giorno (nessun filtro sul mood: quelle
-      // vicine al centro scala sfumano invece di sparire, vedi
-      // moodTitleOpacity).
-      const titles = dayNotes
-        .filter((n) => n.title)
-        .map((n) => ({ text: n.title, mood: n.mood }))
-      return {
-        key,
-        dayNum: parseWall(key)?.d ?? '',
-        weekday: weekdayShort(key),
-        weekend: isWeekend(key),
-        hasNotes: dayNotes.length > 0,
-        avgMood: dayNotes.length ? dayMood(dayNotes) : null,
-        titles,
-        images,
-      }
-    })
-  }, [notes, cursor.year, cursor.month])
+    }),
+    [notes, cursor.year, cursor.month, allPeople],
+  )
 
   return (
     <PhoneShell>
@@ -198,98 +150,17 @@ export default function MonthView() {
 
         <OnThisDay className="mx-3 mb-1 mt-3" />
 
-        {skinPages ? (
-          <div className="pb-2 pt-1">
-            {pagesData && (
-              <MonthPages
-                grid={pagesData.grid}
-                byDay={pagesData.byDay}
-                monthLabel={MONTHS_IT[cursor.month]}
-                onNavigate={navigate}
-                peopleById={pagesData.peopleById}
-                immichUrl={user?.immichUrl?.trim()}
-                immichApiKey={user?.immichApiKey?.trim()}
-              />
-            )}
-          </div>
-        ) : (
-        <ul className="divide-y divide-line-soft">
-          {days.map((d) => {
-            const isToday = d.key === todayK
-            return (
-              <li key={d.key}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/day/${d.key}`)}
-                  className={
-                    'flex w-full items-stretch gap-3 px-3 py-2 text-left transition active:brightness-95 ' +
-                    (isToday ? 'bg-tag ' : '') +
-                    (d.hasNotes ? '' : 'opacity-55')
-                  }
-                >
-                  {/* Targhetta giorno: sfondo = colore del mood del giorno */}
-                  <div
-                    className={
-                      'flex w-[2.8rem] shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-xl py-2 ' +
-                      (d.hasNotes ? '' : 'border border-line-soft')
-                    }
-                    style={
-                      d.hasNotes
-                        ? { backgroundColor: moodColor(d.avgMood) }
-                        : undefined
-                    }
-                  >
-                    <span
-                      className="text-[1.35rem] font-extrabold leading-none"
-                      style={{
-                        color: d.hasNotes
-                          ? moodTextColor(d.avgMood)
-                          : d.weekend
-                            ? 'var(--color-weekend)'
-                            : 'var(--color-ink)',
-                      }}
-                    >
-                      {d.dayNum}
-                    </span>
-                    {d.weekend ? (
-                      <span className="rounded-full bg-weekend px-1.5 text-[10px] font-bold lowercase text-white">
-                        {d.weekday}
-                      </span>
-                    ) : (
-                      <span
-                        className="text-xs font-semibold lowercase"
-                        style={{
-                          color: d.hasNotes
-                            ? moodTextColor(d.avgMood)
-                            : 'var(--color-ink-soft)',
-                        }}
-                      >
-                        {d.weekday}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
-                    {d.titles.map((t, i) => (
-                      <MarqueeText
-                        key={i}
-                        className="text-[15px] font-medium text-ink"
-                        style={{ opacity: moodTitleOpacity(t.mood) }}
-                      >
-                        {t.text}
-                      </MarqueeText>
-                    ))}
-                  </div>
-
-                  <div className="flex w-[88px] shrink-0 items-center justify-end">
-                    <ImageCarousel images={d.images} size={84} />
-                  </div>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-        )}
+        <div className="pb-2 pt-1">
+          <MonthPages
+            grid={pagesData.grid}
+            byDay={pagesData.byDay}
+            monthLabel={MONTHS_IT[cursor.month]}
+            onNavigate={navigate}
+            peopleById={pagesData.peopleById}
+            immichUrl={user?.immichUrl?.trim()}
+            immichApiKey={user?.immichApiKey?.trim()}
+          />
+        </div>
 
         {loading && !notes.length && (
           <p className="p-6 text-center text-sm text-ink-soft">Carico…</p>

@@ -8,25 +8,17 @@ import {
   ANIM_LABELS,
   PAPERS,
   PAPER_LABELS,
-  SKIN_DAYS,
-  SKIN_DAY_LABELS,
-  SKIN_MONTHS,
-  SKIN_MONTH_LABELS,
   getTheme,
   getFont,
   getAnim,
   getPaper,
   getPaperImage,
-  getSkinDay,
-  getSkinMonth,
   setTheme,
   setFont,
   setAnim,
   setPaper,
   setPaperImage,
   clearPaperImage,
-  setSkinDay,
-  setSkinMonth,
 } from '../lib/prefs'
 
 // Ridimensiona un'immagine scelta dall'utente a un lato massimo e la
@@ -96,8 +88,6 @@ export default function AppearanceControls() {
   const [paper, setPaperState] = useState(getPaper())
   const [paperImage, setPaperImageState] = useState(getPaperImage())
   const [imageError, setImageError] = useState('')
-  const [skinDay, setSkinDayState] = useState(getSkinDay())
-  const [skinMonth, setSkinMonthState] = useState(getSkinMonth())
   const fileRef = useRef(null)
 
   async function onPickImage(e) {
@@ -242,36 +232,6 @@ export default function AppearanceControls() {
             L’immagine resta su questo dispositivo (ridimensionata a max 1400 px).
           </p>
         )}
-      </div>
-
-      <div className="space-y-3 border-t border-line-soft pt-4">
-        <Segmented
-          label="Vista giorno"
-          options={SKIN_DAYS}
-          labels={SKIN_DAY_LABELS}
-          value={skinDay}
-          onChange={(v) => {
-            setSkinDayState(v)
-            setSkinDay(v)
-          }}
-        />
-        <Segmented
-          label="Vista mese"
-          options={SKIN_MONTHS}
-          labels={SKIN_MONTH_LABELS}
-          value={skinMonth}
-          onChange={(v) => {
-            setSkinMonthState(v)
-            setSkinMonth(v)
-          }}
-        />
-        <p className="text-xs text-ink-soft">
-          Stili grafici alternativi per una singola vista. Per il giorno,
-          “Disegnata” lo trasforma in un diario tracciato a mano e “Pagine” in
-          un foglio con le note come cartoncini lungo la timeline; per il mese
-          “Pagine” lo rende come pagine di diario impilate e “Bacheca” come un
-          collage (solo da web). Web e telefono, tranne dove indicato.
-        </p>
       </div>
 
       <p className="text-xs text-ink-soft">

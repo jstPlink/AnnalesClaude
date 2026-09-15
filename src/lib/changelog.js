@@ -9,6 +9,19 @@
 
 export const CHANGELOG = [
   {
+    version: '0.45.0',
+    date: '2026-09-15 15:45',
+    changes: [
+      'Skin "Pagine" ora è l\'unica in tutta l\'app: tolti gli stili alternativi (Disegnata, Bacheca, Elenco) sia da Impostazioni → Aspetto che dal codice — meno codice morto, un solo linguaggio visivo.',
+      'Vista giorno: il colore del cartoncino di ogni nota ora segue il gradiente del mood in modo continuo, non più a scatti di 4 fasce colore.',
+      'Colori del mood (Impostazioni → Dati utente): anche gli estremi ("Pessimo"/"Ottimo") si possono spostare, trascinando i pallini direttamente sul gradiente invece di scrivere un numero.',
+      'Impostazioni: "Esci" ed "Elimina account" ora in un\'unica sezione "Account"; i sotto-pannelli (Persone, Tag, Luoghi...) hanno la stessa carta/grana del resto dell\'app invece del vecchio bordo colorato; tessera profilo con foto quadrata e un solo pulsante "Modifica dati" per tutti i campi insieme.',
+      'Ricerca da telefono: nuovo blocco "Canzoni" con tutte le canzoni salvate come filtro, "Note con luoghi" spostato dentro "Luogo", sezioni Tag e Ordina per collassabili, contenitori più leggibili, tolti il pulsante Calendario e la barra del mood ridondanti.',
+      'Pulsante "indietro" ingrandito nelle viste giorno, ricerca, nota e Impostazioni; corretto un bug grafico per cui le targhette persone/luogo/canzone in vista mese (telefono) potevano restare invisibili su alcuni schermi reali.',
+      'Barra laterale web: la voce di menu attiva ora è un vetrino con cornice di legno chiaro (venatura vera) al posto del semplice sfondo più chiaro.',
+    ],
+  },
+  {
     version: '0.44.0',
     date: '2026-09-15 13:37',
     changes: [

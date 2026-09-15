@@ -514,7 +514,7 @@ export default function Profile() {
           title="Indietro"
           aria-label="Indietro"
         >
-          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+          <Icon name="chevron-left" size={21} strokeWidth={2.8} />
         </button>
         <h2 className="flex-1 text-center font-serif text-xl font-extrabold text-ink">
           Profilo
@@ -538,11 +538,11 @@ export default function Profile() {
           icon="list"
           description="Dati unici e personali tuoi, sincronizzati su tutti i dispositivi."
         >
-          <SettingsSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
+          <SettingsSection nested title="Colori del mood" icon="sparkles">
             <MoodGradientControls />
           </SettingsSection>
 
-          <SettingsSection nested title="Persone" icon="user" accent="#8397a6">
+          <SettingsSection nested title="Persone" icon="user">
             <p className="text-xs text-ink-soft">
               Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
               Immich o creane una nuova qui.
@@ -630,7 +630,7 @@ export default function Profile() {
             )}
           </SettingsSection>
 
-          <SettingsSection nested title="Tag" icon="tag" accent="#c9a227">
+          <SettingsSection nested title="Tag" icon="tag">
             <p className="text-xs text-ink-soft">
               Elenco dei tag selezionabili nelle note.
             </p>
@@ -677,7 +677,7 @@ export default function Profile() {
             </div>
           </SettingsSection>
 
-          <SettingsSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
+          <SettingsSection nested title="Luoghi" icon="map-pin">
             <p className="text-xs text-ink-soft">
               Elenco dei luoghi selezionabili nelle note. Vengono aggiunti
               anche automaticamente quando ne scegli uno da una nota.
@@ -785,7 +785,7 @@ export default function Profile() {
             </button>
           </SettingsSection>
 
-          <SettingsSection nested title="Canzoni" icon="music" accent="#8fae5c">
+          <SettingsSection nested title="Canzoni" icon="music">
             <p className="text-xs text-ink-soft">
               Le canzoni collegate alle note, con quante note le usano
               ciascuna. Sola lettura: si aggiungono dalle note stesse.
@@ -799,7 +799,7 @@ export default function Profile() {
           icon="link"
           description="Immich, Gemini (IA), Spotify."
         >
-            <SettingsSection nested title="Immich" icon="image" accent="#8397a6">
+            <SettingsSection nested title="Immich" icon="image">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
               aggiungi immagini a una nota.
@@ -859,7 +859,7 @@ export default function Profile() {
             </div>
             </SettingsSection>
 
-            <SettingsSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
+            <SettingsSection nested title="Gemini (IA)" icon="sparkles">
               <p className="text-xs text-ink-soft">
                 Chiave API di Google AI Studio per ripulire il testo delle note,
                 riconoscere le persone citate e scrivere contenuti con l'IA.
@@ -905,7 +905,7 @@ export default function Profile() {
                 </button>
               </div>
 
-              <SettingsSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
+              <SettingsSection nested title="Istruzioni personalizzate" icon="edit">
                 <p className="text-xs text-ink-soft">
                   Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
                   usare, cosa evidenziare o evitare...). Salvate sul tuo
@@ -941,7 +941,7 @@ export default function Profile() {
               </SettingsSection>
             </SettingsSection>
 
-            <SettingsSection nested title="Spotify" icon="music" accent="#8fae5c">
+            <SettingsSection nested title="Spotify" icon="music">
             <p className="text-xs text-ink-soft">
               Client ID/Secret di un'app Spotify (Client Credentials) per
               cercare canzoni da aggiungere alle note, senza incollare link a
@@ -1057,26 +1057,29 @@ export default function Profile() {
           <Changelog />
         </SettingsSection>
 
-        <button
-          type="button"
-          onClick={onLogout}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
-        >
-          <Icon name="logout" size={18} />
-          Esci
-        </button>
-
         <SettingsSection
-          title="Elimina account"
-          icon="alert-triangle"
-          description="Azione permanente: cancella il tuo diario e tutti i dati collegati."
-          danger
-          noCollapse
+          title="Account"
+          icon="user"
+          description="Esci dal tuo account o eliminalo in modo permanente."
         >
-          <DeleteAccount />
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
+          >
+            <Icon name="logout" size={18} />
+            Esci
+          </button>
+
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-line-soft pt-4">
+            <span className="text-xs text-ink-soft">
+              Elimina il tuo diario e tutti i dati collegati — azione permanente.
+            </span>
+            <DeleteAccount />
+          </div>
         </SettingsSection>
 
-        <p className="mt-3 text-center text-xs text-ink-soft">
+        <p className="mt-3 text-center text-sm text-ink-soft">
           Annales · versione {__APP_VERSION__}
         </p>
       </main>

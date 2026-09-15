@@ -7,8 +7,6 @@ const FONT_KEY = 'annales.font'
 const ANIM_KEY = 'annales.anim'
 const PAPER_KEY = 'annales.paper'
 const PAPER_IMAGE_KEY = 'annales.paperImage'
-const SKIN_DAY_KEY = 'annales.skinDay'
-const SKIN_MONTH_KEY = 'annales.skinMonth'
 
 export const THEMES = ['system', 'light', 'dark']
 export const THEME_LABELS = { system: 'Sistema', light: 'Chiaro', dark: 'Scuro' }
@@ -53,20 +51,6 @@ export const PAPER_LABELS = {
   immagine: 'Immagine',
 }
 
-// Skin per pagina: temi grafici alternativi applicati a una singola vista.
-// "sketch" = diario disegnato a mano sulla vista giorno (web + mobile).
-// "board" = bacheca collage sulla vista mese (solo web).
-// "pages" = pagine di diario impilate/foglio di diario, su vista mese e
-// vista giorno (web + mobile).
-export const SKIN_DAYS = ['plain', 'sketch', 'pages']
-export const SKIN_DAY_LABELS = { plain: 'Normale', sketch: 'Disegnata', pages: 'Pagine' }
-export const SKIN_MONTHS = ['plain', 'board', 'pages']
-export const SKIN_MONTH_LABELS = {
-  plain: 'Elenco',
-  board: 'Bacheca',
-  pages: 'Pagine',
-}
-
 function read(key, fallback, allowed) {
   try {
     const v = localStorage.getItem(key)
@@ -97,13 +81,6 @@ export function getPaperImage() {
     return ''
   }
 }
-export function getSkinDay() {
-  return read(SKIN_DAY_KEY, 'plain', SKIN_DAYS)
-}
-export function getSkinMonth() {
-  return read(SKIN_MONTH_KEY, 'plain', SKIN_MONTHS)
-}
-
 function prefersDark() {
   try {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -156,13 +133,10 @@ export function applyPrefs() {
     root.style.removeProperty('--paper-custom')
   }
 
-  const skinDay = getSkinDay()
-  if (skinDay === 'plain') delete root.dataset.skinDay
-  else root.dataset.skinDay = skinDay
-
-  const skinMonth = getSkinMonth()
-  if (skinMonth === 'plain') delete root.dataset.skinMonth
-  else root.dataset.skinMonth = skinMonth
+  // Skin "Pagine": l'unica rimasta, per vista giorno e vista mese — non più
+  // una preferenza dell'utente (vedi AppearanceControls.jsx).
+  root.dataset.skinDay = 'pages'
+  root.dataset.skinMonth = 'pages'
 
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', dark ? '#211e18' : '#dbd1bd')
@@ -208,12 +182,6 @@ export function clearPaperImage() {
     // niente: se non si può rimuovere, applyPrefs userà comunque il valore
   }
   applyPrefs()
-}
-export function setSkinDay(v) {
-  setKey(SKIN_DAY_KEY, v)
-}
-export function setSkinMonth(v) {
-  setKey(SKIN_MONTH_KEY, v)
 }
 
 // In modalità "Sistema", segue i cambi del SO in tempo reale (tema + motion).

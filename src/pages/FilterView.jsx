@@ -8,7 +8,12 @@ import Icon from '../components/Icon'
 import MarqueeText from '../components/MarqueeText'
 import PersonAvatar from '../components/PersonAvatar'
 import { useAuth } from '../context/AuthContext'
-import { listNotesFiltered, describeError, peopleUsageCounts } from '../lib/notes'
+import {
+  listNotesFiltered,
+  describeError,
+  peopleUsageCounts,
+  songsUsageList,
+} from '../lib/notes'
 import { listPeople, topByUsage } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { listPlaces } from '../lib/places'
@@ -64,6 +69,9 @@ export default function FilterView() {
   const immichApiKey = user?.immichApiKey?.trim()
   const [peopleOpen, setPeopleOpen] = useState(false)
   const [placesOpen, setPlacesOpen] = useState(false)
+  const [tagsOpen, setTagsOpen] = useState(false)
+  const [sortOpen, setSortOpen] = useState(false)
+  const [songsOpen, setSongsOpen] = useState(false)
   const [peopleUsage, setPeopleUsage] = useState(null)
   const [showAllPeople, setShowAllPeople] = useState(false)
   const [filters, setFilters] = useState({
@@ -75,6 +83,7 @@ export default function FilterView() {
     limit: '',
     text: '',
     place: '',
+    song: '',
     personIds: [],
     tagIds: [],
     hasSongs: false,
@@ -89,6 +98,8 @@ export default function FilterView() {
   const [tagsError, setTagsError] = useState('')
   const [places, setPlaces] = useState([])
   const [placesError, setPlacesError] = useState('')
+  const [songs, setSongs] = useState([])
+  const [songsError, setSongsError] = useState('')
 
   useEffect(() => {
     listPeople()
@@ -100,6 +111,9 @@ export default function FilterView() {
     listPlaces()
       .then(setPlaces)
       .catch((err) => setPlacesError(describeError(err)))
+    songsUsageList()
+      .then(setSongs)
+      .catch((err) => setSongsError(describeError(err)))
     peopleUsageCounts()
       .then(setPeopleUsage)
       .catch(() => {})
@@ -132,6 +146,13 @@ export default function FilterView() {
     set({ place: filters.place === name ? '' : name })
   }
 
+  // Una sola canzone alla volta, come il luogo (non è una relazione, è un
+  // titolo confrontato per uguaglianza — vedi listNotesFiltered).
+  function toggleSong(title) {
+    haptic()
+    set({ song: filters.song === title ? '' : title })
+  }
+
   async function applyFilters() {
     haptic()
     setLoading(true)
@@ -147,6 +168,7 @@ export default function FilterView() {
         moodMax,
         text: filters.text,
         place: filters.place,
+        song: filters.song,
         personIds: filters.personIds,
         tagIds: filters.tagIds,
         hasSongs: filters.hasSongs,
@@ -173,7 +195,7 @@ export default function FilterView() {
           title="Indietro"
           aria-label="Indietro"
         >
-          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+          <Icon name="chevron-left" size={21} strokeWidth={2.8} />
         </button>
         <h2 className="flex-1 text-center font-serif text-xl font-extrabold text-ink">
           Filtri
@@ -212,7 +234,6 @@ export default function FilterView() {
               <Icon name="sparkles" size={15} />
               Mood (0–100)
             </p>
-            <div className="wf-mood-bar" aria-hidden="true" />
             <div className="wf-row">
               <input
                 type="number"
@@ -252,51 +273,62 @@ export default function FilterView() {
             />
           </div>
 
-          {placesError && (
-            <div className="wf-sub">
-              <p className="wf-title">
-                <Icon name="map-pin" size={15} />
-                Luogo
-              </p>
-              <p className="text-xs text-delete-dark">{placesError}</p>
-            </div>
-          )}
-
-          {places.length > 0 && (
-            <div className="wf-sub">
-              <button
-                type="button"
-                onClick={() => setPlacesOpen((v) => !v)}
-                className="wf-title w-full"
-              >
-                <Icon name="map-pin" size={15} />
-                Luogo
-                {filters.place && <span className="count">1</span>}
-                <Icon
-                  name="chevron-right"
-                  size={14}
-                  className={
-                    'ml-auto shrink-0 transition-transform ' +
-                    (placesOpen ? 'rotate-90' : '')
-                  }
-                />
-              </button>
-              {placesOpen && (
-                <div className="wf-chips">
-                  {places.map((p) => (
-                    <ChipButton
-                      key={p.id}
-                      icon="map-pin"
-                      active={filters.place === p.name}
-                      onClick={() => togglePlace(p.name)}
-                    >
-                      {p.name}
-                    </ChipButton>
-                  ))}
-                </div>
+          <div className="wf-sub">
+            <button
+              type="button"
+              onClick={() => setPlacesOpen((v) => !v)}
+              className="wf-title w-full"
+            >
+              <Icon name="map-pin" size={15} />
+              Luogo
+              {(filters.hasPlace ? 1 : 0) + (filters.place ? 1 : 0) > 0 && (
+                <span className="count">
+                  {(filters.hasPlace ? 1 : 0) + (filters.place ? 1 : 0)}
+                </span>
               )}
-            </div>
-          )}
+              <Icon
+                name="chevron-right"
+                size={14}
+                className={
+                  'ml-auto shrink-0 transition-transform ' +
+                  (placesOpen ? 'rotate-90' : '')
+                }
+              />
+            </button>
+            {placesOpen && (
+              <>
+                {placesError && (
+                  <p className="text-xs text-delete-dark">{placesError}</p>
+                )}
+                <div className="wf-chips">
+                  <ChipButton
+                    icon="map-pin"
+                    active={filters.hasPlace}
+                    onClick={() => {
+                      haptic()
+                      set({ hasPlace: !filters.hasPlace })
+                    }}
+                  >
+                    Note con luoghi
+                  </ChipButton>
+                </div>
+                {places.length > 0 && (
+                  <div className="wf-chips mt-2">
+                    {places.map((p) => (
+                      <ChipButton
+                        key={p.id}
+                        icon="map-pin"
+                        active={filters.place === p.name}
+                        onClick={() => togglePlace(p.name)}
+                      >
+                        {p.name}
+                      </ChipButton>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {peopleError && (
             <div className="wf-sub">
@@ -383,74 +415,140 @@ export default function FilterView() {
 
           {tags.length > 0 && (
             <div className="wf-sub">
-              <p className="wf-title">
+              <button
+                type="button"
+                onClick={() => setTagsOpen((v) => !v)}
+                className="wf-title w-full"
+              >
                 <Icon name="tag" size={15} />
                 Tag
+                {filters.tagIds.length > 0 && (
+                  <span className="count">{filters.tagIds.length}</span>
+                )}
+                <Icon
+                  name="chevron-right"
+                  size={14}
+                  className={
+                    'ml-auto shrink-0 transition-transform ' +
+                    (tagsOpen ? 'rotate-90' : '')
+                  }
+                />
+              </button>
+              {tagsOpen && (
+                <div className="wf-chips">
+                  {tags.map((t) => (
+                    <ChipButton
+                      key={t.id}
+                      square
+                      icon="tag"
+                      active={filters.tagIds.includes(t.id)}
+                      onClick={() => toggleTag(t.id)}
+                    >
+                      {t.name}
+                    </ChipButton>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {songsError && (
+            <div className="wf-sub">
+              <p className="wf-title">
+                <Icon name="music" size={15} />
+                Canzoni
               </p>
-              <div className="wf-chips">
-                {tags.map((t) => (
-                  <ChipButton
-                    key={t.id}
-                    square
-                    icon="tag"
-                    active={filters.tagIds.includes(t.id)}
-                    onClick={() => toggleTag(t.id)}
-                  >
-                    {t.name}
-                  </ChipButton>
-                ))}
-              </div>
+              <p className="text-xs text-delete-dark">{songsError}</p>
             </div>
           )}
 
           <div className="wf-sub">
-            <p className="wf-title">
+            <button
+              type="button"
+              onClick={() => setSongsOpen((v) => !v)}
+              className="wf-title w-full"
+            >
               <Icon name="music" size={15} />
-              Contenuto
-            </p>
-            <div className="wf-chips">
-              <ChipButton
-                icon="music"
-                active={filters.hasSongs}
-                onClick={() => {
-                  haptic()
-                  set({ hasSongs: !filters.hasSongs })
-                }}
-              >
-                Note con canzoni
-              </ChipButton>
-              <ChipButton
-                icon="map-pin"
-                active={filters.hasPlace}
-                onClick={() => {
-                  haptic()
-                  set({ hasPlace: !filters.hasPlace })
-                }}
-              >
-                Note con luoghi
-              </ChipButton>
-            </div>
+              Canzoni
+              {(filters.hasSongs ? 1 : 0) + (filters.song ? 1 : 0) > 0 && (
+                <span className="count">
+                  {(filters.hasSongs ? 1 : 0) + (filters.song ? 1 : 0)}
+                </span>
+              )}
+              <Icon
+                name="chevron-right"
+                size={14}
+                className={
+                  'ml-auto shrink-0 transition-transform ' +
+                  (songsOpen ? 'rotate-90' : '')
+                }
+              />
+            </button>
+            {songsOpen && (
+              <>
+                <div className="wf-chips">
+                  <ChipButton
+                    icon="music"
+                    active={filters.hasSongs}
+                    onClick={() => {
+                      haptic()
+                      set({ hasSongs: !filters.hasSongs })
+                    }}
+                  >
+                    Note con canzoni
+                  </ChipButton>
+                </div>
+                {songs.length > 0 && (
+                  <div className="wf-chips mt-2">
+                    {songs.map((s) => (
+                      <ChipButton
+                        key={s.title}
+                        icon="cassette"
+                        active={filters.song === s.title}
+                        onClick={() => toggleSong(s.title)}
+                      >
+                        {s.title}
+                      </ChipButton>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="wf-sub">
-            <p className="wf-title">
+            <button
+              type="button"
+              onClick={() => setSortOpen((v) => !v)}
+              className="wf-title w-full"
+            >
               <Icon name="chart" size={15} />
               Ordina per
-            </p>
-            <div className="wf-chips">
-              {SORTS.map((s) => (
-                <ChipButton
-                  key={s.key}
-                  active={filters.sort === s.key}
-                  onClick={() => {
-                    haptic()
-                    set({ sort: s.key })
-                  }}
-                >
-                  {s.label}
-                </ChipButton>
-              ))}
-            </div>
+              <Icon
+                name="chevron-right"
+                size={14}
+                className={
+                  'ml-auto shrink-0 transition-transform ' +
+                  (sortOpen ? 'rotate-90' : '')
+                }
+              />
+            </button>
+            {sortOpen && (
+              <div className="wf-chips-col">
+                {SORTS.map((s) => (
+                  <ChipButton
+                    key={s.key}
+                    active={filters.sort === s.key}
+                    onClick={() => {
+                      haptic()
+                      set({ sort: s.key })
+                    }}
+                  >
+                    {s.label}
+                  </ChipButton>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="wf-sub">
@@ -540,7 +638,6 @@ export default function FilterView() {
         <Footer
           items={[
             { icon: 'settings', title: 'Opzioni', onClick: () => navigate('/profilo') },
-            { icon: 'calendar', title: 'Calendario', onClick: () => navigate('/') },
             { icon: 'search', title: 'Filtri', active: true },
           ]}
           primaryIcon="plus"

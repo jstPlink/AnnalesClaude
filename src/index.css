@@ -619,11 +619,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   background-size: 120px 64px, 100% 100%, 100% 100%;
 }
 
-/* ============ Skin "diario disegnato" — vista giorno ============
-   Attivata da <html data-skin-day="sketch"> (src/lib/prefs.js). Sovrascrive
-   colori, font e bordi solo dentro `.day-surface` (DayView + WebDay); il
-   resto dell'app resta invariato. Font a mano self-hosted in /public/fonts.
-   Le righe e le cornici usano il filtro SVG #annales-wob (SketchDefs.jsx). */
+/* Font a mano self-hosted (/public/fonts), usati dalla skin "pagine"
+   (vista giorno e vista mese, l'unica rimasta — vedi src/lib/prefs.js). */
 @font-face {
   font-family: 'Annales Marker';
   src: url('/fonts/caveat-700.woff2') format('woff2');
@@ -666,297 +663,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   src: url('/fonts/shadows-into-light-400.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
-}
-
-:root[data-skin-day='sketch'] {
-  --sk-paper: #efe7d6;
-  --sk-card: #e7dcc0;
-  --sk-ink: #2c3742;
-  --sk-ink-soft: #6b6f62;
-  --sk-accent: #bf4535;
-  --sk-tex: radial-gradient(rgba(40, 30, 15, 0.05) 1px, transparent 0);
-}
-:root[data-skin-day='sketch'][data-theme='dark'] {
-  --sk-paper: #211d17;
-  --sk-card: #2a2418;
-  --sk-ink: #e9dcc0;
-  --sk-ink-soft: #a99f86;
-  --sk-accent: #d76d5c;
-  --sk-tex: radial-gradient(rgba(255, 248, 230, 0.03) 1px, transparent 0);
-}
-
-:root[data-skin-day='sketch'] .day-surface {
-  background-color: var(--sk-paper) !important;
-  background-image: var(--sk-tex);
-  background-size: 4px 4px;
-  border-color: var(--sk-ink-soft) !important;
-  color: var(--sk-ink);
-  font-family: 'Annales Hand', 'Kalam', system-ui, sans-serif;
-}
-
-/* righe delle ore: tratto irregolare, "spezzato", disegnato a mano */
-:root[data-skin-day='sketch'] .day-surface .hour-rule {
-  height: 2px;
-  background: var(--sk-ink-soft);
-  opacity: 0.55;
-  filter: url(#annales-wob);
-}
-:root[data-skin-day='sketch'] .day-surface .hour-label {
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  color: var(--sk-ink-soft);
-}
-
-/* blocchi nota: cornice storta a mano (::before) su fondo carta (::after) */
-:root[data-skin-day='sketch'] .day-surface .note-block {
-  overflow: visible !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-:root[data-skin-day='sketch'] .day-surface .note-block > span {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 12px 9px 13px 8px;
-}
-:root[data-skin-day='sketch'] .day-surface .note-block::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  z-index: -1;
-  background: var(--sk-card);
-  border-radius: 14px 10px 16px 9px;
-}
-:root[data-skin-day='sketch'] .day-surface .note-block::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  z-index: 2;
-  border: 2.5px solid var(--sk-ink);
-  border-radius: 14px 10px 16px 9px;
-  filter: url(#annales-wob);
-  pointer-events: none;
-}
-:root[data-skin-day='sketch'] .day-surface .note-title {
-  font-family: 'Annales Marker', 'Caveat', cursive !important;
-  font-weight: 700 !important;
-  font-size: 1.02rem !important;
-  letter-spacing: 0.01em;
-}
-:root[data-skin-day='sketch'] .day-surface .note-time {
-  font-family: 'Annales Hand', 'Kalam', sans-serif !important;
-}
-
-/* ============ Skin "bacheca" — vista mese (solo web) ============
-   Attivata da <html data-skin-month="board"> (src/lib/prefs.js). Rende il
-   componente MonthBoard: cartoncini appuntati su sughero, uniti da filo
-   rosso. Layout a flusso (flex-wrap): regge un numero qualsiasi di giorni.
-   I fili e i bordi usano il filtro #annales-wob (SketchDefs.jsx). */
-:root[data-skin-month='board'] {
-  --bd-cork: #ccb488;
-  --bd-cork-spot: rgba(120, 88, 52, 0.16);
-  --bd-paper: #f4ecdd;
-  --bd-ink: #3c362b;
-  --bd-ink-soft: #6f6653;
-  --bd-thread: #c96f5b;
-  --bd-edge: rgba(60, 50, 35, 0.28);
-}
-:root[data-skin-month='board'][data-theme='dark'] {
-  --bd-cork: #3a3120;
-  --bd-cork-spot: rgba(0, 0, 0, 0.3);
-  --bd-paper: #ecdfc2;
-  --bd-ink: #2e2a22;
-  --bd-ink-soft: #5f584a;
-  --bd-thread: #df7d66;
-  --bd-edge: rgba(255, 248, 230, 0.22);
-}
-
-.month-board {
-  position: relative;
-  margin: 0 auto;
-  width: 84%;
-  max-width: 66rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  justify-content: center;
-  gap: 26px 30px;
-  padding: 36px 30px 42px;
-  border-radius: 8px;
-  background-color: var(--bd-cork);
-  background-image: radial-gradient(var(--bd-cork-spot) 9%, transparent 10%),
-    radial-gradient(var(--bd-cork-spot) 9%, transparent 10%);
-  background-size: 8px 8px, 13px 13px;
-  background-position: 0 0, 4px 5px;
-  box-shadow: inset 0 0 60px rgba(20, 14, 6, 0.22),
-    0 10px 30px rgba(20, 14, 6, 0.18);
-}
-.month-board::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: radial-gradient(
-    120% 90% at 50% 40%,
-    transparent 55%,
-    rgba(28, 18, 8, 0.24)
-  );
-}
-.month-board--empty {
-  display: grid;
-  place-items: center;
-  min-height: 220px;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 1.1rem;
-  color: var(--bd-ink-soft);
-}
-.month-board__threads {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.mb-card {
-  position: relative;
-  z-index: 2;
-  width: 190px;
-  padding: 10px 10px 12px;
-  border: 0;
-  background: var(--bd-paper);
-  color: var(--bd-ink);
-  text-align: left;
-  cursor: pointer;
-  transform: rotate(var(--r, 0deg));
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
-  box-shadow: 0 6px 14px rgba(20, 14, 6, 0.28);
-}
-.mb-card:hover {
-  transform: rotate(0) translateY(-3px) scale(1.03);
-  z-index: 6;
-  box-shadow: 0 12px 22px rgba(20, 14, 6, 0.34);
-}
-.mb-card:focus-visible {
-  outline: 2px dashed var(--bd-thread);
-  outline-offset: 3px;
-}
-.mb-card::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  z-index: 5;
-  border: 2px solid var(--bd-edge);
-  filter: url(#annales-wob);
-  pointer-events: none;
-}
-
-.mb-pin {
-  position: absolute;
-  left: 50%;
-  top: -8px;
-  width: 16px;
-  height: 16px;
-  margin-left: -8px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 34% 30%,
-    rgba(255, 255, 255, 0.85),
-    var(--bd-thread) 46%,
-    rgba(0, 0, 0, 0.45)
-  );
-  box-shadow: 0 3px 5px rgba(10, 6, 2, 0.4);
-  z-index: 4;
-}
-
-.mb-photo {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background-size: cover;
-  background-position: center;
-  filter: saturate(0.82) contrast(0.96);
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
-}
-.mb-cap {
-  display: block;
-  padding: 8px 4px 2px;
-  font-family: 'Annales Marker', 'Caveat', cursive;
-  font-weight: 700;
-  font-size: 1.12rem;
-  line-height: 1.12;
-}
-.mb-cap b {
-  color: var(--bd-thread);
-}
-
-.mb-note-in {
-  display: flex;
-  gap: 9px;
-  padding: 4px 2px 2px;
-}
-.mb-daynum {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-family: 'Annales Marker', 'Caveat', cursive;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-.mb-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.mb-titles span {
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.mb-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 4px 0;
-}
-.mb-mood {
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
-  font-size: 0.72rem;
-  padding: 1px 7px;
-  border-radius: 999px;
-}
-.mb-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.72rem;
-  color: var(--bd-ink-soft);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mb-card {
-    transition: none;
-  }
-  .mb-card:hover {
-    transform: rotate(var(--r, 0deg));
-  }
 }
 
 /* ============ Skin "pagine" — vista mese (solo web) ============
@@ -2037,7 +1743,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-polas {
     display: none;
   }
-  /* targhette impilate in verticale, nello spazio fra cartoncino e foto */
+  /* targhette impilate in verticale, nello spazio fra cartoncino e foto.
+     Confermato con l'utente: il testo c'è (selezionabile/copiabile) ma non
+     viene dipinto — non un problema di dati/layout ma di compositing dello
+     schermo reale. .mp-page (antenato) ha `transform: rotate()` su ogni
+     cella del mese (fino a 31 insieme): stessa famiglia dei glitch grafici
+     da WebView Android già documentati altrove in questo file per l'uso di
+     troppi filtri SVG ripetuti. `translateZ(0)` forza le targhette sul
+     proprio layer di composizione, "svegliandole" dal layer del genitore. */
   .mp-side-mobile {
     display: flex;
     flex: 0 0 auto;
@@ -2045,46 +1758,43 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     align-items: flex-start;
     gap: 6px;
     padding-top: 2px;
+    transform: translateZ(0);
   }
-  /* semplici contatori (icona + numero), non più testo: bastano pochi px.
-     Sfondo più opaco e testo più grande del primo tentativo: alla prova su
-     telefono reale, in mezzo a cartoncino+foto nella stessa riga stretta,
-     le targhette risultavano leggibili a stento (quasi invisibili). */
+  /* stesso materiale delle targhette persona web (.mp-tape): sfondo
+     semitrasparente derivato con color-mix, bordo tratteggiato solo ai
+     fianchi, niente grassetto — non più il rettangolo pieno "di emergenza"
+     usato per isolare il bug di compositing qui sopra. */
   .mp-mini {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 9px 5px 7px;
+    transform: translateZ(0);
+    padding: 5px 10px 5px 8px;
     font-family: 'Annales Hand', 'Kalam', sans-serif;
-    font-weight: 700;
     font-size: 0.88rem;
     line-height: 1;
-    color: var(--mp-ink-b);
-    background: rgba(228, 216, 180, 0.92);
-    border-left: 2px dashed rgba(110, 90, 56, 0.7);
-    border-right: 2px dashed rgba(110, 90, 56, 0.7);
-    box-shadow: 0 2px 5px rgba(20, 12, 4, 0.26);
-    /* niente filter: url(#annales-wob) qui — fino a 3 per nota (persone/
-       luogo/canzone) su tutte le note del mese, causa nota di glitch
-       grafico in WebView Android; i bordi tratteggiati bastano a dare
-       l'idea del ritaglio a mano. */
+    color: #4d4234;
+    background: rgba(228, 216, 180, 0.7);
+    border-left: 2px dashed rgba(110, 90, 56, 0.6);
+    border-right: 2px dashed rgba(110, 90, 56, 0.6);
+    box-shadow: 0 2px 4px rgba(20, 12, 4, 0.2);
   }
   /* luogo = rossa, canzone = verde (le persone restano nel tono carta) */
   .mp-mini--place {
-    color: #5c2a20;
-    background: color-mix(in srgb, #c64637 32%, rgba(228, 216, 180, 0.92));
-    border-left-color: color-mix(in srgb, #c64637 62%, rgba(110, 90, 56, 0.7));
-    border-right-color: color-mix(in srgb, #c64637 62%, rgba(110, 90, 56, 0.7));
+    color: #7a3226;
+    background: color-mix(in srgb, #c64637 26%, rgba(228, 216, 180, 0.7));
+    border-left-color: color-mix(in srgb, #c64637 50%, rgba(110, 90, 56, 0.6));
+    border-right-color: color-mix(in srgb, #c64637 50%, rgba(110, 90, 56, 0.6));
   }
   .mp-mini--song {
-    color: #34481c;
-    background: color-mix(in srgb, #7fa24e 32%, rgba(228, 216, 180, 0.92));
-    border-left-color: color-mix(in srgb, #7fa24e 62%, rgba(110, 90, 56, 0.7));
-    border-right-color: color-mix(in srgb, #7fa24e 62%, rgba(110, 90, 56, 0.7));
+    color: #3c5420;
+    background: color-mix(in srgb, #7fa24e 26%, rgba(228, 216, 180, 0.7));
+    border-left-color: color-mix(in srgb, #7fa24e 50%, rgba(110, 90, 56, 0.6));
+    border-right-color: color-mix(in srgb, #7fa24e 50%, rgba(110, 90, 56, 0.6));
   }
   .mp-mini svg {
     flex: none;
-    opacity: 0.95;
+    opacity: 0.9;
   }
   .mp-mini-text {
     font-variant-numeric: tabular-nums;
@@ -2433,19 +2143,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
      dare il bordo strappato a mano senza la deformazione aggiuntiva. */
   filter: saturate(1.32) drop-shadow(0 6px 14px rgba(20, 12, 4, 0.4));
 }
-.dn-card.mood-green {
-  --mood: #a6d06e;
-}
-.dn-card.mood-blue {
-  --mood: #5ea9d6;
-}
-.dn-card.mood-yellow {
-  --mood: #e6cf5c;
-}
-.dn-card.mood-coral {
-  --mood: #e0655e;
-}
-
 /* titolo: "penna doppia" + evidenziatore NERO (niente più orari sul cartoncino:
    si leggono dalla timeline a sinistra) */
 .dn-title {
@@ -3175,7 +2872,39 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   gap: 10px;
   margin-bottom: 20px;
 }
+/* Involucro di ogni voce: serve solo da genitore posizionato per
+   .sb-item-underlay, che deve stare DIETRO allo sfondo di .sb-item stesso
+   (un pseudo-elemento con z-index negativo non basta: dentro il proprio
+   contesto di impilamento un figlio a z-index negativo dipinge comunque
+   SOPRA allo sfondo del genitore, mai sotto — l'ordine sbagliato visto a
+   schermo veniva da lì). Da fratello vero, invece, l'ordine nel DOM basta:
+   .sb-item-underlay viene prima e dipinge sotto, senza bisogno di z-index. */
+.sb-item-wrap {
+  position: relative;
+}
+/* la targhetta di legno, quando la voce è attiva, sporge un po' storta
+   rispetto al ritaglio di carta originale sotto: qui è quel ritaglio,
+   sempre presente nel DOM ma visibile solo quando la voce dopo di lui è
+   attiva (:has, niente classi doppie da sincronizzare via JS). */
+.sb-item-underlay {
+  display: none;
+}
+.sb-item-underlay:has(+ .sb-item.active) {
+  display: block;
+  position: absolute;
+  inset: -3px -5px -5px -3px;
+  border: 2px dashed rgba(52, 44, 28, 0.42);
+  border-radius: 7px 9px 8px 10px;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 140px 140px;
+  background-blend-mode: multiply;
+  transform: rotate(2.5deg);
+  pointer-events: none;
+}
 .sb-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -3212,13 +2941,68 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   border-color: rgba(52, 44, 28, 0.65);
   box-shadow: 0 6px 14px rgba(20, 12, 4, 0.22);
 }
+/* voce attiva: non più un ritaglio di carta come le altre, ma un vetrino
+   (lastra chiara) incassato in una cornice spessa di legno chiaro (venature
+   vere, non un bordo a tinta unica) — angoli arrotondati "di fabbrica", non
+   più tagliati a mano. La targhetta di legno è incollata un po' storta
+   sopra quella originale tratteggiata, che si intravede da sotto agli
+   angoli (.sb-item-underlay, vedi sopra: ruotata diversamente e un filo più
+   grande). */
 .sb-item.active {
-  background-color: #fff9ea;
-  border-color: rgba(52, 44, 28, 0.7);
+  transform: rotate(-2deg);
+  /* cornice: base chiara + venatura verticale organica (SVG, righe mosse
+     non dritte come le repeating-linear-gradient di prima) in un marrone
+     tenue coerente con la palette dell'app, non il classico legno
+     "arancione" ad alto contrasto. */
+  background-color: #c9a876;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='220' viewBox='0 0 140 220'%3E%3Cg fill='none' stroke='%238a6d45' stroke-linecap='round'%3E%3Cpath d='M8 0 Q14 30 6 55 T10 110 T4 165 T9 220' stroke-width='1' opacity='0.16'/%3E%3Cpath d='M22 0 Q16 25 26 50 T18 105 T24 160 T17 220' stroke-width='1.3' opacity='0.2'/%3E%3Cpath d='M38 0 Q44 35 34 60 T40 115 T32 170 T38 220' stroke-width='0.9' opacity='0.14'/%3E%3Cpath d='M55 0 Q48 20 58 48 T50 100 T57 155 T49 220' stroke-width='1.4' opacity='0.2'/%3E%3Cpath d='M70 0 Q76 28 66 52 T72 108 T64 162 T71 220' stroke-width='1' opacity='0.15'/%3E%3Cpath d='M86 0 Q80 32 90 58 T82 112 T88 168 T80 220' stroke-width='1.2' opacity='0.18'/%3E%3Cpath d='M102 0 Q108 22 98 50 T104 105 T96 160 T103 220' stroke-width='0.8' opacity='0.12'/%3E%3Cpath d='M118 0 Q112 30 122 55 T114 110 T120 165 T112 220' stroke-width='1.3' opacity='0.19'/%3E%3Cpath d='M132 0 Q126 26 134 52 T128 108 T133 162 T126 220' stroke-width='1' opacity='0.14'/%3E%3Cellipse cx='45' cy='75' rx='5' ry='9' opacity='0.13' stroke-width='1'/%3E%3Cellipse cx='97' cy='150' rx='4' ry='7' opacity='0.11' stroke-width='0.9'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(120deg, #dab97a, #c9a876 55%, #b8935f);
+  background-size: 140px 220px, auto;
+  background-repeat: repeat, no-repeat;
+  border: none;
+  border-radius: 11px;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.26);
+}
+.sb-item.active::before {
+  /* il vetrino, incassato nello spessore della cornice (6px, prima era un
+     bordo di 2.5px: molto più sottile). */
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: 0;
+  border-radius: 6px;
+  background-color: #fbf6e6;
+  /* la venatura continua anche qui, nella parte chiara: prima si vedeva
+     solo sulla cornice più scura intorno, non dentro. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='220' viewBox='0 0 140 220'%3E%3Cg fill='none' stroke='%238a6d45' stroke-linecap='round'%3E%3Cpath d='M8 0 Q14 30 6 55 T10 110 T4 165 T9 220' stroke-width='1' opacity='0.11'/%3E%3Cpath d='M22 0 Q16 25 26 50 T18 105 T24 160 T17 220' stroke-width='1.3' opacity='0.14'/%3E%3Cpath d='M38 0 Q44 35 34 60 T40 115 T32 170 T38 220' stroke-width='0.9' opacity='0.1'/%3E%3Cpath d='M55 0 Q48 20 58 48 T50 100 T57 155 T49 220' stroke-width='1.4' opacity='0.14'/%3E%3Cpath d='M70 0 Q76 28 66 52 T72 108 T64 162 T71 220' stroke-width='1' opacity='0.1'/%3E%3Cpath d='M86 0 Q80 32 90 58 T82 112 T88 168 T80 220' stroke-width='1.2' opacity='0.13'/%3E%3Cpath d='M102 0 Q108 22 98 50 T104 105 T96 160 T103 220' stroke-width='0.8' opacity='0.09'/%3E%3Cpath d='M118 0 Q112 30 122 55 T114 110 T120 165 T112 220' stroke-width='1.3' opacity='0.13'/%3E%3Cpath d='M132 0 Q126 26 134 52 T128 108 T133 162 T126 220' stroke-width='1' opacity='0.1'/%3E%3Cellipse cx='45' cy='75' rx='5' ry='9' opacity='0.09' stroke-width='1'/%3E%3Cellipse cx='97' cy='150' rx='4' ry='7' opacity='0.08' stroke-width='0.9'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      transparent 30%,
+      transparent 72%,
+      rgba(255, 255, 255, 0.25) 100%
+    );
+  background-size: 140px 220px, auto;
+  background-repeat: repeat, no-repeat;
+  box-shadow: inset 0 1px 3px rgba(20, 12, 4, 0.18);
+  pointer-events: none;
+}
+.sb-item.active:hover,
+.sb-item.active:focus-visible {
+  transform: rotate(-2deg) translateY(-2px);
 }
 .sb-item svg {
   flex: none;
   opacity: 0.85;
+}
+/* icona + testo sopra ai due strati della voce attiva (vetrino incassato e
+   targhetta tratteggiata sotto): senza queste due righe, quando la voce
+   attiva ha il proprio stacking context (per via dello z-index sotto)
+   restano coperte dal vetrino. */
+.sb-item.active svg,
+.sb-item-label {
+  position: relative;
+  z-index: 2;
 }
 .sb-item:focus-visible {
   outline: 2px solid #33291c;
@@ -3625,14 +3409,18 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 
 /* Sotto-cartoncino: un contenitore per gruppo di parametri dentro una
-   sezione (es. "Tema", "Font dell'app", "Persone"...), con un bordo
-   colorato distintivo. */
+   sezione (es. "Tema", "Font dell'app", "Persone"...). Stessa materia di
+   carta (grana) e bordo tratteggiato del resto della skin "Pagine" — non
+   più un bordo pieno colorato diverso per ogni categoria. */
 .ws-sub {
   position: relative;
   margin: 0 0 14px;
-  border-radius: 4px 12px 12px 4px;
-  border-left: 4px solid var(--sub-c, var(--color-line));
+  border-radius: 10px;
+  border: 1.5px dashed var(--color-line);
   background-color: var(--color-cream);
+  background-image: var(--sb-grain, none);
+  background-size: 130px 130px;
+  background-blend-mode: multiply;
   box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.18);
   overflow: hidden;
 }
@@ -3653,15 +3441,16 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 .ws-sub-head:hover,
 .ws-sub-head:focus-visible {
-  background-color: color-mix(in srgb, var(--sub-c, var(--color-line)) 12%, transparent);
+  background-color: color-mix(in srgb, var(--color-ink) 6%, transparent);
 }
 .ws-sub-icon {
-  color: var(--sub-c, var(--color-ink-soft));
+  color: var(--color-ink-soft);
 }
 .ws-sub-title {
   flex: 1;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
   font-weight: 700;
-  font-size: 0.94rem;
+  font-size: 1rem;
 }
 .ws-sub-chev {
   color: var(--color-ink-soft);
@@ -3752,13 +3541,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   z-index: 2;
   display: flex;
   gap: 16px;
-  /* la foto si allunga fino a combaciare col fondo di .pf-fields (l'ultima
-     riga è "Password") invece di un'altezza fissa. */
-  align-items: stretch;
+  /* foto quadrata (vedi .pf-photo), allineata in alto: non più allungata a
+     combaciare col fondo delle righe accanto (era un rettangolo verticale). */
+  align-items: flex-start;
 }
 .pf-photo {
   position: relative;
-  width: 70px;
+  width: 76px;
+  height: 76px;
   flex: none;
   display: flex;
   align-items: center;
@@ -3856,71 +3646,74 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .pf-fvalue.dots {
   letter-spacing: 0.2em;
 }
-.pf-pencil {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 1.5px dashed rgba(120, 100, 60, 0.45);
-  background: rgba(255, 255, 255, 0.35);
-  color: #5a4d33;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.pf-pencil:hover {
-  background: rgba(255, 255, 255, 0.6);
-}
-.pf-edit {
+/* Tutti i campi in modifica insieme (aperta dal pulsante "Modifica dati"
+   sotto la tessera, non più una matitina per riga). */
+.pf-editall {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-.pf-edit.stack {
   flex-direction: column;
-  align-items: stretch;
+  gap: 12px;
 }
-.pf-edit input {
+.pf-erow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.pf-erow .pf-flabel {
+  width: auto;
+}
+.pf-erow input {
   min-width: 0;
-  flex: 1;
-  padding: 5px 9px;
+  padding: 7px 10px;
   border-radius: 8px;
   border: 1.5px dashed rgba(120, 100, 60, 0.45);
   background: rgba(255, 255, 255, 0.55);
   font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   color: #33291c;
   outline: none;
 }
-.pf-edit.stack input {
-  width: 100%;
+.pf-erow input + input {
+  margin-top: 5px;
 }
-.pf-edit-actions {
+/* pulsante/i sotto la tessera: uno "Modifica dati" a riposo, due
+   ("Salva modifiche"/"Annulla") affiancati mentre è in modifica. */
+.pf-modify-btn {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-}
-.pf-edit-btn {
-  flex: none;
-  padding: 5px 11px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
   border: 1.5px dashed rgba(52, 44, 28, 0.5);
-  cursor: pointer;
   background: rgba(255, 255, 255, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
   color: #33291c;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
-.pf-edit-btn.save {
+.pf-modify-btn:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+.pf-modify-btn.save {
   background: color-mix(in srgb, var(--color-save) 55%, white);
   border-color: var(--color-save-dark);
 }
-.pf-edit-btn.save:disabled {
+.pf-modify-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+.pf-modify-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pf-modify-actions .pf-modify-btn {
+  margin-top: 0;
+  flex: 1;
 }
 .pf-hint {
   margin: 0;
@@ -4011,10 +3804,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .pf-fvalue {
     font-size: 0.82rem;
   }
-  .pf-pencil {
-    width: 22px;
-    height: 22px;
-  }
   .pf-foot {
     margin-top: 9px;
   }
@@ -4055,7 +3844,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .ws-sub {
     margin-bottom: 11px;
-    border-radius: 4px 11px 11px 4px;
+    border-radius: 9px;
   }
   .ws-sub-head {
     padding: 9px 12px;
@@ -4066,7 +3855,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     height: 15px;
   }
   .ws-sub-title {
-    font-size: 0.86rem;
+    font-size: 0.9rem;
   }
   .ws-sub-chev {
     width: 13px;
@@ -4439,8 +4228,8 @@ li:last-child > .wd-month-row {
    diversamente come se fossero stati tagliati a mano uno alla volta. */
 .mchev {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   flex: none;
   border-radius: 50%;
   display: grid;
@@ -4702,19 +4491,149 @@ li:last-child > .wd-month-row {
   background-blend-mode: overlay;
   color: #efe7d4;
 }
-/* pulsante "nuova nota": ritaglio di cartone chiaro (leggero, non il timbro
-   nero di .mgemini) con un filo tratteggiato bianco tutto intorno, per
-   distinguerlo bene come azione principale al centro della barra. */
+/* pulsante "nuova nota": stesso timbro nero di .mgemini (con una texture di
+   cartone più marcata: grana + fibra, non solo grana), con un filo
+   tratteggiato bianco tutto intorno per distinguerlo come azione principale
+   al centro della barra. */
 .mfab {
   width: 60px;
   height: 60px;
-  background-color: #d9c79a;
+  background-color: #211a10;
   background-image: var(--sb-grain), var(--sb-fiber);
   background-size: 100px 100px, 160px 160px;
-  background-blend-mode: multiply, soft-light;
-  border: 2px dashed rgba(255, 252, 240, 0.85);
+  background-blend-mode: overlay, soft-light;
+  border: 2px dashed rgba(255, 255, 255, 0.75);
+  color: #efe7d4;
+  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.3);
+}
+
+/* ===================== Scelta "nuova nota" (NewNoteChoiceSheet.jsx):
+   cartoncino tenuto da due nastri adesivi, stessa materia (grana+fibra) e
+   stesso set di ritagli di carta (.mcircle-paper/.mgemini) del resto della
+   barra mobile — non più il pannello bianco generico degli altri picker
+   (tag/luogo/canzone), che qui stonava con tutto il resto. ===================== */
+.ncs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 14, 6, 0.5);
+}
+.ncs-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px 18px max(18px, env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+  background-color: #efe6cf;
+  background-image: var(--sb-grain), var(--sb-fiber);
+  background-size: 150px 150px, 230px 230px;
+  background-blend-mode: soft-light, soft-light;
+  box-shadow: 0 -10px 26px rgba(20, 12, 4, 0.32);
+}
+.ncs-tape {
+  position: absolute;
+  top: -10px;
+  width: 54px;
+  height: 20px;
+  box-shadow: 0 2px 4px rgba(20, 12, 4, 0.25);
+}
+.ncs-tape::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 55%);
+}
+.ncs-tape.a {
+  left: 30px;
+  background-color: #d9645a;
+  transform: rotate(-5deg);
+}
+.ncs-tape.b {
+  right: 30px;
+  background-color: #7fae6a;
+  transform: rotate(4deg);
+}
+.ncs-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ncs-title {
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-ink);
+}
+.ncs-options {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ncs-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background-color: #fbf6e8;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: multiply;
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  text-align: left;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 2px 6px rgba(20, 12, 4, 0.14);
+}
+.ncs-option:active {
+  transform: scale(0.98);
+}
+.ncs-opt-icon {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.ncs-opt-icon.gemini {
+  background-color: #211a10;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: overlay;
+  color: #efe7d4;
+}
+.ncs-opt-icon.paper {
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  border: 2px dashed rgba(52, 44, 28, 0.45);
   color: #33291c;
-  box-shadow: 0 4px 10px rgba(20, 12, 4, 0.26), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+.ncs-opt-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ncs-opt-text b {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--color-ink);
+}
+.ncs-opt-text span {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--color-ink-soft);
 }
 
 /* ===================== Cerca (vista web, WebFilter.jsx): ogni gruppo di
@@ -4724,13 +4643,15 @@ li:last-child > .wd-month-row {
    (si adatta a chiaro/scuro), non un oggetto fisso come la tessera/barra
    laterale. ===================== */
 .wf-sub {
-  background-color: var(--color-cream);
+  /* --color-panel-2, non più --color-cream: era lo stesso tono dello sfondo
+     della pagina, i contenitori non si distinguevano quasi per niente. */
+  background-color: var(--color-panel-2);
   background-image: var(--sb-grain), var(--sb-fiber);
   background-size: 130px 130px, 200px 200px;
   background-blend-mode: multiply, soft-light;
   border-radius: 10px;
   border: 1px solid var(--color-line);
-  box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.18);
+  box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.24);
   padding: 14px 16px 16px;
 }
 /* usata sia su <p> (titolo statico) sia su <button> (Luogo/Persone,
@@ -4792,6 +4713,16 @@ li:last-child > .wd-month-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+/* "Ordina per": un'opzione sotto l'altra invece che affiancate, più facili
+   da leggere/toccare quando sono solo alternative fra loro (radio-like). */
+.wf-chips-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wf-chips-col .wf-chip {
+  width: 100%;
 }
 .wf-chip {
   display: flex;
@@ -5011,7 +4942,7 @@ li:last-child > .wf-result {
     font-size: 0.72rem;
   }
   .wf-mood-bar {
-    height: 7px;
+    height: 9px;
     margin-bottom: 8px;
   }
   .wf-apply {

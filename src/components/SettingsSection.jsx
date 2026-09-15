@@ -5,16 +5,15 @@ import Icon from './Icon'
 // @media (max-width: 480px)): intestazione a "cartoncino a quadretti"
 // colorato, larga quanto la sezione, con icona+titolo+descrizione insieme
 // (stesso motivo dell'intestazione della vista giorno). `nested` = un
-// sotto-cartoncino più piccolo, con bordo colorato (`accent`), per un
-// singolo gruppo di parametri dentro la sezione. `noCollapse` = sempre
-// visibile, senza freccia (usato per "Elimina account": non è mai stata una
-// sezione richiudibile).
+// sotto-cartoncino più piccolo (stessa materia di carta, grana+fibra, non
+// più un bordo colorato per categoria) per un singolo gruppo di parametri
+// dentro la sezione. `noCollapse` = sempre visibile, senza freccia (usato
+// per "Elimina account": non è mai stata una sezione richiudibile).
 export default function SettingsSection({
   title,
   icon,
   description,
   nested = false,
-  accent,
   danger = false,
   noCollapse = false,
   defaultOpen = false,
@@ -24,7 +23,7 @@ export default function SettingsSection({
 
   if (nested) {
     return (
-      <div className="ws-sub" style={accent ? { '--sub-c': accent } : undefined}>
+      <div className="ws-sub">
         <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
           {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
           <span className="ws-sub-title">{title}</span>

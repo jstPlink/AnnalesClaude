@@ -39,14 +39,15 @@ export const DEFAULT_MOOD_HEX = DEFAULT_STOPS.map((s) => rgbToHex(s.c))
 // gradiente scelto senza dover passare un parametro in decine di componenti.
 let STOPS = DEFAULT_STOPS
 
-// Posizioni valide: 6 numeri crescenti, estremi fissi a 0 e 1 (i 4 stop
-// interni possono stare ovunque in mezzo, con un margine minimo fra loro
-// perché il gradiente non degeneri).
+// Posizioni valide: 6 numeri crescenti dentro 0–1 (estremi compresi: anche
+// "pessimo" e "ottimo" si possono spostare, non solo i 4 stop interni), con
+// un margine minimo fra loro perché il gradiente non degeneri.
 function isValidPositions(pos) {
   if (!Array.isArray(pos) || pos.length !== DEFAULT_STOP_POSITIONS.length) {
     return false
   }
-  if (pos[0] !== 0 || pos[pos.length - 1] !== 1) return false
+  if (!Number.isFinite(pos[0]) || pos[0] < 0) return false
+  if (pos[pos.length - 1] > 1) return false
   for (let i = 1; i < pos.length; i++) {
     if (!(Number.isFinite(pos[i]) && pos[i] > pos[i - 1])) return false
   }
@@ -104,9 +105,20 @@ function lerp(a, b, k) {
   return Math.round(a + (b - a) * k)
 }
 
-// Colore CSS per un singolo valore di mood.
+// Colore CSS per un singolo valore di mood. Se gli estremi del gradiente
+// sono stati spostati (non più a 0/1), un mood oltre l'ultimo/prima del
+// primo stop resta piatto al colore di quello stop, non sfuma oltre.
 export function moodColor(value) {
   const v = clamp01(Number(value))
+  if (v <= STOPS[0].t) {
+    const c = STOPS[0].c
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+  }
+  const lastStop = STOPS[STOPS.length - 1]
+  if (v >= lastStop.t) {
+    const c = lastStop.c
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+  }
   for (let i = 0; i < STOPS.length - 1; i++) {
     const lo = STOPS[i]
     const hi = STOPS[i + 1]
@@ -118,7 +130,7 @@ export function moodColor(value) {
       return `rgb(${r}, ${g}, ${b})`
     }
   }
-  const last = STOPS[STOPS.length - 1].c
+  const last = lastStop.c
   return `rgb(${last[0]}, ${last[1]}, ${last[2]})`
 }
 
@@ -127,17 +139,22 @@ export function moodColor(value) {
 export function moodTextColor(value) {
   const v = clamp01(Number(value))
   let rgb = [255, 255, 255]
-  for (let i = 0; i < STOPS.length - 1; i++) {
-    const lo = STOPS[i]
-    const hi = STOPS[i + 1]
-    if (v >= lo.t && v <= hi.t) {
-      const k = hi.t === lo.t ? 0 : (v - lo.t) / (hi.t - lo.t)
-      rgb = [
-        lerp(lo.c[0], hi.c[0], k),
-        lerp(lo.c[1], hi.c[1], k),
-        lerp(lo.c[2], hi.c[2], k),
-      ]
-      break
+  if (v <= STOPS[0].t) {
+    rgb = STOPS[0].c
+  } else if (v >= STOPS[STOPS.length - 1].t) {
+    rgb = STOPS[STOPS.length - 1].c
+  } else {
+    for (let i = 0; i < STOPS.length - 1; i++) {
+      const lo = STOPS[i]
+      const hi = STOPS[i + 1]
+      if (v >= lo.t && v <= hi.t) {
+        rgb = [
+          lerp(lo.c[0], hi.c[0], (v - lo.t) / (hi.t - lo.t)),
+          lerp(lo.c[1], hi.c[1], (v - lo.t) / (hi.t - lo.t)),
+          lerp(lo.c[2], hi.c[2], (v - lo.t) / (hi.t - lo.t)),
+        ]
+        break
+      }
     }
   }
   const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255

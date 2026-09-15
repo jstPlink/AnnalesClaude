@@ -507,11 +507,11 @@ export default function WebProfile() {
         icon="list"
         description="Dati unici e personali tuoi, legati all'account e sincronizzati su tutti i dispositivi."
       >
-        <SettingsSection nested title="Colori del mood" icon="sparkles" accent="#5ea9d6">
+        <SettingsSection nested title="Colori del mood" icon="sparkles">
           <MoodGradientControls />
         </SettingsSection>
 
-        <SettingsSection nested title="Persone" icon="user" accent="#8397a6">
+        <SettingsSection nested title="Persone" icon="user">
         <p className="text-sm text-ink-soft">
           Elenco delle persone selezionabili nelle note. Aggiungine dal tuo
           Immich o creane una nuova qui.
@@ -589,7 +589,7 @@ export default function WebProfile() {
         )}
         </SettingsSection>
 
-        <SettingsSection nested title="Tag" icon="tag" accent="#c9a227">
+        <SettingsSection nested title="Tag" icon="tag">
         <p className="text-sm text-ink-soft">
           Elenco dei tag selezionabili nelle note.
         </p>
@@ -639,7 +639,7 @@ export default function WebProfile() {
         </div>
         </SettingsSection>
 
-        <SettingsSection nested title="Luoghi" icon="map-pin" accent="#e0655e">
+        <SettingsSection nested title="Luoghi" icon="map-pin">
         <p className="text-sm text-ink-soft">
           Elenco dei luoghi selezionabili nelle note. Vengono aggiunti anche
           automaticamente quando ne scegli uno da una nota. Modificando nome o
@@ -749,7 +749,7 @@ export default function WebProfile() {
         </div>
         </SettingsSection>
 
-        <SettingsSection nested title="Canzoni" icon="music" accent="#8fae5c">
+        <SettingsSection nested title="Canzoni" icon="music">
           <p className="text-sm text-ink-soft">
             Le canzoni collegate alle note, con quante note le usano
             ciascuna. Sola lettura: si aggiungono dalle note stesse.
@@ -763,7 +763,7 @@ export default function WebProfile() {
         icon="link"
         description="Chiavi e collegamenti per le funzioni opzionali di Annales."
       >
-        <SettingsSection nested title="Immich" icon="image" accent="#8397a6">
+        <SettingsSection nested title="Immich" icon="image">
         <p className="text-sm text-ink-soft">
           Collega il tuo server Immich per scegliere le foto da lì quando
           aggiungi immagini a una nota.
@@ -828,7 +828,7 @@ export default function WebProfile() {
         </div>
         </SettingsSection>
 
-        <SettingsSection nested title="Spotify" icon="music" accent="#8fae5c">
+        <SettingsSection nested title="Spotify" icon="music">
         <p className="text-sm text-ink-soft">
           Client ID/Secret di un'app Spotify (Client Credentials) per cercare
           canzoni da aggiungere alle note, senza incollare link a mano.
@@ -893,7 +893,7 @@ export default function WebProfile() {
         </div>
         </SettingsSection>
 
-        <SettingsSection nested title="Gemini (IA)" icon="sparkles" accent="#5ea9d6">
+        <SettingsSection nested title="Gemini (IA)" icon="sparkles">
         <p className="text-sm text-ink-soft">
           Chiave API di Google AI Studio per ripulire il testo delle note,
           riconoscere le persone citate e scrivere contenuti con l'IA.
@@ -943,7 +943,7 @@ export default function WebProfile() {
           </div>
         </div>
 
-        <SettingsSection nested title="Istruzioni personalizzate" icon="edit" accent="#a889a0">
+        <SettingsSection nested title="Istruzioni personalizzate" icon="edit">
           <p className="text-sm text-ink-soft">
             Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
             usare, cosa evidenziare o evitare...). Salvate sul tuo account:

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { plainText, parsePlace } from '../../lib/notes'
+import { moodColor } from '../../lib/mood'
 import { MONTHS_IT, durationMinutes, parseWall, weekdayLong } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 import Icon from '../../components/Icon'
@@ -9,7 +10,6 @@ import {
   handFor,
   tilt,
   osmTileFor,
-  moodKind,
   personTapeColor,
   useCarouselIndex,
 } from '../../lib/pagesSkin'
@@ -170,7 +170,7 @@ export default function DayPages({
         title: n.title?.trim() || 'Senza titolo',
         body: plainText(n.content),
         hand: handFor(n.id),
-        kind: moodKind(n.mood),
+        mood: n.mood,
         cw: cardWidthFor(n.id),
         cr: `${tilt(`${n.id}~cr`, 0.8).toFixed(2)}deg`,
         people,
@@ -261,8 +261,8 @@ export default function DayPages({
                     cambia nulla, la colonna resta quella di sempre. */}
                 <span className="dn-notes-row">
                   <span
-                    className={'dn-card' + (it.kind ? ` mood-${it.kind}` : '')}
-                    style={{ '--cw': it.cw, '--cr': it.cr }}
+                    className="dn-card"
+                    style={{ '--cw': it.cw, '--cr': it.cr, '--mood': moodColor(it.mood) }}
                   >
                     <span className="dn-title">
                       <span className="hl" aria-hidden="true" />

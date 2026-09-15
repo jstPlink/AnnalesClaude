@@ -87,28 +87,37 @@ export default function Sidebar() {
         />
 
         <nav className="sb-nav">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
-          >
-            <Icon name="calendar" size={17} />
-            Calendario
-          </NavLink>
-          <NavLink
-            to="/dati"
-            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
-          >
-            <Icon name="chart" size={17} />
-            Andamento
-          </NavLink>
-          <NavLink
-            to="/statistiche"
-            className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
-          >
-            <Icon name="bar-chart" size={17} />
-            Statistiche
-          </NavLink>
+          <span className="sb-item-wrap">
+            <span className="sb-item-underlay" aria-hidden="true" />
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+            >
+              <Icon name="calendar" size={17} />
+              <span className="sb-item-label">Calendario</span>
+            </NavLink>
+          </span>
+          <span className="sb-item-wrap">
+            <span className="sb-item-underlay" aria-hidden="true" />
+            <NavLink
+              to="/dati"
+              className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+            >
+              <Icon name="chart" size={17} />
+              <span className="sb-item-label">Andamento</span>
+            </NavLink>
+          </span>
+          <span className="sb-item-wrap">
+            <span className="sb-item-underlay" aria-hidden="true" />
+            <NavLink
+              to="/statistiche"
+              className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+            >
+              <Icon name="bar-chart" size={17} />
+              <span className="sb-item-label">Statistiche</span>
+            </NavLink>
+          </span>
         </nav>
 
         <NavLink

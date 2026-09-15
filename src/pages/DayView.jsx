@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
@@ -7,89 +7,16 @@ import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import YearPill from '../components/YearPill'
 import Icon from '../components/Icon'
-import MarqueeText from '../components/MarqueeText'
-import ImageCarousel from '../components/ImageCarousel'
 import DayPages from './web/DayPages'
-import { listNotesInRange, describeError, plainText } from '../lib/notes'
+import { listNotesInRange, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
-import { fileUrl } from '../lib/pocketbase'
-import { moodColor, moodTextColor } from '../lib/mood'
-import { SKIN_DAYS, SKIN_DAY_LABELS, getSkinDay, setSkinDay } from '../lib/prefs'
-import {
-  addDaysKey,
-  dayMonthLabel,
-  dayRange,
-  durationMinutes,
-  parseWall,
-  timeLabel,
-} from '../lib/dates'
+import { addDaysKey, dayMonthLabel, dayRange, parseWall } from '../lib/dates'
 
-const DAY_MIN = 24 * 60
 const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
-const RAIL_W = 31 // px, larghezza della barra oraria a sinistra (-20%, poi -15%)
-const MIN_BLOCK = 24 // px, altezza minima di un blocco nota
 
 function startMinutes(value) {
   const p = parseWall(value)
   return p ? p.h * 60 + p.mi : 0
-}
-
-// Anteprima del contenuto: riempie lo spazio rimasto sotto il titolo e, se il
-// testo non ci sta, sfuma verso il basso terminando con "…".
-function ClampedPreview({ text }) {
-  const ref = useRef(null)
-  const [clamped, setClamped] = useState(false)
-
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1)
-    check()
-    const ro = new ResizeObserver(check)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [text])
-
-  return (
-    <span className="relative min-h-0 flex-1 overflow-hidden">
-      <span
-        ref={ref}
-        className="block h-full overflow-hidden text-[11px] leading-snug text-ink-soft"
-      >
-        {text}
-      </span>
-      {clamped && (
-        <>
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-tag to-transparent" />
-          <span className="pointer-events-none absolute bottom-0 right-0 text-[11px] leading-snug text-ink-soft">
-            …
-          </span>
-        </>
-      )}
-    </span>
-  )
-}
-
-// Assegna una "corsia" a note che si sovrappongono nel tempo.
-function withLanes(items) {
-  const laneEnd = []
-  const placed = items.map((it) => {
-    let lane = laneEnd.findIndex((end) => end <= it.startMin)
-    if (lane === -1) {
-      lane = laneEnd.length
-      laneEnd.push(it.endMin)
-    } else {
-      laneEnd[lane] = it.endMin
-    }
-    return { ...it, lane }
-  })
-  return placed.map((it) => ({ ...it, lanes: laneEnd.length }))
-}
-
-// Ciclo dei 3 stili: Normale -> Disegnata -> Pagine -> Normale.
-function nextSkin(skin) {
-  const i = SKIN_DAYS.indexOf(skin)
-  return SKIN_DAYS[(i + 1) % SKIN_DAYS.length]
 }
 
 export default function DayView() {
@@ -100,9 +27,6 @@ export default function DayView() {
   const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const trackRef = useRef(null)
-  const [trackH, setTrackH] = useState(0)
-  const [skin, setSkin] = useState(getSkinDay())
   const peopleById = useMemo(
     () => new Map(people.map((p) => [p.id, p])),
     [people],
@@ -165,34 +89,6 @@ export default function DayView() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  // Misura l'altezza della fascia oraria (deve stare tutto in una schermata).
-  useLayoutEffect(() => {
-    const el = trackRef.current
-    if (!el) return
-    const update = () => setTrackH(el.clientHeight)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  const blocks = useMemo(() => {
-    const items = notes.map((n) => {
-      const startMin = Math.max(0, Math.min(DAY_MIN, startMinutes(n.timeStart)))
-      const dur = durationMinutes(n.timeStart, n.timeEnd)
-      const endMin = Math.min(DAY_MIN, startMin + (dur || 0))
-      // URL immagini precalcolati (riferimento stabile: il carosello non si
-      // resetta a ogni render della vista).
-      const images = (n.images || []).map((fn) => ({
-        url: fileUrl(n, fn, { thumb: '400x400' }),
-      }))
-      return { note: n, startMin, endMin, images }
-    })
-    return withLanes(items)
-  }, [notes])
-
-  const pxPerMin = trackH / DAY_MIN
-
   return (
     <PhoneShell>
       <MobileTopBar className="mtop-day">
@@ -203,42 +99,16 @@ export default function DayView() {
           title="Indietro"
           aria-label="Indietro"
         >
-          <Icon name="chevron-left" size={16} strokeWidth={2.8} />
+          <Icon name="chevron-left" size={21} strokeWidth={2.8} />
         </button>
-        <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" onStep={go} />
-        {/* Non più una matita (fa pensare "scrivi qui") — due foglietti
-            sovrapposti, coerente con "cambia aspetto della pagina". */}
-        <button
-          type="button"
-          className="mchev"
-          onClick={() => {
-            const next = nextSkin(skin)
-            setSkin(next)
-            setSkinDay(next)
-          }}
-          title={`Stile: ${SKIN_DAY_LABELS[skin]} (tocca per cambiare)`}
-          aria-label="Cambia aspetto della pagina"
-        >
-          <Icon
-            name="layers"
-            size={16}
-            className={
-              skin === 'sketch'
-                ? 'text-delete-dark'
-                : skin === 'pages'
-                  ? 'text-ink'
-                  : ''
-            }
-          />
-        </button>
+        <div className="flex flex-1 justify-center">
+          <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" onStep={go} />
+        </div>
       </MobileTopBar>
 
       <main
         key={date}
-        className={
-          'day-surface anim-page relative min-h-0 flex-1 overflow-hidden bg-panel ' +
-          (skin === 'pages' ? 'px-2 py-3' : 'px-3 py-3')
-        }
+        className="day-surface anim-page relative min-h-0 flex-1 overflow-hidden bg-panel px-2 py-3"
         style={{ touchAction: 'pan-y' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -249,149 +119,23 @@ export default function DayView() {
           </p>
         )}
 
-        {skin === 'pages' ? (
-          // Skin "Pagine": le 24h si comprimono per stare tutte nello
-          // schermo (fit), come da web — se il contenuto di una nota non ci
-          // sta viene tagliato, è solo decorativo, non serve scorrere per
-          // vedere le note più tarde.
-          loading ? (
-            <p className="p-6 text-center text-ink-soft">Carico…</p>
-          ) : !notes.length ? (
-            <p className="pt-10 text-center text-ink-soft">Nessuna nota</p>
-          ) : (
-            <DayPages
-              date={date}
-              notes={notes}
-              onNavigate={navigate}
-              peopleById={peopleById}
-              immichUrl={user?.immichUrl?.trim()}
-              immichApiKey={user?.immichApiKey?.trim()}
-              fit
-            />
-          )
+        {/* Le 24h si comprimono per stare tutte nello schermo (fit), come da
+            web — se il contenuto di una nota non ci sta viene tagliato, è
+            solo decorativo, non serve scorrere per vedere le note più tarde. */}
+        {loading ? (
+          <p className="p-6 text-center text-ink-soft">Carico…</p>
+        ) : !notes.length ? (
+          <p className="pt-10 text-center text-ink-soft">Nessuna nota</p>
         ) : (
-        <div ref={trackRef} className="relative h-full w-full">
-          {/* Barra oraria: una riga per ogni ora, estesa da qui fino al
-              bordo opposto dello schermo (dietro alle note, quando ce ne
-              sono). Etichetta ogni 3 ore. */}
-          <div className="absolute inset-0">
-            {Array.from({ length: 25 }, (_, h) => {
-              const top = h * 60 * pxPerMin
-              const label = h % 3 === 0 && h < 24
-              return (
-                <div
-                  key={h}
-                  className="hour-line absolute left-0 right-0 flex items-start"
-                  style={{ top }}
-                >
-                  <span
-                    className="hour-label shrink-0 -translate-y-1.5 text-center text-[10px] font-semibold tabular-nums text-ink-soft"
-                    style={{ width: RAIL_W }}
-                  >
-                    {label ? `${String(h).padStart(2, '0')}:00` : ''}
-                  </span>
-                  <span className="hour-rule mt-[1px] h-px flex-1 bg-line/70" />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Note posizionate sull'asse temporale */}
-          <div
-            className="absolute inset-y-0 right-0"
-            style={{ left: RAIL_W + 8 }}
-          >
-            {!loading && !error && !notes.length && (
-              <p className="pt-10 text-center text-ink-soft">Nessuna nota</p>
-            )}
-
-            {trackH > 0 &&
-              blocks.map(({ note: n, startMin, endMin, lane, lanes, images }, bi) => {
-                const top = startMin * pxPerMin
-                const rawH = (endMin - startMin) * pxPerMin
-                const h = Math.max(MIN_BLOCK, rawH)
-                const widthPct = 100 / lanes
-                const tiny = h < 30
-                const img = images[0]
-                const preview = h >= 58 ? plainText(n.content) : ''
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => navigate(`/note/${n.id}`)}
-                    className="note-block anim-row absolute overflow-hidden rounded-xl border border-line bg-tag text-left shadow-sm transition active:scale-[0.99]"
-                    style={{
-                      '--i': bi,
-                      top,
-                      height: h,
-                      left: `calc(${lane * widthPct}% + ${lane ? 4 : 0}px)`,
-                      width: `calc(${widthPct}% - ${lanes > 1 ? 4 : 0}px)`,
-                    }}
-                  >
-                    {tiny ? (
-                      <span
-                        className="block h-full w-full"
-                        style={{ backgroundColor: moodColor(n.mood) }}
-                      />
-                    ) : (
-                      <span className="flex h-full w-full">
-                        {/* Orario di inizio/fine avvolto dal colore del mood */}
-                        <span
-                          className="note-time flex w-11 shrink-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-bold tabular-nums"
-                          style={{
-                            backgroundColor: moodColor(n.mood),
-                            color: moodTextColor(n.mood),
-                          }}
-                        >
-                          <span>{timeLabel(n.timeStart)}</span>
-                          <span>{timeLabel(n.timeEnd)}</span>
-                        </span>
-
-                        <span className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
-                          <span className="flex min-w-0 items-center gap-1.5">
-                            <MarqueeText className="note-title min-w-0 flex-1 shrink text-[13px] font-semibold leading-tight text-ink">
-                              {n.title || (
-                                <span className="italic text-ink-soft">
-                                  Senza titolo
-                                </span>
-                              )}
-                            </MarqueeText>
-                            {n.people?.length > 0 && (
-                              <span className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">
-                                <Icon name="user" size={11} strokeWidth={3} />
-                                {n.people.length}
-                              </span>
-                            )}
-                          </span>
-                          {preview && <ClampedPreview text={preview} />}
-                        </span>
-
-                        {/* Immagine a larghezza fissa, sempre a destra, a tutta
-                            altezza. Con più foto: carosello in dissolvenza. */}
-                        {img && h >= 40 && (
-                          images.length > 1 ? (
-                            <ImageCarousel
-                              images={images}
-                              width={80}
-                              height={h}
-                              rounded=""
-                            />
-                          ) : (
-                            <img
-                              src={img.url}
-                              alt=""
-                              loading="lazy"
-                              className="h-full w-20 shrink-0 bg-panel-2 object-cover"
-                            />
-                          )
-                        )}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-          </div>
-        </div>
+          <DayPages
+            date={date}
+            notes={notes}
+            onNavigate={navigate}
+            peopleById={peopleById}
+            immichUrl={user?.immichUrl?.trim()}
+            immichApiKey={user?.immichApiKey?.trim()}
+            fit
+          />
         )}
       </main>
 
