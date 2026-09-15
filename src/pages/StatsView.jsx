@@ -106,6 +106,17 @@ function DayRow({ day, onClick, style }) {
   )
 }
 
+// Pulsante "mostra altri / mostra meno" in fondo a una lista troncata
+// (persone, giorni, note) — resta nascosto quando non c'è nulla da espandere.
+function ShowMore({ open, onClick, moreCount }) {
+  return (
+    <button type="button" onClick={onClick} className={'st-more' + (open ? ' open' : '')}>
+      {open ? 'Mostra meno' : `Mostra altri ${moreCount}`}
+      <Icon name="chevron-right" size={12} />
+    </button>
+  )
+}
+
 function NoteRow({ note, onClick, style }) {
   return (
     <button type="button" onClick={onClick} style={style} className="anim-row st-row">
@@ -146,6 +157,11 @@ export default function StatsView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [listSheet, setListSheet] = useState(null) // { title, subtitle, notes } | null
+  const [peopleOpen, setPeopleOpen] = useState(false)
+  const [topDaysOpen, setTopDaysOpen] = useState(false)
+  const [bottomDaysOpen, setBottomDaysOpen] = useState(false)
+  const [topNotesOpen, setTopNotesOpen] = useState(false)
+  const [bottomNotesOpen, setBottomNotesOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -257,13 +273,6 @@ export default function StatsView() {
               />
             </div>
 
-            <RecapCard
-              label={String(year)}
-              notes={yearNotes}
-              apiKey={geminiApiKey}
-              className="mt-5"
-            />
-
             {stats.topPeople.length > 0 && (
               <section className="mt-5">
                 <span className="st-label">
@@ -271,7 +280,7 @@ export default function StatsView() {
                   Persone più presenti
                 </span>
                 <ol className="st-people">
-                  {stats.topPeople.map((p, i) => (
+                  {(peopleOpen ? stats.topPeople : stats.topPeople.slice(0, 5)).map((p, i) => (
                     <li key={p.id} className="st-person-row">
                       <span className="st-rank">{i + 1}</span>
                       <PersonAvatar
@@ -286,6 +295,15 @@ export default function StatsView() {
                       </span>
                     </li>
                   ))}
+                  {stats.topPeople.length > 5 && (
+                    <li>
+                      <ShowMore
+                        open={peopleOpen}
+                        onClick={() => setPeopleOpen((v) => !v)}
+                        moreCount={stats.topPeople.length - 5}
+                      />
+                    </li>
+                  )}
                 </ol>
               </section>
             )}
@@ -298,7 +316,7 @@ export default function StatsView() {
                 </span>
                 <div className="st-rows">
                   <ul>
-                    {stats.topDays.map((d, i) => (
+                    {(topDaysOpen ? stats.topDays : stats.topDays.slice(0, 2)).map((d, i) => (
                       <li key={d.key}>
                         <DayRow
                           day={d}
@@ -308,6 +326,13 @@ export default function StatsView() {
                       </li>
                     ))}
                   </ul>
+                  {stats.topDays.length > 2 && (
+                    <ShowMore
+                      open={topDaysOpen}
+                      onClick={() => setTopDaysOpen((v) => !v)}
+                      moreCount={stats.topDays.length - 2}
+                    />
+                  )}
                 </div>
               </section>
             )}
@@ -320,16 +345,25 @@ export default function StatsView() {
                 </span>
                 <div className="st-rows">
                   <ul>
-                    {stats.bottomDays.map((d, i) => (
-                      <li key={d.key}>
-                        <DayRow
-                          day={d}
-                          style={{ '--i': i }}
-                          onClick={() => navigate(`/day/${d.key}`)}
-                        />
-                      </li>
-                    ))}
+                    {(bottomDaysOpen ? stats.bottomDays : stats.bottomDays.slice(0, 2)).map(
+                      (d, i) => (
+                        <li key={d.key}>
+                          <DayRow
+                            day={d}
+                            style={{ '--i': i }}
+                            onClick={() => navigate(`/day/${d.key}`)}
+                          />
+                        </li>
+                      ),
+                    )}
                   </ul>
+                  {stats.bottomDays.length > 2 && (
+                    <ShowMore
+                      open={bottomDaysOpen}
+                      onClick={() => setBottomDaysOpen((v) => !v)}
+                      moreCount={stats.bottomDays.length - 2}
+                    />
+                  )}
                 </div>
               </section>
             )}
@@ -342,7 +376,7 @@ export default function StatsView() {
                 </span>
                 <div className="st-rows">
                   <ul>
-                    {stats.topNotes.map((n, i) => (
+                    {(topNotesOpen ? stats.topNotes : stats.topNotes.slice(0, 2)).map((n, i) => (
                       <li key={n.id}>
                         <NoteRow
                           note={n}
@@ -352,6 +386,13 @@ export default function StatsView() {
                       </li>
                     ))}
                   </ul>
+                  {stats.topNotes.length > 2 && (
+                    <ShowMore
+                      open={topNotesOpen}
+                      onClick={() => setTopNotesOpen((v) => !v)}
+                      moreCount={stats.topNotes.length - 2}
+                    />
+                  )}
                 </div>
               </section>
             )}
@@ -364,16 +405,25 @@ export default function StatsView() {
                 </span>
                 <div className="st-rows">
                   <ul>
-                    {stats.bottomNotes.map((n, i) => (
-                      <li key={n.id}>
-                        <NoteRow
-                          note={n}
-                          style={{ '--i': i }}
-                          onClick={() => navigate(`/note/${n.id}`)}
-                        />
-                      </li>
-                    ))}
+                    {(bottomNotesOpen ? stats.bottomNotes : stats.bottomNotes.slice(0, 2)).map(
+                      (n, i) => (
+                        <li key={n.id}>
+                          <NoteRow
+                            note={n}
+                            style={{ '--i': i }}
+                            onClick={() => navigate(`/note/${n.id}`)}
+                          />
+                        </li>
+                      ),
+                    )}
                   </ul>
+                  {stats.bottomNotes.length > 2 && (
+                    <ShowMore
+                      open={bottomNotesOpen}
+                      onClick={() => setBottomNotesOpen((v) => !v)}
+                      moreCount={stats.bottomNotes.length - 2}
+                    />
+                  )}
                 </div>
               </section>
             )}
@@ -429,6 +479,13 @@ export default function StatsView() {
                 </div>
               </section>
             )}
+
+            <RecapCard
+              label={String(year)}
+              notes={yearNotes}
+              apiKey={geminiApiKey}
+              className="mt-5 st-recap-provisional"
+            />
 
             {!stats.noteCount && (
               <p className="py-10 text-center text-ink-soft">

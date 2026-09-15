@@ -7,6 +7,7 @@ const FONT_KEY = 'annales.font'
 const ANIM_KEY = 'annales.anim'
 const PAPER_KEY = 'annales.paper'
 const PAPER_IMAGE_KEY = 'annales.paperImage'
+const CURSOR_KEY = 'annales.cursor'
 
 export const THEMES = ['system', 'light', 'dark']
 export const THEME_LABELS = { system: 'Sistema', light: 'Chiaro', dark: 'Scuro' }
@@ -21,6 +22,11 @@ export const FONT_LABELS = {
 
 export const ANIMS = ['system', 'on', 'off']
 export const ANIM_LABELS = { system: 'Sistema', on: 'Sì', off: 'No' }
+
+// Cursore del mouse a tema (matitina): spento di default, resta quello di
+// Windows finché non lo si attiva esplicitamente.
+export const CURSORS = ['off', 'on']
+export const CURSOR_LABELS = { off: 'Windows', on: 'Matitina' }
 
 export const PAPERS = [
   'nessuna',
@@ -71,6 +77,9 @@ export function getAnim() {
 }
 export function getPaper() {
   return read(PAPER_KEY, 'rigato', PAPERS)
+}
+export function getCursor() {
+  return read(CURSOR_KEY, 'off', CURSORS)
 }
 // Sfondo personalizzato (data URL, solo per lo sfondo "immagine"). Vive in
 // localStorage come le altre preferenze di aspetto: per-dispositivo.
@@ -138,6 +147,9 @@ export function applyPrefs() {
   root.dataset.skinDay = 'pages'
   root.dataset.skinMonth = 'pages'
 
+  if (getCursor() === 'on') root.dataset.cursor = 'custom'
+  else delete root.dataset.cursor
+
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', dark ? '#211e18' : '#dbd1bd')
 }
@@ -162,6 +174,9 @@ export function setAnim(v) {
 }
 export function setPaper(v) {
   setKey(PAPER_KEY, v)
+}
+export function setCursor(v) {
+  setKey(CURSOR_KEY, v)
 }
 // Salva/rimuove l'immagine di sfondo personalizzata. `setPaperImage` torna
 // false se localStorage rifiuta il salvataggio (quota: immagine troppo

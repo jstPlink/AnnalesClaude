@@ -258,13 +258,6 @@ export default function WebStats() {
         />
       </div>
 
-      <RecapCard
-        label={String(year)}
-        notes={yearNotes}
-        apiKey={geminiApiKey}
-        className="mt-6"
-      />
-
       {(stats.topPeople.length > 0 ||
         stats.bestWeek ||
         stats.bestWeekday ||
@@ -439,6 +432,13 @@ export default function WebStats() {
           </section>
         )}
       </div>
+
+      <RecapCard
+        label={String(year)}
+        notes={yearNotes}
+        apiKey={geminiApiKey}
+        className="mt-8 st-recap-provisional"
+      />
 
       {!loading && !stats.noteCount && (
         <p className="py-16 text-center text-ink-soft">Nessuna nota nel {year}.</p>

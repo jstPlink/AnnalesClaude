@@ -8,17 +8,21 @@ import {
   ANIM_LABELS,
   PAPERS,
   PAPER_LABELS,
+  CURSORS,
+  CURSOR_LABELS,
   getTheme,
   getFont,
   getAnim,
   getPaper,
   getPaperImage,
+  getCursor,
   setTheme,
   setFont,
   setAnim,
   setPaper,
   setPaperImage,
   clearPaperImage,
+  setCursor,
 } from '../lib/prefs'
 
 // Ridimensiona un'immagine scelta dall'utente a un lato massimo e la
@@ -87,6 +91,7 @@ export default function AppearanceControls() {
   const [anim, setAnimState] = useState(getAnim())
   const [paper, setPaperState] = useState(getPaper())
   const [paperImage, setPaperImageState] = useState(getPaperImage())
+  const [cursor, setCursorState] = useState(getCursor())
   const [imageError, setImageError] = useState('')
   const fileRef = useRef(null)
 
@@ -147,6 +152,16 @@ export default function AppearanceControls() {
         onChange={(v) => {
           setAnimState(v)
           setAnim(v)
+        }}
+      />
+      <Segmented
+        label="Cursore del mouse"
+        options={CURSORS}
+        labels={CURSOR_LABELS}
+        value={cursor}
+        onChange={(v) => {
+          setCursorState(v)
+          setCursor(v)
         }}
       />
 

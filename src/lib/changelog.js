@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.47.0',
+    date: '2026-09-15 19:10',
+    changes: [
+      'Impostazioni → Aspetto: il cursore a matitina ora è facoltativo ("Cursore del mouse: Windows / Matitina"), spento di default — resta quello di Windows finché non lo si attiva.',
+      'Statistiche: meno grana di cartone sulle targhette, etichette di sezione ("Persone più presenti", "Giorni migliori"...) più leggibili, numeri di riepilogo meno marcati, recap dell\'anno spostato in fondo e colorato di giallo per segnalarlo provvisorio. Da telefono, le liste di persone/giorni/note mostrano solo le prime voci con un pulsante "Mostra altri".',
+      'Ricerca da web allineata a quella da telefono: sezione "Canzoni" con filtro dedicato, "Note con luoghi" spostato dentro "Luogo", Tag ora collassabile, "Ordina per" in verticale, tolta la sezione "Contenuto" e la barra del mood.',
+    ],
+  },
+  {
     version: '0.46.0',
     date: '2026-09-15 18:20',
     changes: [
