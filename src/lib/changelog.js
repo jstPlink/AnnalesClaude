@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.54.0',
+    date: '2026-09-16 23:01',
+    changes: [
+      'Statistiche: aggiunta "Settimana peggiore" alla lista "In evidenza" (web e mobile), accanto a "Settimana migliore" — tocca per vedere le note di quella settimana.',
+    ],
+  },
+  {
     version: '0.53.0',
     date: '2026-09-16 22:21',
     changes: [

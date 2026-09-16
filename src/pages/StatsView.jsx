@@ -235,6 +235,22 @@ export default function StatsView() {
     })
   }
 
+  function openWorstWeekNotes() {
+    if (!stats.worstWeek) return
+    const { first, last } = stats.worstWeek
+    const notes = sortByDateTime(
+      yearNotes.filter((n) => {
+        const dk = dayKey(n.date)
+        return dk >= first && dk <= last
+      }),
+    )
+    setListSheet({
+      title: 'Settimana peggiore',
+      subtitle: `${shortDM(first)} – ${shortDM(last)}`,
+      notes,
+    })
+  }
+
   return (
     <PhoneShell>
       <MobileTopBar>
@@ -430,6 +446,7 @@ export default function StatsView() {
             )}
 
             {(stats.bestWeek ||
+              stats.worstWeek ||
               stats.bestWeekday ||
               stats.topTag ||
               stats.topPlace) && (
@@ -447,6 +464,16 @@ export default function StatsView() {
                       value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
                       sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
                       onClick={openWeekNotes}
+                    />
+                  )}
+                  {stats.worstWeek && (
+                    <StatCard
+                      variant="mini"
+                      icon="cloud"
+                      label="Settimana peggiore"
+                      value={`${shortDM(stats.worstWeek.first)} – ${shortDM(stats.worstWeek.last)}`}
+                      sub={`mood ${Math.round(stats.worstWeek.mood * 100)} · ${stats.worstWeek.notes} note`}
+                      onClick={openWorstWeekNotes}
                     />
                   )}
                   {stats.bestWeekday && (

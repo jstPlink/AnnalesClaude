@@ -75,9 +75,14 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     weekMap.set(wk, e)
   }
   const weeks = [...weekMap.values()].map((e) => ({ ...e, mood: e.moodSum / e.days }))
+  const weeksWithEnough = weeks.filter((w) => w.days >= 2)
   const bestWeek =
-    weeks.filter((w) => w.days >= 2).sort((a, b) => b.mood - a.mood)[0] ||
+    weeksWithEnough.sort((a, b) => b.mood - a.mood)[0] ||
     weeks.sort((a, b) => b.mood - a.mood)[0] ||
+    null
+  const worstWeek =
+    weeksWithEnough.sort((a, b) => a.mood - b.mood)[0] ||
+    weeks.sort((a, b) => a.mood - b.mood)[0] ||
     null
 
   // Giorno della settimana con il mood medio più alto.
@@ -147,6 +152,7 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     topNotes,
     bottomNotes,
     bestWeek,
+    worstWeek,
     bestWeekday,
     topPeople,
     topPerson: topPeople[0] || null,
