@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
 
@@ -25,7 +26,10 @@ export default function ImageLightbox({ images = [], index, onClose, onIndex }) 
     onIndex?.((index + delta + images.length) % images.length)
   }
 
-  return (
+  // In portal su <body>: annidato nella pagina, il fixed poteva restare
+  // legato al contenitore invece che alla vera finestra (sfondo scuro che
+  // non copriva tutto, pannello fuori dai bordi visibili).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
@@ -78,6 +82,7 @@ export default function ImageLightbox({ images = [], index, onClose, onIndex }) 
           {index + 1} / {images.length}
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

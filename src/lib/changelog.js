@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.52.0',
+    date: '2026-09-16 20:38',
+    changes: [
+      'Import da foglio: colonne di default aggiornate (mese C, giorno E, testo F, titolo G, voto H); il campo "Data" in revisione mostra la data per esteso ("lunedì 09 febbraio 2026") invece del solo input, più veloce da leggere scorrendo tante note di fila.',
+      'Import da foglio: i file caricati restano in una libreria personale (non più solo nel browser) — un pulsante sotto il box per richiamare ciascun file caricato in precedenza, con una × per dimenticarlo, così si riprende anche da un altro dispositivo senza ricaricarlo da capo.',
+      'Selettori di immagini, canzoni, persone, tag e luogo (mobile e web): risolto un bug di posizionamento per cui lo sfondo scuro non copriva tutto lo schermo e il pannello poteva finire fuori dai bordi visibili, rendendo alcuni pulsanti non raggiungibili.',
+    ],
+  },
+  {
     version: '0.51.0',
     date: '2026-09-16 19:21',
     changes: [

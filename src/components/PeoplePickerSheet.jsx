@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
@@ -100,7 +101,10 @@ export default function PeoplePickerSheet({
     }
   }
 
-  return (
+  // In portal su <body>: annidato nella pagina, il fixed poteva restare
+  // legato al contenitore invece che alla vera finestra (sfondo scuro che
+  // non copriva tutto, pannello fuori dai bordi visibili).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:p-6"
       onClick={onClose}
@@ -210,6 +214,7 @@ export default function PeoplePickerSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

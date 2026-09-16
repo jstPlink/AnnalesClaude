@@ -9,6 +9,7 @@ import {
 } from '../../lib/notes'
 import { listPeople, createPerson } from '../../lib/people'
 import { listTags, createTag } from '../../lib/tags'
+import { listImportCsvs, createImportCsv, deleteImportCsv } from '../../lib/importCsvs'
 import { extractNotesFromImage, describeGeminiError } from '../../lib/gemini'
 import {
   parseDelimited,
@@ -16,7 +17,7 @@ import {
   dayToNote,
   timesInText,
 } from '../../lib/importSheet'
-import { MONTHS_IT, dayKey, dateRangeBounds } from '../../lib/dates'
+import { MONTHS_IT, dayKey, dateRangeBounds, importDayLabel } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
 import PersonAvatar from '../../components/PersonAvatar'
 import PeoplePickerSheet from '../../components/PeoplePickerSheet'
@@ -127,12 +128,13 @@ export default function WebImport() {
   // Import da testo: TSV/CSV dell'anno e mappatura colonne (lettere del foglio).
   const [tsv, setTsv] = useState('')
   const [cols, setCols] = useState({
-    month: 'A',
-    day: 'C',
-    text: 'D',
-    title: 'E',
-    mood: 'F',
+    month: 'C',
+    day: 'E',
+    text: 'F',
+    title: 'G',
+    mood: 'H',
   })
+  const [savedCsvs, setSavedCsvs] = useState([]) // libreria di file caricati in precedenza (da import_csvs)
   const [preSkipped, setPreSkipped] = useState(0) // giorni saltati perché già importati
   const [dayText, setDayText] = useState({}) // { 'YYYY-MM-DD': testo grezzo del giorno }
 
@@ -166,6 +168,7 @@ export default function WebImport() {
     listPeople().then(setAllPeople).catch(() => {})
     listTags().then(setAllTags).catch(() => {})
     peopleUsageCounts().then(setPeopleUsage).catch(() => {})
+    listImportCsvs().then(setSavedCsvs).catch(() => {})
   }, [])
 
   const setField = (patch) => setDraft((d) => ({ ...d, ...patch }))
@@ -365,18 +368,50 @@ export default function WebImport() {
     setDone(false)
   }
 
-  const loadTsvFile = useCallback((file) => {
+  // Salvata su `import_csvs` (PocketBase), non più solo in localStorage: così
+  // resta disponibile anche cambiando dispositivo. Se lo stesso contenuto è
+  // già in libreria non lo riduplica.
+  async function addSavedCsv(label, content) {
+    if (savedCsvs.some((c) => c.content === content)) return
+    try {
+      const rec = await createImportCsv(label, content)
+      setSavedCsvs((prev) => [rec, ...prev])
+    } catch (err) {
+      setError(describeError(err))
+    }
+  }
+
+  function loadSavedCsv(entry) {
+    setTsv(entry.content)
+    setNotes(null)
+    setDone(false)
+    setResults([])
+    setError('')
+  }
+
+  async function removeSavedCsv(id) {
+    try {
+      await deleteImportCsv(id)
+      setSavedCsvs((prev) => prev.filter((c) => c.id !== id))
+    } catch (err) {
+      setError(describeError(err))
+    }
+  }
+
+  function loadTsvFile(file) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
-      setTsv(String(reader.result || ''))
+      const text = String(reader.result || '')
+      setTsv(text)
       setNotes(null)
       setDone(false)
       setResults([])
       setError('')
+      addSavedCsv(file.name, text)
     }
     reader.readAsText(file)
-  }, [])
+  }
 
   // Ricostruisce un "segmento" (nomi, non id) dalla bozza corrente, così che
   // Fondi/Spezza non perdano le modifiche fatte a mano nella revisione.
@@ -655,6 +690,34 @@ export default function WebImport() {
             />
           </label>
 
+          {savedCsvs.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedCsvs.map((c) => (
+                <span
+                  key={c.id}
+                  className="flex items-center gap-1.5 rounded-full border border-line bg-cream py-1 pl-3 pr-1.5 text-xs font-semibold text-ink"
+                >
+                  <button
+                    type="button"
+                    onClick={() => loadSavedCsv(c)}
+                    title={`Rimetti nel box: ${c.label}`}
+                    className="max-w-[160px] truncate hover:underline"
+                  >
+                    {c.label}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSavedCsv(c.id)}
+                    title="Dimentica questo file"
+                    className="rounded-full p-0.5 text-ink-soft transition hover:text-delete-dark"
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-end gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -922,7 +985,7 @@ export default function WebImport() {
           <div className="flex flex-wrap gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Data
+                {draft.date ? importDayLabel(draft.date) : 'Data'}
               </span>
               <input
                 type="date"

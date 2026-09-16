@@ -120,6 +120,18 @@ export function weekdayShort(dKey) {
   return WEEKDAYS_SHORT_IT[dt.getDay()]
 }
 
+// "lunedì 09 febbraio 2026" — per esteso, più veloce da leggere in un colpo
+// d'occhio di "09/02/2026" (usato nella revisione dell'import, dove si
+// scorrono molte date di fila).
+export function importDayLabel(dKey) {
+  const p = parseWall(dKey)
+  if (!p) return ''
+  const dt = new Date(p.y, p.mo - 1, p.d)
+  const wd = WEEKDAYS_IT[dt.getDay()].toLowerCase()
+  const mon = MONTHS_IT[p.mo - 1].toLowerCase()
+  return `${wd} ${pad(p.d)} ${mon} ${p.y}`
+}
+
 // "Mercoledì" — nome completo del giorno della settimana.
 export function weekdayLong(dKey) {
   const p = parseWall(dKey)

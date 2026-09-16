@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
 import { dayKey, fullDayLabel, todayKey } from '../lib/dates'
@@ -180,7 +181,13 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
 
   if (!open) return null
 
-  return (
+  // In portal su <body>: se no, essendo annidato nella pagina nota (dentro
+  // colonne/animazioni con molte foto reali), capitava che lo sfondo scuro
+  // non coprisse tutto lo schermo e il pannello finisse fuori dai bordi
+  // visibili — un fixed dentro l'albero della pagina può restare legato al
+  // suo contenitore invece che alla vera finestra. Da qui in poi è sempre
+  // ancorato al viewport reale, qualunque cosa succeda nel resto della pagina.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:p-6"
       onClick={onClose}
@@ -317,6 +324,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

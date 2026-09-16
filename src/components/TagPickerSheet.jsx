@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
 import { createTag } from '../lib/tags'
@@ -37,7 +38,10 @@ export default function TagPickerSheet({
     }
   }
 
-  return (
+  // In portal su <body>: annidato nella pagina, il fixed poteva restare
+  // legato al contenitore invece che alla vera finestra (sfondo scuro che
+  // non copriva tutto, pannello fuori dai bordi visibili).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:p-6"
       onClick={onClose}
@@ -121,6 +125,7 @@ export default function TagPickerSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
