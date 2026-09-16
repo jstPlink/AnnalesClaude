@@ -9,6 +9,18 @@
 
 export const CHANGELOG = [
   {
+    version: '0.50.0',
+    date: '2026-09-16 17:01',
+    changes: [
+      'Vista mese: all\'apertura dell\'app va subito al mese corrente, e ogni volta che si carica il mese lo scroll è già sul giorno di oggi (mobile e web).',
+      'Andamento da web: le barrette di ogni mese sono ora cliccabili una per una, con il numero del giorno sotto ciascuna, per aprire subito quel giorno.',
+      'Andamento e Statistiche da web: header con titolo e anno fisso in cima scorrendo la pagina.',
+      'Impostazioni, sezione Gemini (IA): più contrasto e spazio fra i campi, meno tutto appiccicato; il campo delle istruzioni personalizzate è più grande.',
+      'Pannello per generare una nota con Gemini (mobile e web): stessa estetica a foglietto di cartoncino del resto dell\'app invece del vecchio pannello bianco generico; da web appare a centro schermo invece che in basso.',
+      'Corretto il dropdown di mese/anno da telefono, che poteva uscire dai bordi dello schermo o comparire scentrato rispetto al pulsante; il menu del mese è anche un po\' più largo per far stare nomi lunghi come "Settembre".',
+    ],
+  },
+  {
     version: '0.49.0',
     date: '2026-09-16 15:53',
     changes: [

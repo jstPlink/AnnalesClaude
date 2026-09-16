@@ -854,14 +854,14 @@ export default function Profile() {
               </p>
               <TokenHelp which="gemini" />
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-ink-soft">
+                <span className="mb-1.5 block text-xs font-semibold text-ink-soft">
                   API key
                 </span>
                 <input
                   type="password"
                   value={geminiApiKey}
                   onChange={(e) => setGeminiApiKey(e.target.value)}
-                  className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                  className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
                 />
               </label>
               {geminiStatus && (
@@ -900,11 +900,11 @@ export default function Profile() {
                   account: valgono su tutti i dispositivi.
                 </p>
                 <textarea
-                  rows={4}
+                  rows={7}
                   placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
                   value={geminiInstructions}
                   onChange={(e) => setGeminiInstructions(e.target.value)}
-                  className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                  className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
                 />
                 {geminiInstructionsStatus && (
                   <p

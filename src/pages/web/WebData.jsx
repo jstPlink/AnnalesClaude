@@ -5,7 +5,7 @@ import Icon from '../../components/Icon'
 import { useNav } from '../../context/NavContext'
 import { listNotesInRange, describeError } from '../../lib/notes'
 import { yearWeeklyMood, moodColor, moodTextColor } from '../../lib/mood'
-import { MONTHS_IT } from '../../lib/dates'
+import { MONTHS_IT, dayKey } from '../../lib/dates'
 
 // Colori delle 3 linee del grafico nella skin "Pagine": grafite per il
 // giorno, penna blu per la settimana, evidenziatore corallo per il mese —
@@ -13,18 +13,45 @@ import { MONTHS_IT } from '../../lib/dates'
 // inventarne di nuove.
 const CHART_LINE_COLORS = { day: '#a9906e', week: '#5ea9d6', month: '#e0655e' }
 
-// Una barretta per ogni giorno del mese.
-function WeekBars({ groups }) {
+// Una barretta cliccabile per ogni giorno del mese: porta dritti a quel
+// giorno. Sotto, il numero di ogni giorno che esiste davvero in quel mese
+// (niente 31 per i mesi da 30 giorni, niente 29/30 per febbraio...).
+function MonthDayBars({ year, month, groups, onOpenDay }) {
   return (
-    <span className="wd-month-bars">
-      {groups.map((g, i) =>
-        g.mood == null ? (
-          <i key={i} style={{ height: '10%', backgroundColor: 'var(--color-line)' }} />
-        ) : (
-          <i key={i} style={{ height: `${Math.max(10, g.mood * 100)}%`, backgroundColor: moodColor(g.mood) }} />
-        ),
-      )}
-    </span>
+    <div className="wd-day-bars">
+      <div className="wd-day-bars-track">
+        {groups.map((g, i) => {
+          const day = i + 1
+          const label = `${day} ${MONTHS_IT[month]}`
+          return (
+            <button
+              key={day}
+              type="button"
+              title={label}
+              aria-label={label}
+              disabled={!g.count}
+              onClick={() => onOpenDay(dayKey(new Date(year, month, day)))}
+              className="wd-day-bar"
+            >
+              <i
+                style={
+                  g.mood == null
+                    ? { height: '10%', backgroundColor: 'var(--color-line)' }
+                    : { height: `${Math.max(10, g.mood * 100)}%`, backgroundColor: moodColor(g.mood) }
+                }
+              />
+            </button>
+          )
+        })}
+      </div>
+      <div className="wd-day-bars-ticks">
+        {groups.map((g, i) => (
+          <span key={i} style={{ left: `${((i + 0.5) / groups.length) * 100}%` }}>
+            {i + 1}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -61,7 +88,7 @@ export default function WebData() {
 
   return (
     <div>
-      <div className="relative mb-[50px] mt-[40px] w-full">
+      <div className="sticky top-0 z-10 mb-[50px] mt-[40px] w-full bg-cream">
         <span className="header-quadretti bleed-day" aria-hidden="true" />
         {/* griglia 1fr/auto/1fr: il titolo resta a sinistra, l'anno si
             centra sull'intera riga (a centro pagina) invece di seguire
@@ -153,33 +180,51 @@ export default function WebData() {
           <ul>
             {data.monthly.map((m) => (
               <li key={m.month}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCursor({ year, month: m.month })
-                    navigate('/')
-                  }}
-                  className="wd-month-row"
-                >
-                  <span className="wd-month-tag">{MONTHS_IT[m.month]}</span>
-                  <WeekBars groups={m.groups} />
-                  <span
-                    className="wd-month-score"
-                    style={
-                      m.mood == null
-                        ? {
-                            color: 'var(--color-ink-soft)',
-                            border: '1px solid var(--color-line)',
-                          }
-                        : {
-                            backgroundColor: moodColor(m.mood),
-                            color: moodTextColor(m.mood),
-                          }
-                    }
+                <div className="wd-month-row wd-day-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCursor({ year, month: m.month })
+                      navigate('/')
+                    }}
+                    title={`Apri ${MONTHS_IT[m.month]}`}
+                    className="wd-month-tag-btn"
                   >
-                    {m.mood == null ? '—' : Math.round(m.mood * 100)}
-                  </span>
-                </button>
+                    <span className="wd-month-tag">{MONTHS_IT[m.month]}</span>
+                  </button>
+                  <MonthDayBars
+                    year={year}
+                    month={m.month}
+                    groups={m.groups}
+                    onOpenDay={(key) => navigate(`/day/${key}`)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCursor({ year, month: m.month })
+                      navigate('/')
+                    }}
+                    title={`Apri ${MONTHS_IT[m.month]}`}
+                    className="wd-month-score-btn"
+                  >
+                    <span
+                      className="wd-month-score"
+                      style={
+                        m.mood == null
+                          ? {
+                              color: 'var(--color-ink-soft)',
+                              border: '1px solid var(--color-line)',
+                            }
+                          : {
+                              backgroundColor: moodColor(m.mood),
+                              color: moodTextColor(m.mood),
+                            }
+                      }
+                    >
+                      {m.mood == null ? '—' : Math.round(m.mood * 100)}
+                    </span>
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

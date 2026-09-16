@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { dayMood, moodColor } from '../../lib/mood'
 import { plainText, parsePlace } from '../../lib/notes'
@@ -235,9 +235,19 @@ export default function MonthPages({
       })
   }, [grid, byDay, peopleById])
 
+  // Ogni volta che si carica/ricarica il mese corrente (mobile: rimonta a
+  // ogni cambio mese; web: `pages` cambia comunque perché dipende da
+  // `grid`), porta subito a fuoco il giorno di oggi — niente `.is-today`
+  // nel DOM se il mese mostrato non è quello corrente, quindi qui non fa
+  // nulla nei mesi passati/futuri.
+  const stackRef = useRef(null)
+  useEffect(() => {
+    stackRef.current?.querySelector('.is-today')?.scrollIntoView({ block: 'center' })
+  }, [pages])
+
   return (
     <div className="month-pages">
-      <div className="mp-stack">
+      <div className="mp-stack" ref={stackRef}>
         {pages.map((pg) => {
           const hasMedia = Boolean(pg.placeName) || pg.hasSong
           return (

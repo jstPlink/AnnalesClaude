@@ -205,7 +205,7 @@ export default function WebStats() {
 
   return (
     <div>
-      <div className="relative mb-[50px] mt-[40px] w-full">
+      <div className="sticky top-0 z-10 mb-[50px] mt-[40px] w-full bg-cream">
         <span className="header-quadretti bleed-day" aria-hidden="true" />
         {/* griglia 1fr/auto/1fr: il titolo resta a sinistra, l'anno si
             centra sull'intera riga (a centro pagina) invece di seguire

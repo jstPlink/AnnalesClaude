@@ -3410,7 +3410,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   margin: 0 0 14px;
   border-radius: 10px;
   border: 1.5px dashed var(--color-line);
-  background-color: var(--color-cream);
+  /* --color-panel-2, non --color-cream: i campi dentro (input/textarea)
+     sono bg-cream, sullo stesso tono si confondevano col contenitore. */
+  background-color: var(--color-panel-2);
   background-image: var(--sb-grain, none);
   background-size: 130px 130px;
   background-blend-mode: multiply;
@@ -3419,6 +3421,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 .ws-sub:last-child {
   margin-bottom: 0;
+}
+/* un .ws-sub dentro un altro .ws-sub (es. "Istruzioni personalizzate"
+   dentro "Gemini"): torna al tono cream, altrimenti si confonderebbe col
+   genitore appena scurito qui sopra — livelli di nidificazione alternati. */
+.ws-sub .ws-sub {
+  background-color: var(--color-cream);
 }
 .ws-sub-head {
   width: 100%;
@@ -3453,6 +3461,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   transform: rotate(90deg);
 }
 .ws-sub-body {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
   padding: 0 16px 16px;
 }
 
@@ -3852,6 +3863,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     height: 13px;
   }
   .ws-sub-body {
+    gap: 9px;
     padding: 0 13px 13px;
   }
 }
@@ -4723,6 +4735,23 @@ li:last-child > .wd-month-row {
   background-blend-mode: soft-light, soft-light;
   box-shadow: 0 -10px 26px rgba(20, 12, 4, 0.32);
 }
+/* Da schermi larghi in su (breakpoint desktop, come useIsWide) il
+   foglietto va a centro schermo come un vero dialog invece che in basso
+   come uno sheet mobile — riguarda solo NewNoteWithGeminiSheet.jsx, unico
+   componente fra quelli che condividono .ncs-backdrop/.ncs-sheet a essere
+   usato anche da web (Sidebar.jsx): NewNoteChoiceSheet/GeminiSheet vivono
+   solo in pagine mobile-only, che a queste larghezze non sono comunque
+   montate. */
+@media (min-width: 1024px) {
+  .ncs-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+  .ncs-sheet {
+    border-radius: 22px;
+    box-shadow: 0 20px 40px -12px rgba(20, 12, 4, 0.45);
+  }
+}
 .ncs-tape {
   position: absolute;
   top: -10px;
@@ -4945,6 +4974,23 @@ li:last-child > .wd-month-row {
   text-align: center;
   font-size: 0.85rem;
   color: var(--color-ink-soft);
+}
+/* griglia foto di "Genera dalle foto di ieri" (NewNoteWithGeminiSheet). */
+.gms-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+/* avviso "testo ripristinato dall'ultimo tentativo" — stesso tono di
+   avviso giallo usato altrove nell'app (color-warn), su un ritaglio di
+   carta invece di un banner Tailwind generico. */
+.gms-restored {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--color-warn-dark);
+  background-color: color-mix(in srgb, var(--color-warn) 25%, var(--color-cream) 75%);
+  font-size: 0.78rem;
+  color: var(--color-ink);
 }
 .gms-error {
   margin-top: 10px;
@@ -5615,6 +5661,98 @@ li:last-child > .st-person-row {
   border-radius: 14px;
   box-shadow: 0 8px 20px -14px rgba(20, 12, 4, 0.3);
   padding: 4px 18px;
+}
+/* riga "mese per mese" di Andamento quando le barrette sono cliccabili
+   (WebData.jsx): il cartellino del mese e la targhetta del punteggio
+   diventano ciascuno un pulsante a sé (stesso aspetto, sfondo/bordo
+   azzerati sul wrapper), la riga intera non è più cliccabile — niente
+   cursore/hover da pulsante su di lei — e l'allineamento va in alto
+   perché le barre hanno anche i numeri dei giorni sotto, più alte di una
+   singola riga di testo. */
+.wd-day-row {
+  align-items: flex-start;
+  cursor: default;
+}
+.wd-day-row:hover,
+.wd-day-row:focus-visible {
+  background: none;
+  transform: none;
+}
+.wd-day-row .wd-month-tag {
+  margin-top: 2px;
+}
+.wd-month-tag-btn,
+.wd-month-score-btn {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  border-radius: 999px;
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease;
+}
+.wd-month-tag-btn:hover,
+.wd-month-tag-btn:focus-visible,
+.wd-month-score-btn:hover,
+.wd-month-score-btn:focus-visible {
+  transform: scale(1.06);
+}
+.wd-day-bars {
+  flex: 1;
+  min-width: 0;
+}
+.wd-day-bars-track {
+  display: flex;
+  align-items: flex-end;
+  height: 32px;
+  gap: 1.5px;
+}
+.wd-day-bar {
+  flex: 1;
+  min-width: 1px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: var(--cursor-pointer);
+}
+.wd-day-bar:disabled {
+  cursor: default;
+}
+.wd-day-bar i {
+  width: 100%;
+  border-radius: 1px 1px 0 0;
+  display: block;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+.wd-day-bar:not(:disabled):hover i,
+.wd-day-bar:not(:disabled):focus-visible i {
+  transform: scaleY(1.08);
+  filter: brightness(1.15);
+}
+.wd-day-bars-ticks {
+  position: relative;
+  height: 14px;
+  margin-top: 3px;
+}
+.wd-day-bars-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
+}
+@media (max-width: 480px) {
+  .wd-day-bars-track {
+    height: 26px;
+  }
+  .wd-day-bars-ticks span {
+    font-size: 0.52rem;
+  }
 }
 .st-row {
   width: 100%;
@@ -6299,7 +6437,7 @@ li:last-child > .st-row {
   position: absolute;
   left: 50%;
   z-index: 30;
-  margin-top: 10px;
+  margin-top: 297px;
   width: 104px;
   /* su schermi stretti, centrato sul proprio pulsante (spesso vicino al
      bordo), poteva uscire dallo schermo — mai più largo dello spazio
@@ -6313,21 +6451,7 @@ li:last-child > .st-row {
   padding: 6px;
 }
 .mn-pop.wide {
-  width: 150px;
-}
-/* Sotto una certa larghezza il centraggio sul pulsante non basta: un
-   pulsante vicino al bordo (frequente nella barra mobile, mese+anno
-   affiancati) sposta comunque il menu fuori schermo anche se più stretto
-   del viewport, perché il punto di ancoraggio stesso è troppo vicino al
-   bordo. Qui si passa a centrare sull'intero schermo (non più sul
-   pulsante) con un'altezza fissa che scavalca la barra superiore. */
-@media (max-width: 640px) {
-  .mn-pop {
-    position: fixed;
-    left: 50%;
-    top: calc(max(14px, env(safe-area-inset-top)) + 65px);
-    margin-top: 0;
-  }
+  width: 165px;
 }
 .mn-list {
   display: flex;

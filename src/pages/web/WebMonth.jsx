@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
 import { useAuth } from '../../context/AuthContext'
@@ -22,13 +22,56 @@ function ArrowIcon({ dir }) {
 // stessa identica ricetta per l'orario nella vista nota.
 function ClockDropdownList({ items, wide }) {
   const listRef = useRef(null)
+  const popRef = useRef(null)
+
+  useLayoutEffect(() => {
+    // Resta ancorato sotto il proprio pulsante (centrato), ma se così
+    // uscirebbe dai bordi del "foglio" app (.app-paper: il limite reale
+    // ritagliato da overflow-hidden, non necessariamente tutta la
+    // finestra) si sposta quel tanto che basta per restare visibile.
+    // Ricalcola a ogni cambio di dimensioni del box (non solo al mount):
+    // il font digitale carica in modo asincrono e può cambiare la
+    // larghezza del testo dopo il primo render, quando il calcolo fatto
+    // una sola volta userebbe ancora le misure del font di riserva.
+    const el = popRef.current
+    if (!el) return
+    const reposition = () => {
+      el.style.transform = 'translateX(-50%)'
+      const bounds = el.closest('.app-paper')?.getBoundingClientRect()
+      const boundLeft = bounds ? bounds.left : 0
+      const boundRight = bounds ? bounds.right : window.innerWidth
+      const rect = el.getBoundingClientRect()
+      const margin = 10
+      let shift = 0
+      if (rect.left < boundLeft + margin) shift = boundLeft + margin - rect.left
+      else if (rect.right > boundRight - margin) shift = boundRight - margin - rect.right
+      el.style.transform = shift ? `translateX(calc(-50% + ${shift}px))` : 'translateX(-50%)'
+    }
+    reposition()
+    const ro = new ResizeObserver(reposition)
+    ro.observe(el)
+    window.addEventListener('resize', reposition)
+    // Rete di sicurezza esplicita per il caso più comune di cambio
+    // larghezza dopo il mount: il font DSEG14 non ancora pronto al primo
+    // render (il ResizeObserver dovrebbe già coprirlo, ma non si affida
+    // solo a quello).
+    let cancelled = false
+    document.fonts?.ready?.then(() => {
+      if (!cancelled) reposition()
+    })
+    return () => {
+      cancelled = true
+      ro.disconnect()
+      window.removeEventListener('resize', reposition)
+    }
+  }, [])
 
   useEffect(() => {
     listRef.current?.querySelector('.active')?.scrollIntoView({ block: 'center' })
   }, [])
 
   return (
-    <div className={'mn-pop' + (wide ? ' wide' : '')}>
+    <div className={'mn-pop' + (wide ? ' wide' : '')} ref={popRef}>
       <div className="mn-list" ref={listRef}>
         {items.map(({ key, label, active, onClick }) => (
           <button

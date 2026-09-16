@@ -891,47 +891,45 @@ export default function WebProfile() {
         </p>
         <TokenHelp which="gemini" />
 
-        <div className="mt-4 space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-              API key
-            </span>
-            <input
-              type="password"
-              value={geminiApiKey}
-              onChange={(e) => setGeminiApiKey(e.target.value)}
-              className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
-            />
-          </label>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            API key
+          </span>
+          <input
+            type="password"
+            value={geminiApiKey}
+            onChange={(e) => setGeminiApiKey(e.target.value)}
+            className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none focus:border-ink-soft"
+          />
+        </label>
 
-          {geminiStatus && (
-            <p
-              className={
-                'text-sm ' + (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
-              }
-            >
-              {geminiStatus.message}
-            </p>
-          )}
+        {geminiStatus && (
+          <p
+            className={
+              'text-sm ' + (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+            }
+          >
+            {geminiStatus.message}
+          </p>
+        )}
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={testGemini}
-              disabled={testingGemini || !geminiApiKey.trim()}
-              className="flex-1 rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
-            >
-              {testingGemini ? 'Verifico…' : 'Testa connessione'}
-            </button>
-            <button
-              type="button"
-              onClick={saveGemini}
-              disabled={savingGemini}
-              className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
-            >
-              {savingGemini ? 'Salvo…' : 'Salva'}
-            </button>
-          </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={testGemini}
+            disabled={testingGemini || !geminiApiKey.trim()}
+            className="flex-1 rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-tag disabled:opacity-50"
+          >
+            {testingGemini ? 'Verifico…' : 'Testa connessione'}
+          </button>
+          <button
+            type="button"
+            onClick={saveGemini}
+            disabled={savingGemini}
+            className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+          >
+            {savingGemini ? 'Salvo…' : 'Salva'}
+          </button>
         </div>
 
         <SettingsSection nested title="Istruzioni personalizzate" icon="edit">
@@ -941,16 +939,16 @@ export default function WebProfile() {
             valgono su tutti i dispositivi.
           </p>
           <textarea
-            rows={4}
+            rows={7}
             placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
             value={geminiInstructions}
             onChange={(e) => setGeminiInstructions(e.target.value)}
-            className="mt-3 w-full resize-none rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+            className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none focus:border-ink-soft"
           />
           {geminiInstructionsStatus && (
             <p
               className={
-                'mt-2 text-sm ' +
+                'text-sm ' +
                 (geminiInstructionsStatus.ok ? 'text-save-dark' : 'text-delete-dark')
               }
             >
@@ -961,7 +959,7 @@ export default function WebProfile() {
             type="button"
             onClick={saveGeminiInstructions}
             disabled={savingGeminiInstructions}
-            className="mt-3 w-full rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
+            className="w-full rounded-full border border-save-dark bg-save px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
           >
             {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
           </button>
