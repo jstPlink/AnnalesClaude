@@ -886,10 +886,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-page:nth-child(3n + 1)::before {
   background-position: 40px 90px, right 18px, 20px -50px, -60px 60px, 0 0, 0 0;
 }
+/* Un filo sfilato dalla pila, non in primo piano su tutto: niente z-index
+   forzato in cima a ogni altra pagina del mese — resta nel suo punto della
+   pila (sotto ai fogli successivi che la coprono un po', come dal vivo),
+   solo sollevata e raddrizzata. */
 .mp-page:hover,
 .mp-page:focus-visible {
-  transform: rotate(0) translateY(-2px);
-  z-index: 30;
+  transform: rotate(0) translateY(-11px);
   box-shadow: 0 -6px 14px -8px rgba(20, 12, 4, 0.24),
     0 16px 26px -12px rgba(20, 12, 4, 0.42);
 }
@@ -1193,6 +1196,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   position: relative;
   padding-left: 1.05rem;
   line-height: 1.15;
+  /* Rotazione indipendente per nota (--nr, da MonthPages.jsx): ogni titolo
+     gira per conto suo, non più insieme al cartoncino/agli altri titoli
+     dello stesso giorno — vedi `rot` in `titles` (MonthPages.jsx). */
+  transform: rotate(var(--nr, 0deg));
 }
 .mp-notes .mp-n {
   color: #33291c;
@@ -1207,23 +1214,19 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-family: 'Annales Marker', 'Caveat', cursive;
   font-weight: 700;
   font-size: 1.32rem;
-  transform: rotate(-0.6deg);
 }
 .mp-n[data-hand='b'] {
   font-family: 'Annales Hand', 'Kalam', sans-serif;
   font-size: 1.02rem;
-  transform: rotate(0.4deg);
   margin-left: 0.4rem;
 }
 .mp-n[data-hand='c'] {
   font-family: 'Annales Hand Gochi', 'Gochi Hand', cursive;
   font-size: 1.08rem;
-  transform: rotate(0.6deg);
 }
 .mp-n[data-hand='d'] {
   font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
   font-size: 1.14rem;
-  transform: rotate(-0.35deg);
   margin-left: 0.25rem;
 }
 .mp-empty {

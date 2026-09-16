@@ -119,34 +119,32 @@ export function timesInText(s) {
 
 // Da righe di celle (parseDelimited) a giornate
 // { dateKey, rawText, sheetTitle, moodScore }.
-// - `year` / `month` (month 0–11) danno anno e mese; il giorno viene dalla
-//   colonna `day`.
-// - Le righe il cui numero di giorno non è valido per quel mese vengono
-//   ignorate (intestazioni, separatori, celle vuote).
+// - `year` dà l'anno; mese e giorno si leggono dalla riga stessa (colonne
+//   `monthCol` e `day`) — così si può incollare l'anno intero in un colpo
+//   solo e ogni riga finisce da sola nel mese giusto, senza dover scegliere
+//   un mese alla volta da un menu.
+// - Le righe senza un mese riconoscibile in `monthCol`, o con un numero di
+//   giorno non valido per quel mese, vengono ignorate (intestazioni,
+//   separatori, celle vuote).
 // - Una riga senza testo E senza voto viene ignorata; con solo il voto resta
 //   (giornata vuota comunque registrata).
-// - Se lo stesso giorno compare più volte si tiene la prima occorrenza.
-// - `monthCol` (opzionale): lettera/indice della colonna col mese. Se dato,
-//   si tengono SOLO le righe il cui mese corrisponde a `month` — così si può
-//   incollare più mesi (anche l'anno intero) e lavorarli uno alla volta
-//   cambiando il mese scelto.
-export function sheetRowsToDays(
-  rows,
-  { year, month, day, text, title, mood, monthCol },
-) {
+// - Se la stessa data compare più volte si tiene la prima occorrenza.
+export function sheetRowsToDays(rows, { year, day, text, title, mood, monthCol }) {
   const di = colToIndex(day)
   const ti = colToIndex(text)
   const tii = colToIndex(title)
   const mi = colToIndex(mood)
   const mci = colToIndex(monthCol)
-  const lastDay = new Date(year, month + 1, 0).getDate()
   const seen = new Set()
   const out = []
   for (const r of rows) {
-    if (mci != null && parseMonth(r[mci]) !== month) continue
+    const month = mci != null ? parseMonth(r[mci]) : null
+    if (month == null) continue
+    const lastDay = new Date(year, month + 1, 0).getDate()
     const dayNum = Number(String((di != null && r[di]) || '').trim())
     if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > lastDay) continue
-    if (seen.has(dayNum)) continue
+    const dateKey = `${year}-${pad(month + 1)}-${pad(dayNum)}`
+    if (seen.has(dateKey)) continue
     const rawText = ti != null ? String(r[ti] ?? '').replace(/\s+$/g, '') : ''
     const moodRaw = mi != null ? String(r[mi] ?? '').trim() : ''
     const moodNum = moodRaw === '' ? NaN : Number(moodRaw.replace(',', '.'))
@@ -154,9 +152,9 @@ export function sheetRowsToDays(
       ? Math.min(100, Math.max(0, moodNum))
       : null
     if (!rawText.trim() && moodScore == null) continue
-    seen.add(dayNum)
+    seen.add(dateKey)
     out.push({
-      dateKey: `${year}-${pad(month + 1)}-${pad(dayNum)}`,
+      dateKey,
       rawText,
       sheetTitle:
         tii != null
@@ -169,4 +167,107 @@ export function sheetRowsToDays(
   }
   out.sort((a, b) => (a.dateKey < b.dateKey ? -1 : 1))
   return out
+}
+
+const clamp01 = (x) => Math.min(1, Math.max(0, x))
+
+// Avvisi non bloccanti su un blocco: servono solo a guidare la revisione.
+function dayFlags(content) {
+  const flags = []
+  if (content.trim().length < 40) flags.push('Blocco molto corto')
+  if (content.trim() && !timesInText(content).length)
+    flags.push('Nessun orario nel blocco')
+  return flags
+}
+
+// Minuscolo e senza accenti, per confronti insensibili a maiuscole/accenti.
+function foldCase(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+}
+
+// Parole di un testo (≥3 lettere, così non abboccano ad articoli/preposizioni
+// come "un", "di", "al").
+function wordsOf(s) {
+  return foldCase(s)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3)
+}
+
+// Tra `names` (persone o tag già a database), quelli con almeno una "parola"
+// (nome/cognome per una persona, l'intera parola per un tag di una parola)
+// che compare per intero nel testo — confronto per parole intere, non per
+// sottostringa, per non far scattare "Ann" dentro "Anna" o "vino" dentro
+// "avvinare". Sostituisce l'analisi che faceva Gemini: qui è solo un
+// controllo lessicale, va sempre rivisto in revisione.
+export function matchMentioned(text, names) {
+  const words = new Set(wordsOf(text))
+  const out = []
+  for (const name of names) {
+    const parts = wordsOf(name)
+    if (parts.length && parts.some((p) => words.has(p))) out.push(name)
+  }
+  return out
+}
+
+// Da una giornata (sheetRowsToDays) a UNA nota che copre tutto il testo del
+// giorno, senza tagliarlo: è lo "script" locale che sostituisce la
+// segmentazione via Gemini per l'import da foglio, che con molti giorni
+// insieme si bloccava spesso. La suddivisione in più fasi (e l'umore di
+// ciascuna) resta a chi rivede, con "Spezza qui" nella schermata di import.
+// `peopleNames`/`tagNames` (opzionali): elenco di quelli già a database, per
+// precompilare persone/tag citati nel testo (vedi matchMentioned) — sempre
+// da confermare in revisione.
+export function dayToNote(
+  { dateKey, rawText, sheetTitle, moodScore },
+  { peopleNames = [], tagNames = [] } = {},
+) {
+  const lines = String(rawText ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+  const nonEmpty = []
+  lines.forEach((l, i) => {
+    if (l.trim()) nonEmpty.push(i)
+  })
+  const mood = moodScore != null ? clamp01(moodScore / 100) : 0.5
+  if (!nonEmpty.length) {
+    return {
+      date: dateKey,
+      title: sheetTitle,
+      content: '',
+      mood,
+      timeStart: '',
+      timeEnd: '',
+      people: matchMentioned(sheetTitle, peopleNames),
+      place: '',
+      tags: matchMentioned(sheetTitle, tagNames),
+      sourceStart: null,
+      sourceEnd: null,
+      flags: ['Giornata senza testo'],
+    }
+  }
+  const start = nonEmpty[0]
+  const end = nonEmpty[nonEmpty.length - 1]
+  const content = lines
+    .slice(start, end + 1)
+    .join('\n')
+    .replace(/^\s+|\s+$/g, '')
+  const times = timesInText(content)
+  const haystack = `${sheetTitle} ${content}`
+  return {
+    date: dateKey,
+    title: sheetTitle,
+    content,
+    mood,
+    timeStart: times[0] || '',
+    timeEnd: times[times.length - 1] || '',
+    people: matchMentioned(haystack, peopleNames),
+    place: '',
+    tags: matchMentioned(haystack, tagNames),
+    sourceStart: start,
+    sourceEnd: end,
+    flags: dayFlags(content),
+  }
 }

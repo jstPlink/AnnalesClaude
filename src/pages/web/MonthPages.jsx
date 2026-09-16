@@ -198,6 +198,10 @@ export default function MonthPages({
           .map((n) => ({
             id: n.id,
             text: n.title?.trim() || plainText(n.content).slice(0, 70),
+            // Rotazione indipendente per nota (non più legata alla "mano"
+            // scelta per il font): così più titoli nello stesso giorno non
+            // girano tutti allo stesso angolo insieme al cartoncino.
+            rot: `${tilt(`${n.id}~mpn`, 1.6).toFixed(2)}deg`,
           }))
           .filter((t) => t.text)
 
@@ -311,7 +315,12 @@ export default function MonthPages({
                     style={{ '--mp-mood': moodColor(pg.mood) }}
                   >
                     {pg.titles.map((t) => (
-                      <span key={t.id} className="mp-n" data-hand={handFor(t.id)}>
+                      <span
+                        key={t.id}
+                        className="mp-n"
+                        data-hand={handFor(t.id)}
+                        style={{ '--nr': t.rot }}
+                      >
                         {t.text}
                       </span>
                     ))}

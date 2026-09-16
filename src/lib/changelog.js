@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.51.0',
+    date: '2026-09-16 19:21',
+    changes: [
+      'Import da foglio (beta): niente più Gemini per leggere il testo — uno script locale prepara subito una nota per giorno (mese e giorno letti dalla colonna del CSV, non più scelti da un menu a parte), con persone e tag già a database riconosciuti automaticamente nel testo; ordine dei campi in revisione rivisto (titolo sopra al contenuto, orari sulla riga della data) e tolta la descrizione in alto alla pagina.',
+      'Barra laterale web, "Nuova nota": in vista giorno prende la data del giorno che si sta guardando, invece di andare sempre a oggi.',
+      'Aggiungere persone a una nota: ogni persona mostra ora in quante note è già usata.',
+      'Vista mese: risolto un bug per cui i fogli e i titoli delle note di uno stesso mese finivano quasi tutti con la stessa inclinazione invece che sparsa; il foglio sotto al mouse si solleva di più e non salta più sopra a tutti gli altri fogli del mese.',
+    ],
+  },
+  {
     version: '0.50.0',
     date: '2026-09-16 17:01',
     changes: [

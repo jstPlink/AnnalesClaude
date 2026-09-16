@@ -26,9 +26,18 @@ export function useCarouselIndex(length, intervalMs = 2800) {
 }
 
 // Hash stabile di una stringa (mano, inclinazione, tinta... tutto ne deriva).
+// Dopo l'hash polinomiale c'è un mixing finale (stile finalizer Murmur3):
+// senza, chiavi quasi identiche come le date consecutive di un mese
+// ("2026-01-14" vs "2026-01-15") davano hash quasi uguali — le note di uno
+// stesso mese finivano tutte con la stessa inclinazione, invece che sparse.
 export function hash(str) {
   let h = 0
   for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) | 0
+  h ^= h >>> 16
+  h = Math.imul(h, 0x85ebca6b)
+  h ^= h >>> 13
+  h = Math.imul(h, 0xc2b2ae35)
+  h ^= h >>> 16
   return ((h % 1e9) + 1e9) % 1e9
 }
 

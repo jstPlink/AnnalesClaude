@@ -29,6 +29,12 @@ export default function Sidebar() {
     location.pathname.startsWith('/day/') ||
     location.pathname.startsWith('/note')
 
+  // "Nuova nota" prende la data del giorno che si sta guardando: quella in
+  // vista giorno (/day/:date), altrimenti oggi (vista mese e tutte le altre
+  // pagine — la barra laterale è sempre visibile, non solo in calendario).
+  const dayMatch = location.pathname.match(/^\/day\/(\d{4}-\d{2}-\d{2})$/)
+  const newNoteDate = dayMatch ? dayMatch[1] : todayKey()
+
   const name = user?.name?.trim() || user?.email || 'Utente'
   const email = user?.email || ''
   const initial = name.charAt(0).toUpperCase()
@@ -60,7 +66,7 @@ export default function Sidebar() {
         <div className="sb-head-row">
           <button
             type="button"
-            onClick={() => navigate(`/note/new?date=${todayKey()}`)}
+            onClick={() => navigate(`/note/new?date=${newNoteDate}`)}
             className="sb-new"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
@@ -89,7 +95,7 @@ export default function Sidebar() {
           allPeople={allPeople}
           allTags={allTags}
           onGenerated={(draft) =>
-            navigate(`/note/new?date=${draft.dateKey || todayKey()}`, {
+            navigate(`/note/new?date=${draft.dateKey || newNoteDate}`, {
               state: { aiDraft: draft },
             })
           }

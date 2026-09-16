@@ -9,13 +9,14 @@ import {
 } from '../../lib/notes'
 import { listPeople, createPerson } from '../../lib/people'
 import { listTags, createTag } from '../../lib/tags'
+import { extractNotesFromImage, describeGeminiError } from '../../lib/gemini'
 import {
-  extractNotesFromImage,
-  segmentDayIntoNotes,
-  describeGeminiError,
-} from '../../lib/gemini'
-import { parseDelimited, sheetRowsToDays, timesInText } from '../../lib/importSheet'
-import { MONTHS_IT, dayKey, monthRange } from '../../lib/dates'
+  parseDelimited,
+  sheetRowsToDays,
+  dayToNote,
+  timesInText,
+} from '../../lib/importSheet'
+import { MONTHS_IT, dayKey, dateRangeBounds } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
 import PersonAvatar from '../../components/PersonAvatar'
 import PeoplePickerSheet from '../../components/PeoplePickerSheet'
@@ -29,25 +30,19 @@ import Icon from '../../components/Icon'
 
 // Schermata PROVVISORIA (solo web) per migrare il vecchio diario tenuto su
 // Google Fogli. Due sorgenti:
-//  - "Da foglio (testo)": si incolla/carica l'export TSV/CSV di un mese;
-//    ogni giornata viene mandata a Gemini che sceglie SOLO dove tagliarla in
-//    più note (il testo non viene riscritto: vedi segmentDayIntoNotes in
-//    lib/gemini.js). Copertura garantita del 100% del testo; sovra/sotto-
-//    segmentazione si sistemano in revisione con Fondi / Spezza.
-//  - "Da immagine": si incolla lo screenshot di una o più giornate.
+//  - "Da foglio (testo)": si incolla/carica l'export TSV/CSV dell'anno (o di
+//    un periodo); ogni riga diventa una giornata e ogni giornata UNA nota
+//    con tutto il suo testo (vedi dayToNote in lib/importSheet.js) — niente
+//    Gemini qui: su tanti giorni insieme si bloccava spesso. La suddivisione
+//    in più fasi (e l'umore di ciascuna) si fa in revisione con Fondi/Spezza.
+//  - "Da immagine": si incolla lo screenshot di una o più giornate, che
+//    Gemini estrae come note separate.
 // In entrambi i casi le note estratte si rivedono e salvano una a una, con
 // gli stessi selettori del telefono (persone con foto, tag, luogo, canzoni).
 
 const now = new Date()
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
-// Tetto ai riavvii automatici dopo un 429 di Gemini durante la segmentazione
-// di un mese: oltre questo si ferma e si offre "Riprendi".
-const RETRY_CAP = 12
-// Massimo numero di giorni segmentati in una singola passata, per non
-// saturare Gemini: i giorni oltre questo limite si lavorano rilanciando con
-// lo stesso file (il filtro anti-duplicato salta quelli già salvati).
-const BATCH_DAYS = 10
 
 // Costruisce la bozza modificabile abbinando i nomi estratti da Gemini alle
 // persone/tag già in elenco (match sul nome, case-insensitive); quelli senza
@@ -129,21 +124,16 @@ export default function WebImport() {
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
 
-  // Import da testo: TSV/CSV di un mese e mappatura colonne (lettere del foglio).
+  // Import da testo: TSV/CSV dell'anno e mappatura colonne (lettere del foglio).
   const [tsv, setTsv] = useState('')
   const [cols, setCols] = useState({
-    month: '',
-    day: 'B',
-    text: 'C',
-    title: 'D',
-    mood: 'E',
+    month: 'A',
+    day: 'C',
+    text: 'D',
+    title: 'E',
+    mood: 'F',
   })
-  const [segmenting, setSegmenting] = useState(false)
-  const [segProgress, setSegProgress] = useState('')
-  const [resumeFrom, setResumeFrom] = useState(null) // indice giorno da cui riprendere
   const [preSkipped, setPreSkipped] = useState(0) // giorni saltati perché già importati
-  const [cappedDays, setCappedDays] = useState(0) // giorni oltre BATCH_DAYS rinviati
-  const [partialNotes, setPartialNotes] = useState([]) // note già segmentate prima di un errore
   const [dayText, setDayText] = useState({}) // { 'YYYY-MM-DD': testo grezzo del giorno }
 
   const [allPeople, setAllPeople] = useState([])
@@ -311,16 +301,16 @@ export default function WebImport() {
     }
   }
 
-  // Import da testo: legge il TSV/CSV, ricava le giornate del mese e le manda
-  // a Gemini una alla volta. Ogni giornata diventa 1+ note (partizione lossless
-  // del testo: vedi segmentDayIntoNotes). Su 429 aspetta e riprova; su altro
-  // errore si ferma tenendo quanto già fatto e offre "Riprendi".
-  async function runExtractText() {
-    if (!apiKey || segmenting) return
+  // Import da testo: legge il TSV/CSV e ricava le giornate (mese e anno letti
+  // dalla riga stessa, vedi sheetRowsToDays). Ogni giornata diventa subito UNA
+  // nota con tutto il suo testo (dayToNote, nessuna chiamata a Gemini): la
+  // suddivisione in più fasi si fa a mano in revisione con Fondi/Spezza.
+  function runExtractText() {
+    if (!tsv.trim()) return
+    setError('')
     const rows = parseDelimited(tsv)
-    let days = sheetRowsToDays(rows, {
+    const days = sheetRowsToDays(rows, {
       year,
-      month,
       monthCol: cols.month,
       day: cols.day,
       text: cols.text,
@@ -329,103 +319,50 @@ export default function WebImport() {
     })
     if (!days.length) {
       setError(
-        'Nessuna giornata riconosciuta per ' +
-          `${MONTHS_IT[month]} ${year}: controlla le colonne indicate, il mese/anno` +
-          (cols.month ? ' e la colonna mese.' : '.'),
+        `Nessuna giornata riconosciuta per l'anno ${year}: controlla le colonne indicate.`,
       )
       return
     }
+    runExtractTextAsync(days)
+  }
 
-    // Anti-duplicato: se un giorno del mese ha già note salvate, lo si salta —
-    // così si può ridare in pasto anche l'anno intero senza ricreare quanto
-    // già importato. La segmentazione avviene prima della revisione, quindi
-    // su "Riprendi" il filtro dà lo stesso elenco e gli indici restano validi.
+  // Parte async separata solo per il controllo anti-duplicato (fetch delle
+  // note già presenti nel periodo): il resto è sincrono.
+  async function runExtractTextAsync(days) {
+    let list = days
     let skipped = 0
     try {
-      const { start, end } = monthRange(year, month)
+      const { start, end } = dateRangeBounds(
+        list[0].dateKey,
+        list[list.length - 1].dateKey,
+      )
       const existing = await listNotesInRange({ start, end })
       const hasNotes = new Set(existing.map((n) => dayKey(n.date)))
-      const before = days.length
-      days = days.filter((d) => !hasNotes.has(d.dateKey))
-      skipped = before - days.length
+      const before = list.length
+      list = list.filter((d) => !hasNotes.has(d.dateKey))
+      skipped = before - list.length
     } catch {
       // fetch fallito: si procede senza filtro anti-duplicato
     }
-    if (!days.length) {
-      setError(
-        `Tutti i ${skipped} giorni di ${MONTHS_IT[month]} ${year} presenti nel testo risultano già importati.`,
-      )
+    if (!list.length) {
+      setError(`Tutti i ${skipped} giorni presenti nel testo risultano già importati.`)
       return
     }
 
-    // Limita a BATCH_DAYS giorni per passata: i restanti si lavorano
-    // rilanciando con lo stesso file (verranno saltati quelli già salvati).
-    let overflow = 0
-    if (days.length > BATCH_DAYS) {
-      overflow = days.length - BATCH_DAYS
-      days = days.slice(0, BATCH_DAYS)
-    }
-    if (!resumeFrom) {
-      setPreSkipped(skipped)
-      setCappedDays(overflow)
-    }
-
-    setSegmenting(true)
-    setError('')
-    const from = resumeFrom || 0
-    const acc = from ? [...partialNotes] : []
-    const texts = from ? { ...dayText } : {}
-    let retries = 0
-    try {
-      for (let k = from; k < days.length; k++) {
-        const d = days[k]
-        setSegProgress(`Giorno ${k + 1} di ${days.length} — ${d.dateKey}`)
-        texts[d.dateKey] = d.rawText
-        let segs
-        try {
-          segs = await segmentDayIntoNotes(apiKey, {
-            dateKey: d.dateKey,
-            rawText: d.rawText,
-            sheetTitle: d.sheetTitle,
-            moodScore: d.moodScore,
-            peopleNames: allPeople.map((p) => p.name),
-            tagNames: allTags.map((t) => t.name),
-          })
-        } catch (err) {
-          if (err.status === 429 && retries < RETRY_CAP) {
-            retries++
-            const wait = (err.retryDelaySeconds || 30) + 1
-            setSegProgress(`Limite Gemini raggiunto: attendo ${wait}s…`)
-            await new Promise((r) => setTimeout(r, wait * 1000))
-            k--
-            continue
-          }
-          setDayText(texts)
-          setPartialNotes(acc)
-          setResumeFrom(k)
-          setError(
-            `${describeGeminiError(err)} — premi "Riprendi dal giorno ${k + 1}".`,
-          )
-          return
-        }
-        acc.push(...segs)
-      }
-      if (!acc.length) {
-        setError('Nessuna nota estratta dal testo.')
-        return
-      }
-      setDayText(texts)
-      setNotes(acc)
-      setIndex(0)
-      setDraft(toDraft(acc[0], allPeople, allTags))
-      setResults([])
-      setResumeFrom(null)
-      setPartialNotes([])
-      setDone(false)
-    } finally {
-      setSegmenting(false)
-      setSegProgress('')
-    }
+    const peopleNames = allPeople.map((p) => p.name)
+    const tagNames = allTags.map((t) => t.name)
+    const texts = {}
+    const acc = list.map((d) => {
+      texts[d.dateKey] = d.rawText
+      return dayToNote(d, { peopleNames, tagNames })
+    })
+    setDayText(texts)
+    setPreSkipped(skipped)
+    setNotes(acc)
+    setIndex(0)
+    setDraft(toDraft(acc[0], allPeople, allTags))
+    setResults([])
+    setDone(false)
   }
 
   const loadTsvFile = useCallback((file) => {
@@ -436,9 +373,6 @@ export default function WebImport() {
       setNotes(null)
       setDone(false)
       setResults([])
-      setResumeFrom(null)
-      setPartialNotes([])
-      setCappedDays(0)
       setError('')
     }
     reader.readAsText(file)
@@ -628,10 +562,7 @@ export default function WebImport() {
     setImage(null)
     setTsv('')
     setDayText({})
-    setResumeFrom(null)
-    setPartialNotes([])
     setPreSkipped(0)
-    setSegProgress('')
     setNotes(null)
     setDraft(null)
     setResults([])
@@ -677,13 +608,7 @@ export default function WebImport() {
         </div>
       )}
 
-      <p className="mb-6 text-sm text-ink-soft">
-        {mode === 'text'
-          ? 'Incolla o carica l’export TSV/CSV di un mese del vecchio diario su Google Fogli. Gemini divide ogni giornata in una o più note — senza riscrivere il testo, solo scegliendo dove tagliare — che rivedi e salvi una alla volta.'
-          : 'Incolla (Ctrl/Cmd+V) o carica lo screenshot di una o più giornate del vecchio diario. Gemini ne estrae le singole attività come note separate, da rivedere e salvare una alla volta.'}
-      </p>
-
-      {!apiKey && (
+      {mode === 'image' && !apiKey && (
         <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
           Configura una chiave API Gemini in Profilo per usare questa schermata.
         </p>
@@ -722,35 +647,15 @@ export default function WebImport() {
             <textarea
               rows={7}
               value={tsv}
-              onChange={(e) => {
-                setTsv(e.target.value)
-                setResumeFrom(null)
-                setPartialNotes([])
-              }}
+              onChange={(e) => setTsv(e.target.value)}
               placeholder={
-                'Incolla qui la selezione di un mese dal foglio Google: una riga per giorno, colonne separate da TAB (o virgola). Le celle con più righe restano tra virgolette — va bene così.'
+                'Incolla qui le righe del vecchio diario (anche l’anno intero): una riga per giorno, colonne separate da TAB (o virgola). Le celle con più righe restano tra virgolette — va bene così.'
               }
               className="w-full resize-y rounded-xl border border-line bg-cream px-3 py-2 font-mono text-xs leading-relaxed text-ink outline-none focus:border-ink-soft"
             />
           </label>
 
           <div className="flex flex-wrap items-end gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Mese
-              </span>
-              <select
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-                className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
-              >
-                {MONTHS_IT.map((m, i) => (
-                  <option key={m} value={i}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Anno
@@ -797,29 +702,22 @@ export default function WebImport() {
             ))}
             <p className="w-full text-xs text-ink-soft">
               Lettere di colonna del foglio (A, B, C…). Lascia vuoto “titolo” o
-              “voto” se non ci sono. Indica <strong>“mese”</strong> (la colonna
-              che contiene il mese, come numero 1–12 o nome) per incollare più
-              mesi insieme — anche l’anno intero — e lavorarli uno alla volta
-              cambiando il menu <em>Mese</em> qui sopra. I giorni già importati
-              vengono saltati in automatico.
+              “voto” se non ci sono. La colonna <strong>“mese”</strong> (numero
+              1–12 o nome) va sempre indicata: dice a ogni riga in che mese
+              cade, così si può incollare l’anno intero in un colpo solo —
+              niente più menu da cambiare mese per mese. I giorni già
+              importati vengono saltati in automatico.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {segmenting && segProgress && (
-              <span className="text-sm text-ink-soft">{segProgress}</span>
-            )}
             <button
               type="button"
-              disabled={!apiKey || (!tsv.trim() && !resumeFrom) || segmenting}
+              disabled={!tsv.trim()}
               onClick={runExtractText}
               className="ml-auto rounded-full border border-save-dark bg-save px-5 py-2.5 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
             >
-              {segmenting
-                ? 'Segmento…'
-                : resumeFrom
-                  ? `Riprendi dal giorno ${resumeFrom + 1}`
-                  : 'Segmenta il mese'}
+              Prepara le note
             </button>
           </div>
 
@@ -924,12 +822,6 @@ export default function WebImport() {
                   · {preSkipped} giorni già importati, saltati
                 </span>
               )}
-              {mode === 'text' && cappedDays > 0 && (
-                <span className="ml-2 font-normal">
-                  · altri {cappedDays} giorni: salva questi e rilancia con lo
-                  stesso file
-                </span>
-              )}
             </span>
             <button
               type="button"
@@ -1027,7 +919,7 @@ export default function WebImport() {
             </>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+          <div className="flex flex-wrap gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Data
@@ -1039,23 +931,6 @@ export default function WebImport() {
                 className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
               />
             </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Titolo
-              </span>
-              <input
-                type="text"
-                value={draft.title}
-                onChange={(e) => setField({ title: e.target.value })}
-                placeholder="Titolo della nota"
-                className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
-              />
-            </label>
-          </div>
-
-          <MoodSlider value={draft.mood} onChange={(mood) => setField({ mood })} />
-
-          <div className="flex gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Inizio
@@ -1079,6 +954,21 @@ export default function WebImport() {
               />
             </label>
           </div>
+
+          <MoodSlider value={draft.mood} onChange={(mood) => setField({ mood })} />
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Titolo
+            </span>
+            <input
+              type="text"
+              value={draft.title}
+              onChange={(e) => setField({ title: e.target.value })}
+              placeholder="Titolo della nota"
+              className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-ink-soft"
+            />
+          </label>
 
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -1431,8 +1321,6 @@ export default function WebImport() {
             {results.filter((r) => r.status === 'skipped').length} saltate.
             {preSkipped > 0 &&
               ` ${preSkipped} giorni non riproposti perché già presenti nel diario.`}
-            {cappedDays > 0 &&
-              ` Altri ${cappedDays} giorni non ancora lavorati: rilancia con lo stesso file per continuare.`}
           </p>
           <ul className="divide-y divide-line-soft border-y border-line-soft text-sm">
             {results.map((r, i) => (

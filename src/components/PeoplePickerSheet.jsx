@@ -6,7 +6,7 @@ import { createPerson } from '../lib/people'
 
 const LIMIT = 10
 
-function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
+function PersonRow({ person, active, immichUrl, immichApiKey, usageCount, onToggle }) {
   return (
     <button
       type="button"
@@ -21,6 +21,11 @@ function PersonRow({ person, active, immichUrl, immichApiKey, onToggle }) {
     >
       <PersonAvatar person={person} immichUrl={immichUrl} immichApiKey={immichApiKey} />
       <span className="text-sm font-semibold text-ink">{person.name}</span>
+      {usageCount > 0 && (
+        <span className="text-xs font-semibold text-ink-soft">
+          {usageCount} {usageCount === 1 ? 'nota' : 'note'}
+        </span>
+      )}
       {active && (
         <span className="ml-auto text-ink">
           <Icon name="check" size={18} />
@@ -157,6 +162,7 @@ export default function PeoplePickerSheet({
                     active={selectedIds.includes(person.id)}
                     immichUrl={immichUrl}
                     immichApiKey={immichApiKey}
+                    usageCount={usageCounts?.[person.id] || 0}
                     onToggle={onToggle}
                   />
                 ))}
@@ -184,6 +190,7 @@ export default function PeoplePickerSheet({
                       active={selectedIds.includes(person.id)}
                       immichUrl={immichUrl}
                       immichApiKey={immichApiKey}
+                      usageCount={usageCounts?.[person.id] || 0}
                       onToggle={onToggle}
                     />
                   ))}
