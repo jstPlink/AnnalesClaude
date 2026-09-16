@@ -3413,12 +3413,15 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   margin: 0 0 14px;
   border-radius: 10px;
   border: 1.5px dashed var(--color-line);
-  /* --color-panel-2, non --color-cream: i campi dentro (input/textarea)
-     sono bg-cream, sullo stesso tono si confondevano col contenitore. */
-  background-color: var(--color-panel-2);
+  /* --color-tag (il tono più chiaro): --color-panel/--color-panel-2 (usati
+     prima) restavano scuri perché il "multiply" della grana sotto scurisce
+     qualunque colore di base — passato a "soft-light", molto più leggero,
+     e al tono più chiaro disponibile. I campi dentro (input/textarea) sono
+     bg-cream, un filo più scuro, e restano comunque distinguibili. */
+  background-color: var(--color-tag);
   background-image: var(--sb-grain, none);
   background-size: 130px 130px;
-  background-blend-mode: multiply;
+  background-blend-mode: soft-light;
   box-shadow: 0 4px 10px -4px rgba(20, 12, 4, 0.18);
   overflow: hidden;
 }
@@ -6397,7 +6400,7 @@ li:last-child > .st-row {
 }
 .tp-list {
   display: flex;
-  height: 132px;
+  height: 172px;
   flex-direction: column;
   overflow-y: auto;
   scroll-snap-type: y proximity;

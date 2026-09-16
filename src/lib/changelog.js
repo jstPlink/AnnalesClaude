@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.53.0',
+    date: '2026-09-16 22:21',
+    changes: [
+      'Import da foglio, revisione nota: gli orari Inizio/Fine sono ora staccati dalla data (spinti a destra) invece di stare tutti appiccicati; il box "Contenuto" si allarga sempre quanto serve a mostrare tutto il testo, senza più bisogno di ridimensionarlo a mano.',
+      'Selettore orario (vista nota): colonna più alta (+30%) per raggiungere più valori senza scorrere così tanto.',
+      'Impostazioni: i sotto-cartoncini (Colori del mood, Persone, Tag...) erano rimasti troppo scuri — sfondo più chiaro e grana meno marcata.',
+    ],
+  },
+  {
     version: '0.52.0',
     date: '2026-09-16 20:38',
     changes: [

@@ -188,6 +188,17 @@ export default function WebImport() {
   )
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews])
 
+  // Il box "Contenuto" si espande sempre quanto serve a mostrare tutto il
+  // testo, invece di scrollare al suo interno o richiedere un ridimensiona-
+  // mento manuale: si ricalcola a ogni cambio di testo (battitura, cambio
+  // nota, Fondi/Spezza).
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [draft?.content])
+
   function addFiles(list) {
     const picked = Array.from(list || []).filter((f) => f.type.startsWith('image/'))
     if (picked.length) setDraft((d) => ({ ...d, files: [...d.files, ...picked] }))
@@ -982,7 +993,7 @@ export default function WebImport() {
             </>
           )}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 {draft.date ? importDayLabel(draft.date) : 'Data'}
@@ -994,28 +1005,30 @@ export default function WebImport() {
                 className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
               />
             </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Inizio
-              </span>
-              <input
-                type="time"
-                value={draft.timeStart}
-                onChange={(e) => setField({ timeStart: e.target.value })}
-                className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Fine
-              </span>
-              <input
-                type="time"
-                value={draft.timeEnd}
-                onChange={(e) => setField({ timeEnd: e.target.value })}
-                className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
-              />
-            </label>
+            <div className="flex gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Inizio
+                </span>
+                <input
+                  type="time"
+                  value={draft.timeStart}
+                  onChange={(e) => setField({ timeStart: e.target.value })}
+                  className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Fine
+                </span>
+                <input
+                  type="time"
+                  value={draft.timeEnd}
+                  onChange={(e) => setField({ timeEnd: e.target.value })}
+                  className="rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink outline-none"
+                />
+              </label>
+            </div>
           </div>
 
           <MoodSlider value={draft.mood} onChange={(mood) => setField({ mood })} />
@@ -1042,7 +1055,7 @@ export default function WebImport() {
               rows={9}
               value={draft.content}
               onChange={(e) => setField({ content: e.target.value })}
-              className="w-full resize-y rounded-xl border border-line bg-cream px-3 py-2 text-sm leading-relaxed text-ink outline-none focus:border-ink-soft"
+              className="w-full resize-none overflow-hidden rounded-xl border border-line bg-cream px-3 py-2 text-sm leading-relaxed text-ink outline-none focus:border-ink-soft"
             />
           </label>
 
