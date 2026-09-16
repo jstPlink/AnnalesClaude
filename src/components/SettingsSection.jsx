@@ -3,8 +3,8 @@ import Icon from './Icon'
 
 // Sezione delle Impostazioni (web e mobile, stesse classi CSS scalate via
 // @media (max-width: 480px)): intestazione a "cartoncino a quadretti"
-// colorato, larga quanto la sezione, con icona+titolo+descrizione insieme
-// (stesso motivo dell'intestazione della vista giorno). `nested` = un
+// colorato, larga quanto la sezione, con icona+titolo insieme (stesso
+// motivo dell'intestazione della vista giorno). `nested` = un
 // sotto-cartoncino più piccolo (stessa materia di carta, grana+fibra, non
 // più un bordo colorato per categoria) per un singolo gruppo di parametri
 // dentro la sezione. `noCollapse` = sempre visibile, senza freccia (usato
@@ -12,7 +12,6 @@ import Icon from './Icon'
 export default function SettingsSection({
   title,
   icon,
-  description,
   nested = false,
   danger = false,
   noCollapse = false,
@@ -44,7 +43,6 @@ export default function SettingsSection({
       {icon && <Icon name={icon} size={22} className="ws-icon shrink-0" />}
       <span className="ws-htext">
         <span className="ws-title">{title}</span>
-        {description && <span className="ws-desc">{description}</span>}
       </span>
       {!noCollapse && (
         <Icon

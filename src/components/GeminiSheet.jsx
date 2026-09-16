@@ -124,46 +124,33 @@ export default function GeminiSheet({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-cream"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+    <div className="ncs-backdrop" onClick={onClose}>
+      <div className="ncs-sheet gms-sheet" onClick={(e) => e.stopPropagation()}>
+        <span className="ncs-tape a" aria-hidden="true" />
+        <span className="ncs-tape b" aria-hidden="true" />
+
+        <div className="ncs-head">
           <div className="flex items-center gap-2">
             {mode !== 'menu' && (
-              <button
-                type="button"
-                onClick={goMenu}
-                className="text-ink-soft transition hover:text-ink"
-                title="Indietro"
-              >
-                <Icon name="chevron-left" size={18} />
+              <button type="button" onClick={goMenu} className="gms-chev" title="Indietro" aria-label="Indietro">
+                <Icon name="chevron-left" size={15} strokeWidth={2.8} />
               </button>
             )}
-            <h3 className="text-lg font-extrabold text-ink">Gemini</h3>
+            <h3 className="ncs-title">Gemini</h3>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-1 text-ink-soft transition hover:text-ink"
-            title="Chiudi"
-          >
-            <Icon name="x" size={20} />
+          <button type="button" onClick={onClose} className="gms-chev" title="Chiudi" aria-label="Chiudi">
+            <Icon name="x" size={15} strokeWidth={2.8} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="gms-body">
           {!ready ? (
-            <p className="py-6 text-center text-sm text-ink-soft">
+            <p className="gms-empty">
               Configura una chiave API Gemini in Profilo per usare queste
               funzioni.
             </p>
           ) : mode === 'menu' ? (
-            <div className="space-y-2">
+            <div className="ncs-options">
               <button
                 type="button"
                 onClick={() => {
@@ -171,16 +158,14 @@ export default function GeminiSheet({
                   runClean()
                 }}
                 disabled={!plain.trim()}
-                className="flex w-full items-center gap-3 rounded-2xl border border-line bg-tag px-4 py-3 text-left transition hover:brightness-95 disabled:opacity-40"
+                className="ncs-option"
               >
-                <Icon name="check" size={18} className="shrink-0 text-ink-soft" />
-                <span>
-                  <span className="block text-sm font-semibold text-ink">
-                    Ripulisci e sintetizza
-                  </span>
-                  <span className="block text-xs text-ink-soft">
-                    Corregge e rende più scorrevole il testo della nota.
-                  </span>
+                <span className="ncs-opt-icon paper">
+                  <Icon name="check" size={17} />
+                </span>
+                <span className="ncs-opt-text">
+                  <b>Ripulisci e sintetizza</b>
+                  <span>Corregge e rende più scorrevole il testo della nota.</span>
                 </span>
               </button>
               <button
@@ -190,37 +175,29 @@ export default function GeminiSheet({
                   runPeople()
                 }}
                 disabled={!plain.trim() || !allPeople.length}
-                className="flex w-full items-center gap-3 rounded-2xl border border-line bg-tag px-4 py-3 text-left transition hover:brightness-95 disabled:opacity-40"
+                className="ncs-option"
               >
-                <Icon name="user" size={18} className="shrink-0 text-ink-soft" />
-                <span>
-                  <span className="block text-sm font-semibold text-ink">
-                    Riconosci le persone citate
-                  </span>
-                  <span className="block text-xs text-ink-soft">
-                    Confronta il testo con il tuo elenco persone.
-                  </span>
+                <span className="ncs-opt-icon paper">
+                  <Icon name="user" size={17} />
+                </span>
+                <span className="ncs-opt-text">
+                  <b>Riconosci le persone citate</b>
+                  <span>Confronta il testo con il tuo elenco persone.</span>
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={() => setMode('write')}
-                className="flex w-full items-center gap-3 rounded-2xl border border-line bg-tag px-4 py-3 text-left transition hover:brightness-95"
-              >
-                <Icon name="edit" size={18} className="shrink-0 text-ink-soft" />
-                <span>
-                  <span className="block text-sm font-semibold text-ink">
-                    Scrivi con l'IA
-                  </span>
-                  <span className="block text-xs text-ink-soft">
-                    Genera un nuovo contenuto da delle indicazioni.
-                  </span>
+              <button type="button" onClick={() => setMode('write')} className="ncs-option">
+                <span className="ncs-opt-icon paper">
+                  <Icon name="edit" size={17} />
+                </span>
+                <span className="ncs-opt-text">
+                  <b>Scrivi con l'IA</b>
+                  <span>Genera un nuovo contenuto da delle indicazioni.</span>
                 </span>
               </button>
             </div>
           ) : mode === 'write' && !preview ? (
-            <div className="space-y-3">
-              <p className="text-xs text-ink-soft">
+            <div className="gms-stack">
+              <p className="gms-hint">
                 Descrivi cosa scrivere: Gemini genererà il testo della nota.
               </p>
               <textarea
@@ -229,13 +206,13 @@ export default function GeminiSheet({
                 placeholder="Es. una giornata di mare con amici, tono leggero…"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                className="w-full resize-none rounded-xl border border-line bg-tag px-3 py-2 text-sm text-ink outline-none"
+                className="gms-field"
               />
               <button
                 type="button"
                 disabled={!instructions.trim() || loading}
                 onClick={runWrite}
-                className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95 disabled:opacity-50"
+                className="gms-cta"
               >
                 {loading ? 'Scrivo…' : 'Genera'}
               </button>
@@ -243,35 +220,24 @@ export default function GeminiSheet({
           ) : (mode === 'clean' || mode === 'write') && loading ? (
             <GeminiWait />
           ) : (mode === 'clean' || mode === 'write') && preview ? (
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Anteprima
-              </p>
-              <p className="whitespace-pre-wrap rounded-xl border border-line bg-tag px-3 py-2.5 text-sm text-ink">
-                {preview}
-              </p>
-              <button
-                type="button"
-                onClick={applyPreview}
-                className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95"
-              >
+            <div className="gms-stack">
+              <p className="gms-label">Anteprima</p>
+              <p className="gms-preview">{preview}</p>
+              <button type="button" onClick={applyPreview} className="gms-cta">
                 Sostituisci il contenuto della nota
               </button>
             </div>
           ) : mode === 'people' && loading ? (
             <GeminiWait label="Analizzo il testo…" />
           ) : mode === 'people' && matches?.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-xs text-ink-soft">
+            <div className="gms-stack">
+              <p className="gms-hint">
                 Persone riconosciute nel testo: scegli quelle da aggiungere
                 alla nota.
               </p>
-              <div className="space-y-1.5">
+              <div className="gms-stack" style={{ gap: 6 }}>
                 {matches.map((m) => (
-                  <label
-                    key={m.id}
-                    className="flex items-center gap-2.5 rounded-xl border border-line bg-tag px-3 py-2"
-                  >
+                  <label key={m.id} className="gms-check-row">
                     <input
                       type="checkbox"
                       checked={m.checked}
@@ -283,21 +249,17 @@ export default function GeminiSheet({
                         )
                       }
                     />
-                    <span className="text-sm font-semibold text-ink">{m.name}</span>
+                    <span>{m.name}</span>
                   </label>
                 ))}
               </div>
-              <button
-                type="button"
-                onClick={applyPeople}
-                className="w-full rounded-full bg-save px-6 py-3 text-sm font-bold text-ink transition active:scale-95"
-              >
+              <button type="button" onClick={applyPeople} className="gms-cta">
                 Applica
               </button>
             </div>
           ) : null}
 
-          {error && <p className="mt-3 text-xs text-delete-dark">{error}</p>}
+          {error && <p className="gms-error">{error}</p>}
         </div>
       </div>
     </div>

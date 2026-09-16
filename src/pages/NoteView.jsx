@@ -4,6 +4,7 @@ import PhoneShell from '../components/PhoneShell'
 import MobileTopBar from '../components/MobileTopBar'
 import MobileBottomBar from '../components/MobileBottomBar'
 import DatePickerPopover from '../components/DatePickerPopover'
+import TimePickerPopover from '../components/TimePickerPopover'
 import Icon from '../components/Icon'
 import MoodSlider from '../components/MoodSlider'
 import RichText from '../components/RichText'
@@ -41,6 +42,7 @@ import {
   parseWall,
   subtractHours,
   timeInputValue,
+  MONTHS_IT,
 } from '../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -308,6 +310,8 @@ export default function NoteView() {
 
   const parsed = parseWall(form.dateKey)
   const year = parsed?.y ?? new Date().getFullYear()
+  const dayStr = parsed ? String(parsed.d).padStart(2, '0') : '--'
+  const monthStr = parsed ? MONTHS_IT[parsed.mo - 1].slice(0, 3).toUpperCase() : '---'
 
   const onPickFiles = useCallback((e) => {
     const picked = Array.from(e.target.files || [])
@@ -422,7 +426,7 @@ export default function NoteView() {
       <MobileTopBar className="mtop-note">
         <div className="mtop-row1">
           <button type="button" onClick={() => navigate(-1)} className="mchev" title="Indietro" aria-label="Indietro">
-            <Icon name="chevron-left" size={27} strokeWidth={2.8} />
+            <Icon name="chevron-left" size={19} strokeWidth={2.8} />
           </button>
           <span className="mtop-year">{year}</span>
           <button
@@ -432,38 +436,51 @@ export default function NoteView() {
             title={mode === 'save' ? 'Salva' : 'Elimina nota'}
             className={'mcircle-action ' + mode}
           >
-            <Icon name={mode === 'save' ? 'check' : 'trash'} size={27} strokeWidth={2.8} />
+            <Icon name={mode === 'save' ? 'check' : 'trash'} size={19} strokeWidth={2.8} />
           </button>
         </div>
 
         <div className="mtop-row2">
-          <span className="mplaque mplaque-time">
-            <input
-              type="time"
-              aria-label="Orario di inizio"
-              value={form.timeStart}
-              onChange={(e) => set({ timeStart: e.target.value })}
-              className="mplaque-label"
-            />
-          </span>
+          <TimePickerPopover
+            time={form.timeStart}
+            onChange={(timeStart) => set({ timeStart })}
+            className="mtime-slot"
+            buttonClassName="mclock-face"
+            ariaLabel={`Cambia orario di inizio, ora ${form.timeStart}`}
+          >
+            <span className="mclock-screen">
+              <span className="mclock-digits">{form.timeStart}</span>
+            </span>
+          </TimePickerPopover>
 
           <DatePickerPopover
             dateKey={form.dateKey}
             onChange={(dateKey) => set({ dateKey })}
-            className="mplaque mplaque-date"
-            buttonClassName="mplaque-label"
+            className="mdate-slot"
+            buttonClassName="mclock-face"
             textClassName=""
-          />
+            ariaLabel={`Cambia data, ora ${dayStr} ${monthStr} ${year}`}
+          >
+            <span className="mclock-screen">
+              <span className="mclock-digits">
+                {dayStr}
+                <span className="mclock-sep">:</span>
+                {monthStr}
+              </span>
+            </span>
+          </DatePickerPopover>
 
-          <span className="mplaque mplaque-time">
-            <input
-              type="time"
-              aria-label="Orario di fine"
-              value={form.timeEnd}
-              onChange={(e) => set({ timeEnd: e.target.value })}
-              className="mplaque-label"
-            />
-          </span>
+          <TimePickerPopover
+            time={form.timeEnd}
+            onChange={(timeEnd) => set({ timeEnd })}
+            className="mtime-slot"
+            buttonClassName="mclock-face"
+            ariaLabel={`Cambia orario di fine, ora ${form.timeEnd}`}
+          >
+            <span className="mclock-screen">
+              <span className="mclock-digits">{form.timeEnd}</span>
+            </span>
+          </TimePickerPopover>
         </div>
       </MobileTopBar>
 

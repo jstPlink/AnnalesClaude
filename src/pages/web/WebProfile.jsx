@@ -494,19 +494,11 @@ export default function WebProfile() {
 
       <ProfileCard />
 
-      <SettingsSection
-        title="Aspetto"
-        icon="settings"
-        description="Tema, font, animazioni e sfondo — solo su questo dispositivo."
-      >
+      <SettingsSection title="Aspetto" icon="settings">
         <AppearanceControls />
       </SettingsSection>
 
-      <SettingsSection
-        title="Dati utente"
-        icon="list"
-        description="Dati unici e personali tuoi, legati all'account e sincronizzati su tutti i dispositivi."
-      >
+      <SettingsSection title="Dati utente" icon="list">
         <SettingsSection nested title="Colori del mood" icon="sparkles">
           <MoodGradientControls />
         </SettingsSection>
@@ -761,7 +753,6 @@ export default function WebProfile() {
       <SettingsSection
         title="Integrazioni"
         icon="link"
-        description="Chiavi e collegamenti per le funzioni opzionali di Annales."
       >
         <SettingsSection nested title="Immich" icon="image">
         <p className="text-sm text-ink-soft">
@@ -981,7 +972,6 @@ export default function WebProfile() {
       <SettingsSection
         title="Import ed export"
         icon="download"
-        description="Esporta il diario o importa da un'immagine."
       >
         <button
           type="button"
@@ -997,7 +987,6 @@ export default function WebProfile() {
       <SettingsSection
         title="Supporto"
         icon="mail"
-        description="Domande, problemi o suggerimenti su Annales? Scrivimi pure."
       >
         <dl className="mt-5 divide-y divide-line-soft border-y border-line-soft text-sm">
           <div className="flex items-center justify-between py-3">
@@ -1030,7 +1019,6 @@ export default function WebProfile() {
       <SettingsSection
         title="Offrimi un caffè"
         icon="heart"
-        description="Se Annales ti è utile e vuoi sostenere lo sviluppo."
       >
         {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando sarà
             pronto, sostituire con il link reale (https://buymeacoffee.com/…). */}
@@ -1042,31 +1030,29 @@ export default function WebProfile() {
       <SettingsSection
         title="Novità"
         icon="list"
-        description="Le ultime versioni e cosa è cambiato."
       >
         <Changelog />
       </SettingsSection>
 
-      <button
-        type="button"
-        onClick={() => {
-          logout()
-          navigate('/login', { replace: true })
-        }}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-sm font-bold text-ink shadow-sm transition hover:brightness-105"
-      >
-        <Icon name="logout" size={18} />
-        Esci
-      </button>
+      <SettingsSection title="Account" icon="user">
+        <button
+          type="button"
+          onClick={() => {
+            logout()
+            navigate('/login', { replace: true })
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-sm font-bold text-ink shadow-sm transition hover:brightness-105"
+        >
+          <Icon name="logout" size={18} />
+          Esci
+        </button>
 
-      <SettingsSection
-        title="Elimina account"
-        icon="alert-triangle"
-        description="Azione permanente: cancella il tuo diario e tutti i dati collegati."
-        danger
-        noCollapse
-      >
-        <DeleteAccount />
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-line-soft pt-4">
+          <span className="text-xs text-ink-soft">
+            Elimina il tuo diario e tutti i dati collegati — azione permanente.
+          </span>
+          <DeleteAccount />
+        </div>
       </SettingsSection>
 
       {immichReady && (

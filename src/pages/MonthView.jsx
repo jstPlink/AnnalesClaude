@@ -112,6 +112,7 @@ export default function MonthView() {
         onPointerUp={onPointerUp}
       >
         <YearPill
+          skin="clock"
           year={cursor.year}
           subtitle={MONTHS_IT[cursor.month]}
           month={cursor.month}

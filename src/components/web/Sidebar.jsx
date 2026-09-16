@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fileUrl } from '../../lib/pocketbase'
 import { todayKey } from '../../lib/dates'
@@ -18,7 +18,16 @@ import NewNoteWithGeminiSheet from '../NewNoteWithGeminiSheet'
 // carta d'identità (numero di tessera e firma generati da nome+email).
 export default function Sidebar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+
+  // "Calendario" resta evidenziato anche in vista giorno (/day/:date) e
+  // nell'editor nota (/note/...), pagine raggiunte da lì e senza una voce
+  // propria nella barra laterale.
+  const calendarActive =
+    location.pathname === '/' ||
+    location.pathname.startsWith('/day/') ||
+    location.pathname.startsWith('/note')
 
   const name = user?.name?.trim() || user?.email || 'Utente'
   const email = user?.email || ''
@@ -92,7 +101,7 @@ export default function Sidebar() {
             <NavLink
               to="/"
               end
-              className={({ isActive }) => 'sb-item' + (isActive ? ' active' : '')}
+              className={'sb-item' + (calendarActive ? ' active' : '')}
             >
               <Icon name="calendar" size={17} />
               <span className="sb-item-label">Calendario</span>

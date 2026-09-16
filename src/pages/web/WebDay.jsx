@@ -75,50 +75,46 @@ export default function WebDay() {
 
   return (
     <div className="flex h-[calc(100dvh-4rem)] flex-col">
-      <header className="mx-auto mb-4 w-3/5 shrink-0">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="mb-3 flex items-center gap-2 text-base font-bold text-ink-soft transition hover:text-ink"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Torna al mese
-        </button>
-        <div className="flex items-end justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
+      <div className="relative mb-[50px] mt-[40px] w-full shrink-0">
+        <span className="header-quadretti bleed-day" aria-hidden="true" />
+        {/* griglia 1fr/auto/1fr: indietro resta ancorato a sinistra, ma
+            l'orologio si centra sempre sull'intera riga (a centro schermo),
+            non dov'è capitato dopo il pulsante indietro. La 3° colonna
+            vuota è solo per bilanciare le due 1fr. */}
+        <header className="relative z-[1] grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
+          <button type="button" onClick={() => navigate('/')} className="ne-back justify-self-start">
+            <Icon name="chevron-left" size={16} strokeWidth={2.6} />
+            Torna al mese
+          </button>
+          <div className="flex min-w-0 items-center justify-self-center gap-[15px]">
             <button
               type="button"
               onClick={() => go(-1)}
               aria-label="Giorno precedente"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+              className="ne-clock-arrow"
             >
               <Icon name="chevron-left" size={18} />
             </button>
-            <h1 className="min-w-0 truncate font-serif text-3xl font-semibold tracking-tight text-ink">
+            {/* testo scritto a mano, non più l'orologio LCD: qui la data
+                non si può modificare direttamente (solo ± un giorno con le
+                frecce), a differenza degli altri orologi della vista mese
+                e nota — lo stile "cliccabile" era fuorviante. */}
+            <span className="day-label-hand">
               {fullDayLabel(date)}
-            </h1>
+              <span className="hl" aria-hidden="true" />
+            </span>
             <button
               type="button"
               onClick={() => go(1)}
               aria-label="Giorno successivo"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
+              className="ne-clock-arrow"
             >
               <Icon name="chevron-right" size={18} />
             </button>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(`/note/new?date=${date}`)}
-              className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream transition hover:brightness-110"
-            >
-              + Nuova nota
-            </button>
-          </div>
-        </div>
-      </header>
+          <span aria-hidden="true" />
+        </header>
+      </div>
 
       {error && (
         <p className="mx-auto mb-3 w-3/5 shrink-0 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">

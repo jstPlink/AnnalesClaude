@@ -525,19 +525,11 @@ export default function Profile() {
       <main className="anim-page flex-1 overflow-y-auto no-scrollbar px-3 py-4">
         <ProfileCard />
 
-        <SettingsSection
-          title="Aspetto"
-          icon="settings"
-          description="Tema, font, animazioni e sfondo — solo su questo dispositivo."
-        >
+        <SettingsSection title="Aspetto" icon="settings">
           <AppearanceControls />
         </SettingsSection>
 
-        <SettingsSection
-          title="Dati utente"
-          icon="list"
-          description="Dati unici e personali tuoi, sincronizzati su tutti i dispositivi."
-        >
+        <SettingsSection title="Dati utente" icon="list">
           <SettingsSection nested title="Colori del mood" icon="sparkles">
             <MoodGradientControls />
           </SettingsSection>
@@ -794,11 +786,7 @@ export default function Profile() {
           </SettingsSection>
         </SettingsSection>
 
-        <SettingsSection
-          title="Integrazioni"
-          icon="link"
-          description="Immich, Gemini (IA), Spotify."
-        >
+        <SettingsSection title="Integrazioni" icon="link">
             <SettingsSection nested title="Immich" icon="image">
             <p className="text-xs text-ink-soft">
               Collega il tuo server Immich per scegliere le foto da lì quando
@@ -1003,19 +991,11 @@ export default function Profile() {
           </SettingsSection>
         </SettingsSection>
 
-        <SettingsSection
-          title="Import ed export"
-          icon="download"
-          description="L'importazione da immagine è disponibile solo dalla versione web."
-        >
+        <SettingsSection title="Import ed export" icon="download">
             <ExportButtons />
         </SettingsSection>
 
-        <SettingsSection
-          title="Supporto"
-          icon="mail"
-          description="Domande, problemi o suggerimenti su Annales?"
-        >
+        <SettingsSection title="Supporto" icon="mail">
           <a
             href="mailto:fp.dignazio@gmail.com"
             className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
@@ -1036,11 +1016,7 @@ export default function Profile() {
           </a>
         </SettingsSection>
 
-        <SettingsSection
-          title="Offrimi un caffè"
-          icon="heart"
-          description="Se Annales ti è utile e vuoi sostenere lo sviluppo."
-        >
+        <SettingsSection title="Offrimi un caffè" icon="heart">
           {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando
               sarà pronto, sostituire con il link reale
               (https://buymeacoffee.com/…). */}
@@ -1049,19 +1025,11 @@ export default function Profile() {
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Novità"
-          icon="list"
-          description="Le ultime versioni e cosa è cambiato."
-        >
+        <SettingsSection title="Novità" icon="list">
           <Changelog />
         </SettingsSection>
 
-        <SettingsSection
-          title="Account"
-          icon="user"
-          description="Esci dal tuo account o eliminalo in modo permanente."
-        >
+        <SettingsSection title="Account" icon="user">
           <button
             type="button"
             onClick={onLogout}

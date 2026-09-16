@@ -16,25 +16,45 @@ function ArrowIcon({ dir }) {
   )
 }
 
-// Placchetta lunga che "abbraccia" un valore (anno o mese): i pulsanti
-// prima/dopo sono inglobati alle estremità della stessa pillola invece di
-// essere cerchi separati. Cliccando nel mezzo si apre un menu a tendina per
-// saltare direttamente a un valore non adiacente (anno o mese qualsiasi),
-// più comodo dello scorrere un passo alla volta con le frecce.
-function PillNav({ label, ariaLabel, prevLabel, nextLabel, onPrev, onNext, open, onToggle, widthClass, dropdown }) {
+// Menu a tendina di anno/mese: stessa estetica LCD dell'orologio che lo
+// apre (schermo grigio, cifre col font digitale), non più il solito
+// elenco bianco generico — coerente con TimePickerPopover, che usa la
+// stessa identica ricetta per l'orario nella vista nota.
+function ClockDropdownList({ items, wide }) {
+  const listRef = useRef(null)
+
+  useEffect(() => {
+    listRef.current?.querySelector('.active')?.scrollIntoView({ block: 'center' })
+  }, [])
+
   return (
-    // Il "relative" sta sul contenitore esterno (senza overflow-hidden):
-    // il dropdown è posizionato rispetto a questo, non alla pillola vera e
-    // propria, altrimenti l'overflow-hidden della pillola (che arrotonda
-    // gli angoli delle frecce interne) lo taglierebbe via.
+    <div className={'mn-pop' + (wide ? ' wide' : '')}>
+      <div className="mn-list" ref={listRef}>
+        {items.map(({ key, label, active, onClick }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={onClick}
+            className={'mn-item' + (active ? ' active' : '')}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Orologio LCD (stessa estetica del pannello Data/Orario della vista
+// nota): le frecce prima/dopo sono pulsanti tondi a parte, la targhetta
+// centrale apre — al tocco — un menu a tendina per saltare direttamente a
+// un valore non adiacente (anno o mese qualsiasi), più comodo dello
+// scorrere un passo alla volta con le frecce.
+function ClockNav({ label, ariaLabel, prevLabel, nextLabel, onPrev, onNext, open, onToggle, dropdown }) {
+  return (
     <div className="relative">
-      <div className="flex h-11 items-stretch overflow-hidden rounded-full border border-line bg-tag shadow-sm">
-        <button
-          type="button"
-          aria-label={prevLabel}
-          onClick={onPrev}
-          className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
-        >
+      <div className="flex items-center gap-2">
+        <button type="button" aria-label={prevLabel} onClick={onPrev} className="ne-clock-arrow">
           <ArrowIcon dir="left" />
         </button>
         <button
@@ -42,19 +62,13 @@ function PillNav({ label, ariaLabel, prevLabel, nextLabel, onPrev, onNext, open,
           aria-label={ariaLabel}
           aria-expanded={open}
           onClick={onToggle}
-          className={
-            widthClass +
-            ' shrink-0 truncate px-1 text-center font-serif text-2xl font-semibold text-ink transition hover:bg-panel/60'
-          }
+          className="ne-clock-face inline"
         >
-          {label}
+          <span className="ne-clock-screen">
+            <span className="ne-clock-digits">{label}</span>
+          </span>
         </button>
-        <button
-          type="button"
-          aria-label={nextLabel}
-          onClick={onNext}
-          className="flex w-10 shrink-0 items-center justify-center text-ink-soft transition hover:bg-panel hover:text-ink"
-        >
+        <button type="button" aria-label={nextLabel} onClick={onNext} className="ne-clock-arrow">
           <ArrowIcon dir="right" />
         </button>
       </div>
@@ -152,14 +166,15 @@ export default function WebMonth() {
 
   return (
     <div>
-      <header className="mx-auto mb-6 flex w-3/5 flex-wrap items-center justify-between gap-4">
+      <div className="sticky top-0 z-10 mb-[50px] mt-[40px] w-full bg-cream">
+        <span className="header-quadretti bleed-month" aria-hidden="true" />
+        <header className="relative z-[1] mx-auto flex w-3/5 flex-wrap items-center justify-between gap-4">
         <div ref={navRef} className="flex flex-wrap items-center gap-3">
-          <PillNav
+          <ClockNav
             label={cursor.year}
             ariaLabel="Scegli anno"
             prevLabel="Anno precedente"
             nextLabel="Anno successivo"
-            widthClass="w-20"
             open={openYear}
             onPrev={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
             onNext={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
@@ -168,32 +183,24 @@ export default function WebMonth() {
               setOpenMonth(false)
             }}
             dropdown={
-              <div className="absolute left-1/2 top-full z-30 mt-2 max-h-64 w-32 -translate-x-1/2 overflow-y-auto rounded-2xl border border-line bg-cream p-2 shadow-xl no-scrollbar">
-                {yearOptions.map((y) => (
-                  <button
-                    key={y}
-                    type="button"
-                    onClick={() => {
-                      setCursor((c) => ({ ...c, year: y }))
-                      setOpenYear(false)
-                    }}
-                    className={
-                      'block w-full rounded-xl px-3 py-2 text-center text-lg font-bold transition ' +
-                      (y === cursor.year ? 'bg-sand text-ink' : 'text-ink-soft hover:bg-panel')
-                    }
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
+              <ClockDropdownList
+                items={yearOptions.map((y) => ({
+                  key: y,
+                  label: y,
+                  active: y === cursor.year,
+                  onClick: () => {
+                    setCursor((c) => ({ ...c, year: y }))
+                    setOpenYear(false)
+                  },
+                }))}
+              />
             }
           />
-          <PillNav
+          <ClockNav
             label={MONTHS_IT[cursor.month]}
             ariaLabel="Scegli mese"
             prevLabel="Mese precedente"
             nextLabel="Mese successivo"
-            widthClass="w-40"
             open={openMonth}
             onPrev={() => setCursor((c) => addMonths(c, -1))}
             onNext={() => setCursor((c) => addMonths(c, 1))}
@@ -202,41 +209,24 @@ export default function WebMonth() {
               setOpenYear(false)
             }}
             dropdown={
-              <div className="absolute left-1/2 top-full z-30 mt-2 max-h-64 w-40 -translate-x-1/2 overflow-y-auto rounded-2xl border border-line bg-cream p-2 shadow-xl no-scrollbar">
-                {MONTHS_IT.map((m, i) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => {
-                      setCursor((c) => ({ ...c, month: i }))
-                      setOpenMonth(false)
-                    }}
-                    className={
-                      'block w-full rounded-xl px-3 py-2 text-center text-base font-bold transition ' +
-                      (i === cursor.month ? 'bg-sand text-ink' : 'text-ink-soft hover:bg-panel')
-                    }
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
+              <ClockDropdownList
+                wide
+                items={MONTHS_IT.map((m, i) => ({
+                  key: m,
+                  label: m,
+                  active: i === cursor.month,
+                  onClick: () => {
+                    setCursor((c) => ({ ...c, month: i }))
+                    setOpenMonth(false)
+                  },
+                }))}
+              />
             }
           />
-          <button
-            type="button"
-            onClick={() => {
-              const t = new Date()
-              setCursor({ year: t.getFullYear(), month: t.getMonth() })
-              setOpenYear(false)
-              setOpenMonth(false)
-            }}
-            className="flex h-11 shrink-0 items-center rounded-full border border-line bg-tag px-5 font-serif text-2xl font-semibold text-ink-soft shadow-sm transition hover:bg-panel hover:text-ink active:scale-95"
-          >
-            Oggi
-          </button>
         </div>
         {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
-      </header>
+        </header>
+      </div>
 
       {error && (
         <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">

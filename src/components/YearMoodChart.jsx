@@ -12,6 +12,9 @@ export default function YearMoodChart({
   data,
   aspectRatio = 0.82, // altezza / larghezza del grafico
   monthFontSize = 22,
+  axisFontSize = 24,
+  fontFamily, // senza valore: eredita il font di default (mobile, invariato)
+  fontWeight = 600,
   alternateMonths = true, // true = un mese sì e uno no (schermi stretti)
   showAxisValues = false,
   bare = false,
@@ -87,8 +90,9 @@ export default function YearMoodChart({
               x={padL - 10}
               y={y(m) + 8}
               textAnchor="end"
-              fontSize="24"
-              fontWeight="600"
+              fontSize={axisFontSize}
+              fontFamily={fontFamily}
+              fontWeight={fontWeight}
               fill="var(--color-ink-soft)"
             >
               {Math.round(m * 100)}
@@ -107,7 +111,8 @@ export default function YearMoodChart({
               y={H - 10}
               textAnchor="middle"
               fontSize={monthFontSize}
-              fontWeight="600"
+              fontFamily={fontFamily}
+              fontWeight={fontWeight}
               fill="var(--color-ink-soft)"
             >
               {mo.slice(0, 3)}

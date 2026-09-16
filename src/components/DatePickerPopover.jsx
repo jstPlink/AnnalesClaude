@@ -9,12 +9,7 @@ import {
 
 function NavArrow({ dir, onClick, label }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="flex h-7 w-7 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
-    >
+    <button type="button" aria-label={label} onClick={onClick} className="dp-cal-arrow">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         {dir === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
       </svg>
@@ -31,6 +26,8 @@ export default function DatePickerPopover({
   className = '',
   textClassName = 'text-sm font-semibold',
   buttonClassName = 'max-w-full truncate rounded-full border border-line bg-tag px-4 py-1.5 text-ink transition active:scale-95',
+  children,
+  ariaLabel,
 }) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(null)
@@ -65,26 +62,27 @@ export default function DatePickerPopover({
       <button
         type="button"
         onClick={openPicker}
+        aria-label={ariaLabel}
         className={buttonClassName + ' ' + textClassName}
       >
-        {dayMonthLabel(dateKey)}
+        {children ?? dayMonthLabel(dateKey)}
       </button>
 
       {open && view && (
-        <div className="absolute left-1/2 z-30 mt-2 w-64 -translate-x-1/2 rounded-2xl border border-line bg-cream p-3 shadow-xl">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="dp-cal">
+          <div className="dp-cal-head">
             <NavArrow dir="left" label="Mese precedente" onClick={() => setView((v) => addMonths(v, -1))} />
-            <span className="text-sm font-bold text-ink">
+            <span className="dp-cal-title">
               {MONTHS_IT[view.month]} {view.year}
             </span>
             <NavArrow dir="right" label="Mese successivo" onClick={() => setView((v) => addMonths(v, 1))} />
           </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-semibold uppercase text-ink-soft">
+          <div className="dp-cal-week">
             {['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((w, i) => (
               <span key={i}>{w}</span>
             ))}
           </div>
-          <div className="mt-1 grid grid-cols-7 gap-0.5">
+          <div className="dp-cal-grid">
             {grid.map((cell) => {
               const selected = cell.key === dateKey
               const day = parseWall(cell.key)?.d
@@ -96,14 +94,7 @@ export default function DatePickerPopover({
                     onChange(cell.key)
                     setOpen(false)
                   }}
-                  className={
-                    'aspect-square rounded-lg text-xs font-semibold transition ' +
-                    (selected
-                      ? 'bg-ink text-cream'
-                      : cell.inMonth
-                        ? 'text-ink hover:bg-tag'
-                        : 'text-ink-soft/40 hover:bg-tag')
-                  }
+                  className={'dp-cal-day' + (selected ? ' selected' : cell.inMonth ? '' : ' muted')}
                 >
                   {day}
                 </button>

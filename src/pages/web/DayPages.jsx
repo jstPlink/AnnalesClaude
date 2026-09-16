@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { plainText, parsePlace } from '../../lib/notes'
 import { moodColor } from '../../lib/mood'
-import { MONTHS_IT, durationMinutes, parseWall, weekdayLong } from '../../lib/dates'
+import { durationMinutes, parseWall } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 import Icon from '../../components/Icon'
 import {
@@ -199,18 +199,9 @@ export default function DayPages({
 
   const trackH = fit ? fitH : TRACK_H
   const pxPerMin = trackH / DAY_MIN
-  const p = parseWall(date)
-  const dayLabel = p ? `${weekdayLong(date)} ${p.d} ${MONTHS_IT[p.mo - 1].toLowerCase()}` : ''
 
   return (
     <div className={'day-outer' + (fit ? ' fit' : '')}>
-      <div className="day-header">
-        <span className="day-wd">
-          <span className="hl" aria-hidden="true" />
-          {dayLabel}
-        </span>
-      </div>
-
       <div className="day-sheet" style={{ '--deco': deco }}>
         <div
           className="day-track"

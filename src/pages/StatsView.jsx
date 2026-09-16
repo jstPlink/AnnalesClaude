@@ -239,6 +239,7 @@ export default function StatsView() {
     <PhoneShell>
       <MobileTopBar>
         <YearPill
+          skin="clock"
           year={year}
           onChange={(y) => setCursor((c) => ({ ...c, year: y }))}
           onStep={(delta) => setCursor((c) => ({ ...c, year: c.year + delta }))}

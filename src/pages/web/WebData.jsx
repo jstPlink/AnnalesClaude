@@ -13,21 +13,6 @@ import { MONTHS_IT } from '../../lib/dates'
 // inventarne di nuove.
 const CHART_LINE_COLORS = { day: '#a9906e', week: '#5ea9d6', month: '#e0655e' }
 
-function NavArrow({ dir, onClick, label }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-tag hover:text-ink"
-    >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-        {dir === 'left' ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
-      </svg>
-    </button>
-  )
-}
-
 // Una barretta per ogni giorno del mese.
 function WeekBars({ groups }) {
   return (
@@ -76,27 +61,44 @@ export default function WebData() {
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">
+      <div className="relative mb-[50px] mt-[40px] w-full">
+        <span className="header-quadretti bleed-day" aria-hidden="true" />
+        {/* griglia 1fr/auto/1fr: il titolo resta a sinistra, l'anno si
+            centra sull'intera riga (a centro pagina) invece di seguire
+            subito il titolo. */}
+        <header className="relative z-[1] grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
+          <h1 className="wd-page-title justify-self-start">
             Andamento
+            <span className="hl" aria-hidden="true" />
           </h1>
-          <NavArrow
-            dir="left"
-            label="Anno precedente"
-            onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
-          />
-          <span className="w-14 text-center font-serif text-2xl font-semibold text-ink-soft">
-            {year}
+          <div className="flex items-center gap-2 justify-self-center">
+            <button
+              type="button"
+              aria-label="Anno precedente"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year - 1 }))}
+              className="ne-clock-arrow"
+            >
+              <Icon name="chevron-left" size={18} />
+            </button>
+            <span className="ne-clock-face inline">
+              <span className="ne-clock-screen">
+                <span className="ne-clock-digits">{year}</span>
+              </span>
+            </span>
+            <button
+              type="button"
+              aria-label="Anno successivo"
+              onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
+              className="ne-clock-arrow"
+            >
+              <Icon name="chevron-right" size={18} />
+            </button>
+          </div>
+          <span className="justify-self-end text-sm text-ink-soft">
+            {loading && 'Aggiorno…'}
           </span>
-          <NavArrow
-            dir="right"
-            label="Anno successivo"
-            onClick={() => setCursor((c) => ({ ...c, year: c.year + 1 }))}
-          />
-        </div>
-        {loading && <span className="text-sm text-ink-soft">Aggiorno…</span>}
-      </header>
+        </header>
+      </div>
 
       {error && (
         <p className="mb-4 rounded-2xl bg-delete/15 px-4 py-3 text-sm text-delete-dark">
@@ -124,8 +126,11 @@ export default function WebData() {
           <div className="wd-chart-body">
             <YearMoodChart
               data={data}
-              aspectRatio={0.451}
-              monthFontSize={17.6}
+              aspectRatio={0.361}
+              monthFontSize={13}
+              axisFontSize={13}
+              fontFamily="'Annales Hand', 'Kalam', sans-serif"
+              fontWeight={700}
               alternateMonths={false}
               showAxisValues
               bare

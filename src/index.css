@@ -709,6 +709,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-weight: 400;
   font-display: swap;
 }
+/* Font digitale stile display LCD/calcolatrice per l'orologio della vista
+   nota web (DSEG14 Classic, licenza SIL OFL — github.com/keshikan/DSEG). */
+@font-face {
+  font-family: 'Annales Digital';
+  src: url('/fonts/dseg14-classic-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
 
 /* ============ Skin "pagine" — vista mese (solo web) ============
    Attivata da <html data-skin-month="pages"> (src/lib/prefs.js). Rende il
@@ -1988,49 +1996,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   color: var(--color-ink-soft);
 }
 
-/* Intestazione su un foglio A PARTE: quadretti, più scuro, sovrapposto. */
-.day-header {
-  position: relative;
-  z-index: 5;
-  display: inline-block;
-  margin: 0 0 -20px 14px;
-  padding: 12px 28px 14px 24px;
-  background-color: var(--dp-header-bg);
-  background-image: repeating-linear-gradient(
-      90deg,
-      var(--dp-header-line) 0 1px,
-      transparent 1px 17px
-    ),
-    repeating-linear-gradient(0deg, var(--dp-header-line) 0 1px, transparent 1px 17px),
-    var(--dp-grain, none);
-  background-size: 17px 17px, 17px 17px, 150px 150px;
-  background-blend-mode: normal, normal, multiply;
-  border: 1px solid var(--dp-header-border);
-  box-shadow: 0 7px 15px -6px rgba(20, 12, 4, 0.42);
-  transform: rotate(-1.4deg);
-  filter: url(#annales-wob);
-}
-.day-wd {
-  position: relative;
-  display: inline-block;
-  font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  font-size: 1.66rem;
-  line-height: 1.1;
-  color: var(--dp-wd);
-}
-.day-wd .hl {
-  position: absolute;
-  left: -10px;
-  right: -12px;
-  bottom: 0.06em;
-  height: 0.54em;
-  background: var(--dp-wd-hl);
-  transform: skewX(-11deg) rotate(-1deg);
-  mix-blend-mode: multiply;
-  z-index: -1;
-  filter: url(#annales-wob);
-}
-
 .day-sheet {
   position: relative;
   /* colonna orari (58px) + riga rossa, poi margine destro/basso del foglio */
@@ -2565,13 +2530,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
    francobollo/mappa e dischetto CD. Le foto diventano UNA sola
    "diapositiva" a carosello invece di due polaroid affiancate. ---- */
 @media (max-width: 480px) {
-  .day-header {
-    margin-left: 4px;
-    padding: 9px 18px 10px 16px;
-  }
-  .day-wd {
-    font-size: 1.28rem;
-  }
   .day-sheet {
     padding: 20px 14px 26px 54px;
   }
@@ -3014,7 +2972,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     linear-gradient(120deg, #e7c391, #dab07e 55%, #c39667);
   background-size: 140px 220px, auto;
   background-repeat: repeat, no-repeat;
-  border: none;
+  /* bordino e incisione identici alla targhetta "aggiungi" riempita della
+     vista nota web (.ne-addtag.filled) — stessa identica targhetta in
+     legno, non solo lo stesso materiale di sfondo. */
+  border: 2px solid rgba(112, 74, 36, 0.45);
   border-radius: 11px;
   box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 245, 210, 0.5),
     inset 0 1px 2px rgba(255, 255, 255, 0.4);
@@ -3033,6 +2994,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .sb-item-label {
   position: relative;
   z-index: 2;
+}
+.sb-item.active svg {
+  opacity: 1;
+  filter: drop-shadow(0 1px 0 rgba(255, 245, 225, 0.5)) drop-shadow(0 -1px 1px rgba(40, 24, 8, 0.45));
+}
+.sb-item.active .sb-item-label {
+  text-shadow: 0 1px 0 rgba(255, 245, 225, 0.5), 0 -1px 1px rgba(40, 24, 8, 0.45);
 }
 .sb-item:focus-visible {
   outline: 2px solid #33291c;
@@ -3416,11 +3384,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   font-size: 1.2rem;
   line-height: 1.2;
   color: var(--color-ink);
-}
-.ws-desc {
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.8rem;
-  color: var(--color-ink-soft);
 }
 .ws-chev {
   color: var(--color-ink-soft);
@@ -3861,9 +3824,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .ws-title {
     font-size: 1.05rem;
   }
-  .ws-desc {
-    font-size: 0.72rem;
-  }
   .ws-chev {
     width: 15px;
     height: 15px;
@@ -3896,6 +3856,34 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
 }
 
+/* Titolo di pagina (Andamento/Statistiche, web): stesso font a mano e
+   stesso evidenziatore giallo del titolo della pagina di accesso
+   (.wl-title/.wl-title-wrap .hl) — non più il font serif generico. */
+.wd-page-title {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-weight: 400;
+  font-size: 2.3rem;
+  color: var(--color-ink);
+}
+/* nero (non giallo): il foglietto sotto resta sempre chiaro, in qualunque
+   tema — è carta vera, non uno sfondo dell'interfaccia — quindi non serve
+   nessuna variante per il tema scuro. Stessa tinta di .dn-title .hl. */
+.wd-page-title .hl {
+  position: absolute;
+  left: -6px;
+  right: -8px;
+  bottom: 0.08em;
+  height: 0.5em;
+  background: rgba(26, 20, 10, 0.16);
+  filter: url(#annales-wob);
+  transform: skewX(-10deg) rotate(-1deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+
 /* ===================== Andamento (vista web): un foglietto a quadretti
    sovrapposto per ogni cartoncino — stessa idea del ".day-header" della
    vista giorno — invece del cartoncino cliccabile a tutta larghezza delle
@@ -3903,6 +3891,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .wd-card-wrap {
   margin-bottom: 30px;
 }
+/* foglio a quadretti chiaro, sovrapposto e un po' storto — stessa
+   identica idea dell'intestazione della vista giorno (.day-header), non
+   più la targhetta nera. */
 .wd-header {
   position: relative;
   z-index: 2;
@@ -3911,18 +3902,18 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   gap: 9px;
   margin: 0 0 -20px 18px;
   padding: 11px 24px 13px 20px;
-  background-color: #2b2015;
+  background-color: #e6dcc3;
   background-image: repeating-linear-gradient(
       90deg,
-      rgba(230, 220, 195, 0.1) 0 1px,
+      rgba(92, 78, 52, 0.18) 0 1px,
       transparent 1px 17px
     ),
-    repeating-linear-gradient(0deg, rgba(230, 220, 195, 0.1) 0 1px, transparent 1px 17px),
+    repeating-linear-gradient(0deg, rgba(92, 78, 52, 0.18) 0 1px, transparent 1px 17px),
     var(--sb-grain, none);
   background-size: 17px 17px, 17px 17px, 150px 150px;
-  background-blend-mode: normal, normal, overlay;
-  border: 1px solid #4c4636;
-  box-shadow: 0 7px 15px -6px rgba(20, 12, 4, 0.42);
+  background-blend-mode: normal, normal, multiply;
+  border: 1px solid #c6b995;
+  box-shadow: 0 7px 15px -6px rgba(20, 12, 4, 0.3);
   transform: rotate(-1.3deg);
   filter: url(#annales-wob);
 }
@@ -3931,14 +3922,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 .wd-header svg {
   flex: none;
-  color: #efe7d4;
+  color: #4d4234;
   opacity: 0.85;
 }
 .wd-header h2 {
   margin: 0;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
   font-size: 1.15rem;
-  color: #efe7d4;
+  color: #4d4234;
   white-space: nowrap;
 }
 .wd-card {
@@ -4277,11 +4268,17 @@ li:last-child > .wd-month-row {
   color: #33291c;
   box-shadow: 0 3px 7px rgba(20, 12, 4, 0.2);
 }
-/* Vista nota: indietro ed elimina/salva +30% (erano rimasti più piccoli
-   che nelle altre viste mobile, mese e giorno comprese). */
+/* Vista nota: indietro ed elimina/salva della stessa dimensione dei
+   pulsanti per aggiungere media in basso (.mcircle, 48px). */
 .mtop-note .mchev {
-  width: 57px;
-  height: 57px;
+  width: 48px;
+  height: 48px;
+}
+/* stessa dimensione del pulsante indietro della vista nota (.mtop-note
+   .mchev), 48px — era rimasto quello più piccolo di base (44px). */
+.mtop-day .mchev {
+  width: 48px;
+  height: 48px;
 }
 .mtop-day .mchev:first-child {
   transform: rotate(-6deg);
@@ -4311,7 +4308,7 @@ li:last-child > .wd-month-row {
 .mplaque-arrow {
   position: relative;
   z-index: 1;
-  width: 24px;
+  width: 31px;
   flex: none;
   display: grid;
   place-items: center;
@@ -4340,6 +4337,73 @@ li:last-child > .wd-month-row {
 }
 .mplaque-day .mplaque-label {
   font-size: 0.88rem;
+}
+
+/* skin="clock" di YearPill: stessa sveglia LCD della vista nota web (vedi
+   .ne-clock-face), in versione compatta per la barra superiore mobile —
+   vista mese (mese+anno), vista giorno (giorno:mese:anno). Le frecce non
+   sono più incorporate nella targhetta ma pulsanti tondi a parte. */
+.mclock-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.mclock-face {
+  display: flex;
+  flex: none;
+  padding: 3.5px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eef0ec);
+  border: 1px solid rgba(20, 12, 4, 0.1);
+  box-shadow: 0 2.5px 5px rgba(20, 12, 4, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  cursor: var(--cursor-pointer);
+}
+.mclock-screen {
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: linear-gradient(160deg, #d5d9d1, #c1c5bd);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+}
+.mclock-digits {
+  font-family: 'Annales Digital', ui-monospace, 'SF Mono', 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  color: #202822;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.mclock-sep {
+  margin: 0 1px;
+}
+.mclock-arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 70px 70px;
+  background-blend-mode: multiply;
+  border: none;
+  color: #4a3208;
+  box-shadow: 0 1.5px 4px rgba(20, 12, 4, 0.2);
+}
+
+/* Vista nota mobile, riga orario: sostituisce le vecchie targhette
+   .mplaque-time (input nativo sempre visibile) con lo stesso orologio LCD,
+   larghezza fissa per restare allineato alla targhetta Data accanto. */
+.mtime-slot {
+  display: flex;
+  flex: 0 0 89px;
+  justify-content: center;
+}
+.mtime-slot .mclock-face {
+  width: 100%;
+  justify-content: center;
 }
 
 /* selettore Calendario/Andamento/Statistiche: un'unica striscia di
@@ -4376,6 +4440,10 @@ li:last-child > .wd-month-row {
     linear-gradient(155deg, #e6bd82, #cda267 50%, #a3733f);
   background-size: 140px 220px, auto;
   background-repeat: repeat, no-repeat;
+  /* bordino e incisione identici alla targhetta "aggiungi" riempita della
+     vista nota web (.ne-addtag.filled/.sb-item.active) — stessa identica
+     targhetta in legno ovunque nell'app. */
+  border: 2px solid rgba(112, 74, 36, 0.45);
   box-shadow: 0 2px 5px rgba(20, 12, 4, 0.35), inset 0 0 0 1px rgba(255, 245, 210, 0.6),
     inset 0 1px 2px rgba(255, 255, 255, 0.5);
   /* leggermente storta, come una targhetta di legno vera incollata un po'
@@ -4398,6 +4466,7 @@ li:last-child > .wd-month-row {
 }
 .mtab.active {
   color: #2b2015;
+  text-shadow: 0 1px 0 rgba(255, 245, 225, 0.5), 0 -1px 1px rgba(40, 24, 8, 0.45);
 }
 
 /* riga del footer generica (Footer.jsx compone .mfooter da sé; NoteView.jsx
@@ -4503,9 +4572,22 @@ li:last-child > .wd-month-row {
     linear-gradient(120deg, #f0dab3, #e6c599 55%, #d3aa7c);
   background-size: 90px 140px, auto;
   background-repeat: repeat, no-repeat;
-  border: none;
+  border: 2px solid rgba(112, 74, 36, 0.45);
   color: #4a341c;
   box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 250, 235, 0.6);
+}
+/* icone più chiare, stessa tonalità dei pulsanti "aggiungi" della vista
+   web (.ne-addtag/.ne-addtag.filled) — .mcircle-paper è condiviso col
+   footer generico (Footer.jsx), che resta scuro come prima: lo
+   schiarimento vale solo qui, dentro .mnote-fab-wrap. */
+.mnote-fab-wrap .mcircle-paper {
+  color: var(--color-ink-soft);
+}
+.mnote-fab-wrap .mcircle-paper svg {
+  opacity: 0.75;
+}
+.mnote-fab-wrap .mcircle-paper.active {
+  color: #3d2a16;
 }
 .mcircle-count {
   position: absolute;
@@ -4591,6 +4673,13 @@ li:last-child > .wd-month-row {
   background-size: 100px 100px;
   background-blend-mode: overlay;
   color: #efe7d4;
+  /* stesso timbro leggermente storto del pulsante gemini nelle altre viste
+     (.sb-gemini/.ncs-opt-icon.gemini), non più dritto "di fabbrica". */
+  transform: rotate(-2deg);
+  transition: transform 0.12s ease;
+}
+.mgemini:active {
+  transform: rotate(-2deg) scale(0.93);
 }
 /* pulsante "nuova nota": stesso timbro nero di .mgemini (con una texture di
    cartone più marcata: grana + fibra, non solo grana), con un filo
@@ -4735,6 +4824,132 @@ li:last-child > .wd-month-row {
   font-size: 0.78rem;
   line-height: 1.3;
   color: var(--color-ink-soft);
+}
+
+/* ===================== Pannello Gemini nella nota (GeminiSheet.jsx):
+   stesso foglietto di cartoncino appeso con nastro di .ncs-sheet, invece
+   del vecchio modale bianco generico che stonava con il resto. ============== */
+.gms-sheet {
+  display: flex;
+  max-height: 85vh;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gms-body {
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+}
+/* stesso ritaglio di carta tondo di .mchev, in piccolo, per indietro/chiudi
+   nell'intestazione del pannello. */
+.gms-chev {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  border: 2px dashed rgba(52, 44, 28, 0.45);
+  color: #33291c;
+}
+.gms-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gms-hint {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+.gms-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.gms-field {
+  width: 100%;
+  resize: none;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background-color: #fbf6e8;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: multiply;
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.88rem;
+  color: var(--color-ink);
+  outline: none;
+}
+.gms-preview {
+  white-space: pre-wrap;
+  border-radius: 14px;
+  padding: 12px;
+  background-color: #fbf6e8;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: multiply;
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.88rem;
+  color: var(--color-ink);
+}
+.gms-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background-color: #fbf6e8;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: multiply;
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-ink);
+}
+.gms-cta {
+  width: 100%;
+  border-radius: 999px;
+  padding: 12px 20px;
+  background: var(--color-save);
+  border: 2px solid var(--color-save-dark);
+  color: #2d3a1a;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22);
+  transition: transform 0.12s ease;
+}
+.gms-cta:active {
+  transform: scale(0.97);
+}
+.gms-cta:disabled {
+  opacity: 0.5;
+}
+.gms-empty {
+  padding: 26px 14px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(52, 44, 28, 0.3);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+.gms-error {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--color-delete-dark);
 }
 
 /* ===================== Cerca (vista web, WebFilter.jsx): ogni gruppo di
@@ -5571,42 +5786,119 @@ li:last-child > .st-row {
    stesso rettangolo con margine e righe già usato per il foglio della
    vista giorno (.day-sheet), senza grana, con due pezzi di nastro adesivo
    in alto. ===================== */
+/* Foglio a quadretti che spunta da dietro i pulsanti dell'header — vista
+   mese, vista giorno e vista nota (web): stesso foglio "strappato" che
+   aveva l'intestazione della vista giorno prima di essere tolta, qui però
+   puro sfondo decorativo (nessuna etichetta dentro). Il contenitore che lo
+   ospita deve avere position:relative; il contenuto vero sopra deve avere
+   position:relative + z-index:1 per stare davanti. */
+.header-quadretti {
+  position: absolute;
+  /* Orizzontale moderato e uguale per tutte e 3 le viste: deve solo
+     sporgere un po' oltre i pulsanti, MAI arrivare ai bordi reali dello
+     schermo (i tentativi precedenti esageravano apposta per garantire di
+     raggiungerli — ora è l'esatto contrario). Verticale invece esagerato
+     verso l'alto apposta: deve arrivare e sparire oltre il bordo
+     superiore reale della pagina, non fermarsi al margine della colonna
+     di contenuto. Il ritaglio netto, in entrambi i casi, arriva gratis
+     dall'overflow:hidden di .app-paper (l'intero guscio dell'app, a piena
+     larghezza/altezza viewport). Stessa rotazione di 1° per tutte e 3. */
+  inset: -300px 48px -26px 48px;
+  z-index: 0;
+  border-radius: 4px;
+  background-color: #dbd1b9;
+  background-image: repeating-linear-gradient(
+      90deg,
+      rgba(92, 78, 52, 0.15) 0 1px,
+      transparent 1px 17px
+    ),
+    repeating-linear-gradient(0deg, rgba(92, 78, 52, 0.15) 0 1px, transparent 1px 17px),
+    var(--sb-grain, none);
+  background-size: 17px 17px, 17px 17px, 150px 150px;
+  background-blend-mode: normal, normal, multiply;
+  border: 1px solid #c6b995;
+  box-shadow: 0 7px 15px -6px rgba(20, 12, 4, 0.3);
+  transform: rotate(-1deg);
+  filter: url(#annales-wob);
+  pointer-events: none;
+}
+.header-quadretti.bleed-month {
+  left: -48px;
+  right: -48px;
+}
+.header-quadretti.bleed-day {
+  left: -48px;
+  right: -48px;
+}
+/* verticale ridotto rispetto alle altre 2 viste — qui i pulsanti stavano
+   troppo staccati dal bordo del foglietto. */
+.header-quadretti.bleed-note {
+  left: -40px;
+  right: -40px;
+  bottom: -12px;
+}
 .ne-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 22px;
+  /* i 50px verso il corpo pagina sono sul wrapper esterno (.header-
+     quadretti ne ha bisogno per posizionarsi), non più qui. */
+  margin-bottom: 0;
 }
-.ne-back {
+/* indietro/elimina come la targhetta dei link della barra laterale
+   (.sb-item): ritaglio di carta chiaro col contorno a matita tratteggiato,
+   angoli smussati irregolari, icona + etichetta scritta a mano — non più
+   pillole. Elimina è la stessa identica targhetta, solo tinta di rosso.
+   Salva resta il cartoncino nero (stesso materiale di .sb-new/.sb-gemini),
+   qui non toccato. */
+.ne-back,
+.ne-delete {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-weight: 650;
-  font-size: 0.86rem;
-  color: var(--color-ink-soft);
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 7px 9px 8px 10px;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
   cursor: var(--cursor-pointer);
+  box-shadow: 0 3px 7px rgba(20, 12, 4, 0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.ne-back:hover,
+.ne-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(20, 12, 4, 0.22);
+}
+.ne-back {
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 140px 140px;
+  background-blend-mode: multiply;
+  border: 2px dashed rgba(52, 44, 28, 0.42);
+  color: #33291c;
 }
 .ne-back:hover {
-  color: var(--color-ink);
+  border-color: rgba(52, 44, 28, 0.65);
 }
 .ne-save {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   padding: 10px 22px;
   border-radius: 999px;
-  border: none;
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
   cursor: var(--cursor-pointer);
+  transition: filter 0.15s ease;
+  border: 1.5px dashed rgba(255, 255, 255, 0.6);
   background-color: #211a10;
   background-image: var(--sb-grain);
   background-size: 140px 140px;
   background-blend-mode: overlay;
   color: #efe7d4;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
-  font-size: 0.88rem;
   box-shadow: 0 6px 14px -3px rgba(10, 6, 0, 0.5);
-  transition: filter 0.15s ease;
 }
 .ne-save:hover {
   filter: brightness(1.1);
@@ -5616,19 +5908,9 @@ li:last-child > .st-row {
   cursor: var(--cursor-wait);
 }
 .ne-delete {
-  padding: 10px 22px;
-  border-radius: 999px;
-  border: 1.5px solid var(--color-delete-dark);
-  background: var(--color-delete);
+  background-color: var(--color-delete);
+  border: 2px dashed var(--color-delete-dark);
   color: var(--color-ink);
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
-  font-size: 0.88rem;
-  cursor: var(--cursor-pointer);
-  transition: filter 0.15s ease;
-}
-.ne-delete:hover {
-  filter: brightness(1.05);
 }
 .ne-delete:disabled {
   opacity: 0.5;
@@ -5637,7 +5919,9 @@ li:last-child > .st-row {
 
 .ne-grid {
   display: grid;
-  grid-template-columns: 290px 1fr;
+  /* -15%: colonna "personalizzazione" (Data/Orario/Mood/Aggiungi) meno
+     ingombrante, 290px -> 247px. */
+  grid-template-columns: 247px 1fr;
   gap: 26px;
   align-items: start;
 }
@@ -5688,6 +5972,400 @@ li:last-child > .st-row {
   color: var(--color-ink-soft);
   flex: none;
 }
+
+/* pannelli Data e Orario: sveglia LCD bianca — cornice in plastica chiara
+   che racchiude uno schermo grigio con cifre scure, come una vera sveglia
+   digitale da comodino (non più le schede "a tabellone" di prima). Il
+   cartoncino del pannello (.ne-sub) resta quello di tutti gli altri. */
+.ne-clock-face {
+  display: flex;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 5.5px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #eef0ec);
+  border: 1px solid rgba(20, 12, 4, 0.1);
+  box-shadow: 0 3.3px 6.6px rgba(20, 12, 4, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease;
+}
+.ne-clock-face:hover {
+  transform: translateY(-1px);
+}
+/* Rotazioni fisse leggerissime sui 3 orologi (Data + i 2 dell'Orario), per
+   un aspetto un po' meno perfettamente allineato — vedi utilizzo in
+   WebNote.jsx tramite i wrapper .ne-clock-tilt-*. */
+.ne-clock-tilt-a .ne-clock-face {
+  transform: rotate(-0.8deg);
+}
+.ne-clock-tilt-a .ne-clock-face:hover {
+  transform: rotate(-0.8deg) translateY(-1px);
+}
+.ne-clock-tilt-b .ne-clock-face {
+  transform: rotate(1.1deg);
+}
+.ne-clock-tilt-b .ne-clock-face:hover {
+  transform: rotate(1.1deg) translateY(-1px);
+}
+.ne-clock-tilt-c .ne-clock-face {
+  transform: rotate(-1.3deg);
+}
+.ne-clock-tilt-c .ne-clock-face:hover {
+  transform: rotate(-1.3deg) translateY(-1px);
+}
+.ne-clock-screen {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: linear-gradient(160deg, #d5d9d1, #c1c5bd);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  text-align: center;
+}
+.ne-clock-digits {
+  font-family: 'Annales Digital', ui-monospace, 'SF Mono', 'Courier New', monospace;
+  font-weight: 700;
+  /* -15%: la colonna "personalizzazione" che ospita l'orologio Data si è
+     ristretta (.ne-grid), il testo non ci stava più comodo. */
+  font-size: 1.32rem;
+  letter-spacing: 0.02em;
+  color: #202822;
+  text-transform: uppercase;
+}
+.ne-clock-sep {
+  margin: 0 1px;
+}
+/* variante "in riga" per gli orologi usati come intestazione di pagina
+   (vista mese/giorno web: anno, mese, "oggi", data) invece che nel
+   pannello laterale stretto della nota — larghezza libera sul contenuto,
+   schermo e cifre più generosi. */
+/* -20%: l'intestazione andava a capo su due righe nella vista mese. */
+.ne-clock-face.inline {
+  width: auto;
+  margin-bottom: 0;
+  padding: 5.6px;
+  border-radius: 10px;
+}
+.ne-clock-face.inline .ne-clock-screen {
+  padding: 7px 16px;
+  border-radius: 5.6px;
+}
+.ne-clock-face.inline .ne-clock-digits {
+  font-size: 1.28rem;
+  letter-spacing: 0.05em;
+}
+/* stessa freccetta tonda di carta della vista mese/giorno mobile
+   (.mclock-arrow), in versione web accanto agli orologi "in riga". */
+.ne-clock-arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background-color: #efe7d4;
+  background-image: var(--sb-grain);
+  background-size: 90px 90px;
+  background-blend-mode: multiply;
+  border: none;
+  color: #4a3208;
+  box-shadow: 0 2px 5px rgba(20, 12, 4, 0.22);
+  cursor: var(--cursor-pointer);
+  transition: transform 0.12s ease;
+}
+.ne-clock-arrow:hover {
+  transform: translateY(-1px);
+}
+/* Vista giorno (web): data scritta a mano, non un orologio — qui non è
+   cliccabile per modificarla (solo ± un giorno con le frecce accanto),
+   quindi niente stile "orologio LCD" che lascerebbe intendere il
+   contrario. Stesso font della vecchia intestazione .day-wd (tolta). */
+.day-label-hand {
+  position: relative;
+  display: inline-block;
+  font-family: 'Annales Pen', 'Permanent Marker', cursive;
+  font-size: 1.7rem;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+/* stesso evidenziatore nero del titolo di Andamento/Statistiche
+   (.wd-page-title .hl) — stessa materia "scritta a mano", stesso segno. */
+.day-label-hand .hl {
+  position: absolute;
+  left: -6px;
+  right: -8px;
+  bottom: 0.08em;
+  height: 0.5em;
+  background: rgba(26, 20, 10, 0.16);
+  filter: url(#annales-wob);
+  transform: skewX(-10deg) rotate(-1deg);
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+.ne-clock-face.small {
+  padding: 4.4px;
+}
+.ne-clock-face.small .ne-clock-screen {
+  padding: 6px 8px;
+}
+.ne-clock-face.small .ne-clock-digits {
+  font-size: 1.1rem;
+}
+.ne-clock-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ne-clock-pair > * {
+  flex: 1;
+  min-width: 0;
+}
+.ne-clock-pair .ne-clock-face {
+  margin-bottom: 0;
+}
+.ne-clock-pair-sep {
+  flex: none;
+  color: var(--color-ink-soft);
+  font-weight: 700;
+}
+
+/* Calendario a comparsa (DatePickerPopover, usato sia da Data in web che
+   dalla targhetta data in mobile): finestrella in stile calendario da
+   tavolo "strappabile" vecchia scuola — testata rossa, forellino di
+   aggancio in alto, numeri su cartoncino chiaro. */
+.dp-cal {
+  position: absolute;
+  left: 50%;
+  z-index: 30;
+  margin-top: 11px;
+  width: 232px;
+  transform: translateX(-50%);
+  border-radius: 3px 3px 12px 12px;
+  background: var(--color-cream);
+  border: 1px solid rgba(20, 12, 4, 0.15);
+  box-shadow: 0 14px 28px -10px rgba(20, 12, 4, 0.45), 0 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.dp-cal::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5a5a5a, #201f1d 75%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+.dp-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 8px;
+  background: linear-gradient(180deg, #b6483a, #8f3529);
+  box-shadow: 0 2px 4px rgba(20, 12, 4, 0.25);
+}
+.dp-cal-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fdf3ea;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+.dp-cal-arrow {
+  display: flex;
+  height: 22px;
+  width: 22px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fdf3ea;
+  transition: background-color 0.15s ease;
+}
+.dp-cal-arrow:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+.dp-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin: 0 6px;
+  padding: 8px 2px 6px;
+  border-bottom: 1px dashed rgba(20, 12, 4, 0.18);
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8f3529;
+}
+.dp-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 8px 8px 10px;
+}
+.dp-cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  transition: background-color 0.15s ease;
+}
+.dp-cal-day:hover {
+  background-color: var(--color-tag);
+}
+.dp-cal-day.muted {
+  color: rgba(58, 42, 26, 0.32);
+}
+.dp-cal-day.selected {
+  background: radial-gradient(circle at 35% 30%, #c4574a, #8f3529 78%);
+  color: #fdf3ea;
+  box-shadow: 0 2px 4px rgba(20, 12, 4, 0.35);
+}
+
+/* Selettore orario a comparsa (TimePickerPopover): stessa estetica
+   "sveglia LCD" degli orologi del pannello Orario — un'unica colonna
+   semplice (non più due rotelle ore/minuti affiancate, né intestazione
+   con titolo e chiudi), abbastanza stretta da non uscire dallo schermo
+   anche quando l'orologio che la apre è vicino al bordo, al posto del
+   popup nativo del browser (che con due orologi vicini si apriva ancorato
+   al primo invece che a quello cliccato). */
+.tp-pop {
+  position: absolute;
+  left: 50%;
+  z-index: 30;
+  margin-top: 10px;
+  width: 92px;
+  max-width: calc(100vw - 16px);
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #eef0ec);
+  border: 1px solid rgba(20, 12, 4, 0.15);
+  box-shadow: 0 14px 26px -10px rgba(20, 12, 4, 0.45);
+  padding: 6px;
+}
+.tp-list {
+  display: flex;
+  height: 132px;
+  flex-direction: column;
+  overflow-y: auto;
+  scroll-snap-type: y proximity;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #d5d9d1, #c1c5bd);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+}
+.tp-list::-webkit-scrollbar {
+  width: 4px;
+}
+.tp-list::-webkit-scrollbar-thumb {
+  background: rgba(32, 40, 34, 0.25);
+  border-radius: 999px;
+}
+.tp-item {
+  flex: none;
+  padding: 6px 0;
+  scroll-snap-align: center;
+  text-align: center;
+  font-family: 'Annales Digital', ui-monospace, 'SF Mono', 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: rgba(32, 40, 34, 0.45);
+  transition: color 0.15s ease;
+}
+.tp-item:hover {
+  color: rgba(32, 40, 34, 0.75);
+}
+.tp-item.active {
+  color: #202822;
+  font-size: 1.1rem;
+}
+
+/* Menu anno/mese della vista mese (web): stessa identica ricetta LCD di
+   .tp-pop/.tp-list/.tp-item (selettore orario della vista nota) — schermo
+   grigio, colonna scorrevole, cifre col font digitale — al posto del
+   solito elenco bianco generico. .wide serve al mese (nomi lunghi, es.
+   "SETTEMBRE"), l'anno resta stretto. */
+.mn-pop {
+  position: absolute;
+  left: 50%;
+  z-index: 30;
+  margin-top: 10px;
+  width: 104px;
+  /* su schermi stretti, centrato sul proprio pulsante (spesso vicino al
+     bordo), poteva uscire dallo schermo — mai più largo dello spazio
+     visibile, con un margine di sicurezza di 12px per lato. */
+  max-width: calc(100vw - 24px);
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #eef0ec);
+  border: 1px solid rgba(20, 12, 4, 0.15);
+  box-shadow: 0 14px 26px -10px rgba(20, 12, 4, 0.45);
+  padding: 6px;
+}
+.mn-pop.wide {
+  width: 150px;
+}
+/* Sotto una certa larghezza il centraggio sul pulsante non basta: un
+   pulsante vicino al bordo (frequente nella barra mobile, mese+anno
+   affiancati) sposta comunque il menu fuori schermo anche se più stretto
+   del viewport, perché il punto di ancoraggio stesso è troppo vicino al
+   bordo. Qui si passa a centrare sull'intero schermo (non più sul
+   pulsante) con un'altezza fissa che scavalca la barra superiore. */
+@media (max-width: 640px) {
+  .mn-pop {
+    position: fixed;
+    left: 50%;
+    top: calc(max(14px, env(safe-area-inset-top)) + 65px);
+    margin-top: 0;
+  }
+}
+.mn-list {
+  display: flex;
+  max-height: 220px;
+  flex-direction: column;
+  overflow-y: auto;
+  scroll-snap-type: y proximity;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #d5d9d1, #c1c5bd);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+}
+.mn-list::-webkit-scrollbar {
+  width: 4px;
+}
+.mn-list::-webkit-scrollbar-thumb {
+  background: rgba(32, 40, 34, 0.25);
+  border-radius: 999px;
+}
+.mn-item {
+  flex: none;
+  padding: 7px 0;
+  scroll-snap-align: center;
+  text-align: center;
+  font-family: 'Annales Digital', ui-monospace, 'SF Mono', 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  color: rgba(32, 40, 34, 0.45);
+  transition: color 0.15s ease;
+}
+.mn-item:hover {
+  color: rgba(32, 40, 34, 0.75);
+}
+.mn-item.active {
+  color: #202822;
+  font-size: 1.15rem;
+}
+
 .ne-add {
   flex: none;
   padding: 4px 11px;
@@ -5734,14 +6412,14 @@ li:last-child > .st-row {
 .ne-addtag-underlay:has(+ .ne-addtag.filled) {
   display: block;
   position: absolute;
+  /* stesso identico ritaglio del pulsante vuoto (.ne-addtag): raggio
+     uniforme, cream piatto, niente grana — prima erano diversi e si
+     capiva che non era davvero lo stesso pulsante sotto. */
   inset: -3px -4px -4px -3px;
   z-index: 0;
-  border: 1.5px dashed rgba(52, 44, 28, 0.42);
-  border-radius: 8px 10px 9px 11px;
-  background-color: var(--color-cream);
-  background-image: var(--sb-grain, none);
-  background-size: 90px 90px;
-  background-blend-mode: multiply;
+  border: 1.5px dashed rgba(52, 44, 28, 0.4);
+  border-radius: 9px;
+  background: var(--color-cream);
   transform: rotate(2deg);
 }
 .ne-addtag {
@@ -5783,9 +6461,21 @@ li:last-child > .st-row {
     linear-gradient(120deg, #e7c391, #dab07e 55%, #c39667);
   background-size: 90px 140px, auto;
   background-repeat: repeat, no-repeat;
-  border: none;
+  /* bordino un poco più spesso, tono legno scuro */
+  border: 2px solid rgba(112, 74, 36, 0.45);
   color: #3d2a16;
   box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 245, 210, 0.5);
+}
+/* effetto scavato/inciso nel legno: ombra chiara sotto (il bordo
+   dell'incisione che riceve luce) + ombra scura sopra (il fondo
+   dell'incavo, in ombra) */
+.ne-addtag.filled .label,
+.ne-addtag.filled .count {
+  text-shadow: 0 1px 0 rgba(255, 245, 225, 0.5), 0 -1px 1px rgba(40, 24, 8, 0.45);
+}
+.ne-addtag.filled svg {
+  filter: drop-shadow(0 1px 0 rgba(255, 245, 225, 0.5))
+    drop-shadow(0 -1px 1px rgba(40, 24, 8, 0.45));
 }
 .ne-addtag .count {
   margin-left: auto;
@@ -5862,38 +6552,6 @@ li:last-child > .st-row {
   margin-left: 1px;
 }
 
-.ne-date {
-  font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  font-size: 1.15rem;
-  color: var(--color-ink);
-  margin: 0 0 6px;
-}
-.ne-date-link {
-  max-width: 100%;
-}
-
-.ne-time-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ne-time-input {
-  min-width: 0;
-  flex: 1;
-  padding: 6px 9px;
-  border-radius: 9px;
-  border: 1.5px dashed var(--color-line);
-  background: rgba(255, 255, 255, 0.4);
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 0.82rem;
-  color: var(--color-ink);
-  outline: none;
-}
-.ne-sep {
-  color: var(--color-ink-soft);
-}
-
-
 .ne-chips {
   display: flex;
   flex-wrap: wrap;
@@ -5912,9 +6570,26 @@ li:last-child > .st-row {
   font-size: 0.76rem;
   color: var(--color-ink);
 }
+/* Tag: stessa targhetta/dischetto in legno del resto dei media aggiunti
+   (persone/foto/canzoni/luogo), non più il chip bianco generico che
+   stonava in mezzo a tutto quel legno. */
 .ne-chip.sq {
   border-radius: 8px;
   padding: 5px 9px;
+  background-color: #d3b88f;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='220' viewBox='0 0 140 220'%3E%3Cg fill='none' stroke='%238f5a2c' stroke-linecap='round'%3E%3Cpath d='M4 0 Q8 25 2 48 T6 96 T1 145 T5 220' stroke-width='0.9' opacity='0.22'/%3E%3Cpath d='M13 0 Q9 22 15 46 T10 94 T16 142 T9 220' stroke-width='1.2' opacity='0.26'/%3E%3Cpath d='M23 0 Q28 28 20 52 T26 100 T19 148 T25 220' stroke-width='0.8' opacity='0.18'/%3E%3Cpath d='M32 0 Q27 20 34 44 T28 92 T35 140 T27 220' stroke-width='1.1' opacity='0.24'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(120deg, #e7c391, #dab07e 55%, #c39667);
+  background-size: 90px 140px, auto;
+  background-repeat: repeat, no-repeat;
+  border: 2px solid rgba(112, 74, 36, 0.45);
+  color: #3d2a16;
+  box-shadow: 0 3px 8px rgba(20, 12, 4, 0.22), inset 0 0 0 1px rgba(255, 245, 210, 0.5);
+}
+.ne-chip.sq svg {
+  filter: drop-shadow(0 1px 0 rgba(255, 245, 225, 0.5)) drop-shadow(0 -1px 1px rgba(40, 24, 8, 0.45));
+}
+.ne-chip.sq .rm {
+  text-shadow: 0 1px 0 rgba(255, 245, 225, 0.5), 0 -1px 1px rgba(40, 24, 8, 0.45);
 }
 .ne-chip svg {
   width: 11px;
@@ -5929,6 +6604,11 @@ li:last-child > .st-row {
   padding: 0 2px 0 0;
   cursor: var(--cursor-pointer);
   flex: none;
+}
+.ne-chip.sq svg,
+.ne-chip.sq .rm {
+  color: #3d2a16;
+  opacity: 1;
 }
 
 .ne-songs {
@@ -6098,10 +6778,11 @@ li:last-child > .st-row {
   font-size: 1.32rem;
   color: #33291c;
 }
-/* stessa dimensione del pulsante indietro (.mtop-note .mchev, 57px). */
+/* stessa dimensione del pulsante indietro (.mtop-note .mchev) e dei
+   pulsanti per aggiungere media in basso (.mcircle), 48px. */
 .mcircle-action {
-  width: 57px;
-  height: 57px;
+  width: 48px;
+  height: 48px;
   flex: none;
   border-radius: 50%;
   display: grid;
@@ -6124,38 +6805,30 @@ li:last-child > .st-row {
   opacity: 0.5;
 }
 
+/* riga tratteggiata sottile sopra la riga orari/data, come se il
+   cartoncino fosse piegato lì — stesso trattamento del divisorio fra tab e
+   pulsanti in basso nella vista home (.mtabs + .mnav-footer). */
 .mtop-row2 {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 6px;
-}
-.mplaque-time {
-  flex: 0 0 auto;
-  width: 89px;
-  justify-content: center;
-}
-.mplaque-time .mplaque-label {
-  width: 100%;
-  text-align: center;
-  padding: 7px 4px;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
+  margin-top: 2px;
+  padding-top: 13px;
+  border-top: 1.5px dashed rgba(52, 44, 28, 0.3);
 }
 /* larghezza fissa invece di flex:1 — riempiva tutto lo spazio residuo
-   lasciando le targhette orario troppo strette per il loro contenuto
-   ("08:3" invece di "08:30"). */
-.mplaque-date {
+   lasciando la targhetta data troppo stretta per il suo contenuto. */
+.mdate-slot {
+  display: flex;
   flex: 0 1 121px;
   justify-content: center;
   min-width: 0;
 }
-.mplaque-date .mplaque-label {
-  width: 100%;
-  text-align: center;
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
-  font-size: 0.86rem;
+.mdate-slot .mclock-face {
+  max-width: 100%;
+}
+.mdate-slot .mclock-digits {
   overflow: hidden;
   text-overflow: ellipsis;
 }

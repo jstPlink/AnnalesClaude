@@ -11,6 +11,7 @@ import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
 import DatePickerPopover from '../../components/DatePickerPopover'
+import TimePickerPopover from '../../components/TimePickerPopover'
 import Icon from '../../components/Icon'
 import {
   createNote,
@@ -32,6 +33,8 @@ import {
   dayKey,
   fullDayLabel,
   timeInputValue,
+  parseWall,
+  MONTHS_IT,
 } from '../../lib/dates'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -377,25 +380,35 @@ export default function WebNote() {
       ? osmTileFor(placeLat, placeLon, 14)
       : null
 
+  const parsedDate = parseWall(form.dateKey)
+  const dayStr = parsedDate ? String(parsedDate.d).padStart(2, '0') : '--'
+  const monthStr = parsedDate ? MONTHS_IT[parsedDate.mo - 1].slice(0, 3).toUpperCase() : '---'
+  const yearStr = parsedDate ? String(parsedDate.y) : '----'
+  const [startH, startM] = (form.timeStart || '00:00').split(':')
+  const [endH, endM] = (form.timeEnd || '00:00').split(':')
+
   return (
     <div>
-      <div className="ne-head">
-        <button type="button" onClick={() => navigate(-1)} className="ne-back">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Indietro
-        </button>
+      <div className="relative mb-[50px] mt-[40px]">
+        <span className="header-quadretti bleed-note" aria-hidden="true" />
+        <div className="ne-head relative z-[1] px-4">
+          <button type="button" onClick={() => navigate(-1)} className="ne-back">
+            <Icon name="chevron-left" size={16} strokeWidth={2.6} />
+            Indietro
+          </button>
 
-        {mode === 'save' ? (
-          <button type="button" disabled={busy} onClick={handleSave} className="ne-save">
-            {existsOnServer ? 'Salva modifiche' : 'Crea nota'}
-          </button>
-        ) : (
-          <button type="button" disabled={busy} onClick={handleDelete} className="ne-delete">
-            Elimina nota
-          </button>
-        )}
+          {mode === 'save' ? (
+            <button type="button" disabled={busy} onClick={handleSave} className="ne-save">
+              <Icon name="check" size={16} strokeWidth={2.6} />
+              {existsOnServer ? 'Salva modifiche' : 'Crea nota'}
+            </button>
+          ) : (
+            <button type="button" disabled={busy} onClick={handleDelete} className="ne-delete">
+              <Icon name="trash" size={16} strokeWidth={2.6} />
+              Elimina nota
+            </button>
+          )}
+        </div>
       </div>
 
       {loadError && (
@@ -411,35 +424,63 @@ export default function WebNote() {
             <div className="ne-sub-head">
               <span className="ne-sub-title">Data</span>
             </div>
-            <p className="ne-date">{fullDayLabel(form.dateKey)}</p>
+            {/* l'intera targhetta è ora il pulsante che apre il calendario
+                (prima solo l'anno lo era, e sotto c'era anche il vecchio
+                link testuale "2 Settembre": entrambi rimossi). */}
             <DatePickerPopover
               dateKey={form.dateKey}
               onChange={(dateKey) => set({ dateKey })}
-              buttonClassName="ne-date-link"
-              textClassName="text-xs font-bold underline underline-offset-2 text-ink-soft"
-            />
+              className="ne-clock-tilt-a"
+              buttonClassName="ne-clock-face"
+              textClassName=""
+              ariaLabel={`Cambia data, ora ${fullDayLabel(form.dateKey)}`}
+            >
+              <span className="ne-clock-screen">
+                <span className="ne-clock-digits">
+                  {dayStr}
+                  <span className="ne-clock-sep">:</span>
+                  {monthStr}
+                  <span className="ne-clock-sep">:</span>
+                  {yearStr}
+                </span>
+              </span>
+            </DatePickerPopover>
           </div>
 
           <div className="ne-sub">
             <div className="ne-sub-head">
               <span className="ne-sub-title">Orario</span>
             </div>
-            <div className="ne-time-row">
-              <input
-                type="time"
-                aria-label="Inizio"
-                value={form.timeStart}
-                onChange={(e) => set({ timeStart: e.target.value })}
-                className="ne-time-input"
-              />
-              <span className="ne-sep">–</span>
-              <input
-                type="time"
-                aria-label="Fine"
-                value={form.timeEnd}
-                onChange={(e) => set({ timeEnd: e.target.value })}
-                className="ne-time-input"
-              />
+            {/* stesso discorso dell'orologio Data, ma con un dropdown
+                nostro (TimePickerPopover) invece del popup nativo del
+                browser: con due orologi vicini, showPicker() apriva il
+                selettore sempre ancorato al primo input anche cliccando
+                il secondo — un dropdown per orologio, posizionato
+                relativamente al proprio pulsante, risolve il problema. */}
+            <div className="ne-clock-pair">
+              <TimePickerPopover
+                time={form.timeStart}
+                onChange={(timeStart) => set({ timeStart })}
+                className="ne-clock-tilt-b"
+                buttonClassName="ne-clock-face small"
+                ariaLabel={`Cambia orario di inizio, ora ${form.timeStart}`}
+              >
+                <span className="ne-clock-screen">
+                  <span className="ne-clock-digits">{startH}:{startM}</span>
+                </span>
+              </TimePickerPopover>
+              <span className="ne-clock-pair-sep">–</span>
+              <TimePickerPopover
+                time={form.timeEnd}
+                onChange={(timeEnd) => set({ timeEnd })}
+                className="ne-clock-tilt-c"
+                buttonClassName="ne-clock-face small"
+                ariaLabel={`Cambia orario di fine, ora ${form.timeEnd}`}
+              >
+                <span className="ne-clock-screen">
+                  <span className="ne-clock-digits">{endH}:{endM}</span>
+                </span>
+              </TimePickerPopover>
             </div>
           </div>
 

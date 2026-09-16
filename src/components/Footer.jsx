@@ -28,8 +28,8 @@ function PaperCircle({ icon, onClick, title, active }) {
   )
 }
 
-// "Opzioni" (→ Profilo): non più un'icona a ingranaggio — la stessa tessera
-// fotografica della barra laterale web, in formato circolare compatto.
+// "Opzioni" (→ Profilo): la stessa tessera fotografica della barra
+// laterale web, in formato circolare compatto.
 function ProfileCircle({ onClick, title }) {
   const { user } = useAuth()
   const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '96x96' }) : ''

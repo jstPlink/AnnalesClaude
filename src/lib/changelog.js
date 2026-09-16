@@ -9,6 +9,20 @@
 
 export const CHANGELOG = [
   {
+    version: '0.49.0',
+    date: '2026-09-16 15:53',
+    changes: [
+      'Vista nota da web: data e orario ora sono una sveglia LCD digitale (font a segmenti dedicato), come il resto dell\'app; il calendario e il selettore orario a comparsa hanno un\'estetica coerente (calendario da tavolo "strappabile", selettore orario a rotella); pulsanti indietro/salva/elimina tornano ad essere targhette con testo e contorno tratteggiato, coerenti con la barra laterale.',
+      'Vista mese e vista giorno da web: anno/mese/data ora sono lo stesso orologio LCD (con menu a tendina in stile coerente per saltare a un valore non adiacente); un foglio a quadretti leggermente storto spunta dietro ai pulsanti dell\'header, che ora resta fisso in cima allo schermo scorrendo le note del mese. Rimosso il pulsante "Oggi" e il vecchio foglio col nome del giorno/mese.',
+      'Vista giorno: la data resta un testo scritto a mano con evidenziatore (qui non si può modificare direttamente, solo di un giorno alla volta) invece dell\'orologio, per non trarre in inganno.',
+      'Andamento e Statistiche da web: stesso foglio a quadretti e stesso orologio LCD per l\'anno; titolo con font a mano ed evidenziatore come nel resto dell\'app; anno centrato in pagina; grafico dell\'andamento più basso e con testi coerenti col resto della pagina.',
+      'Vista nota (mobile e web): tag aggiunti ora hanno la stessa targhetta in legno degli altri elementi; targhetta della tab attiva (mobile e web) con lo stesso bordo e incisione delle altre targhette in legno.',
+      'Impostazioni: rimosse le descrizioni sotto ogni categoria; "Esci" ed "Elimina account" ora sono un\'unica categoria "Account" anche da web (come già in mobile).',
+      'Barra laterale web: "Calendario" resta evidenziato anche nella vista giorno e nell\'editor nota.',
+      'Corretti alcuni bug: dropdown di mese/anno che a volte uscivano dallo schermo da telefono, dropdown scambiati fra loro nella vista mese da telefono, popup dell\'orario che si apriva sempre ancorato al primo orologio invece di quello cliccato.',
+    ],
+  },
+  {
     version: '0.48.0',
     date: '2026-09-16 12:00',
     changes: [
