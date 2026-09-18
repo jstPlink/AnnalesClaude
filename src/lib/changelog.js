@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.56.0',
+    date: '2026-09-18 21:50',
+    changes: [
+      'Import da foglio: "Spezza qui" ora ricalcola persone e tag su ciascuna metà del testo (invece di copiare lo stesso elenco su entrambi) e completa gli orari — il primo pezzo eredita l\'inizio del blocco originale, il secondo la fine.',
+    ],
+  },
+  {
     version: '0.55.0',
     date: '2026-09-18 15:38',
     changes: [

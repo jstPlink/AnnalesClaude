@@ -16,6 +16,7 @@ import {
   sheetRowsToDays,
   dayToNote,
   timesInText,
+  matchMentioned,
 } from '../../lib/importSheet'
 import { MONTHS_IT, dayKey, dateRangeBounds, importDayLabel } from '../../lib/dates'
 import MoodSlider from '../../components/MoodSlider'
@@ -515,11 +516,18 @@ export default function WebImport() {
     const base = segFromDraft(draft)
     const tA = timesInText(before)
     const tB = timesInText(after)
+    const peopleNames = allPeople.map((p) => p.name)
+    const tagNames = allTags.map((t) => t.name)
     const partA = {
       ...base,
       content: before,
+      // Il primo pezzo eredita l'inizio del blocco originale se il suo testo
+      // non contiene orari; la fine no (apparteneva al blocco intero, non a
+      // questa metà) — resta vuota finché non c'è un orario da leggere lì.
       timeStart: tA[0] || base.timeStart || '',
       timeEnd: tA[tA.length - 1] || '',
+      people: matchMentioned(before, peopleNames),
+      tags: matchMentioned(before, tagNames),
       sourceStart: null,
       sourceEnd: null,
       flags: [],
@@ -528,8 +536,12 @@ export default function WebImport() {
       ...base,
       title: '',
       content: after,
+      // Speculare: il secondo pezzo eredita la fine del blocco originale se
+      // manca, non l'inizio.
       timeStart: tB[0] || '',
-      timeEnd: tB[tB.length - 1] || '',
+      timeEnd: tB[tB.length - 1] || base.timeEnd || '',
+      people: matchMentioned(after, peopleNames),
+      tags: matchMentioned(after, tagNames),
       sourceStart: null,
       sourceEnd: null,
       flags: [],
