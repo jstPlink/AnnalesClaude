@@ -23,16 +23,23 @@ export default function SettingsSection({
   if (nested) {
     return (
       <div className="ws-sub">
-        <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
-          {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
-          <span className="ws-sub-title">{title}</span>
-          <Icon
-            name="chevron-right"
-            size={14}
-            className={'ws-sub-chev shrink-0' + (open ? ' ws-sub-chev-open' : '')}
-          />
-        </button>
-        {open && <div className="ws-sub-body">{children}</div>}
+        {noCollapse ? (
+          <div className="ws-sub-head">
+            {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
+            <span className="ws-sub-title">{title}</span>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
+            {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
+            <span className="ws-sub-title">{title}</span>
+            <Icon
+              name="chevron-right"
+              size={14}
+              className={'ws-sub-chev shrink-0' + (open ? ' ws-sub-chev-open' : '')}
+            />
+          </button>
+        )}
+        {(noCollapse || open) && <div className="ws-sub-body">{children}</div>}
       </div>
     )
   }

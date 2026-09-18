@@ -45,7 +45,11 @@ import {
   syncPlacesFromNotes,
 } from '../lib/places'
 import { getSpotifyToken, describeSpotifyError } from '../lib/spotify'
-import { testGeminiKey, describeGeminiError } from '../lib/gemini'
+import {
+  testGeminiKey,
+  describeGeminiError,
+  saveGeminiCustomInstructions,
+} from '../lib/gemini'
 import { downloadIntegrationDoc } from '../lib/integrationDocs'
 import { haptic } from '../lib/haptics'
 
@@ -159,9 +163,7 @@ export default function Profile() {
     setSavingGeminiInstructions(true)
     setGeminiInstructionsStatus(null)
     try {
-      await pb.collection('users').update(user.id, {
-        geminiCustomInstructions: geminiInstructions.trim(),
-      })
+      await saveGeminiCustomInstructions(geminiInstructions)
       setGeminiInstructionsStatus({ ok: true, message: 'Salvato.' })
     } catch (err) {
       setGeminiInstructionsStatus({ ok: false, message: describeError(err) })
@@ -847,88 +849,6 @@ export default function Profile() {
             </div>
             </SettingsSection>
 
-            <SettingsSection nested title="Gemini (IA)" icon="sparkles">
-              <p className="text-xs text-ink-soft">
-                Chiave API di Google AI Studio per ripulire il testo delle note,
-                riconoscere le persone citate e scrivere contenuti con l'IA.
-              </p>
-              <TokenHelp which="gemini" />
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                  API key
-                </span>
-                <input
-                  type="password"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
-                  className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
-                />
-              </label>
-              {geminiStatus && (
-                <p
-                  className={
-                    'text-xs ' +
-                    (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
-                  }
-                >
-                  {geminiStatus.message}
-                </p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={testGemini}
-                  disabled={testingGemini || !geminiApiKey.trim()}
-                  className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-                >
-                  {testingGemini ? 'Verifico…' : 'Testa connessione'}
-                </button>
-                <button
-                  type="button"
-                  onClick={saveGemini}
-                  disabled={savingGemini}
-                  className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-                >
-                  {savingGemini ? 'Salvo…' : 'Salva'}
-                </button>
-              </div>
-
-              <SettingsSection nested title="Istruzioni personalizzate" icon="edit">
-                <p className="text-xs text-ink-soft">
-                  Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
-                  usare, cosa evidenziare o evitare...). Salvate sul tuo
-                  account: valgono su tutti i dispositivi.
-                </p>
-                <textarea
-                  rows={7}
-                  placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
-                  value={geminiInstructions}
-                  onChange={(e) => setGeminiInstructions(e.target.value)}
-                  className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
-                />
-                {geminiInstructionsStatus && (
-                  <p
-                    className={
-                      'text-xs ' +
-                      (geminiInstructionsStatus.ok
-                        ? 'text-save-dark'
-                        : 'text-delete-dark')
-                    }
-                  >
-                    {geminiInstructionsStatus.message}
-                  </p>
-                )}
-                <button
-                  type="button"
-                  onClick={saveGeminiInstructions}
-                  disabled={savingGeminiInstructions}
-                  className="w-full rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
-                >
-                  {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
-                </button>
-              </SettingsSection>
-            </SettingsSection>
-
             <SettingsSection nested title="Spotify" icon="music">
             <p className="text-xs text-ink-soft">
               Client ID/Secret di un'app Spotify (Client Credentials) per
@@ -988,7 +908,89 @@ export default function Profile() {
                 {savingSpotify ? 'Salvo…' : 'Salva'}
               </button>
             </div>
-          </SettingsSection>
+            </SettingsSection>
+
+            <SettingsSection nested title="Gemini (IA)" icon="sparkles">
+              <p className="text-xs text-ink-soft">
+                Chiave API di Google AI Studio per ripulire il testo delle note
+                e scrivere contenuti con l'IA.
+              </p>
+              <TokenHelp which="gemini" />
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                  API key
+                </span>
+                <input
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
+                />
+              </label>
+              {geminiStatus && (
+                <p
+                  className={
+                    'text-xs ' +
+                    (geminiStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+                  }
+                >
+                  {geminiStatus.message}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={testGemini}
+                  disabled={testingGemini || !geminiApiKey.trim()}
+                  className="flex-1 rounded-full border border-line bg-tag px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {testingGemini ? 'Verifico…' : 'Testa connessione'}
+                </button>
+                <button
+                  type="button"
+                  onClick={saveGemini}
+                  disabled={savingGemini}
+                  className="flex-1 rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {savingGemini ? 'Salvo…' : 'Salva'}
+                </button>
+              </div>
+
+              <SettingsSection nested noCollapse title="Istruzioni personalizzate" icon="edit">
+                <p className="text-xs text-ink-soft">
+                  Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
+                  usare, cosa evidenziare o evitare...). Salvate sul tuo
+                  account: valgono su tutti i dispositivi.
+                </p>
+                <textarea
+                  rows={7}
+                  placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
+                  value={geminiInstructions}
+                  onChange={(e) => setGeminiInstructions(e.target.value)}
+                  className="w-full resize-none rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink outline-none"
+                />
+                {geminiInstructionsStatus && (
+                  <p
+                    className={
+                      'text-xs ' +
+                      (geminiInstructionsStatus.ok
+                        ? 'text-save-dark'
+                        : 'text-delete-dark')
+                    }
+                  >
+                    {geminiInstructionsStatus.message}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={saveGeminiInstructions}
+                  disabled={savingGeminiInstructions}
+                  className="w-full rounded-full border border-save-dark bg-save px-4 py-2 text-xs font-bold text-ink transition disabled:opacity-50"
+                >
+                  {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
+                </button>
+              </SettingsSection>
+            </SettingsSection>
         </SettingsSection>
 
         <SettingsSection title="Import ed export" icon="download">

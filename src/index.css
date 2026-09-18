@@ -4071,10 +4071,14 @@ li:last-child > .wd-month-row {
   color: var(--color-ink);
   box-shadow: 0 2px 5px rgba(20, 12, 4, 0.1);
 }
-.wd-month-bars {
+.wd-month-bars-wrap {
   flex: 1;
   min-width: 0;
-  height: 32px;
+}
+/* Altezza -30% rispetto all'originale (era 32px): stesse barrette, più
+   compatte in verticale. */
+.wd-month-bars {
+  height: 22px;
   display: flex;
   align-items: flex-end;
   gap: 1.5px;
@@ -4084,6 +4088,18 @@ li:last-child > .wd-month-row {
   min-width: 1px;
   border-radius: 1px 1px 0 0;
   display: block;
+}
+.wd-month-bars-ticks {
+  position: relative;
+  height: 12px;
+  margin-top: 2px;
+}
+.wd-month-bars-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.56rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
 }
 .wd-month-score {
   flex: none;
@@ -4139,7 +4155,13 @@ li:last-child > .wd-month-row {
     text-transform: capitalize;
   }
   .wd-month-bars {
-    height: 26px;
+    height: 18px;
+  }
+  .wd-month-bars-ticks {
+    height: 11px;
+  }
+  .wd-month-bars-ticks span {
+    font-size: 0.5rem;
   }
   .wd-month-score {
     min-width: 2.4rem;
@@ -4167,6 +4189,12 @@ li:last-child > .wd-month-row {
   position: relative;
   flex: none;
   z-index: 20;
+  /* Riserva lo spazio della barra di stato qui, non solo dentro .mtop: il
+     foglio decorativo dietro (.mtop-under) è ruotato e, senza questo
+     margine sull'intero contenitore, il suo angolo in alto sporge sopra lo
+     spazio riservato da .mtop e finisce fisicamente sotto la barra di
+     stato del telefono (tagliato) nella PWA installata. */
+  padding-top: env(safe-area-inset-top);
 }
 .mtop-under {
   position: absolute;
@@ -4198,7 +4226,7 @@ li:last-child > .wd-month-row {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: max(14px, env(safe-area-inset-top)) 18px 20px;
+  padding: 14px 18px 20px;
   background-color: #c7ba95;
   background-image: var(--sb-grain), var(--sb-fiber);
   background-size: 150px 150px, 230px 230px;
@@ -4938,22 +4966,6 @@ li:last-child > .wd-month-row {
   font-size: 0.88rem;
   color: var(--color-ink);
 }
-.gms-check-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background-color: #fbf6e8;
-  background-image: var(--sb-grain);
-  background-size: 100px 100px;
-  background-blend-mode: multiply;
-  border: 1.5px dashed rgba(52, 44, 28, 0.4);
-  font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: var(--color-ink);
-}
 .gms-cta {
   width: 100%;
   border-radius: 999px;
@@ -4973,6 +4985,58 @@ li:last-child > .wd-month-row {
 .gms-cta:disabled {
   opacity: 0.5;
 }
+/* Istruzioni personalizzate, ripetute qui (oltre che in Impostazioni) per
+   poterle aggiustare al volo mentre si scrive un prompt, senza uscire dal
+   pannello — vedi NewNoteWithGeminiSheet.jsx e GeminiSheet.jsx. Sezione
+   volutamente più piccola/defilata del prompt principale, separata da un
+   bordo tratteggiato sopra, e richiudibile (chiusa di default) per non
+   affollare il pannello quando non serve toccarle. */
+.gms-instructions {
+  padding-top: 14px;
+  border-top: 1.5px dashed rgba(52, 44, 28, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gms-instructions-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  cursor: var(--cursor-pointer);
+}
+.gms-instructions-chev {
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+.gms-instructions-chev.open {
+  transform: rotate(90deg);
+}
+.gms-instructions-save {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 7px 16px;
+  background: var(--color-cream);
+  border: 1.5px solid var(--color-line);
+  color: var(--color-ink);
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: transform 0.12s ease;
+}
+.gms-instructions-save:active {
+  transform: scale(0.97);
+}
+.gms-instructions-save:disabled {
+  opacity: 0.5;
+}
 .gms-empty {
   padding: 26px 14px;
   border-radius: 14px;
@@ -4980,12 +5044,6 @@ li:last-child > .wd-month-row {
   text-align: center;
   font-size: 0.85rem;
   color: var(--color-ink-soft);
-}
-/* griglia foto di "Genera dalle foto di ieri" (NewNoteWithGeminiSheet). */
-.gms-photo-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
 }
 /* avviso "testo ripristinato dall'ultimo tentativo" — stesso tono di
    avviso giallo usato altrove nell'app (color-warn), su un ritaglio di
@@ -5795,6 +5853,11 @@ li:last-child > .st-row {
   font-weight: 700;
   font-size: 0.86rem;
   box-shadow: 0 2px 5px rgba(20, 12, 4, 0.2), inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+/* Righe "Note per mese": niente scontrino del mood a sinistra (badge), solo
+   nome del mese e conteggio agli estremi della riga. */
+.st-month-row {
+  justify-content: space-between;
 }
 .st-row-title {
   display: block;

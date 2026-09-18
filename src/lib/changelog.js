@@ -9,6 +9,19 @@
 
 export const CHANGELOG = [
   {
+    version: '0.55.0',
+    date: '2026-09-18 15:38',
+    changes: [
+      'Statistiche (mobile e web): nuova lista "Note per mese" e due targhette in evidenza, "Mese più felice" e "Mese più triste" — tocca per vedere le note di quel mese.',
+      'Vista giorno (mobile): la data ora è lo stesso orologio LCD del resto dell\'app, non più la vecchia targhetta.',
+      'Andamento (mobile): numeri dei giorni (multipli di 5) sotto le barrette di ogni mese, come da web; barre più basse (-30%).',
+      'Rimossa "Genera dalle foto di ieri" da "Nuova nota con Gemini" e "Riconosci le persone citate" dal menu Gemini della nota (mobile) — restano scrittura da prompt e ripulisci/sintetizza testo.',
+      'Impostazioni: sezione "Istruzioni personalizzate" (Gemini) non più a scomparsa, sempre visibile; ordine di Immich/Spotify/Gemini uniformato tra mobile e web.',
+      'Ovunque si scrive un prompt per Gemini (nuova nota, scrivi con l\'IA) è ora presente anche un box "Istruzioni personalizzate" — richiudibile, chiuso di default — per modificarle al volo senza passare da Impostazioni; si applicano subito alla generazione in corso.',
+      'Corretto un taglio del cartoncino della barra superiore mobile sotto la barra di stato del telefono, nella PWA installata.',
+    ],
+  },
+  {
     version: '0.54.0',
     date: '2026-09-16 23:01',
     changes: [

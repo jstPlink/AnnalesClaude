@@ -111,7 +111,13 @@ export default function DayView() {
           <Icon name="chevron-left" size={21} strokeWidth={2.8} />
         </button>
         <div className="flex flex-1 justify-center">
-          <YearPill year={year} subtitle={dayMonthLabel(date)} layout="row" onStep={go} />
+          <YearPill
+            skin="clock"
+            year={year}
+            subtitle={dayMonthLabel(date)}
+            layout="row"
+            onStep={go}
+          />
         </div>
       </MobileTopBar>
 
@@ -174,12 +180,10 @@ export default function DayView() {
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
         customInstructions={user?.geminiCustomInstructions?.trim()}
-        immichUrl={user?.immichUrl?.trim()}
-        immichApiKey={user?.immichApiKey?.trim()}
         allPeople={people}
         allTags={tags}
         onGenerated={(draft) =>
-          navigate(`/note/new?date=${draft.dateKey || date}`, {
+          navigate(`/note/new?date=${date}`, {
             state: { aiDraft: draft },
           })
         }

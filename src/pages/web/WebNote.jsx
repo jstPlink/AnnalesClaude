@@ -25,7 +25,6 @@ import {
 } from '../../lib/notes'
 import { personTapeColor, osmTileFor, tilt } from '../../lib/pagesSkin'
 import { fileUrl } from '../../lib/pocketbase'
-import { fetchImmichOriginalAsFile } from '../../lib/immich'
 import { listPeople } from '../../lib/people'
 import { listTags } from '../../lib/tags'
 import { useAuth } from '../../context/AuthContext'
@@ -197,26 +196,6 @@ export default function WebNote() {
     peopleUsageCounts()
       .then(setPeopleUsage)
       .catch(() => {})
-  }, [])
-
-  // Bozza "dalle foto di ieri": scarica gli originali Immich e li allega.
-  useEffect(() => {
-    const ids = aiDraft?.immichAssetIds
-    if (!ids?.length || !immichReady) return
-    let alive = true
-    Promise.all(
-      ids.map((assetId) =>
-        fetchImmichOriginalAsFile(immichUrl, immichApiKey, { id: assetId }),
-      ),
-    )
-      .then((files) => {
-        if (alive) setNewFiles((prev) => [...prev, ...files])
-      })
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))

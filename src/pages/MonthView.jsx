@@ -209,12 +209,10 @@ export default function MonthView() {
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
         customInstructions={user?.geminiCustomInstructions?.trim()}
-        immichUrl={user?.immichUrl?.trim()}
-        immichApiKey={user?.immichApiKey?.trim()}
         allPeople={allPeople}
         allTags={allTags}
         onGenerated={(draft) =>
-          navigate(`/note/new?date=${draft.dateKey || todayKey()}`, {
+          navigate(`/note/new?date=${todayKey()}`, {
             state: { aiDraft: draft },
           })
         }

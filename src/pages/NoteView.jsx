@@ -31,7 +31,6 @@ import {
 } from '../lib/notes'
 import { personTapeColor, tilt } from '../lib/pagesSkin'
 import { fileUrl } from '../lib/pocketbase'
-import { fetchImmichOriginalAsFile } from '../lib/immich'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { haptic } from '../lib/haptics'
@@ -136,6 +135,7 @@ export default function NoteView() {
   const spotifyClientId = user?.spotifyClientId?.trim()
   const spotifyClientSecret = user?.spotifyClientSecret?.trim()
   const geminiApiKey = user?.geminiApiKey?.trim()
+  const geminiCustomInstructions = user?.geminiCustomInstructions?.trim()
 
   const dateParam = search.get('date')
   const initialDate =
@@ -224,26 +224,6 @@ export default function NoteView() {
       .catch(() => {})
   }, [])
 
-  // Bozza "dalle foto di ieri": scarica gli originali Immich indicati e li
-  // allega come nuovi file.
-  useEffect(() => {
-    const ids = aiDraft?.immichAssetIds
-    if (!ids?.length || !immichReady) return
-    let alive = true
-    Promise.all(
-      ids.map((assetId) =>
-        fetchImmichOriginalAsFile(immichUrl, immichApiKey, { id: assetId }),
-      ),
-    )
-      .then((files) => {
-        if (alive) setNewFiles((prev) => [...prev, ...files])
-      })
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
 
@@ -857,9 +837,7 @@ export default function NoteView() {
         apiKey={geminiApiKey}
         content={form.content}
         onReplaceContent={(text) => set({ content: text })}
-        allPeople={allPeople}
-        selectedPeopleIds={peopleIds}
-        onTogglePerson={togglePerson}
+        customInstructions={geminiCustomInstructions}
       />
     </PhoneShell>
   )

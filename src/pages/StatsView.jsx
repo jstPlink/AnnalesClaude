@@ -117,6 +117,23 @@ function ShowMore({ open, onClick, moreCount }) {
   )
 }
 
+function MonthRow({ month, onClick, style }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={style}
+      disabled={!month.count}
+      className="anim-row st-row st-month-row"
+    >
+      <span className="st-row-title">{month.name}</span>
+      <span className="st-row-meta">
+        {month.count} {month.count === 1 ? 'nota' : 'note'}
+      </span>
+    </button>
+  )
+}
+
 function NoteRow({ note, onClick, style }) {
   return (
     <button type="button" onClick={onClick} style={style} className="anim-row st-row">
@@ -219,6 +236,21 @@ export default function StatsView() {
     })
   }
 
+  function openMonthNotes(month, notesCount) {
+    if (!notesCount) return
+    const notes = sortByDateTime(
+      yearNotes.filter((n) => {
+        const p = parseWall(n.date)
+        return p && p.mo - 1 === month
+      }),
+    )
+    setListSheet({
+      title: MONTHS_IT[month],
+      subtitle: `${notesCount} ${notesCount === 1 ? 'nota' : 'note'} nel ${year}`,
+      notes,
+    })
+  }
+
   function openWeekNotes() {
     if (!stats.bestWeek) return
     const { first, last } = stats.bestWeek
@@ -289,6 +321,28 @@ export default function StatsView() {
                 icon="sparkles"
               />
             </div>
+
+            {stats.noteCount > 0 && (
+              <section className="mt-5">
+                <span className="st-label">
+                  <Icon name="calendar" size={11} />
+                  Note per mese
+                </span>
+                <div className="st-rows st-months">
+                  <ul>
+                    {stats.notesByMonth.map((m, i) => (
+                      <li key={m.month}>
+                        <MonthRow
+                          month={m}
+                          style={{ '--i': i }}
+                          onClick={() => openMonthNotes(m.month, m.count)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
 
             {stats.topPeople.length > 0 && (
               <section className="mt-5">
@@ -448,6 +502,8 @@ export default function StatsView() {
             {(stats.bestWeek ||
               stats.worstWeek ||
               stats.bestWeekday ||
+              stats.bestMonth ||
+              stats.worstMonth ||
               stats.topTag ||
               stats.topPlace) && (
               <section className="mt-5">
@@ -474,6 +530,26 @@ export default function StatsView() {
                       value={`${shortDM(stats.worstWeek.first)} – ${shortDM(stats.worstWeek.last)}`}
                       sub={`mood ${Math.round(stats.worstWeek.mood * 100)} · ${stats.worstWeek.notes} note`}
                       onClick={openWorstWeekNotes}
+                    />
+                  )}
+                  {stats.bestMonth && (
+                    <StatCard
+                      variant="mini"
+                      icon="sparkles"
+                      label="Mese più felice"
+                      value={stats.bestMonth.name}
+                      sub={`mood ${Math.round(stats.bestMonth.mood * 100)} · ${stats.bestMonth.count} note`}
+                      onClick={() => openMonthNotes(stats.bestMonth.month, stats.bestMonth.count)}
+                    />
+                  )}
+                  {stats.worstMonth && (
+                    <StatCard
+                      variant="mini"
+                      icon="cloud"
+                      label="Mese più triste"
+                      value={stats.worstMonth.name}
+                      sub={`mood ${Math.round(stats.worstMonth.mood * 100)} · ${stats.worstMonth.count} note`}
+                      onClick={() => openMonthNotes(stats.worstMonth.month, stats.worstMonth.count)}
                     />
                   )}
                   {stats.bestWeekday && (

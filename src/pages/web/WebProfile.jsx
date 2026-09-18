@@ -31,7 +31,11 @@ import {
   syncPlacesFromNotes,
 } from '../../lib/places'
 import { getSpotifyToken, describeSpotifyError } from '../../lib/spotify'
-import { testGeminiKey, describeGeminiError } from '../../lib/gemini'
+import {
+  testGeminiKey,
+  describeGeminiError,
+  saveGeminiCustomInstructions,
+} from '../../lib/gemini'
 import { downloadIntegrationDoc } from '../../lib/integrationDocs'
 import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
@@ -152,9 +156,7 @@ export default function WebProfile() {
     setSavingGeminiInstructions(true)
     setGeminiInstructionsStatus(null)
     try {
-      await pb.collection('users').update(user.id, {
-        geminiCustomInstructions: geminiInstructions.trim(),
-      })
+      await saveGeminiCustomInstructions(geminiInstructions)
       setGeminiInstructionsStatus({ ok: true, message: 'Salvato.' })
     } catch (err) {
       setGeminiInstructionsStatus({ ok: false, message: describeError(err) })
@@ -886,8 +888,8 @@ export default function WebProfile() {
 
         <SettingsSection nested title="Gemini (IA)" icon="sparkles">
         <p className="text-sm text-ink-soft">
-          Chiave API di Google AI Studio per ripulire il testo delle note,
-          riconoscere le persone citate e scrivere contenuti con l'IA.
+          Chiave API di Google AI Studio per ripulire il testo delle note e
+          scrivere contenuti con l'IA.
         </p>
         <TokenHelp which="gemini" />
 
@@ -932,7 +934,7 @@ export default function WebProfile() {
           </button>
         </div>
 
-        <SettingsSection nested title="Istruzioni personalizzate" icon="edit">
+        <SettingsSection nested noCollapse title="Istruzioni personalizzate" icon="edit">
           <p className="text-sm text-ink-soft">
             Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
             usare, cosa evidenziare o evitare...). Salvate sul tuo account:

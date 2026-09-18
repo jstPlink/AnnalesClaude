@@ -1,12 +1,23 @@
 // Integrazione Gemini (Google AI Studio): pulizia/riassunto del testo di una
-// nota, analisi delle persone citate, generazione di nuovo contenuto,
-// estrazione di note da uno screenshot di vecchio diario.
-// Serve solo una API key (Profilo) — nessun OAuth, chiamata REST diretta,
-// nessuna libreria necessaria.
+// nota, generazione di nuovo contenuto, estrazione di note da uno screenshot
+// di vecchio diario. Serve solo una API key (Profilo) — nessun OAuth,
+// chiamata REST diretta, nessuna libreria necessaria.
 
 import { MONTHS_IT, dayKey } from './dates'
 import { plainText } from './notes'
 import { timesInText } from './importSheet'
+import { pb } from './pocketbase'
+
+// Salva le istruzioni personalizzate sull'account (campo `geminiCustomInstructions`
+// di `users`) — usata sia da Impostazioni sia dai pannelli dove si scrive il
+// prompt (modificabili lì al volo, senza dover andare in Impostazioni).
+export async function saveGeminiCustomInstructions(text) {
+  const userId = pb.authStore.record?.id
+  if (!userId) throw new Error('Non autenticato.')
+  await pb.collection('users').update(userId, {
+    geminiCustomInstructions: text.trim(),
+  })
+}
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
 
@@ -109,30 +120,14 @@ export async function cleanupNoteText(apiKey, text) {
 }
 
 // Scrive un nuovo contenuto di nota a partire da indicazioni dell'utente.
-export async function writeNoteText(apiKey, instructions) {
+export async function writeNoteText(apiKey, instructions, customInstructions = '') {
   const prompt =
-    'Scrivi il contenuto di una nota personale di diario in italiano, in prima persona, seguendo queste indicazioni. Rispondi SOLO con il testo della nota, senza titoli, virgolette o commenti.\n\nIndicazioni:\n' +
-    instructions
+    'Scrivi il contenuto di una nota personale di diario in italiano, in prima persona, seguendo queste indicazioni. Rispondi SOLO con il testo della nota, senza titoli, virgolette o commenti.\n\n' +
+    (customInstructions.trim()
+      ? `Istruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato richiesto sopra): ${customInstructions.trim()}\n\n`
+      : '') +
+    `Indicazioni:\n${instructions}`
   return callGemini(apiKey, prompt)
-}
-
-// Ritorna i nomi (presi esattamente da peopleNames) delle persone che
-// risultano menzionate o coinvolte nel testo.
-export async function analyzePeopleInText(apiKey, text, peopleNames) {
-  if (!peopleNames.length) return []
-  const prompt =
-    "Di seguito trovi il testo di una nota personale di diario e un elenco di persone conosciute dall'autore. Restituisci SOLO un array JSON (nessun altro testo) con i nomi, presi esattamente dall'elenco, delle persone chiaramente menzionate o coinvolte nel testo. Se nessuna corrisponde, restituisci [].\n\n" +
-    `Elenco persone: ${JSON.stringify(peopleNames)}\n\n` +
-    `Testo:\n${text}`
-  const raw = await callGemini(apiKey, prompt)
-  const match = raw.match(/\[[\s\S]*\]/)
-  if (!match) return []
-  try {
-    const arr = JSON.parse(match[0])
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : []
-  } catch {
-    return []
-  }
 }
 
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -452,65 +447,6 @@ export async function recapNotes(apiKey, notes, { label = '' } = {}) {
     'senza titolo né elenchi puntati.\n\n' +
     rows.join('\n')
   return callGemini(apiKey, prompt)
-}
-
-// Bozza di nota a partire da un gruppo di foto (thumbnail in base64) di un
-// dato giorno. Come draftNoteFromPrompt, ritorna un oggetto da rivedere.
-export async function draftNoteFromPhotos(
-  apiKey,
-  images,
-  { dateLabel = '', peopleNames = [], tagNames = [], customInstructions = '' } = {},
-) {
-  if (!images || !images.length) throw new Error('Nessuna foto selezionata.')
-  const instruction =
-    `Queste sono le foto scattate ${dateLabel ? 'il ' + dateLabel : 'in un giorno'}. ` +
-    'Prepara la bozza di una nota di diario personale in italiano, in prima persona, che ' +
-    'racconti quella giornata a partire da ciò che si vede. Rispondi SOLO con un oggetto JSON ' +
-    'valido, senza testo prima o dopo, con esattamente questa forma:\n' +
-    '{"title": string breve, ' +
-    '"content": string (il racconto, scorrevole, qualche frase), ' +
-    `"tags": array preso ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinente, altrimenti [], ` +
-    `"people": array preso ESATTAMENTE dall'elenco ${JSON.stringify(peopleNames)} se riconosci qualcuno, altrimenti [], ` +
-    '"place": string col nome del luogo se deducibile dalle foto, altrimenti "", ' +
-    '"mood": numero tra 0 e 1 che stima l\'umore della giornata dalle foto, ' +
-    '"timeStart": "HH:MM" plausibile, "timeEnd": "HH:MM" plausibile}' +
-    (customInstructions.trim()
-      ? `\n\nIstruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato JSON richiesto sopra): ${customInstructions.trim()}`
-      : '')
-  const parts = [
-    { text: instruction },
-    ...images.map((img) => ({
-      inlineData: { mimeType: img.mimeType, data: img.base64 },
-    })),
-  ]
-  const raw = await callGeminiParts(apiKey, parts)
-  const match = raw.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
-  let data
-  try {
-    data = JSON.parse(match[0])
-  } catch {
-    throw new Error('Gemini non ha restituito un risultato valido.')
-  }
-  const mood = Number(data.mood)
-  let timeStart = TIME_RE.test(data.timeStart) ? data.timeStart : '09:00'
-  let timeEnd = TIME_RE.test(data.timeEnd) ? data.timeEnd : '10:00'
-  if (toMinutes(timeEnd) <= toMinutes(timeStart)) {
-    timeStart = '09:00'
-    timeEnd = '10:00'
-  }
-  return {
-    title: typeof data.title === 'string' ? data.title.trim() : '',
-    content: typeof data.content === 'string' ? data.content.trim() : '',
-    tags: Array.isArray(data.tags) ? data.tags.filter((x) => typeof x === 'string') : [],
-    people: Array.isArray(data.people)
-      ? data.people.filter((x) => typeof x === 'string')
-      : [],
-    place: typeof data.place === 'string' ? data.place.trim() : '',
-    mood: Number.isFinite(mood) ? Math.min(1, Math.max(0, mood)) : 0.5,
-    timeStart,
-    timeEnd,
-  }
 }
 
 export function describeGeminiError(err) {

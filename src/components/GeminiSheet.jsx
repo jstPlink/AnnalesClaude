@@ -4,30 +4,32 @@ import GeminiWait from './GeminiWait'
 import {
   cleanupNoteText,
   writeNoteText,
-  analyzePeopleInText,
   describeGeminiError,
+  saveGeminiCustomInstructions,
 } from '../lib/gemini'
-import { plainText } from '../lib/notes'
+import { plainText, describeError } from '../lib/notes'
 
 // Dialog per le funzioni IA (Gemini) su una nota: ripulire/sintetizzare il
-// testo esistente, riconoscere le persone citate tra quelle conosciute, o
-// scrivere un nuovo contenuto da zero seguendo delle indicazioni.
+// testo esistente, o scrivere un nuovo contenuto da zero seguendo delle
+// indicazioni.
 export default function GeminiSheet({
   open,
   onClose,
   apiKey,
   content,
   onReplaceContent,
-  allPeople,
-  selectedPeopleIds,
-  onTogglePerson,
+  customInstructions,
 }) {
-  const [mode, setMode] = useState('menu') // menu | clean | write | people
+  const [mode, setMode] = useState('menu') // menu | clean | write
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState('')
   const [instructions, setInstructions] = useState('')
-  const [matches, setMatches] = useState(null) // [{ id, name, checked }] | null
+
+  const [customText, setCustomText] = useState(customInstructions || '')
+  const [savingCustom, setSavingCustom] = useState(false)
+  const [customStatus, setCustomStatus] = useState(null)
+  const [customOpen, setCustomOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -36,13 +38,28 @@ export default function GeminiSheet({
     setError('')
     setPreview('')
     setInstructions('')
-    setMatches(null)
-  }, [open])
+    setCustomText(customInstructions || '')
+    setCustomStatus(null)
+    setCustomOpen(false)
+  }, [open, customInstructions])
 
   if (!open) return null
 
   const ready = Boolean(apiKey)
   const plain = plainText(content)
+
+  async function saveCustomText() {
+    setSavingCustom(true)
+    setCustomStatus(null)
+    try {
+      await saveGeminiCustomInstructions(customText)
+      setCustomStatus({ ok: true, message: 'Salvato.' })
+    } catch (err) {
+      setCustomStatus({ ok: false, message: describeError(err) })
+    } finally {
+      setSavingCustom(false)
+    }
+  }
 
   async function runClean() {
     setLoading(true)
@@ -62,53 +79,13 @@ export default function GeminiSheet({
     setLoading(true)
     setError('')
     try {
-      const text = await writeNoteText(apiKey, instructions.trim())
+      const text = await writeNoteText(apiKey, instructions.trim(), customText)
       setPreview(text)
     } catch (err) {
       setError(describeGeminiError(err))
     } finally {
       setLoading(false)
     }
-  }
-
-  async function runPeople() {
-    setLoading(true)
-    setError('')
-    try {
-      const names = await analyzePeopleInText(
-        apiKey,
-        plain,
-        allPeople.map((p) => p.name),
-      )
-      const found = allPeople.filter((p) =>
-        names.some((n) => n.trim().toLowerCase() === p.name.trim().toLowerCase()),
-      )
-      if (!found.length) {
-        setError('Nessuna persona conosciuta riconosciuta nel testo.')
-        setMatches([])
-      } else {
-        setMatches(
-          found.map((p) => ({
-            id: p.id,
-            name: p.name,
-            checked: !selectedPeopleIds.includes(p.id),
-          })),
-        )
-      }
-    } catch (err) {
-      setError(describeGeminiError(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function applyPeople() {
-    for (const m of matches) {
-      const alreadySelected = selectedPeopleIds.includes(m.id)
-      if (m.checked && !alreadySelected) onTogglePerson(m.id)
-      if (!m.checked && alreadySelected) onTogglePerson(m.id)
-    }
-    onClose()
   }
 
   function applyPreview() {
@@ -120,7 +97,6 @@ export default function GeminiSheet({
     setMode('menu')
     setError('')
     setPreview('')
-    setMatches(null)
   }
 
   return (
@@ -168,23 +144,6 @@ export default function GeminiSheet({
                   <span>Corregge e rende più scorrevole il testo della nota.</span>
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('people')
-                  runPeople()
-                }}
-                disabled={!plain.trim() || !allPeople.length}
-                className="ncs-option"
-              >
-                <span className="ncs-opt-icon paper">
-                  <Icon name="user" size={17} />
-                </span>
-                <span className="ncs-opt-text">
-                  <b>Riconosci le persone citate</b>
-                  <span>Confronta il testo con il tuo elenco persone.</span>
-                </span>
-              </button>
               <button type="button" onClick={() => setMode('write')} className="ncs-option">
                 <span className="ncs-opt-icon paper">
                   <Icon name="edit" size={17} />
@@ -216,6 +175,51 @@ export default function GeminiSheet({
               >
                 {loading ? 'Scrivo…' : 'Genera'}
               </button>
+
+              <div className="gms-instructions">
+                <button
+                  type="button"
+                  onClick={() => setCustomOpen((v) => !v)}
+                  className="gms-instructions-label"
+                >
+                  <Icon name="edit" size={13} />
+                  Istruzioni personalizzate
+                  <Icon
+                    name="chevron-right"
+                    size={12}
+                    className={'gms-instructions-chev' + (customOpen ? ' open' : '')}
+                  />
+                </button>
+                {customOpen && (
+                  <>
+                    <textarea
+                      rows={6}
+                      placeholder='Es. "scrivi in tono ironico" oppure "non menzionare mai il lavoro a meno che non sia esplicito"'
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      className="gms-field"
+                    />
+                    {customStatus && (
+                      <p
+                        className={
+                          'text-xs ' +
+                          (customStatus.ok ? 'text-save-dark' : 'text-delete-dark')
+                        }
+                      >
+                        {customStatus.message}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={saveCustomText}
+                      disabled={savingCustom}
+                      className="gms-instructions-save"
+                    >
+                      {savingCustom ? 'Salvo…' : 'Salva istruzioni'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ) : (mode === 'clean' || mode === 'write') && loading ? (
             <GeminiWait />
@@ -225,36 +229,6 @@ export default function GeminiSheet({
               <p className="gms-preview">{preview}</p>
               <button type="button" onClick={applyPreview} className="gms-cta">
                 Sostituisci il contenuto della nota
-              </button>
-            </div>
-          ) : mode === 'people' && loading ? (
-            <GeminiWait label="Analizzo il testo…" />
-          ) : mode === 'people' && matches?.length > 0 ? (
-            <div className="gms-stack">
-              <p className="gms-hint">
-                Persone riconosciute nel testo: scegli quelle da aggiungere
-                alla nota.
-              </p>
-              <div className="gms-stack" style={{ gap: 6 }}>
-                {matches.map((m) => (
-                  <label key={m.id} className="gms-check-row">
-                    <input
-                      type="checkbox"
-                      checked={m.checked}
-                      onChange={(e) =>
-                        setMatches((prev) =>
-                          prev.map((x) =>
-                            x.id === m.id ? { ...x, checked: e.target.checked } : x,
-                          ),
-                        )
-                      }
-                    />
-                    <span>{m.name}</span>
-                  </label>
-                ))}
-              </div>
-              <button type="button" onClick={applyPeople} className="gms-cta">
-                Applica
               </button>
             </div>
           ) : null}

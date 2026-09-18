@@ -18,17 +18,32 @@ import { MONTHS_IT, todayKey } from '../lib/dates'
 // settimana, evidenziatore corallo per il mese.
 const CHART_LINE_COLORS = { day: '#a9906e', week: '#5ea9d6', month: '#e0655e' }
 
-// Una barretta per ogni giorno del mese.
+// Una barretta per ogni giorno del mese, coi numeri dei giorni multipli di 5
+// sotto (5, 10, 15…) — tutti i numeri come da web non ci stanno in una
+// colonna così stretta.
 function WeekBars({ groups }) {
   return (
-    <span className="wd-month-bars">
-      {groups.map((g, i) =>
-        g.mood == null ? (
-          <i key={i} style={{ height: '10%', backgroundColor: 'var(--color-line)' }} />
-        ) : (
-          <i key={i} style={{ height: `${Math.max(10, g.mood * 100)}%`, backgroundColor: moodColor(g.mood) }} />
-        ),
-      )}
+    <span className="wd-month-bars-wrap">
+      <span className="wd-month-bars">
+        {groups.map((g, i) =>
+          g.mood == null ? (
+            <i key={i} style={{ height: '10%', backgroundColor: 'var(--color-line)' }} />
+          ) : (
+            <i key={i} style={{ height: `${Math.max(10, g.mood * 100)}%`, backgroundColor: moodColor(g.mood) }} />
+          ),
+        )}
+      </span>
+      <span className="wd-month-bars-ticks">
+        {groups.map((g, i) => {
+          const day = i + 1
+          if (day % 5 !== 0) return null
+          return (
+            <span key={day} style={{ left: `${((i + 0.5) / groups.length) * 100}%` }}>
+              {day}
+            </span>
+          )
+        })}
+      </span>
     </span>
   )
 }

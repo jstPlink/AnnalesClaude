@@ -90,12 +90,10 @@ export default function Sidebar() {
           onClose={() => setGeminiNoteOpen(false)}
           apiKey={user?.geminiApiKey?.trim()}
           customInstructions={user?.geminiCustomInstructions?.trim()}
-          immichUrl={user?.immichUrl?.trim()}
-          immichApiKey={user?.immichApiKey?.trim()}
           allPeople={allPeople}
           allTags={allTags}
           onGenerated={(draft) =>
-            navigate(`/note/new?date=${draft.dateKey || newNoteDate}`, {
+            navigate(`/note/new?date=${newNoteDate}`, {
               state: { aiDraft: draft },
             })
           }

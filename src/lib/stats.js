@@ -1,6 +1,6 @@
 import { dayMood } from './mood'
 import { groupByDay, parsePlace } from './notes'
-import { parseWall } from './dates'
+import { parseWall, MONTHS_IT } from './dates'
 
 const WEEKDAYS_IT = [
   'Domenica',
@@ -104,6 +104,40 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     }
   }
 
+  // Note per mese (0-11), e mese con mood medio più alto/più basso (almeno
+  // un giorno scritto). Il mood di ogni mese è la media dei mood-giorno
+  // (dayMood, già pesata sulla durata delle note), come per le settimane.
+  const monthMoodSum = Array(12).fill(0)
+  const monthMoodN = Array(12).fill(0)
+  const monthNoteCount = Array(12).fill(0)
+  for (const d of dayEntries) {
+    const p = parseWall(d.key)
+    if (!p) continue
+    monthMoodSum[p.mo - 1] += d.mood
+    monthMoodN[p.mo - 1] += 1
+  }
+  for (const n of yearNotes) {
+    const p = parseWall(n.date)
+    if (p) monthNoteCount[p.mo - 1] += 1
+  }
+  const notesByMonth = MONTHS_IT.map((name, i) => ({
+    month: i,
+    name,
+    count: monthNoteCount[i],
+  }))
+  let bestMonth = null
+  let worstMonth = null
+  for (let i = 0; i < 12; i += 1) {
+    if (!monthMoodN[i]) continue
+    const m = monthMoodSum[i] / monthMoodN[i]
+    if (!bestMonth || m > bestMonth.mood) {
+      bestMonth = { month: i, name: MONTHS_IT[i], mood: m, count: monthNoteCount[i] }
+    }
+    if (!worstMonth || m < worstMonth.mood) {
+      worstMonth = { month: i, name: MONTHS_IT[i], mood: m, count: monthNoteCount[i] }
+    }
+  }
+
   const tagName = new Map(allTags.map((t) => [t.id, t.name]))
 
   const personCount = new Map()
@@ -154,6 +188,9 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     bestWeek,
     worstWeek,
     bestWeekday,
+    notesByMonth,
+    bestMonth,
+    worstMonth,
     topPeople,
     topPerson: topPeople[0] || null,
     topTag: topTags[0] || null,
