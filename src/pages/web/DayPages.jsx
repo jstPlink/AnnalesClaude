@@ -155,12 +155,12 @@ export default function DayPages({
       const song = (n.songs || [])[0] || null
       const songsCount = (n.songs || []).length
       const imgs = (n.images || []).slice(0, 2).map((fn) => ({
-        url: fileUrl(n, fn, { thumb: '400x400' }),
+        url: fileUrl(n, fn, { thumb: '300x300' }),
       }))
       // Fino a 5 foto per il carosello a "diapositiva unica" della vista
       // mobile (imgs resta a 2 per le due polaroid affiancate del desktop).
       const imgsCarousel = (n.images || []).slice(0, 5).map((fn) => ({
-        url: fileUrl(n, fn, { thumb: '400x400' }),
+        url: fileUrl(n, fn, { thumb: '300x300' }),
       }))
 
       return {

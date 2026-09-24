@@ -4,21 +4,45 @@
 // ritorno della rete; le letture vere passano da src/lib/cache.js.
 
 import { pb, fileUrl } from './pocketbase'
-import { cacheSet, markOk, markSlow } from './cache'
+import { cacheSet, markOk, markSlow, THUMBS_CACHE } from './cache'
 import { isNetworkError } from './offlineQueue'
 
-const THUMBS_CACHE = 'annales-thumbs'
-const THUMB_SIZES = ['300x300', '400x400']
+const THUMB_SIZE = '300x300'
+const THUMB_PX = 300
 let running = false
+
+// Le miniature di PocketBase mantengono il formato originale (gli screenshot
+// PNG pesano centinaia di KB): qui si ricodificano in WebP a qualità 0,7,
+// tipicamente 10–20 KB l'una, e si salvano con l'URL originale — le <img>
+// e i background css le trovano dalla cache del service worker.
+async function lightBlob(res) {
+  const blob = await res.blob()
+  if (typeof createImageBitmap === 'undefined' || typeof OffscreenCanvas === 'undefined') {
+    return blob
+  }
+  try {
+    const bmp = await createImageBitmap(blob)
+    const scale = Math.min(1, THUMB_PX / Math.max(bmp.width, bmp.height))
+    const w = Math.max(1, Math.round(bmp.width * scale))
+    const h = Math.max(1, Math.round(bmp.height * scale))
+    const canvas = new OffscreenCanvas(w, h)
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h)
+    bmp.close()
+    const out = await canvas.convertToBlob({ type: 'image/webp', quality: 0.7 })
+    return out.type === 'image/webp' && out.size < blob.size ? out : blob
+  } catch {
+    return blob
+  }
+}
 
 async function prefetchThumbs(notes) {
   if (typeof caches === 'undefined') return
+  // vecchia cache (versione precedente, con miniature pesanti e risposte opache)
+  await caches.delete('annales-thumbs')
   const cache = await caches.open(THUMBS_CACHE)
   const urls = []
   for (const n of notes) {
-    for (const name of n.images || []) {
-      for (const thumb of THUMB_SIZES) urls.push(fileUrl(n, name, { thumb }))
-    }
+    for (const name of n.images || []) urls.push(fileUrl(n, name, { thumb: THUMB_SIZE }))
   }
   let i = 0
   const worker = async () => {
@@ -27,13 +51,15 @@ async function prefetchThumbs(notes) {
       try {
         if (await cache.match(url)) continue
         const res = await fetch(url, { mode: 'cors' })
-        if (res.ok) await cache.put(url, res)
+        if (!res.ok) continue
+        const blob = await lightBlob(res)
+        await cache.put(url, new Response(blob, { headers: { 'Content-Type': blob.type } }))
       } catch {
         // miniatura non scaricabile ora: si riprova al prossimo avvio
       }
     }
   }
-  await Promise.all([worker(), worker(), worker(), worker()])
+  await Promise.all([worker(), worker()])
 }
 
 export async function prefetchAll() {

@@ -50,11 +50,14 @@ export default defineConfig({
           // src/lib/prefetch.js), così le foto si vedono anche con poca rete.
           {
             urlPattern: ({ url }) =>
-              url.pathname.startsWith('/api/files/') && url.searchParams.has('thumb'),
+              url.pathname.startsWith('/api/files/') &&
+              url.searchParams.get('thumb') === '300x300',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'annales-thumbs',
-              cacheableResponse: { statuses: [0, 200] },
+              cacheName: 'annales-thumbs-v2',
+              // solo risposte "vere" (200): quelle opache (status 0) il browser
+              // le conteggia ~7 MB l'una, gonfiando lo spazio usato.
+              cacheableResponse: { statuses: [200] },
             },
           },
           {

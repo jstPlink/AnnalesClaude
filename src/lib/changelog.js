@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.60.0',
+    date: '2026-09-24 22:45',
+    changes: [
+      "Le notifiche di connessione debole/assente e delle note in attesa di sincronizzazione sono ora piccole linguette sul bordo destro dello schermo, a metà altezza: non coprono più gli orari in alto. Toccandole si espandono mostrando il testo per intero e il pulsante per riprovare o sincronizzare.",
+      "Cache offline più leggera: le miniature sono salvate in WebP a una sola dimensione (300x300) e le risposte non leggibili non vengono più conservate, così lo spazio occupato sul telefono cala molto.",
+    ],
+  },
+  {
     version: '0.59.0',
     date: '2026-09-24 22:25',
     changes: [

@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { queuedCount, onQueueChange } from '../lib/offlineQueue'
 import { flushQueue } from '../lib/notes'
 import { useAuth } from '../context/AuthContext'
-import Icon from './Icon'
+import SideTab from './SideTab'
 
-// Pillola (posizionata da StatusPills.jsx) che compare quando ci sono modifiche in coda offline: mostra
+// Linguetta laterale (posizionata da StatusPills.jsx) che compare quando ci sono modifiche in coda offline: mostra
 // il conteggio e permette di forzare la sincronizzazione. Prova a sincronizzare
 // da sola al login e a ogni evento `online`.
 export default function PendingSync() {
@@ -48,13 +48,16 @@ export default function PendingSync() {
   if (count === 0) return null
 
   return (
-    <button
-      type="button"
-      onClick={flush}
-      className="anim-drop pointer-events-auto flex items-center gap-2 rounded-full border border-warn-dark bg-warn px-3 py-1.5 text-xs font-bold text-ink shadow-lg"
+    <SideTab
+      icon="cloud"
+      badge={count}
+      actionLabel="Sincronizza ora"
+      onAction={flush}
+      busy={busy}
     >
-      <Icon name="cloud" size={14} className="shrink-0" />
-      {busy ? 'Sincronizzo…' : `${count} in attesa · sincronizza`}
-    </button>
+      {busy
+        ? 'Sincronizzo…'
+        : `${count} ${count === 1 ? 'nota in attesa' : 'note in attesa'} di sincronizzazione: create o modificate senza rete, si caricano appena la connessione lo permette.`}
+    </SideTab>
   )
 }

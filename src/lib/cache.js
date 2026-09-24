@@ -185,7 +185,8 @@ export async function cachedRead(key, fetcher, { fallback, softMs = SOFT_MS } = 
 }
 
 // ---- statistiche e pulizia (Impostazioni → Uso offline) ----
-const THUMBS_CACHE = 'annales-thumbs'
+export const THUMBS_CACHE = 'annales-thumbs-v2'
+const LEGACY_THUMBS_CACHES = ['annales-thumbs']
 
 // Spazio usato dall'app su questo dispositivo (stima del browser: include
 // anche coda offline e file dell'app) + cosa c'è nella cache dei dati.
@@ -226,7 +227,7 @@ export async function clearOfflineCache() {
     }
   }
   try {
-    await caches.delete(THUMBS_CACHE)
+    for (const name of [THUMBS_CACHE, ...LEGACY_THUMBS_CACHES]) await caches.delete(name)
   } catch {
     // Cache Storage non disponibile
   }
