@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.58.1',
+    date: '2026-09-24 22:21',
+    changes: [
+      "Corretto l'uso offline: aprendo l'app senza rete o con rete molto lenta non serve più rifare il login (la sessione salvata viene scartata solo se il server la rifiuta), così si vedono subito i dati salvati in locale.",
+    ],
+  },
+  {
     version: '0.58.0',
     date: '2026-09-24 22:10',
     changes: [

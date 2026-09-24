@@ -27,11 +27,21 @@ export function AuthProvider({ children }) {
     })
 
     if (pb.authStore.isValid) {
-      // Rinnova il token e verifica che sia ancora valido lato server.
-      pb.collection('users')
+      // Rinnova il token e verifica che sia ancora valido lato server. La
+      // sessione salvata si scarta SOLO se il server la rifiuta (401/403/404):
+      // con rete assente o lenta (o server irraggiungibile) si resta dentro,
+      // altrimenti offline toccherebbe rifare il login proprio quando non si
+      // può — e l'app ha i dati in cache da mostrare (vedi src/lib/cache.js).
+      const refresh = pb.collection('users')
         .authRefresh()
-        .catch(() => pb.authStore.clear())
-        .finally(() => setReady(true))
+        .catch((err) => {
+          if ([401, 403, 404].includes(err?.status)) pb.authStore.clear()
+        })
+      // Con rete lentissima non si tiene bloccata la schermata "Carico…":
+      // dopo 4 s si parte con la sessione salvata e il rinnovo finisce dopo.
+      Promise.race([refresh, new Promise((resolve) => setTimeout(resolve, 4000))]).finally(() =>
+        setReady(true),
+      )
     } else {
       setReady(true)
     }
