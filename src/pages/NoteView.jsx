@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { getConnection } from '../lib/cache'
 import PhoneShell from '../components/PhoneShell'
 import MobileTopBar from '../components/MobileTopBar'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -304,6 +305,16 @@ export default function NoteView() {
     savingRef.current = true
     setBusy(true)
     setDialog(null)
+    if (getConnection().status !== 'ok') {
+      setDialog({
+        title: 'Connessione debole',
+        tone: 'info',
+        lines: [
+          'Il salvataggio potrebbe richiedere del tempo (soprattutto con immagini).',
+          'La nota verrà caricata appena la connessione lo permette: se non ci riesce ora resta in coda e si sincronizza da sola.',
+        ],
+      })
+    }
     const creating = !existsOnServer
     const imageCount = existingImages.length + newFiles.length
     try {

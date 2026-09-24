@@ -1,5 +1,6 @@
 import { pb } from './pocketbase'
 import { colorForName } from './pagesSkin'
+import { cachedRead } from './cache'
 
 // Accesso alla collection `people` di PocketBase: l'elenco (curato dall'utente
 // in Profilo) delle persone selezionabili nelle note. È per-utente: il campo
@@ -13,7 +14,7 @@ import { colorForName } from './pagesSkin'
 const COLLECTION = 'people'
 
 export async function listPeople() {
-  return pb.collection(COLLECTION).getFullList({ sort: 'name' })
+  return cachedRead('people', () => pb.collection(COLLECTION).getFullList({ sort: 'name' }))
 }
 
 export async function createPersonFromImmich(immichPerson) {

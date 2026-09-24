@@ -1,9 +1,50 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="14" fill="#efe9df"/>
-  <rect x="14" y="10" width="36" height="44" rx="6" fill="#e4ddd0" stroke="#cdc6b7" stroke-width="2"/>
-  <rect x="14" y="10" width="9" height="44" rx="4" fill="#d9d3c5"/>
-  <line x1="27" y1="22" x2="45" y2="22" stroke="#6f6a60" stroke-width="3" stroke-linecap="round"/>
-  <line x1="27" y1="30" x2="45" y2="30" stroke="#6f6a60" stroke-width="3" stroke-linecap="round"/>
-  <line x1="27" y1="38" x2="40" y2="38" stroke="#6f6a60" stroke-width="3" stroke-linecap="round"/>
-  <path d="M39 10 h9 v17 l-4.5 -4 -4.5 4 Z" fill="#e5493d"/>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <pattern id="grid" width="14" height="14" patternUnits="userSpaceOnUse">
+      <path d="M14 0H0V14" fill="none" stroke="#8fb0c6" stroke-width="1" opacity=".65"/>
+    </pattern>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="2" dy="6" stdDeviation="3.5" flood-color="#1a1208" flood-opacity=".6"/>
+    </filter>
+    <filter id="shs" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="1" dy="2.5" stdDeviation="1.6" flood-color="#1a1208" flood-opacity=".55"/>
+    </filter>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7d9a0"/><stop offset=".55" stop-color="#8fc7d6"/><stop offset="1" stop-color="#3f8fb0"/>
+    </linearGradient>
+    <g id="sheet">
+      <rect width="96" height="120" rx="6" fill="#fbf9f0" stroke="#b9ae8f" stroke-width="1.5"/>
+      <rect width="96" height="120" rx="6" fill="url(#grid)"/>
+    </g>
+    <g id="scrawl">
+      <path d="M0 0c8-10 16 8 26-2s16 6 28-2" fill="none" stroke="#2d6a9f" stroke-width="3" stroke-linecap="round"/>
+      <path d="M0 16h44" fill="none" stroke="#2d6a9f" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    </g>
+    <path id="tR" d="M92 0h16a6 6 0 0 1 6 6v14a6 6 0 0 1-6 6H92z"/>
+    <path id="tL" d="M4 0h-16a6 6 0 0 0-6 6v14a6 6 0 0 0 6 6h16z"/>
+    <g id="pol">
+      <rect width="42" height="50" rx="2" fill="#fffdf6" stroke="#c9bd9c" stroke-width="1.2"/>
+      <rect x="4" y="4" width="34" height="32" fill="url(#sea)"/>
+      <circle cx="29" cy="12" r="4" fill="#f9c74f"/>
+      <path d="M4 26q5-3 9 0t9 0t9 0t7 0v10H4z" fill="#3f8fb0"/>
+      <path d="M4 30q5-3 9 0t9 0t9 0t7 0v6H4z" fill="#2f7796"/>
+      <path d="M14 27v-9" stroke="#7a4a2a" stroke-width="1"/>
+      <path d="M9 19a5 4 0 0 1 10 0z" fill="#e5493d"/>
+      <path d="M8 43c4-4 6 3 11-1s7 3 14-1" fill="none" stroke="#5a4a2a" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <g transform="translate(34 30) rotate(-10 48 60)" filter="url(#sh)"><use xlink:href="#sheet"/></g>
+  <g transform="translate(58 34) rotate(7 48 60)" filter="url(#sh)"><use xlink:href="#sheet"/></g>
+  <g transform="translate(44 48) rotate(-1 48 60)" filter="url(#sh)">
+    <use xlink:href="#sheet"/>
+    <g transform="translate(14 22)"><use xlink:href="#scrawl"/></g>
+    <g transform="translate(40 60) rotate(6 21 25)" filter="url(#shs)"><use xlink:href="#pol"/></g>
+  </g>
+  <g transform="translate(34 30) rotate(-10 48 60)">
+    <use xlink:href="#tL" y="14" fill="#a6d06e" filter="url(#shs)"/>
+    <use xlink:href="#tL" y="48" fill="#e6cf5c" filter="url(#shs)"/>
+  </g>
+  <g transform="translate(44 48) rotate(-1 48 60)">
+    <use xlink:href="#tR" y="44" fill="#e0655e" filter="url(#shs)"/>
+  </g>
 </svg>

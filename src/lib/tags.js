@@ -1,4 +1,5 @@
 import { pb } from './pocketbase'
+import { cachedRead } from './cache'
 
 // Accesso alla collection `tags` di PocketBase: l'elenco (curato dall'utente
 // in Profilo, o creato al volo dalla nota) dei tag selezionabili nelle note.
@@ -8,7 +9,7 @@ import { pb } from './pocketbase'
 const COLLECTION = 'tags'
 
 export async function listTags() {
-  return pb.collection(COLLECTION).getFullList({ sort: 'name' })
+  return cachedRead('tags', () => pb.collection(COLLECTION).getFullList({ sort: 'name' }))
 }
 
 export async function createTag(name) {

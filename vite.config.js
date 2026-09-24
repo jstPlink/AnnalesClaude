@@ -43,9 +43,20 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
-        // Non mettere in cache le chiamate API di PocketBase: i dati devono
-        // arrivare sempre freschi dal backend.
+        // Le altre chiamate API di PocketBase non passano dalla cache del
+        // service worker: i dati offline stanno in IndexedDB (src/lib/cache.js).
         runtimeCaching: [
+          // Miniature delle immagini: prima dalla cache locale (riempita da
+          // src/lib/prefetch.js), così le foto si vedono anche con poca rete.
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith('/api/files/') && url.searchParams.has('thumb'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'annales-thumbs',
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
             handler: 'NetworkOnly',

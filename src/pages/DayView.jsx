@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCacheRefresh } from '../hooks/useConnection'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
@@ -59,6 +60,9 @@ export default function DayView() {
   useEffect(() => {
     load()
   }, [load])
+
+  // dati arrivati in background dopo aver mostrato quelli salvati (rete lenta)
+  useCacheRefresh(load)
 
   // Persone (per le targhette coi nomi nella skin "Pagine"). Caricato una
   // volta; se fallisce, la skin resta senza targhette.

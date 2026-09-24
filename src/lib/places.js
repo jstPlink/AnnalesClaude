@@ -1,5 +1,6 @@
 import { pb } from './pocketbase'
 import { listDistinctPlacesFromNotes } from './notes'
+import { cachedRead } from './cache'
 
 // Accesso alla collection `places` di PocketBase: l'elenco (curato
 // dall'utente in Impostazioni, o creato al volo scegliendo un luogo su una
@@ -14,7 +15,7 @@ import { listDistinctPlacesFromNotes } from './notes'
 const COLLECTION = 'places'
 
 export async function listPlaces() {
-  return pb.collection(COLLECTION).getFullList({ sort: 'name' })
+  return cachedRead('places', () => pb.collection(COLLECTION).getFullList({ sort: 'name' }))
 }
 
 export async function createPlace(place) {

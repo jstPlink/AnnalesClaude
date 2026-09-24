@@ -10,7 +10,7 @@ import { NavProvider } from './context/NavContext'
 import { useIsWide } from './hooks/useIsWide'
 import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
-import PendingSync from './components/PendingSync'
+import StatusPills from './components/StatusPills'
 import SketchDefs from './components/SketchDefs'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
@@ -174,7 +174,7 @@ export default function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <PendingSync />
+          <StatusPills />
         </BrowserRouter>
       </NavProvider>
     </AuthProvider>

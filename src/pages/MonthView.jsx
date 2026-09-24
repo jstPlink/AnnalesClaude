@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCacheRefresh } from '../hooks/useConnection'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../context/NavContext'
 import { useAuth } from '../context/AuthContext'
@@ -58,6 +59,9 @@ export default function MonthView() {
   useEffect(() => {
     load(cursor)
   }, [cursor, load])
+
+  // dati arrivati in background dopo aver mostrato quelli salvati (rete lenta)
+  useCacheRefresh(() => load(cursor))
 
   const go = useCallback((delta) => {
     setDir(delta)

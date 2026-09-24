@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { getConnection } from '../../lib/cache'
 import MoodSlider from '../../components/MoodSlider'
 import RichText from '../../components/RichText'
 import Dialog from '../../components/Dialog'
@@ -260,6 +261,16 @@ export default function WebNote() {
     savingRef.current = true
     setBusy(true)
     setDialog(null)
+    if (getConnection().status !== 'ok') {
+      setDialog({
+        title: 'Connessione debole',
+        tone: 'info',
+        lines: [
+          'Il salvataggio potrebbe richiedere del tempo (soprattutto con immagini).',
+          'La nota verrà caricata appena la connessione lo permette: se non ci riesce ora resta in coda e si sincronizza da sola.',
+        ],
+      })
+    }
     const creating = !existsOnServer
     const imageCount = existingImages.length + newFiles.length
     try {

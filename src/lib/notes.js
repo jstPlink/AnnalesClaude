@@ -7,6 +7,7 @@ import {
   queuedCount,
   isNetworkError,
 } from './offlineQueue'
+import { cachedRead, cacheGet } from './cache'
 
 // Accesso alla collection `note` di PocketBase.
 // Campi: title, content (Markdown), mood (0–1), date, timeStart, timeEnd,
@@ -15,24 +16,42 @@ import {
 const COLLECTION = 'note'
 
 // Elenco note con `date` nell'intervallo [start, end] (stringhe datetime PB).
+// Letto con cache (vedi src/lib/cache.js): con rete assente/lenta mostra i
+// dati salvati; se manca la cache esatta di questo intervallo lo ricava da
+// quella di tutte le note (riempita all'apertura, vedi prefetch.js).
 export async function listNotesInRange({ start, end }) {
   // La collection non ha i campi autodate `created`/`updated`: ordinare solo
   // per `timeStart` (poi eventualmente lato client).
-  return pb.collection(COLLECTION).getFullList({
-    filter: pb.filter('date >= {:start} && date <= {:end}', { start, end }),
-    sort: 'timeStart',
-  })
+  return cachedRead(
+    `range:${start}|${end}`,
+    () =>
+      pb.collection(COLLECTION).getFullList({
+        filter: pb.filter('date >= {:start} && date <= {:end}', { start, end }),
+        sort: 'timeStart',
+      }),
+    {
+      fallback: async () => {
+        const all = await cacheGet('notes:all')
+        if (!all) return undefined
+        return all.value
+          .filter((n) => n.date >= start && n.date <= end)
+          .sort((a, b) => (a.timeStart < b.timeStart ? -1 : a.timeStart > b.timeStart ? 1 : 0))
+      },
+    },
+  )
 }
 
 export async function getNote(id) {
-  return pb.collection(COLLECTION).getOne(id)
+  return cachedRead(`note:${id}`, () => pb.collection(COLLECTION).getOne(id))
 }
 
 // Conteggio di tutte le note mai scritte (nessun filtro sull'anno): una
 // pagina da 1 elemento basta, serve solo `totalItems`.
 export async function countAllNotes() {
-  const res = await pb.collection(COLLECTION).getList(1, 1, { fields: 'id' })
-  return res.totalItems
+  return cachedRead('count', async () => {
+    const res = await pb.collection(COLLECTION).getList(1, 1, { fields: 'id' })
+    return res.totalItems
+  })
 }
 
 // Il luogo è salvato come JSON { name, lat, lon } dentro il campo testo
@@ -215,12 +234,14 @@ export async function flushQueue() {
 // Conteggio di quante note coinvolgono ciascuna persona: { personId: n }.
 // Serve a mostrare in cima le persone più usate nel selettore.
 export async function peopleUsageCounts() {
-  const list = await pb.collection(COLLECTION).getFullList({ fields: 'people' })
-  const counts = {}
-  for (const n of list) {
-    for (const id of n.people || []) counts[id] = (counts[id] || 0) + 1
-  }
-  return counts
+  return cachedRead('peopleUsage', async () => {
+    const list = await pb.collection(COLLECTION).getFullList({ fields: 'people' })
+    const counts = {}
+    for (const n of list) {
+      for (const id of n.people || []) counts[id] = (counts[id] || 0) + 1
+    }
+    return counts
+  })
 }
 
 // Conteggio di quante note usano ciascun luogo, chiave = nome normalizzato

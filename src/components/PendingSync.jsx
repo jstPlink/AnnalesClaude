@@ -4,7 +4,7 @@ import { flushQueue } from '../lib/notes'
 import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
 
-// Pillola fissa che compare quando ci sono modifiche in coda offline: mostra
+// Pillola (posizionata da StatusPills.jsx) che compare quando ci sono modifiche in coda offline: mostra
 // il conteggio e permette di forzare la sincronizzazione. Prova a sincronizzare
 // da sola al login e a ogni evento `online`.
 export default function PendingSync() {
@@ -51,7 +51,7 @@ export default function PendingSync() {
     <button
       type="button"
       onClick={flush}
-      className="anim-drop fixed left-1/2 top-[max(0.5rem,env(safe-area-inset-top))] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-warn-dark bg-warn px-3 py-1.5 text-xs font-bold text-ink shadow-lg"
+      className="anim-drop pointer-events-auto flex items-center gap-2 rounded-full border border-warn-dark bg-warn px-3 py-1.5 text-xs font-bold text-ink shadow-lg"
     >
       <Icon name="cloud" size={14} className="shrink-0" />
       {busy ? 'Sincronizzo…' : `${count} in attesa · sincronizza`}

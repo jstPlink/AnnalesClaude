@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCacheRefresh } from '../../hooks/useConnection'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
 import { useAuth } from '../../context/AuthContext'
@@ -192,6 +193,9 @@ export default function WebMonth() {
   useEffect(() => {
     load()
   }, [load])
+
+  // dati arrivati in background dopo aver mostrato quelli salvati (rete lenta)
+  useCacheRefresh(load)
 
   // Elenco persone (per le etichette coi nomi nella skin "Pagine"). Caricato
   // una volta; se fallisce, la skin resta senza targhette.

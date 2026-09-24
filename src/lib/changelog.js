@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.58.0',
+    date: '2026-09-24 22:10',
+    changes: [
+      "Uso offline o con poca connessione: all'apertura l'app scarica in locale note, persone, tag, luoghi e miniature delle immagini; con rete assente o lenta mostra subito i dati salvati e li aggiorna in background appena arriva la risposta.",
+      'Una pillola in alto avvisa quando la connessione è debole o assente (i dati potrebbero non essere aggiornati, con ora dell\'ultimo aggiornamento); toccandola si riprova ad aggiornare.',
+      'Salvando una nota con connessione debole compare un avviso: il caricamento può richiedere tempo, e se non riesce subito la nota resta in coda e si sincronizza da sola.',
+      'Nuova icona dell\'app: fogli a quadretti sfalsati con linguette colorate e una piccola polaroid del mare.',
+    ],
+  },
+  {
     version: '0.57.0',
     date: '2026-09-24 20:40',
     changes: [
