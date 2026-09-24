@@ -8,32 +8,7 @@ import { cacheSet, markOk, markSlow, THUMBS_CACHE } from './cache'
 import { isNetworkError } from './offlineQueue'
 
 const THUMB_SIZE = '300x300'
-const THUMB_PX = 300
 let running = false
-
-// Le miniature di PocketBase mantengono il formato originale (gli screenshot
-// PNG pesano centinaia di KB): qui si ricodificano in WebP a qualità 0,7,
-// tipicamente 10–20 KB l'una, e si salvano con l'URL originale — le <img>
-// e i background css le trovano dalla cache del service worker.
-async function lightBlob(res) {
-  const blob = await res.blob()
-  if (typeof createImageBitmap === 'undefined' || typeof OffscreenCanvas === 'undefined') {
-    return blob
-  }
-  try {
-    const bmp = await createImageBitmap(blob)
-    const scale = Math.min(1, THUMB_PX / Math.max(bmp.width, bmp.height))
-    const w = Math.max(1, Math.round(bmp.width * scale))
-    const h = Math.max(1, Math.round(bmp.height * scale))
-    const canvas = new OffscreenCanvas(w, h)
-    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h)
-    bmp.close()
-    const out = await canvas.convertToBlob({ type: 'image/webp', quality: 0.7 })
-    return out.type === 'image/webp' && out.size < blob.size ? out : blob
-  } catch {
-    return blob
-  }
-}
 
 async function prefetchThumbs(notes) {
   if (typeof caches === 'undefined') return
@@ -44,6 +19,11 @@ async function prefetchThumbs(notes) {
   for (const n of notes) {
     for (const name of n.images || []) urls.push(fileUrl(n, name, { thumb: THUMB_SIZE }))
   }
+  // toglie le miniature di note/immagini che non esistono più
+  const wanted = new Set(urls)
+  for (const req of await cache.keys()) {
+    if (!wanted.has(req.url)) await cache.delete(req)
+  }
   let i = 0
   const worker = async () => {
     while (i < urls.length) {
@@ -52,8 +32,7 @@ async function prefetchThumbs(notes) {
         if (await cache.match(url)) continue
         const res = await fetch(url, { mode: 'cors' })
         if (!res.ok) continue
-        const blob = await lightBlob(res)
-        await cache.put(url, new Response(blob, { headers: { 'Content-Type': blob.type } }))
+        await cache.put(url, res)
       } catch {
         // miniatura non scaricabile ora: si riprova al prossimo avvio
       }

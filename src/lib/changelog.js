@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.60.1',
+    date: '2026-09-24 22:50',
+    changes: [
+      "Cache offline: le miniature tornano a essere salvate così come le genera il server (300x300, senza conversione in WebP); a ogni aggiornamento vengono tolte quelle di note o immagini non più esistenti.",
+    ],
+  },
+  {
     version: '0.60.0',
     date: '2026-09-24 22:45',
     changes: [
