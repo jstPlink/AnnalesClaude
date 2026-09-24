@@ -44,6 +44,7 @@ import AppearanceControls from '../../components/AppearanceControls'
 import MoodGradientControls from '../../components/MoodGradientControls'
 import SongsUsageList from '../../components/SongsUsageList'
 import ExportButtons from '../../components/ExportButtons'
+import OfflineStorage from '../../components/OfflineStorage'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
@@ -967,6 +968,10 @@ export default function WebProfile() {
           </button>
         </SettingsSection>
         </SettingsSection>
+      </SettingsSection>
+
+      <SettingsSection title="Uso offline" icon="cloud">
+        <OfflineStorage />
       </SettingsSection>
 
       <SettingsSection

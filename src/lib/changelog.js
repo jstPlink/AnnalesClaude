@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.59.0',
+    date: '2026-09-24 22:25',
+    changes: [
+      "Impostazioni (mobile e web): nuova sezione \"Uso offline\" con lo spazio occupato dalla cache locale, il numero di note e miniature salvate e l'ora dell'ultimo aggiornamento, con i pulsanti \"Aggiorna ora\" e \"Svuota cache\".",
+    ],
+  },
+  {
     version: '0.58.1',
     date: '2026-09-24 22:21',
     changes: [

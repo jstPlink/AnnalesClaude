@@ -183,3 +183,51 @@ export async function cachedRead(key, fetcher, { fallback, softMs = SOFT_MS } = 
     throw err
   }
 }
+
+// ---- statistiche e pulizia (Impostazioni → Uso offline) ----
+const THUMBS_CACHE = 'annales-thumbs'
+
+// Spazio usato dall'app su questo dispositivo (stima del browser: include
+// anche coda offline e file dell'app) + cosa c'è nella cache dei dati.
+export async function offlineStats() {
+  let usage = null
+  let quota = null
+  try {
+    const e = await navigator.storage?.estimate?.()
+    usage = e?.usage ?? null
+    quota = e?.quota ?? null
+  } catch {
+    // stima non disponibile su questo browser
+  }
+  const all = await cacheGet('notes:all')
+  let thumbs = 0
+  try {
+    thumbs = (await (await caches.open(THUMBS_CACHE)).keys()).length
+  } catch {
+    // Cache Storage non disponibile
+  }
+  return {
+    usage,
+    quota,
+    notes: all?.value?.length ?? 0,
+    savedAt: all?.savedAt ?? null,
+    thumbs,
+  }
+}
+
+// Svuota dati e miniature salvati (le note sul server restano intatte, e la
+// coda delle modifiche offline non si tocca).
+export async function clearOfflineCache() {
+  if (hasIndexedDb()) {
+    try {
+      await withStore('readwrite', (s) => s.clear())
+    } catch {
+      // niente da svuotare
+    }
+  }
+  try {
+    await caches.delete(THUMBS_CACHE)
+  } catch {
+    // Cache Storage non disponibile
+  }
+}

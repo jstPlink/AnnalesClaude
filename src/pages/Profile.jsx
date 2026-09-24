@@ -11,6 +11,7 @@ import AppearanceControls from '../components/AppearanceControls'
 import MoodGradientControls from '../components/MoodGradientControls'
 import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
+import OfflineStorage from '../components/OfflineStorage'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
 import ProfileCard from '../components/web/ProfileCard'
@@ -991,6 +992,10 @@ export default function Profile() {
                 </button>
               </SettingsSection>
             </SettingsSection>
+        </SettingsSection>
+
+        <SettingsSection title="Uso offline" icon="cloud">
+          <OfflineStorage />
         </SettingsSection>
 
         <SettingsSection title="Import ed export" icon="download">
