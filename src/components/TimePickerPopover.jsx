@@ -4,18 +4,17 @@ function pad2(n) {
   return String(n).padStart(2, '0')
 }
 
-const STEP = 5
-const TIMES = Array.from({ length: (24 * 60) / STEP }, (_, i) => {
-  const total = i * STEP
-  return `${pad2(Math.floor(total / 60))}:${pad2(total % 60)}`
-})
+const MINUTE_STEP = 5
+const HOURS = Array.from({ length: 24 }, (_, i) => pad2(i))
+const MINUTES = Array.from({ length: 60 / MINUTE_STEP }, (_, i) => pad2(i * MINUTE_STEP))
 
-// Popover per scegliere un orario (HH:MM), stessa estetica "sveglia LCD"
-// del pannello Orario: una sola colonna semplice (niente più due rotelle
-// ore/minuti affiancate né intestazione con titolo/chiudi), così resta
-// stretta abbastanza da non uscire dallo schermo anche quando l'orologio
-// che la apre è vicino al bordo — il tocco su un valore lo applica e
-// chiude subito, come nel calendario.
+// Popover per scegliere un orario (HH:MM), stessa estetica "sveglia LCD" del
+// pannello Orario: due colonne separate — ore (0-23) e minuti (multipli di
+// 5) — invece di un'unica lista con tutte le combinazioni ogni 5 minuti,
+// così si arriva al valore cercato con molto meno scorrimento. Scegliere da
+// una colonna applica subito quella parte dell'orario senza chiudere il
+// popover (serve poter toccare anche l'altra); si chiude cliccando fuori o
+// con Escape, come il calendario/menu mese-anno.
 export default function TimePickerPopover({
   time,
   onChange,
@@ -26,7 +25,8 @@ export default function TimePickerPopover({
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
-  const listRef = useRef(null)
+  const hourListRef = useRef(null)
+  const minuteListRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -42,12 +42,19 @@ export default function TimePickerPopover({
     }
   }, [open])
 
-  const [h, m] = (time || '00:00').split(':').map(Number)
-  const activeIdx = Math.min(TIMES.length - 1, Math.max(0, Math.round((h * 60 + m) / STEP)))
+  const [hRaw, mRaw] = (time || '00:00').split(':').map(Number)
+  const h = Number.isFinite(hRaw) ? Math.min(23, Math.max(0, hRaw)) : 0
+  const m = Number.isFinite(mRaw) ? Math.min(59, Math.max(0, mRaw)) : 0
+  // Un orario salvato fuori dai multipli di 5 (dato più vecchio) mostra come
+  // "attivo" il minuto arrotondato più vicino, senza però riscriverlo finché
+  // non si tocca qualcosa.
+  const roundedMinute = Math.min(55, Math.round(m / MINUTE_STEP) * MINUTE_STEP)
+  const minuteIdx = roundedMinute / MINUTE_STEP
 
   useEffect(() => {
     if (!open) return
-    listRef.current?.children[activeIdx]?.scrollIntoView({ block: 'center' })
+    hourListRef.current?.children[h]?.scrollIntoView({ block: 'center' })
+    minuteListRef.current?.children[minuteIdx]?.scrollIntoView({ block: 'center' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -64,20 +71,34 @@ export default function TimePickerPopover({
 
       {open && (
         <div className="tp-pop">
-          <div className="tp-list" ref={listRef}>
-            {TIMES.map((t, i) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  onChange(t)
-                  setOpen(false)
-                }}
-                className={'tp-item' + (i === activeIdx ? ' active' : '')}
-              >
-                {t}
-              </button>
-            ))}
+          <div className="tp-cols">
+            <div className="tp-list" ref={hourListRef}>
+              {HOURS.map((hh, i) => (
+                <button
+                  key={hh}
+                  type="button"
+                  onClick={() => onChange(`${hh}:${pad2(roundedMinute)}`)}
+                  className={'tp-item' + (i === h ? ' active' : '')}
+                >
+                  {hh}
+                </button>
+              ))}
+            </div>
+            <span className="tp-colon" aria-hidden="true">
+              :
+            </span>
+            <div className="tp-list" ref={minuteListRef}>
+              {MINUTES.map((mm, i) => (
+                <button
+                  key={mm}
+                  type="button"
+                  onClick={() => onChange(`${pad2(h)}:${mm}`)}
+                  className={'tp-item' + (i === minuteIdx ? ' active' : '')}
+                >
+                  {mm}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
