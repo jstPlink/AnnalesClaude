@@ -12,8 +12,8 @@ export const CHANGELOG = [
     version: '0.57.0',
     date: '2026-09-24 20:40',
     changes: [
-      'Selettore orario (mobile e web): ora e minuti in due colonne separate, con i minuti a multipli di 5, invece di un'unica lista con tutte le combinazioni ogni 5 minuti; resta aperto finché non si clicca fuori.',
-      'Barra del mood: ora è un righello di legno con tacche (e numeri 0–10 nell'editor nota), leggermente inclinato, il cui colore segue il mood; il cursore è una placca di metallo che lo avvolge. Tolti etichetta e valore numerico.',
+      'Selettore orario (mobile e web): ora e minuti in due colonne separate, con i minuti a multipli di 5, invece di un\'unica lista con tutte le combinazioni ogni 5 minuti; resta aperto finché non si clicca fuori.',
+      'Barra del mood: ora è un righello di legno con tacche (e numeri 0–10 nell\'editor nota), leggermente inclinato, il cui colore segue il mood; il cursore è una placca di metallo che lo avvolge. Tolti etichetta e valore numerico.',
     ],
   },
   {
