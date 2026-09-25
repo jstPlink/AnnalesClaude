@@ -2,11 +2,17 @@ import PocketBase from 'pocketbase'
 
 const PB_URL_KEY = 'annales.pbUrl'
 
-// Indirizzo di default: quello bundled avviato insieme al frontend
-// (docker-compose.yml) o da `npm run dev` in locale, sovrascrivibile in
-// fase di build con VITE_PB_URL (vedi .env.example).
+// Indirizzo di default del database:
+//  - build di produzione: la STESSA origin da cui è servita l'app (es.
+//    annales.fplinio.it) — il container del frontend inoltra /api/ e /_/ a
+//    PocketBase (vedi nginx.conf.template), quindi non c'è nessun URL da
+//    configurare;
+//  - `npm run dev`: idem, con il proxy di Vite (vite.config.js) verso lo
+//    stack Docker locale;
+//  - VITE_PB_URL (build time) vince su tutto, per puntare a un backend
+//    esterno (vedi .env.example).
 export const DEFAULT_PB_URL =
-  import.meta.env.VITE_PB_URL?.trim() || 'http://localhost:28090'
+  import.meta.env.VITE_PB_URL?.trim() || window.location.origin
 
 // L'utente può puntare l'app a un'altra istanza PocketBase (pagina di
 // accesso o Impostazioni) — l'indirizzo scelto vive in localStorage,

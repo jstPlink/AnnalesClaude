@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.61.0',
+    date: '2026-09-25 11:36',
+    changes: [
+      "Il database è ora integrato nell'app: PocketBase non è più raggiungibile da fuori e il frontend lo usa in automatico dallo stesso indirizzo del diario (nessun URL del database da inserire, niente secondo hostname nel tunnel).",
+    ],
+  },
+  {
     version: '0.60.1',
     date: '2026-09-24 22:50',
     changes: [

@@ -12,6 +12,13 @@ export default defineConfig({
     // Versione dell'app (da package.json), mostrata in Impostazioni.
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  // Sviluppo: /api/ va al frontend Docker (nginx -> PocketBase interno), avviato
+  // con `docker compose up -d`; VITE_DEV_API per usare un altro indirizzo.
+  server: {
+    proxy: {
+      '/api': process.env.VITE_DEV_API || 'http://localhost:8973',
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -43,6 +50,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
+        // API e admin UI di PocketBase sono sulla stessa origin dell'app
+        // (proxy nginx): non devono mai ricevere la pagina index.html.
+        navigateFallbackDenylist: [/^\/api\//, /^\/_\//],
         // Le altre chiamate API di PocketBase non passano dalla cache del
         // service worker: i dati offline stanno in IndexedDB (src/lib/cache.js).
         runtimeCaching: [

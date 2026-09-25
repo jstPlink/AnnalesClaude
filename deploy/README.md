@@ -41,7 +41,7 @@ docker compose up -d
 
 Al **primo avvio** il container `annales-pocketbase` parte con un database
 vuoto (le collection vengono create da sole dalle migration): per accedere
-alla sua admin UI serve creare un superuser una volta sola:
+se serve un superuser (l'admin UI non è pubblicata, vedi sotto) lo si crea dall'interno:
 
 ```bash
 docker compose exec pocketbase /pb/pocketbase superuser upsert admin@tuodominio.it "una-password-lunga"
@@ -60,40 +60,38 @@ Su Synology: *Container Manager → Progetto → Azione → Ricostruisci* (fa pu
 
 ## 4. Esporre su Internet con Cloudflare
 
-Le porte del compose (`8973:80` per il frontend, `28090:8090` per PocketBase)
-restano **sulla LAN**. Cloudflare non si collega mai a quelle porte
-direttamente: parla con il NAS su 443/HTTPS, e qualcosa sul NAS inoltra al
-container giusto. Vanno esposti **entrambi** i servizi, con hostname diversi:
-il frontend (es. `diario.fplinio.it`) e PocketBase (es. `pb-nuovo.fplinio.it`
-— l'indirizzo compilato in `VITE_PB_URL` nel workflow, vedi sotto).
+Il compose pubblica sulla LAN **una sola porta**: `8973:80` (frontend).
+PocketBase è interno: non ha porte pubblicate, lo raggiunge il container
+`annales` (nginx) che inoltra le chiamate `/api/` dell'app. Basta quindi **un
+solo hostname** (es. `annales.fplinio.it`): niente secondo hostname per il
+database, niente URL da configurare nell'app.
 
-**Opzione A — Cloudflare Tunnel** (come già fai per `pocketbase.fplinio.it`):
-nello stesso tunnel aggiungi **due** *public hostname*:
-- `diario.fplinio.it` → **Service = `http://localhost:8973`** (frontend)
-- `pb-nuovo.fplinio.it` → **Service = `http://localhost:28090`** (PocketBase bundled)
+**Opzione A — Cloudflare Tunnel**: nel tunnel un solo *public hostname*
+- `annales.fplinio.it` → **Service = `http://localhost:8973`** (oppure
+  `http://annales-diario:80` se `cloudflared` gira sulla stessa rete Docker).
 
-(oppure `http://<ip-nas>:PORTA` se preferisci; se `cloudflared` gira come
-container sulla stessa rete Docker puoi anche usare i nomi dei container:
-`http://annales-diario:80` e `http://annales-pocketbase:8090`).
+Eventuali vecchi hostname del database (`pb-nuovo.fplinio.it`,
+`pocketbase.fplinio.it`) si possono togliere dal tunnel.
 
-Il vecchio `pocketbase.fplinio.it` **non va toccato**: resta raggiungibile
-com'è finché non avrai migrato tutti i dati sul nuovo database bundled.
+**Opzione B — reverse proxy del NAS + DNS proxied**: un record DNS proxied
+(arancione) e una regola del reverse proxy verso la porta `8973`.
 
-**Opzione B — reverse proxy del NAS + DNS proxied**: stesso discorso ma con
-due record DNS proxied (arancioni) e due regole del reverse proxy, una per
-porta.
+Quello che colleghi è la porta host del NAS (`8973`), mai la porta interna del
+container.
 
-In entrambi i casi: **quello che colleghi sono le porte host del NAS**
-(`8973` e `28090`), mai le porte interne dei container.
+## Amministrazione del database
+
+L'admin UI e il login da superuser non passano dal proxy (sono chiusi da
+nginx). Per interventi a mano: `docker exec annales-pocketbase ...` oppure,
+temporaneamente, aggiungere `ports: ["28090:8090"]` al servizio `pocketbase`
+(e rimuoverlo a lavoro finito).
 
 ## Note
 
-- **Backend PocketBase**: da questa versione il container gira **bundled sul
-  NAS** (`ghcr.io/jstplink/annalesclaude-pocketbase`), non più su un server
-  esterno. L'URL pubblico con cui il frontend lo raggiunge
-  (`https://pb-nuovo.fplinio.it` di default) è compilato dentro il bundle a
-  build time dal workflow: per cambiarlo si modifica `VITE_PB_URL` in
-  `.github/workflows/docker-publish.yml` e si fa un nuovo push.
+- **Backend PocketBase**: gira **bundled sul NAS**
+  (`ghcr.io/jstplink/annalesclaude-pocketbase`) ed è interno all'app: il
+  frontend lo raggiunge sulla propria origin (`/api/`, proxy nginx), non
+  serve nessun URL del database nella build.
 - **Dati**: vivono nel volume Docker `pb_data` (definito in
   `docker-compose.yaml`), non nel container — sopravvivono a
   `pull`/`up`/`restart`. Si perdono solo con `docker compose down -v` o

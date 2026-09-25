@@ -53,27 +53,39 @@ PocketBase a mano. Il primo account che crei è il tuo, isolato in questa
 istanza (un'istanza = un database SQLite tutto suo, nel volume Docker
 `pb_data`).
 
-Per metterla online con un dominio tuo (Cloudflare Tunnel, reverse proxy...),
-rifai la build puntando `VITE_PB_URL` all'indirizzo **pubblico** con cui si
-raggiungerà PocketBase (il frontend gira nel browser di chi usa l'app, quindi
-non può usare un nome host interno a Docker):
+Il database è **interno all'app**: il container PocketBase non pubblica nessuna
+porta, lo raggiunge solo il container del frontend (`annales-diario`, nginx)
+sulla rete Docker. L'app chiama `/api/...` sulla **propria origin** e nginx
+inoltra a PocketBase solo gli endpoint che servono all'app (record, login e
+registrazione, file, realtime); l'admin UI (`/_/`), il login da superuser,
+impostazioni, backup e gestione delle collection non sono raggiungibili da
+fuori.
 
-```bash
-VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build
-```
+Per metterla online con un dominio tuo (Cloudflare Tunnel, reverse proxy...)
+basta pubblicare **un solo hostname** verso la porta del frontend (8973):
+niente URL del database da configurare, niente CORS.
+
+Solo per puntare a un backend esterno, rifai la build con
+`VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build`.
+
+> Il proxy raggiunge PocketBase come `pocketbase:8090` (nome del servizio
+> compose). Con `docker run` separati, o nomi diversi, imposta la variabile
+> d'ambiente `PB_UPSTREAM=<nome-container>:8090` sul container del frontend.
 
 > La versione di PocketBase è pinnata (`PB_VERSION` in
 > [`pocketbase.Dockerfile`](pocketbase.Dockerfile)) alla stessa serie 0.28.x
 > del pacchetto `pocketbase` in `package.json`. Aggiornandone uno, aggiorna
 > anche l'altro.
 
-Per accedere all'**admin UI di PocketBase** (`http://localhost:28090/_/`, utile
-per ispezionare i dati o intervenire a mano) serve un account superuser, che
-l'app stessa non crea mai: va creato una volta sola da riga di comando:
+Interventi amministrativi (superuser, ispezione dei dati) si fanno dall'interno
+del container, senza esporre nulla:
 
 ```bash
 docker compose exec pocketbase /pb/pocketbase superuser upsert admin@tuodominio.it "una-password-lunga"
 ```
+
+Se ti serve l'**admin UI** (`/_/`), pubblica TEMPORANEAMENTE la porta aggiungendo
+`ports: ["28090:8090"]` al servizio `pocketbase` (e togliendola a lavoro finito).
 
 ### Oppure con docker puro
 
@@ -81,8 +93,8 @@ docker compose exec pocketbase /pb/pocketbase superuser upsert admin@tuodominio.
 docker build -t annales-diario:latest .
 docker build -f pocketbase.Dockerfile -t annales-pocketbase:latest .
 docker network create annales 2>/dev/null || true
-docker run -d --name annales-pocketbase --network annales -p 28090:8090 -v pb_data:/pb/pb_data --restart unless-stopped annales-pocketbase:latest
-docker run -d --name annales-diario --network annales -p 8973:80 --restart unless-stopped annales-diario:latest
+docker run -d --name annales-pocketbase --network annales -v pb_data:/pb/pb_data --restart unless-stopped annales-pocketbase:latest
+docker run -d --name annales-diario --network annales -e PB_UPSTREAM=annales-pocketbase:8090 -p 8973:80 --restart unless-stopped annales-diario:latest
 ```
 
 ### Deploy sul NAS (immagini pre-buildate)
@@ -105,11 +117,13 @@ Cloudflare Tunnel) per HTTPS.
 ## Configurazione backend
 
 Istanza PocketBase usata di default: quella **bundled**, avviata insieme al
-frontend (vedi sopra) su `http://localhost:28090`
-(endpoint note: `/api/collections/note/records`).
+frontend (vedi sopra). In produzione l'app la raggiunge sulla propria origin
+(`/api/...`, inoltrato da nginx); con `npm run dev` tramite il proxy di Vite verso lo
+stack Docker locale (`docker compose up -d`, porta 8973; `VITE_DEV_API` per un altro
+indirizzo). Endpoint note: `/api/collections/note/records`.
 
-Per puntare a un'altra istanza in locale, copia `.env.example` in `.env` e
-imposta `VITE_PB_URL`.
+Per puntare a un'altra istanza, copia `.env.example` in `.env` e imposta
+`VITE_PB_URL` (in produzione: build-arg del Dockerfile).
 
 ### Collection `note`
 
@@ -136,8 +150,9 @@ fonte di verità; qui un riepilogo:
 
 ### CORS / Cloudflare Access
 
-Il browser deve poter chiamare l'URL in `VITE_PB_URL` (PocketBase gestisce da
-solo gli header CORS necessari, anche verso porte/origin diverse in locale).
+Con il proxy integrato (stessa origin) il CORS non entra in gioco. Se invece
+usi `VITE_PB_URL` verso un altro host, il browser deve poter chiamare quell'URL
+(PocketBase gestisce da solo gli header CORS necessari).
 Se in produzione metti PocketBase dietro Cloudflare Access o un WAF, ricordati
 che è **il frontend stesso** (il browser di chi usa l'app) a chiamarlo
 direttamente: un challenge o una policy troppo restrittiva bloccherebbero

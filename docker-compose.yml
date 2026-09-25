@@ -4,12 +4,11 @@
 #   docker compose up -d --build
 #   apri http://localhost:8973, poi "Crea il tuo diario personale"
 #
-# Per esporlo online (dominio proprio, Cloudflare Tunnel, reverse proxy...)
-# rifai la build del frontend con VITE_PB_URL puntato all'URL PUBBLICO con
-# cui si raggiungerà PocketBase — mai un hostname interno Docker: gira nel
-# browser di chi usa l'app, non dentro la rete Docker:
-#
-#   VITE_PB_URL=https://pb.tuodominio.it docker compose up -d --build
+# Il database è interno: PocketBase non ha porte pubblicate e lo raggiunge solo
+# il container "web" (nginx), che inoltra le chiamate /api/ dell'app. Per esporlo online
+# basta pubblicare UN solo hostname (dominio proprio, Cloudflare Tunnel,
+# reverse proxy...) verso la porta 8973: niente URL del database da
+# configurare, niente CORS.
 
 services:
   pocketbase:
@@ -19,20 +18,17 @@ services:
     container_name: annales-pocketbase
     volumes:
       - pb_data:/pb/pb_data
-    ports:
-      # host:container — deve restare raggiungibile dal browser di chi usa
-      # l'app (il frontend gira lato client, non dentro la rete Docker).
-      # Porta host volutamente "strana" (non 8090, molto comune) per non
-      # collidere con altri servizi sulla stessa macchina.
-      - "28090:8090"
+    # Nessuna porta pubblicata: il database è interno, lo raggiunge solo il
+    # container "web" (nginx) sulla rete Docker.
     restart: unless-stopped
 
   web:
     build:
       context: .
       args:
-        # URL del backend PocketBase inlined a build time
-        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:28090}
+        # Vuoto = stessa origin del frontend (default). Valorizzalo solo per
+        # puntare a un PocketBase esterno.
+        VITE_PB_URL: ${VITE_PB_URL:-}
     image: annales-diario:latest
     container_name: annales-diario
     depends_on:

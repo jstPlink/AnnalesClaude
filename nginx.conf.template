@@ -1,0 +1,94 @@
+# Template: l'entrypoint di nginx (immagine ufficiale) lo trasforma in
+# /etc/nginx/conf.d/default.conf sostituendo le variabili d'ambiente
+# ${PB_UPSTREAM} e ${NGINX_RESOLVER} (default nel Dockerfile).
+#
+# PocketBase è interno all'app: non ha porte pubblicate, lo raggiunge solo
+# questo nginx sulla rete Docker. Le chiamate /api/ dell'app passano da qui
+# (stessa origin del frontend: niente URL del database, niente CORS, un solo
+# hostname/tunnel da pubblicare), filtrate da una lista di endpoint ammessi.
+
+# Se la richiesta arriva già da un proxy/tunnel (Cloudflare) si mantiene il
+# suo schema (https), altrimenti quello della connessione diretta.
+map $http_x_forwarded_proto $pb_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
+server {
+    listen       80;
+    server_name  _;
+    root         /usr/share/nginx/html;
+    index        index.html;
+
+    # DNS interno di Docker: il nome del container PocketBase si risolve a
+    # ogni richiesta (proxy_pass con variabile), così nginx parte anche se
+    # PocketBase non è ancora su.
+    resolver ${NGINX_RESOLVER} valid=10s ipv6=off;
+
+    # Immagini/allegati caricati dall'app
+    client_max_body_size 100m;
+
+    # Il database NON è esposto: da fuori passano solo le chiamate che servono
+    # all'app (record delle collection, login/registrazione/recupero account,
+    # file allegati, realtime, health). Restano chiusi admin UI (/_/), login da
+    # superuser (_superusers), impostazioni, backup, log e gestione delle
+    # collection: si amministra solo dall'interno (docker exec) o pubblicando
+    # a mano la porta 8090 del container PocketBase.
+    # Realtime = SSE, quindi niente buffering.
+    location ~ ^/api/(collections/(?!_superusers(/|$))[^/]+/(records|auth-[a-z0-9-]+|request-[a-z0-9-]+|confirm-[a-z0-9-]+)(/|$)|files/|(realtime|health|batch)/?$) {
+        set $pb_upstream ${PB_UPSTREAM};
+        proxy_pass         http://$pb_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $http_host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $pb_proto;
+        proxy_set_header   Connection        "";
+        proxy_buffering    off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    # Tutto il resto di /api/ e l'admin UI: chiuso
+    location ~ ^/(api|_)(/|$) {
+        return 404;
+    }
+
+    # Compressione
+    gzip              on;
+    gzip_vary         on;
+    gzip_min_length   1024;
+    gzip_types        text/plain text/css application/javascript application/json
+                      image/svg+xml application/manifest+json;
+
+    # Asset con hash nel nome: cache lunga e immutabile
+    location /assets/ {
+        expires    1y;
+        add_header Cache-Control "public, immutable";
+        try_files  $uri =404;
+    }
+
+    # Runtime di Workbox (nome con hash, generato da vite-plugin-pwa)
+    location ~ ^/workbox-[^/]+\.js$ {
+        expires    1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Service worker, manifest e index: sempre rivalidati, così gli
+    # aggiornamenti della PWA arrivano subito
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+    }
+    location = /manifest.webmanifest {
+        types { } default_type application/manifest+json;
+        add_header Cache-Control "no-cache";
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    # Fallback SPA: ogni rotta sconosciuta serve index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

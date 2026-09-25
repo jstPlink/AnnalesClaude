@@ -19,10 +19,6 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  # URL PUBBLICO del PocketBase bundled: inlined nel bundle frontend a build
-  # time (gira nel browser, quindi deve essere raggiungibile da fuori, non un
-  # hostname interno Docker). Il vecchio pocketbase.fplinio.it non c'entra più.
-  VITE_PB_URL: https://pb-nuovo.fplinio.it
 
 jobs:
   build-and-push:
@@ -65,8 +61,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VITE_PB_URL=${{ env.VITE_PB_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
