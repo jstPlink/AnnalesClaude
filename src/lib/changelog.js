@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.61.1',
+    date: '2026-09-25 11:57',
+    changes: [
+      "Rimosso il campo \"Server\" da pagina di accesso e Impostazioni: il database è integrato e l'app lo raggiunge da sola. L'indirizzo salvato in precedenza nel browser viene scartato, così il login torna a funzionare.",
+    ],
+  },
+  {
     version: '0.61.0',
     date: '2026-09-25 11:36',
     changes: [

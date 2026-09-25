@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { pb, fileUrl, getPbUrl, setPbUrl, DEFAULT_PB_URL } from '../../lib/pocketbase'
+import { pb, fileUrl } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
 import { fakeIdNumber, fakeSignature } from '../../lib/idCard'
 import { MONTHS_IT } from '../../lib/dates'
@@ -16,7 +15,6 @@ const PASSWORD_DOTS = '••••••••••••'
 // solo pulsante sotto la tessera mette TUTTI i campi in modifica insieme.
 export default function ProfileCard() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const name = user?.name?.trim() || ''
   const email = user?.email || '—'
   const initial = (name || email || '?').charAt(0).toUpperCase()
@@ -58,7 +56,6 @@ export default function ProfileCard() {
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
-  const [serverDraft, setServerDraft] = useState(getPbUrl())
 
   function openEditAll() {
     setEditMode(true)
@@ -68,7 +65,6 @@ export default function ProfileCard() {
     setOldPassword('')
     setNewPassword('')
     setNewPasswordConfirm('')
-    setServerDraft(getPbUrl())
   }
 
   function cancelEditAll() {
@@ -79,8 +75,7 @@ export default function ProfileCard() {
   }
 
   // Un solo pulsante salva tutto quello che è cambiato: nome/email/password
-  // (se compilata) e server — quest'ultimo per ultimo e solo se il resto è
-  // andato a buon fine, perché disconnette e porta al login.
+  // (se compilata).
   async function saveAllChanges() {
     if (!user?.id || busy) return
     if (newPassword && newPassword !== newPasswordConfirm) {
@@ -115,14 +110,6 @@ export default function ProfileCard() {
           passwordConfirm: newPasswordConfirm,
         })
         notes.push('Password aggiornata.')
-      }
-
-      const nextServer = serverDraft.trim() || DEFAULT_PB_URL
-      if (nextServer !== getPbUrl()) {
-        setPbUrl(nextServer)
-        pb.authStore.clear()
-        navigate('/login', { replace: true })
-        return
       }
 
       setFieldMsg({ ok: true, text: notes.length ? notes.join(' ') : 'Nessuna modifica.' })
@@ -225,19 +212,6 @@ export default function ProfileCard() {
                     onChange={(e) => setNewPasswordConfirm(e.target.value)}
                   />
                 </div>
-                <label className="pf-erow">
-                  <span className="pf-flabel">Server</span>
-                  <input
-                    type="text"
-                    value={serverDraft}
-                    onChange={(e) => setServerDraft(e.target.value)}
-                    placeholder={DEFAULT_PB_URL}
-                  />
-                  <p className="pf-hint">
-                    Cambiandolo verrai disconnesso: dovrai accedere di nuovo
-                    (anche con un altro account, se il nuovo server ne ha uno diverso).
-                  </p>
-                </label>
               </div>
             ) : (
               <>
@@ -252,10 +226,6 @@ export default function ProfileCard() {
                 <div className="pf-row">
                   <span className="pf-flabel">Password</span>
                   <span className="pf-fvalue dots">{PASSWORD_DOTS}</span>
-                </div>
-                <div className="pf-row">
-                  <span className="pf-flabel">Server</span>
-                  <span className="pf-fvalue">{getPbUrl()}</span>
                 </div>
               </>
             )}

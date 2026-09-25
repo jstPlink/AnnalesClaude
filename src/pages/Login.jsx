@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { describeError } from '../lib/notes'
 import { haptic } from '../lib/haptics'
 import PhoneShell from '../components/PhoneShell'
-import ServerUrlField from '../components/ServerUrlField'
 
 const MIN_PASSWORD = 8
 
@@ -218,8 +217,6 @@ export default function Login() {
                 ? 'Hai già un account? Accedi'
                 : 'Non hai un account? Registrati'}
             </button>
-
-            <ServerUrlField />
           </div>
 
           <p className="ml-postit">
