@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.61.2',
+    date: '2026-09-25 12:20',
+    changes: [
+      "Pubblicazione più veloce: la build dell'app non passa più dall'emulazione arm64, quindi gli aggiornamenti arrivano sul NAS in pochi minuti.",
+    ],
+  },
+  {
     version: '0.61.1',
     date: '2026-09-25 11:57',
     changes: [

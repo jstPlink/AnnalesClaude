@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1
 
 # --- Stage 1: build della PWA ---------------------------------------------------
-FROM node:22-alpine AS build
+# Stage di build sempre sulla piattaforma nativa del runner (dist/ è HTML/JS/CSS,
+# uguale per ogni architettura): con QEMU emulato per arm64 "npm ci" può
+# impiegare decine di minuti.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 
 WORKDIR /app
 
