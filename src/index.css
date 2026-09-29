@@ -4956,7 +4956,15 @@ li:last-child > .wd-month-row {
    del vecchio modale bianco generico che stonava con il resto. ============== */
 .gms-sheet {
   display: flex;
-  max-height: 85vh;
+  max-width: 520px;
+  /* dvh = altezza VISIBILE reale (esclude la barra indirizzi mobile, che
+     "vh" invece ignora): con solo "vh" il foglietto si calcolava più alto
+     dello spazio davvero visibile, e il fondo (pulsante "Genera"/"Correggi")
+     finiva sotto il bordo dello schermo — da lì lo scroll interno, anche a
+     contenuto aperto per intero. Il fallback in "vh" resta per i browser che
+     non capiscono "dvh" (Firefox/Safari vecchi). */
+  max-height: 88vh;
+  max-height: 94dvh;
   flex-direction: column;
   overflow: hidden;
 }
@@ -5046,6 +5054,76 @@ li:last-child > .wd-month-row {
 }
 .gms-cta:disabled {
   opacity: 0.5;
+}
+/* Prompt principale (indicazioni/istruzioni scritte dall'utente): un po' più
+   alto e leggibile dei campi secondari, per non sentirsi stretti scrivendo
+   un pensiero lungo — vedi GeminiSheet.jsx / NewNoteWithGeminiSheet.jsx. */
+.gms-field-lg {
+  min-height: 132px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+/* Bottone "Detta un vocale" (VoiceRecordButton.jsx): stessa carta ritagliata
+   dei campi, un puntino rosso pulsante mentre registra così si vede a colpo
+   d'occhio che il microfono è acceso. */
+.gms-voice {
+  align-self: flex-start;
+}
+.gms-voice-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: var(--color-cream);
+  border: 1.5px dashed var(--color-line);
+  color: var(--color-ink-soft);
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: transform 0.12s ease;
+}
+.gms-voice-btn:active {
+  transform: scale(0.97);
+}
+.gms-voice-btn:disabled {
+  opacity: 0.5;
+}
+.gms-voice-btn.recording {
+  border-style: solid;
+  border-color: var(--color-delete-dark);
+  color: var(--color-delete-dark);
+  animation: gms-voice-pulse 1.3s ease-in-out infinite;
+}
+@keyframes gms-voice-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.gms-voice-error {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--color-delete-dark);
+}
+/* Richiesta di piccola correzione sotto l'anteprima (GeminiSheet.jsx): stesso
+   riquadro degli altri campi ma separato da un bordo tratteggiato, come
+   .gms-instructions, per segnalare che è un passo successivo opzionale. */
+.gms-correction {
+  padding-top: 14px;
+  border-top: 1.5px dashed rgba(52, 44, 28, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gms-cta-secondary {
+  background: var(--color-cream);
+  border-color: var(--color-line);
+  color: var(--color-ink);
+  box-shadow: none;
 }
 /* Istruzioni personalizzate, ripetute qui (oltre che in Impostazioni) per
    poterle aggiustare al volo mentre si scrive un prompt, senza uscire dal

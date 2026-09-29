@@ -54,15 +54,15 @@ export function clearGeminiPromptDraft() {
   saveGeminiPromptDraft('')
 }
 
-// Chiamata generica: il chiamante fornisce l'array `parts` completo (testo,
-// e/o immagini come { inlineData: { mimeType, data } }).
-async function callGeminiParts(apiKey, parts) {
+// Un tentativo, senza riprovi: il chiamante fornisce `contents` completo
+// (un turno per ogni scambio utente/modello — vedi callGeminiParts).
+async function callGeminiOnce(apiKey, contents) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify({ contents }),
     },
   )
   if (!res.ok) {
@@ -102,8 +102,40 @@ async function callGeminiParts(apiKey, parts) {
   return text
 }
 
-async function callGemini(apiKey, prompt) {
-  return callGeminiParts(apiKey, [{ text: prompt }])
+const OVERLOAD_RETRY_DELAY_MS = 5000
+const OVERLOAD_MAX_ATTEMPTS = 3
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// Il modello risponde spesso 503 "overloaded" nelle ore di punta: è un
+// intoppo momentaneo, non un errore dell'utente, quindi si riprova da soli
+// prima di arrendersi. `onRetry(attempt, maxAttempts)` (opzionale) avvisa
+// chi ha in corso una UI di attesa (vedi GeminiWait) che si sta ritentando.
+async function callGeminiParts(apiKey, parts, { onRetry } = {}) {
+  return callGeminiTurns(apiKey, [{ role: 'user', parts }], { onRetry })
+}
+
+// Come callGeminiParts ma con una conversazione a più turni (usata per
+// chiedere piccole correzioni su un output già ottenuto — vedi refineText).
+async function callGeminiTurns(apiKey, contents, { onRetry } = {}) {
+  let lastErr
+  for (let attempt = 1; attempt <= OVERLOAD_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await callGeminiOnce(apiKey, contents)
+    } catch (err) {
+      lastErr = err
+      if (err.status !== 503 || attempt === OVERLOAD_MAX_ATTEMPTS) throw err
+      onRetry?.(attempt, OVERLOAD_MAX_ATTEMPTS)
+      await wait(OVERLOAD_RETRY_DELAY_MS)
+    }
+  }
+  throw lastErr
+}
+
+async function callGemini(apiKey, prompt, opts) {
+  return callGeminiParts(apiKey, [{ text: prompt }], opts)
 }
 
 // Verifica rapida della chiave (una richiesta minima).
@@ -111,23 +143,58 @@ export async function testGeminiKey(apiKey) {
   await callGemini(apiKey, 'Rispondi con la sola parola: ok.')
 }
 
+
 // Ripulisce/sintetizza il testo esistente di una nota, mantenendone i fatti.
-export async function cleanupNoteText(apiKey, text) {
+// Restituisce anche `history`: la conversazione fin qui, da passare a
+// refineText per chiedere piccole correzioni sul risultato.
+export async function cleanupNoteText(apiKey, text, onRetry) {
   const prompt =
     "Ripulisci e sintetizza il seguente testo di una nota personale di diario, in italiano: correggi refusi e sgrammaticature, migliora la scorrevolezza, mantieni fatti, senso e tono originali. Non aggiungere informazioni non presenti nel testo. Rispondi SOLO con il testo finale della nota, senza titoli, virgolette o commenti.\n\nTesto:\n" +
     text
-  return callGemini(apiKey, prompt)
+  const result = await callGemini(apiKey, prompt, { onRetry })
+  return {
+    text: result,
+    history: [
+      { role: 'user', parts: [{ text: prompt }] },
+      { role: 'model', parts: [{ text: result }] },
+    ],
+  }
 }
 
 // Scrive un nuovo contenuto di nota a partire da indicazioni dell'utente.
-export async function writeNoteText(apiKey, instructions, customInstructions = '') {
+export async function writeNoteText(apiKey, instructions, customInstructions = '', onRetry) {
   const prompt =
     'Scrivi il contenuto di una nota personale di diario in italiano, in prima persona, seguendo queste indicazioni. Rispondi SOLO con il testo della nota, senza titoli, virgolette o commenti.\n\n' +
     (customInstructions.trim()
       ? `Istruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato richiesto sopra): ${customInstructions.trim()}\n\n`
       : '') +
     `Indicazioni:\n${instructions}`
-  return callGemini(apiKey, prompt)
+  const result = await callGemini(apiKey, prompt, { onRetry })
+  return {
+    text: result,
+    history: [
+      { role: 'user', parts: [{ text: prompt }] },
+      { role: 'model', parts: [{ text: result }] },
+    ],
+  }
+}
+
+// Chiede una piccola correzione su un testo già generato da cleanupNoteText/
+// writeNoteText, mantenendo il contesto (indicazioni originali + risposta
+// precedente) invece di ripartire da zero: `history` è quello restituito
+// dalla chiamata precedente (o da un refineText precedente). Restituisce lo
+// stesso { text, history }, con la correzione e la nuova risposta aggiunte
+// in coda, così si può richiedere un'altra correzione sul risultato.
+export async function refineText(apiKey, history, correction, onRetry) {
+  const correctionPrompt =
+    'Applica questa correzione al testo appena scritto, mantenendo lo stesso formato di risposta (SOLO il testo finale della nota, senza titoli, virgolette o commenti): ' +
+    correction
+  const contents = [...history, { role: 'user', parts: [{ text: correctionPrompt }] }]
+  const result = await callGeminiTurns(apiKey, contents, { onRetry })
+  return {
+    text: result,
+    history: [...contents, { role: 'model', parts: [{ text: result }] }],
+  }
 }
 
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -144,7 +211,7 @@ function toMinutes(hhmm) {
 export async function draftNoteFromPrompt(
   apiKey,
   prompt,
-  { peopleNames = [], tagNames = [], customInstructions = '' } = {},
+  { peopleNames = [], tagNames = [], customInstructions = '', onRetry } = {},
 ) {
   const instruction =
     'Da queste indicazioni scritte da un utente, prepara la bozza di una nota personale di diario in italiano, in prima persona. ' +
@@ -161,7 +228,7 @@ export async function draftNoteFromPrompt(
       ? `Istruzioni fisse dell'utente su come scrivere le note (rispettale sempre, a meno che non contraddicano il formato JSON richiesto sopra): ${customInstructions.trim()}\n\n`
       : '') +
     `Indicazioni dell'utente:\n${prompt}`
-  const raw = await callGemini(apiKey, instruction)
+  const raw = await callGemini(apiKey, instruction, { onRetry })
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
   let data
@@ -220,7 +287,7 @@ export function normalizeExtractedNote(n) {
 // attività diventa una nota separata, da rivedere prima di salvare.
 export async function extractNotesFromImage(
   apiKey,
-  { imageBase64, mimeType, year, month, peopleNames = [], tagNames = [] },
+  { imageBase64, mimeType, year, month, peopleNames = [], tagNames = [], onRetry },
 ) {
   const ref = `${MONTHS_IT[month]} ${year}`
   const instruction =
@@ -243,10 +310,11 @@ export async function extractNotesFromImage(
     `"tags": array preso ESATTAMENTE dall'elenco ${JSON.stringify(tagNames)} se pertinente, altrimenti []}. ` +
     'Se una giornata non ha testo, restituisci comunque una nota con "content" vuoto e il mood della riga. ' +
     'Ordina le note per data e orario.'
-  const raw = await callGeminiParts(apiKey, [
-    { text: instruction },
-    { inlineData: { mimeType, data: imageBase64 } },
-  ])
+  const raw = await callGeminiParts(
+    apiKey,
+    [{ text: instruction }, { inlineData: { mimeType, data: imageBase64 } }],
+    { onRetry },
+  )
   const match = raw.match(/\[[\s\S]*\]/)
   if (!match) throw new Error('Gemini non ha restituito un risultato valido.')
   let arr
@@ -352,6 +420,7 @@ export async function segmentDayIntoNotes(
     moodScore = null,
     peopleNames = [],
     tagNames = [],
+    onRetry,
   },
 ) {
   const lines = String(rawText ?? '')
@@ -408,7 +477,7 @@ export async function segmentDayIntoNotes(
     'Ordina i blocchi per startLine.\n\n' +
     `Data: ${dateKey}\n\nTesto:\n${numbered}`
 
-  const out = await callGemini(apiKey, instruction)
+  const out = await callGemini(apiKey, instruction, { onRetry })
   const match = out.match(/\[[\s\S]*\]/)
   let segs = []
   if (match) {
@@ -427,7 +496,7 @@ export async function segmentDayIntoNotes(
 }
 
 // Recap di un periodo: poche frasi che riassumono un insieme di note.
-export async function recapNotes(apiKey, notes, { label = '' } = {}) {
+export async function recapNotes(apiKey, notes, { label = '', onRetry } = {}) {
   if (!notes || !notes.length) throw new Error('Nessuna nota nel periodo.')
   const rows = [...notes]
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
@@ -446,7 +515,25 @@ export async function recapNotes(apiKey, notes, { label = '' } = {}) {
     'tempo, due o tre momenti salienti. Tono caldo e sintetico. Rispondi SOLO con il recap, ' +
     'senza titolo né elenchi puntati.\n\n' +
     rows.join('\n')
-  return callGemini(apiKey, prompt)
+  return callGemini(apiKey, prompt, { onRetry })
+}
+
+// Trascrive un vocale registrato nell'app (invece di affidarsi al dettato
+// dello smartphone, spesso impreciso): Gemini capisce l'audio direttamente,
+// senza bisogno di un servizio di trascrizione separato. Pensato per essere
+// incollato/aggiunto al testo di un prompt scritto a voce, quindi risponde
+// con la sola trascrizione, pulita da balbettii ed esitazioni ma senza
+// riformulare il contenuto.
+export async function transcribeAudio(apiKey, { audioBase64, mimeType }, onRetry) {
+  const instruction =
+    'Trascrivi fedelmente questo messaggio vocale in italiano. Correggi solo balbettii, ' +
+    'esitazioni ("ehm", ripetizioni) e la punteggiatura; non riassumere, non aggiungere e non ' +
+    'togliere contenuto. Rispondi SOLO con la trascrizione, senza commenti.'
+  return callGeminiParts(
+    apiKey,
+    [{ text: instruction }, { inlineData: { mimeType, data: audioBase64 } }],
+    { onRetry },
+  )
 }
 
 export function describeGeminiError(err) {
@@ -463,6 +550,8 @@ export function describeGeminiError(err) {
     }
     return 'Limite di richieste Gemini raggiunto, riprova tra poco (di solito entro un minuto).'
   }
+  if (err.status === 503)
+    return 'Il server di Gemini è sovraccarico: ho già riprovato automaticamente un paio di volte senza successo, riprova tra poco.'
   if (err.status) return `Errore Gemini (${err.status}): ${err.message}`
   if (err.name === 'TypeError') return 'Impossibile raggiungere Gemini (rete).'
   return err.message || String(err)

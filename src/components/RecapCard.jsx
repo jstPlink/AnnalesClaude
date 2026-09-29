@@ -8,6 +8,7 @@ import Icon from './Icon'
 export default function RecapCard({ label, notes, apiKey, className = '' }) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [retry, setRetry] = useState(null)
   const [error, setError] = useState('')
 
   // Nuovo periodo / nuove note: azzera il recap precedente.
@@ -21,13 +22,20 @@ export default function RecapCard({ label, notes, apiKey, className = '' }) {
   async function run() {
     if (loading) return
     setLoading(true)
+    setRetry(null)
     setError('')
     try {
-      setText(await recapNotes(apiKey, notes, { label }))
+      setText(
+        await recapNotes(apiKey, notes, {
+          label,
+          onRetry: (attempt, maxAttempts) => setRetry({ attempt, maxAttempts }),
+        }),
+      )
     } catch (e) {
       setError(describeGeminiError(e))
     } finally {
       setLoading(false)
+      setRetry(null)
     }
   }
 
@@ -45,7 +53,7 @@ export default function RecapCard({ label, notes, apiKey, className = '' }) {
         )}
       </div>
       {loading ? (
-        <GeminiWait label="Preparo il recap…" />
+        <GeminiWait label="Preparo il recap…" retry={retry} />
       ) : text ? (
         <p className="st-recap-text">{text}</p>
       ) : (

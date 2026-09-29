@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.61.3',
+    date: '2026-09-29 21:41',
+    changes: [
+      "Pannelli Gemini (\"Scrivi con l'IA\", \"Nuova nota con Gemini\"): dopo un risultato si può chiedere una piccola correzione invece di ripartire da capo, la finestra è più grande, e se il server è sovraccarico l'app riprova da sola un paio di volte prima di segnalare l'errore (con l'attesa sempre visibile, anche nell'estrazione note da screenshot in Importa).",
+      "Nuovo: dettatura vocale nei pannelli Gemini — si registra un vocale e Gemini lo trascrive direttamente, più affidabile del dettato dello smartphone su nomi e termini particolari.",
+      "Corretto il pannello Gemini che restava scrollabile su mobile anche a tutto schermo.",
+    ],
+  },
+  {
     version: '0.61.2',
     date: '2026-09-25 12:20',
     changes: [

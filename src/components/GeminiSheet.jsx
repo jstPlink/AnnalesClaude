@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import GeminiWait from './GeminiWait'
+import VoiceRecordButton from './VoiceRecordButton'
 import {
   cleanupNoteText,
   writeNoteText,
+  refineText,
   describeGeminiError,
   saveGeminiCustomInstructions,
 } from '../lib/gemini'
@@ -11,7 +13,11 @@ import { plainText, describeError } from '../lib/notes'
 
 // Dialog per le funzioni IA (Gemini) su una nota: ripulire/sintetizzare il
 // testo esistente, o scrivere un nuovo contenuto da zero seguendo delle
-// indicazioni.
+// indicazioni. Una volta ottenuto un risultato, si può chiedere una piccola
+// correzione invece di dover tornare indietro e riscrivere tutto: la
+// richiesta si aggiunge alla stessa conversazione (vedi `history`,
+// refineText in lib/gemini.js), che tiene il contesto di indicazioni +
+// risposta precedente.
 export default function GeminiSheet({
   open,
   onClose,
@@ -22,9 +28,12 @@ export default function GeminiSheet({
 }) {
   const [mode, setMode] = useState('menu') // menu | clean | write
   const [loading, setLoading] = useState(false)
+  const [retry, setRetry] = useState(null)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState('')
+  const [history, setHistory] = useState(null)
   const [instructions, setInstructions] = useState('')
+  const [correction, setCorrection] = useState('')
 
   const [customText, setCustomText] = useState(customInstructions || '')
   const [savingCustom, setSavingCustom] = useState(false)
@@ -35,9 +44,12 @@ export default function GeminiSheet({
     if (!open) return
     setMode('menu')
     setLoading(false)
+    setRetry(null)
     setError('')
     setPreview('')
+    setHistory(null)
     setInstructions('')
+    setCorrection('')
     setCustomText(customInstructions || '')
     setCustomStatus(null)
     setCustomOpen(false)
@@ -63,28 +75,64 @@ export default function GeminiSheet({
 
   async function runClean() {
     setLoading(true)
+    setRetry(null)
     setError('')
     try {
-      const text = await cleanupNoteText(apiKey, plain)
-      setPreview(text)
+      const result = await cleanupNoteText(apiKey, plain, (attempt, maxAttempts) =>
+        setRetry({ attempt, maxAttempts }),
+      )
+      setPreview(result.text)
+      setHistory(result.history)
     } catch (err) {
       setError(describeGeminiError(err))
     } finally {
       setLoading(false)
+      setRetry(null)
     }
   }
 
   async function runWrite() {
     if (!instructions.trim()) return
     setLoading(true)
+    setRetry(null)
     setError('')
     try {
-      const text = await writeNoteText(apiKey, instructions.trim(), customText)
-      setPreview(text)
+      const result = await writeNoteText(
+        apiKey,
+        instructions.trim(),
+        customText,
+        (attempt, maxAttempts) => setRetry({ attempt, maxAttempts }),
+      )
+      setPreview(result.text)
+      setHistory(result.history)
     } catch (err) {
       setError(describeGeminiError(err))
     } finally {
       setLoading(false)
+      setRetry(null)
+    }
+  }
+
+  async function runCorrection() {
+    if (!correction.trim() || !history) return
+    setLoading(true)
+    setRetry(null)
+    setError('')
+    try {
+      const result = await refineText(
+        apiKey,
+        history,
+        correction.trim(),
+        (attempt, maxAttempts) => setRetry({ attempt, maxAttempts }),
+      )
+      setPreview(result.text)
+      setHistory(result.history)
+      setCorrection('')
+    } catch (err) {
+      setError(describeGeminiError(err))
+    } finally {
+      setLoading(false)
+      setRetry(null)
     }
   }
 
@@ -97,6 +145,8 @@ export default function GeminiSheet({
     setMode('menu')
     setError('')
     setPreview('')
+    setHistory(null)
+    setCorrection('')
   }
 
   return (
@@ -161,11 +211,18 @@ export default function GeminiSheet({
               </p>
               <textarea
                 autoFocus
-                rows={4}
+                rows={7}
                 placeholder="Es. una giornata di mare con amici, tono leggero…"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                className="gms-field"
+                className="gms-field gms-field-lg"
+              />
+              <VoiceRecordButton
+                apiKey={apiKey}
+                disabled={loading}
+                onTranscribed={(text) =>
+                  setInstructions((p) => (p.trim() ? `${p.trim()} ${text}` : text))
+                }
               />
               <button
                 type="button"
@@ -222,7 +279,7 @@ export default function GeminiSheet({
               </div>
             </div>
           ) : (mode === 'clean' || mode === 'write') && loading ? (
-            <GeminiWait />
+            <GeminiWait retry={retry} />
           ) : (mode === 'clean' || mode === 'write') && preview ? (
             <div className="gms-stack">
               <p className="gms-label">Anteprima</p>
@@ -230,6 +287,29 @@ export default function GeminiSheet({
               <button type="button" onClick={applyPreview} className="gms-cta">
                 Sostituisci il contenuto della nota
               </button>
+
+              <div className="gms-correction">
+                <p className="gms-hint">
+                  Non ti convince del tutto? Chiedi una piccola correzione:
+                  Gemini la applica a questo stesso testo, senza ripartire da
+                  zero.
+                </p>
+                <textarea
+                  rows={3}
+                  placeholder='Es. "accorcialo" oppure "aggiungi che eravamo anche al mare"'
+                  value={correction}
+                  onChange={(e) => setCorrection(e.target.value)}
+                  className="gms-field"
+                />
+                <button
+                  type="button"
+                  disabled={!correction.trim()}
+                  onClick={runCorrection}
+                  className="gms-cta gms-cta-secondary"
+                >
+                  Correggi
+                </button>
+              </div>
             </div>
           ) : null}
 

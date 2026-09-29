@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 
 // Feedback di attesa per le chiamate a Gemini: un timer che scorre e una
 // barra di caricamento in loop, per rendere chiaro che sta lavorando (le
-// risposte possono richiedere qualche secondo).
-export default function GeminiWait({ label = 'Chiedo a Gemini…' }) {
+// risposte possono richiedere qualche secondo). Resta montato anche durante
+// i riprovi automatici sul server sovraccarico (vedi src/lib/gemini.js): il
+// chiamante passa `retry` = { attempt, maxAttempts } quando sta ritentando,
+// così il timer non si azzera e l'attesa resta sempre visibile e spiegata.
+export default function GeminiWait({ label = 'Chiedo a Gemini…', retry = null }) {
   const [seconds, setSeconds] = useState(0)
 
   useEffect(() => {
@@ -21,7 +24,9 @@ export default function GeminiWait({ label = 'Chiedo a Gemini…' }) {
         />
       </div>
       <p className="text-sm text-ink-soft">
-        {label} {seconds}s
+        {retry
+          ? `Il server è occupato, ritento (${retry.attempt}/${retry.maxAttempts})… ${seconds}s`
+          : `${label} ${seconds}s`}
       </p>
     </div>
   )

@@ -27,6 +27,7 @@ import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
 import PlaceCard from '../../components/PlaceCard'
 import AddImagesSheet from '../../components/AddImagesSheet'
+import GeminiWait from '../../components/GeminiWait'
 import ImmichPicker from '../../components/ImmichPicker'
 import Icon from '../../components/Icon'
 
@@ -144,6 +145,7 @@ export default function WebImport() {
   const [peopleUsage, setPeopleUsage] = useState(null)
 
   const [extracting, setExtracting] = useState(false)
+  const [extractRetry, setExtractRetry] = useState(null)
   const [error, setError] = useState('')
 
   const [notes, setNotes] = useState(null) // array estratto (null = non ancora)
@@ -290,6 +292,7 @@ export default function WebImport() {
   async function runExtract() {
     if (!apiKey || !image || extracting) return
     setExtracting(true)
+    setExtractRetry(null)
     setError('')
     try {
       const result = await extractNotesFromImage(apiKey, {
@@ -299,6 +302,7 @@ export default function WebImport() {
         month,
         peopleNames: allPeople.map((p) => p.name),
         tagNames: allTags.map((t) => t.name),
+        onRetry: (attempt, maxAttempts) => setExtractRetry({ attempt, maxAttempts }),
       })
       if (!result.length) {
         setError("Nessuna nota estratta dall'immagine.")
@@ -313,6 +317,7 @@ export default function WebImport() {
       setError(describeGeminiError(err))
     } finally {
       setExtracting(false)
+      setExtractRetry(null)
     }
   }
 
@@ -893,6 +898,7 @@ export default function WebImport() {
             </button>
           </div>
 
+          {extracting && <GeminiWait label="Leggo lo screenshot…" retry={extractRetry} />}
           {error && <p className="text-sm text-delete-dark">{error}</p>}
         </div>
       )}

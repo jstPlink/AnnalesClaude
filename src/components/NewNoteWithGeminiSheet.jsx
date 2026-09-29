@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import GeminiWait from './GeminiWait'
+import VoiceRecordButton from './VoiceRecordButton'
 import {
   draftNoteFromPrompt,
   describeGeminiError,
@@ -57,6 +58,7 @@ export default function NewNoteWithGeminiSheet({
   const [restoredDraft, setRestoredDraft] = useState(false)
   const [placeholder, setPlaceholder] = useState(PROMPT_PLACEHOLDERS[0])
   const [loading, setLoading] = useState(false)
+  const [retry, setRetry] = useState(null)
   const [error, setError] = useState('')
 
   const [instructions, setInstructions] = useState(customInstructions || '')
@@ -76,6 +78,7 @@ export default function NewNoteWithGeminiSheet({
       PROMPT_PLACEHOLDERS[Math.floor(Math.random() * PROMPT_PLACEHOLDERS.length)],
     )
     setLoading(false)
+    setRetry(null)
     setError('')
     setInstructions(customInstructions || '')
     setInstructionsStatus(null)
@@ -102,12 +105,14 @@ export default function NewNoteWithGeminiSheet({
   async function generateFromPrompt() {
     if (!prompt.trim() || loading) return
     setLoading(true)
+    setRetry(null)
     setError('')
     try {
       const draft = await draftNoteFromPrompt(apiKey, prompt.trim(), {
         peopleNames: allPeople.map((p) => p.name),
         tagNames: allTags.map((t) => t.name),
         customInstructions: instructions,
+        onRetry: (attempt, maxAttempts) => setRetry({ attempt, maxAttempts }),
       })
       onGenerated({
         title: draft.title,
@@ -125,6 +130,7 @@ export default function NewNoteWithGeminiSheet({
       setError(describeGeminiError(err))
     } finally {
       setLoading(false)
+      setRetry(null)
     }
   }
 
@@ -150,7 +156,7 @@ export default function NewNoteWithGeminiSheet({
               funzione.
             </p>
           ) : loading ? (
-            <GeminiWait label="Preparo la nota…" />
+            <GeminiWait label="Preparo la nota…" retry={retry} />
           ) : (
             <div className="gms-stack">
               <p className="gms-hint">
@@ -165,7 +171,7 @@ export default function NewNoteWithGeminiSheet({
               )}
               <textarea
                 autoFocus
-                rows={5}
+                rows={9}
                 placeholder={placeholder}
                 value={prompt}
                 onChange={(e) => {
@@ -174,7 +180,19 @@ export default function NewNoteWithGeminiSheet({
                   setRestoredDraft(false)
                   saveGeminiPromptDraft(v)
                 }}
-                className="gms-field"
+                className="gms-field gms-field-lg"
+              />
+              <VoiceRecordButton
+                apiKey={apiKey}
+                disabled={loading}
+                onTranscribed={(text) => {
+                  setPrompt((p) => {
+                    const next = p.trim() ? `${p.trim()} ${text}` : text
+                    saveGeminiPromptDraft(next)
+                    return next
+                  })
+                  setRestoredDraft(false)
+                }}
               />
               <button
                 type="button"
