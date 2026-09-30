@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNav } from '../../context/NavContext'
 import { useAuth } from '../../context/AuthContext'
-import RecapCard from '../../components/RecapCard'
+import PeriodRecapCard from '../../components/PeriodRecapCard'
 import CountUp from '../../components/CountUp'
 import PersonAvatar from '../../components/PersonAvatar'
 import NotesListSheet from '../../components/NotesListSheet'
@@ -544,11 +544,12 @@ export default function WebStats() {
         )}
       </div>
 
-      <RecapCard
-        label={String(year)}
+      <PeriodRecapCard
+        period="year"
+        periodKey={String(year)}
         notes={yearNotes}
         apiKey={geminiApiKey}
-        className="mt-8 st-recap-provisional"
+        className="mt-8"
       />
 
       {!loading && !stats.noteCount && (

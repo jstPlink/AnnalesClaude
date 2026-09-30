@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Icon from '../../components/Icon'
 import DayPages from './DayPages'
+import PeriodRecapCard from '../../components/PeriodRecapCard'
 import { listNotesInRange, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { addDaysKey, dayRange, fullDayLabel, parseWall } from '../../lib/dates'
@@ -125,6 +126,14 @@ export default function WebDay() {
           {error}
         </p>
       )}
+
+      <PeriodRecapCard
+        period="day"
+        periodKey={date}
+        notes={notes}
+        apiKey={user?.geminiApiKey?.trim()}
+        className="mx-auto mb-3 w-3/5 shrink-0"
+      />
 
       {/* Il foglio NON si scorre, sta tutto nella pagina (fit) — altezza
           fissa qui, DayPages misura lo spazio disponibile. Larghezza piena,

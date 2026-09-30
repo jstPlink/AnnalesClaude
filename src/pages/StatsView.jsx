@@ -6,7 +6,7 @@ import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
-import RecapCard from '../components/RecapCard'
+import PeriodRecapCard from '../components/PeriodRecapCard'
 import CountUp from '../components/CountUp'
 import Skeleton from '../components/Skeleton'
 import PersonAvatar from '../components/PersonAvatar'
@@ -584,11 +584,12 @@ export default function StatsView() {
               </section>
             )}
 
-            <RecapCard
-              label={String(year)}
+            <PeriodRecapCard
+              period="year"
+              periodKey={String(year)}
               notes={yearNotes}
               apiKey={geminiApiKey}
-              className="mt-5 st-recap-provisional"
+              className="mt-5"
             />
 
             {!stats.noteCount && (

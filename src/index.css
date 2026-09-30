@@ -5109,6 +5109,13 @@ li:last-child > .wd-month-row {
   font-size: 0.74rem;
   color: var(--color-delete-dark);
 }
+.gms-voice-retry {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 /* Richiesta di piccola correzione sotto l'anteprima (GeminiSheet.jsx): stesso
    riquadro degli altri campi ma separato da un bordo tratteggiato, come
    .gms-instructions, per segnalare che è un passo successivo opzionale. */
@@ -5615,9 +5622,10 @@ li:last-child > .wf-result {
   color: var(--color-ink-soft);
 }
 
-/* recap IA: sotto-cartoncino con bordo colorato, stesso linguaggio dei
-   sotto-cartoncini di Impostazioni/Cerca (.ws-sub/.wf-sub) */
-.st-recap {
+/* Recap automatico di un periodo (PeriodRecapCard.jsx): stesso sotto-cartoncino
+   di .st-recap qui sopra, ma generico — usato in cima a giorno/mese e nelle
+   statistiche (anno), non solo lì. */
+.prc-card {
   position: relative;
   background-color: var(--color-cream);
   background-image: var(--sb-grain);
@@ -5631,14 +5639,14 @@ li:last-child > .wf-result {
   padding: 16px 20px 18px;
   box-shadow: 0 4px 12px -6px rgba(20, 12, 4, 0.2);
 }
-.st-recap-head {
+.prc-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
 }
-.st-recap-title {
+.prc-title {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -5647,10 +5655,10 @@ li:last-child > .wf-result {
   font-size: 0.86rem;
   color: var(--color-ink);
 }
-.st-recap-title svg {
+.prc-title svg {
   color: #a889a0;
 }
-.st-recap-btn {
+.prc-btn {
   flex: none;
   padding: 6px 14px;
   border-radius: 999px;
@@ -5661,7 +5669,7 @@ li:last-child > .wf-result {
   font-size: 0.76rem;
   color: var(--color-ink);
 }
-.st-recap-text {
+.prc-text {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.55;
@@ -5669,10 +5677,15 @@ li:last-child > .wf-result {
   font-family: 'Annales Hand', 'Kalam', sans-serif;
   white-space: pre-wrap;
 }
-.st-recap-empty {
+.prc-empty {
   margin: 0;
   font-size: 0.86rem;
   color: var(--color-ink-soft);
+}
+.prc-error {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-delete-dark);
 }
 
 /* etichetta di sezione: cartellino di carta ritagliato, non un header a
@@ -5779,15 +5792,6 @@ li:last-child > .st-person-row {
 }
 .st-more.open svg {
   transform: rotate(-90deg);
-}
-
-/* recap dell'anno: funzione provvisoria, stesso giallo del pulsante
-   "Importa" nella barra laterale, per segnalarla come tale. */
-.st-recap-provisional {
-  border-left-color: #f2b01e;
-}
-.st-recap-provisional .st-recap-title svg {
-  color: #f2b01e;
 }
 
 /* mini-targhette secondarie (settimana migliore, tag più usato...):
@@ -6051,19 +6055,19 @@ li:last-child > .st-row {
   .st-tile-sub {
     font-size: 0.7rem;
   }
-  .st-recap {
+  .prc-card {
     padding: 13px 15px 15px;
     border-radius: 4px 13px 13px 4px;
   }
-  .st-recap-title {
+  .prc-title {
     font-size: 0.8rem;
   }
-  .st-recap-btn {
+  .prc-btn {
     padding: 5px 12px;
     font-size: 0.7rem;
   }
-  .st-recap-text,
-  .st-recap-empty {
+  .prc-text,
+  .prc-empty {
     font-size: 0.84rem;
   }
   .st-label {

@@ -10,6 +10,7 @@ import Footer from '../components/Footer'
 import ViewTabs from '../components/ViewTabs'
 import YearPill from '../components/YearPill'
 import OnThisDay from '../components/OnThisDay'
+import PeriodRecapCard from '../components/PeriodRecapCard'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
 import MonthPages from './web/MonthPages'
@@ -154,6 +155,15 @@ export default function MonthView() {
         )}
 
         <OnThisDay className="mx-3 mb-1 mt-3" />
+
+        <PeriodRecapCard
+          period="month"
+          periodKey={`${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`}
+          notes={notes}
+          label={`${MONTHS_IT[cursor.month]} ${cursor.year}`}
+          apiKey={user?.geminiApiKey?.trim()}
+          className="mx-3 mb-1"
+        />
 
         <div className="pb-2 pt-1">
           <MonthPages

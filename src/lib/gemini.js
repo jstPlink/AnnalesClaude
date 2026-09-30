@@ -518,6 +518,27 @@ export async function recapNotes(apiKey, notes, { label = '', onRetry } = {}) {
   return callGemini(apiKey, prompt, { onRetry })
 }
 
+// Recap di UN giorno (più breve di recapNotes, pensato per period): usato dal
+// tasto "Genera"/"Rigenera" sul recap giornaliero (src/lib/recaps.js). Lo
+// stesso testo, con lo stesso stile, lo scrive anche il cron notturno lato
+// server (pb_hooks/main.pb.js) — qui è la versione richiamabile a mano.
+export async function dayRecap(apiKey, notes, onRetry) {
+  if (!notes || !notes.length) throw new Error('Nessuna nota in questo giorno.')
+  const rows = notes.map((n) => {
+    const mood = Math.round(Number(n.mood) * 100)
+    const title = (n.title || '').trim()
+    const body = plainText(n.content).replace(/\s+/g, ' ').slice(0, 240)
+    return `[${mood}] ${title}${body ? ' — ' + body : ''}`
+  })
+  const prompt =
+    'Queste sono le note di diario scritte in un solo giorno (formato: [mood 0-100] titolo — estratto). ' +
+    'Scrivi un breve recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 2-4 frasi: ' +
+    'cosa è successo, persone e luoghi citati, il tono della giornata. Tono caldo, diretto. ' +
+    'Rispondi SOLO col testo del recap, senza titolo né elenchi puntati.\n\n' +
+    rows.join('\n')
+  return callGemini(apiKey, prompt, { onRetry })
+}
+
 // Trascrive un vocale registrato nell'app (invece di affidarsi al dettato
 // dello smartphone, spesso impreciso): Gemini capisce l'audio direttamente,
 // senza bisogno di un servizio di trascrizione separato. Pensato per essere

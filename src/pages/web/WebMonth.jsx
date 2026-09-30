@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { listNotesInRange, groupByDay, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import OnThisDay from '../../components/OnThisDay'
+import PeriodRecapCard from '../../components/PeriodRecapCard'
 import MonthPages from './MonthPages'
 import { MONTHS_IT, addMonths, calendarGrid } from '../../lib/dates'
 
@@ -282,6 +283,15 @@ export default function WebMonth() {
       )}
 
       <OnThisDay className="mb-5 max-w-md" />
+
+      <PeriodRecapCard
+        period="month"
+        periodKey={`${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`}
+        notes={notes}
+        label={`${MONTHS_IT[cursor.month]} ${cursor.year}`}
+        apiKey={user?.geminiApiKey?.trim()}
+        className="mb-5 max-w-md"
+      />
 
       <MonthPages
         grid={grid}

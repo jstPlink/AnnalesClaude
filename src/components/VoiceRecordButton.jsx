@@ -42,6 +42,12 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
   const [state, setState] = useState('idle') // idle | recording | transcribing
   const [seconds, setSeconds] = useState(0)
   const [error, setError] = useState('')
+  // Il vocale appena registrato resta qui finché non viene trascritto con
+  // successo: se la trascrizione fallisce (rete assente, tutti i riprovi
+  // automatici di transcribeAudio esauriti…) si può ritrascrivere lo STESSO
+  // audio con un tasto, invece di dover rifare da capo una registrazione
+  // magari lunga.
+  const [lastRecording, setLastRecording] = useState(null) // { blob, mimeType } | null
   const mediaRef = useRef(null)
   const chunksRef = useRef([])
   const streamRef = useRef(null)
@@ -85,22 +91,29 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
     mediaRef.current?.stop()
   }
 
-  async function transcribe(mimeType) {
+  async function transcribe(blob, mimeType) {
     setState('transcribing')
+    setError('')
     try {
-      const blob = new Blob(chunksRef.current, { type: mimeType })
       const audioBase64 = await blobToBase64(blob)
       const text = await transcribeAudio(apiKey, { audioBase64, mimeType })
       onTranscribed(text)
+      setLastRecording(null) // andata a buon fine: non serve più tenerlo
     } catch (err) {
+      setLastRecording({ blob, mimeType }) // tenuto da parte per "Riprova"
       setError(describeGeminiError(err))
     } finally {
       setState('idle')
     }
   }
 
+  function retryTranscription() {
+    if (lastRecording) transcribe(lastRecording.blob, lastRecording.mimeType)
+  }
+
   async function start() {
     setError('')
+    setLastRecording(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
@@ -112,7 +125,8 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
       }
       rec.onstop = () => {
         streamRef.current?.getTracks().forEach((t) => t.stop())
-        transcribe(rec.mimeType || mimeType || 'audio/webm')
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || mimeType || 'audio/webm' })
+        transcribe(blob, rec.mimeType || mimeType || 'audio/webm')
       }
       mediaRef.current = rec
       rec.start()
@@ -147,7 +161,19 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
           {state === 'transcribing' ? 'Trascrivo…' : 'Detta un vocale'}
         </button>
       )}
-      {error && <p className="gms-voice-error">{error}</p>}
+      {error && (
+        <p className="gms-voice-error">
+          {error}
+          {lastRecording && (
+            <>
+              {' '}
+              <button type="button" onClick={retryTranscription} className="gms-voice-retry">
+                Riprova la trascrizione (senza registrare di nuovo)
+              </button>
+            </>
+          )}
+        </p>
+      )}
     </div>
   )
 }

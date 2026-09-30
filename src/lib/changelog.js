@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.62.0',
+    date: '2026-09-30 22:15',
+    changes: [
+      "Recap automatici: ogni notte l'app prepara da sola, con Gemini, il riassunto del giorno appena finito; a fine mese quello del mese (dai recap giornalieri) e a fine anno quello dell'anno (dai recap mensili). Si aggiornano da soli se modifichi una nota di un periodo già chiuso. In cima alla vista giorno, in cima alla vista mese e nelle Statistiche (anno) compare il recap pronto, con un tasto \"Genera\"/\"Rigenera\" per i periodi passati o per un testo diverso.",
+      "Dettatura vocale: se la trascrizione fallisce, il vocale registrato non si perde più — si può ritrascrivere lo stesso audio senza registrare di nuovo.",
+    ],
+  },
+  {
     version: '0.61.3',
     date: '2026-09-29 21:41',
     changes: [

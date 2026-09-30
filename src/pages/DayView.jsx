@@ -10,6 +10,7 @@ import YearPill from '../components/YearPill'
 import Icon from '../components/Icon'
 import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
+import PeriodRecapCard from '../components/PeriodRecapCard'
 import DayPages from './web/DayPages'
 import { listNotesInRange, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
@@ -124,6 +125,14 @@ export default function DayView() {
           />
         </div>
       </MobileTopBar>
+
+      <PeriodRecapCard
+        period="day"
+        periodKey={date}
+        notes={notes}
+        apiKey={user?.geminiApiKey?.trim()}
+        className="mx-2 mt-2"
+      />
 
       <main
         key={date}
