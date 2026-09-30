@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.62.1',
+    date: '2026-09-30 23:18',
+    changes: [
+      "Fix critico: la v0.62.0 impediva di salvare/modificare le note (\"Failed to create record\"), per un bug negli hook dei recap automatici lato server. Risolto: il salvataggio delle note torna a funzionare normalmente.",
+    ],
+  },
+  {
     version: '0.62.0',
     date: '2026-09-30 22:15',
     changes: [
