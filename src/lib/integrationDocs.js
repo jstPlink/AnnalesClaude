@@ -88,10 +88,56 @@ https:// e, se presente, della porta. Esempi:
   (URL sbagliato, server non esposto, HTTPS con certificato non valido).
 `
 
+const MYMAP = `# Collegamento a MyMap (URL server + email + password)
+
+A cosa serve in Annales: quando aggiungi un luogo a una nota, puoi scegliere
+tra i posti in cui sei stato nel giorno della nota (soste di almeno 20 minuti
+registrate da MyMap) invece di cercarli o scriverli a mano.
+
+Prerequisito: usa MyMap con un account sul TUO server (modalita' "Il mio
+server"). Con il solo database locale del telefono non c'e' nulla da leggere.
+
+## Cosa serve
+
+1. URL server MyMap: lo stesso indirizzo che inserisci nella schermata di
+   accesso di MyMap (il suo PocketBase), con https:// e senza barra finale.
+   Esempio: https://pocketbase.tuodominio.it
+   Deve essere HTTPS, altrimenti il browser blocca la richiesta da Annales.
+2. Email dell'account MyMap: quella con cui accedi in MyMap.
+3. Password dell'account MyMap: serve ad Annales per leggere i tuoi punti
+   (la collection "points" e' leggibile solo dal proprietario).
+
+## Come collegarlo
+
+1. In Annales: Impostazioni -> Integrazioni -> MyMap.
+2. Inserisci URL, email e password e premi "Testa connessione": se tutto va
+   bene vedi quanti punti ci sono sul server.
+3. Premi Salva.
+4. Quando crei o modifichi una nota e tocchi il segnaposto "Luogo", in alto
+   compare la scelta tra "Annales" e "MyMap". Con MyMap vedi i posti del
+   giorno della nota (con i tasti freccia puoi cambiare giorno): toccane uno
+   per sceglierlo, il nome resta modificabile prima di aggiungerlo.
+
+## Come si trovano i nomi
+
+- Se in MyMap hai dato un nome a mano a quel posto, viene usato quello.
+- Altrimenti il nome viene cercato su OpenStreetMap (Nominatim) a partire
+  dalle coordinate; se non c'e' o non ti va bene lo scrivi tu.
+
+## Note
+
+- La password e' salvata nel tuo profilo Annales, come la API key di Immich:
+  non riusarla altrove se ti preoccupa.
+- I posti sono calcolati da Annales con le stesse regole di MyMap (sosta di
+  almeno 20 minuti entro 150 m); un posto puo' apparire solo se in quel giorno
+  il tracking ha registrato abbastanza punti.
+`
+
 export const INTEGRATION_DOCS = {
   gemini: { filename: 'annales-gemini-token.md', body: GEMINI },
   spotify: { filename: 'annales-spotify-credenziali.md', body: SPOTIFY },
   immich: { filename: 'annales-immich-collegamento.md', body: IMMICH },
+  mymap: { filename: 'annales-mymap-collegamento.md', body: MYMAP },
 }
 
 // Scarica una stringa come file di testo (client-side, nessun server).

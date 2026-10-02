@@ -25,6 +25,7 @@ import PeoplePickerSheet from '../../components/PeoplePickerSheet'
 import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
+import { mymapConfigFromUser } from '../../lib/mymap'
 import PlaceCard from '../../components/PlaceCard'
 import AddImagesSheet from '../../components/AddImagesSheet'
 import GeminiWait from '../../components/GeminiWait'
@@ -1526,6 +1527,8 @@ export default function WebImport() {
             open={placeSheetOpen}
             onClose={() => setPlaceSheetOpen(false)}
             onAdd={(place) => setField({ place })}
+            mymap={mymapConfigFromUser(user)}
+            dateKey={draft.date}
           />
         </>
       )}

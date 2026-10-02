@@ -7,6 +7,7 @@ import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../components/PlacePickerSheet'
 import SettingsSection from '../components/SettingsSection'
+import MymapIntegration from '../components/MymapIntegration'
 import AppearanceControls from '../components/AppearanceControls'
 import MoodGradientControls from '../components/MoodGradientControls'
 import SongsUsageList from '../components/SongsUsageList'
@@ -848,6 +849,10 @@ export default function Profile() {
                 {saving ? 'Salvo…' : 'Salva'}
               </button>
             </div>
+            </SettingsSection>
+
+            <SettingsSection nested title="MyMap" icon="map-pin">
+              <MymapIntegration />
             </SettingsSection>
 
             <SettingsSection nested title="Spotify" icon="music">

@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.63.0',
+    date: '2026-10-02 10:38',
+    changes: [
+      "Nuova integrazione MyMap (Impostazioni → Integrazioni): collega l'app che traccia i tuoi spostamenti con URL del server, email e password del suo account. Richiede la migration del database (nuovi campi sull'utente), che parte da sola al riavvio del container.",
+      'Selettore luogo delle note: se MyMap è collegato compare la scelta Annales / MyMap. Con MyMap si vedono i posti visitati nel giorno della nota (soste di almeno 20 minuti, con orario e durata, frecce per cambiare giorno); il nome è quello dato a mano in MyMap, altrimenti OpenStreetMap, e resta modificabile.',
+      "Aggiunta la documentazione dell'app (docs/GUIDA.md e ARCHITETTURA.md) e il supporto allo sviluppo in locale contro il database online (VITE_DEV_API).",
+    ],
+  },
+  {
     version: '0.62.1',
     date: '2026-09-30 23:18',
     changes: [

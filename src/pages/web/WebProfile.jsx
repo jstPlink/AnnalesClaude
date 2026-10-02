@@ -50,6 +50,7 @@ import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
 import ProfileCard from '../../components/web/ProfileCard'
 import SettingsSection from '../../components/SettingsSection'
+import MymapIntegration from '../../components/MymapIntegration'
 
 // Link a una guida .md scaricabile su come ottenere il token/credenziali.
 function TokenHelp({ which }) {
@@ -820,6 +821,10 @@ export default function WebProfile() {
             </button>
           </div>
         </div>
+        </SettingsSection>
+
+        <SettingsSection nested title="MyMap" icon="map-pin">
+          <MymapIntegration web />
         </SettingsSection>
 
         <SettingsSection nested title="Spotify" icon="music">

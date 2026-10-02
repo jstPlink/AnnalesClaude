@@ -26,6 +26,14 @@ npm run dev
 L'app parte su `http://localhost:5173`. La prima schermata è il **login**
 (autenticazione utenti PocketBase, collection `users`).
 
+Il dev server non ha un database proprio: inoltra `/api/` a `VITE_DEV_API`
+oppure, se non impostata, a uno stack Docker locale su `http://localhost:8973`.
+Per lavorare contro il server online crea `.env.local` con
+`VITE_DEV_API=https://annales.fplinio.it` (attenzione: sono i dati veri).
+
+Documentazione: [docs/GUIDA.md](docs/GUIDA.md) (uso) e
+[ARCHITETTURA.md](ARCHITETTURA.md) (com'è fatta, deploy, domande frequenti).
+
 Altri comandi:
 
 ```bash

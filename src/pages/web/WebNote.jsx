@@ -11,6 +11,7 @@ import PersonAvatar from '../../components/PersonAvatar'
 import TagPickerSheet from '../../components/TagPickerSheet'
 import AddSongSheet from '../../components/AddSongSheet'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
+import { mymapConfigFromUser } from '../../lib/mymap'
 import DatePickerPopover from '../../components/DatePickerPopover'
 import TimePickerPopover from '../../components/TimePickerPopover'
 import Icon from '../../components/Icon'
@@ -791,6 +792,8 @@ export default function WebNote() {
         open={placeSheetOpen}
         onClose={() => setPlaceSheetOpen(false)}
         onAdd={(place) => set({ place })}
+        mymap={mymapConfigFromUser(user)}
+        dateKey={form.dateKey}
       />
     </div>
   )

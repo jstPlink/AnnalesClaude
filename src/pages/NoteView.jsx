@@ -18,6 +18,7 @@ import PersonAvatar from '../components/PersonAvatar'
 import TagPickerSheet from '../components/TagPickerSheet'
 import AddSongSheet from '../components/AddSongSheet'
 import PlacePickerSheet from '../components/PlacePickerSheet'
+import { mymapConfigFromUser } from '../lib/mymap'
 import PlaceCard from '../components/PlaceCard'
 import GeminiSheet from '../components/GeminiSheet'
 import {
@@ -840,6 +841,8 @@ export default function NoteView() {
         open={placeSheetOpen}
         onClose={() => setPlaceSheetOpen(false)}
         onAdd={(place) => set({ place })}
+        mymap={mymapConfigFromUser(user)}
+        dateKey={form.dateKey}
       />
 
       <GeminiSheet

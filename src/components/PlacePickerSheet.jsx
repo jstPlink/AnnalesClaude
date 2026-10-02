@@ -3,6 +3,25 @@ import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import { loadLeaflet, searchPlaces, reverseGeocode } from '../lib/leaflet'
 import { listPlaces, upsertPlaceIfMissing } from '../lib/places'
+import { listMymapVisits, lookupPlaceName, describeMymapError, hhmm } from '../lib/mymap'
+import { addDaysKey, dayKey, dayMonthLabel, weekdayShort } from '../lib/dates'
+
+const SOURCE_KEY = 'annales.placeSource'
+
+function readSource() {
+  try {
+    return localStorage.getItem(SOURCE_KEY) === 'mymap' ? 'mymap' : 'annales'
+  } catch {
+    return 'annales'
+  }
+}
+
+function fmtMinutes(min) {
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m ? `${h} h ${m} min` : `${h} h`
+}
 
 const DEFAULT_CENTER = [41.9, 12.5] // Italia, vista d'insieme
 const DEFAULT_ZOOM = 5
@@ -31,7 +50,28 @@ function customMarkerIcon(L) {
 // presente, la mappa parte centrata lì col segnalino già posato e il nome
 // precompilato, il titolo/azione diventano "Modifica luogo", e il luogo NON
 // viene ri-salvato tra quelli curati (lo aggiorna chi chiama).
-export default function PlacePickerSheet({ open, onClose, onAdd, initial = null }) {
+// `mymap` (opzionale): { url, email, password } dell'integrazione MyMap. Se
+// presente (e non si sta modificando) compare la scelta della sorgente
+// "Annales" / "MyMap"; con MyMap si propongono i posti visitati nel giorno
+// `dateKey` (quello della nota), cambiabile con le frecce.
+export default function PlacePickerSheet({
+  open,
+  onClose,
+  onAdd,
+  initial = null,
+  mymap = null,
+  dateKey = '',
+}) {
+  const showSources = Boolean(mymap) && !initial
+  const [source, setSource] = useState(readSource)
+  const fromMymap = showSources && source === 'mymap'
+  const [visitDay, setVisitDay] = useState('')
+  const [visits, setVisits] = useState(null)
+  const [visitsError, setVisitsError] = useState('')
+  const [visitNames, setVisitNames] = useState({})
+  const mymapRef = useRef(mymap)
+  mymapRef.current = mymap
+  const mymapKey = mymap ? `${mymap.url}|${mymap.email}|${mymap.password}` : ''
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -62,6 +102,48 @@ export default function PlacePickerSheet({ open, onClose, onAdd, initial = null 
       alive = false
     }
   }, [open])
+
+  // All'apertura riparte dal giorno della nota e dall'ultima sorgente usata.
+  useEffect(() => {
+    if (!open) return
+    setSource(readSource())
+    setVisitDay(dayKey(dateKey) || dayKey(new Date()))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Posti visitati del giorno scelto da MyMap; i nomi mancanti si cercano su
+  // OpenStreetMap uno alla volta (limite del servizio), man mano che arrivano.
+  useEffect(() => {
+    if (!open || !fromMymap || !visitDay || !mymapRef.current) return
+    let alive = true
+    setVisits(null)
+    setVisitsError('')
+    setVisitNames({})
+    listMymapVisits(mymapRef.current, visitDay)
+      .then(async (list) => {
+        if (!alive) return
+        setVisits(list)
+        for (let i = 0; i < list.length; i++) {
+          if (!alive) return
+          if (list[i].name) continue
+          const name = await lookupPlaceName(list[i].lat, list[i].lon)
+          if (!alive) return
+          if (name) setVisitNames((prev) => ({ ...prev, [i]: name }))
+        }
+      })
+      .catch((err) => alive && setVisitsError(describeMymapError(err)))
+    return () => {
+      alive = false
+    }
+  }, [open, fromMymap, visitDay, mymapKey])
+
+  // Se il nome di un posto già selezionato arriva dopo il tocco, lo precompila
+  // (solo se non si è ancora scritto nulla).
+  useEffect(() => {
+    if (!selected || !visits) return
+    const i = visits.findIndex((v) => `mymap-${v.start}` === selected.id)
+    if (i >= 0 && visitNames[i]) setNameOverride((cur) => cur || visitNames[i])
+  }, [visitNames, selected, visits])
 
   // Crea la mappa una volta sola all'apertura, con tocco per selezionare un punto.
   useEffect(() => {
@@ -129,9 +211,34 @@ export default function PlacePickerSheet({ open, onClose, onAdd, initial = null 
     setNameOverride('')
     setError('')
     setSavedPlaces([])
+    setVisits(null)
+    setVisitsError('')
+    setVisitNames({})
   }, [open])
 
   if (!open) return null
+
+  function chooseSource(next) {
+    setSource(next)
+    try {
+      localStorage.setItem(SOURCE_KEY, next)
+    } catch {
+      // preferenza non salvabile: vale solo per questa apertura
+    }
+  }
+
+  function pickVisit(v, i) {
+    const map = mapRef.current
+    if (!map || !window.L) return
+    const name = v.name || visitNames[i] || ''
+    placeMarker(map, window.L, {
+      id: `mymap-${v.start}`,
+      name,
+      shortName: name,
+      lat: v.lat,
+      lon: v.lon,
+    })
+  }
 
   function placeMarker(map, L, place) {
     setSelected(place)
@@ -200,6 +307,100 @@ export default function PlacePickerSheet({ open, onClose, onAdd, initial = null 
           </button>
         </div>
 
+        {showSources && (
+          <div className="flex gap-2 border-b border-line px-5 py-3" role="tablist">
+            {[
+              ['annales', 'Annales', 'search'],
+              ['mymap', 'MyMap', 'map-pin'],
+            ].map(([key, label, icon]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={source === key}
+                onClick={() => chooseSource(key)}
+                className={
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition ' +
+                  (source === key
+                    ? 'border-ink bg-ink text-cream'
+                    : 'border-line bg-tag text-ink hover:bg-cream')
+                }
+              >
+                <Icon name={icon} size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {fromMymap && (
+          <div className="border-b border-line px-5 py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setVisitDay((d) => addDaysKey(d, -1))}
+                className="rounded-full p-1 text-ink-soft transition hover:text-ink"
+                title="Giorno precedente"
+                aria-label="Giorno precedente"
+              >
+                <Icon name="chevron-left" size={18} />
+              </button>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Posti visitati · {weekdayShort(visitDay)} {dayMonthLabel(visitDay)}
+              </p>
+              <button
+                type="button"
+                onClick={() => setVisitDay((d) => addDaysKey(d, 1))}
+                className="rounded-full p-1 text-ink-soft transition hover:text-ink"
+                title="Giorno successivo"
+                aria-label="Giorno successivo"
+              >
+                <Icon name="chevron-right" size={18} />
+              </button>
+            </div>
+            {visitsError ? (
+              <p className="text-xs text-delete-dark">{visitsError}</p>
+            ) : visits === null ? (
+              <p className="text-xs text-ink-soft">Carico i posti da MyMap…</p>
+            ) : visits.length === 0 ? (
+              <p className="text-xs text-ink-soft">
+                Nessun posto registrato in questo giorno (servono soste di
+                almeno 20 minuti). Cambia giorno o tocca un punto sulla mappa.
+              </p>
+            ) : (
+              <div className="max-h-40 space-y-1 overflow-y-auto">
+                {visits.map((v, i) => {
+                  const name = v.name || visitNames[i]
+                  const active = selected?.id === `mymap-${v.start}`
+                  return (
+                    <button
+                      key={v.start}
+                      type="button"
+                      onClick={() => pickVisit(v, i)}
+                      className={
+                        'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition ' +
+                        (active ? 'bg-ink text-cream' : 'text-ink hover:bg-tag')
+                      }
+                    >
+                      <span className="min-w-0 flex-1 truncate font-semibold">
+                        {name || 'Cerco il nome…'}
+                      </span>
+                      <span
+                        className={
+                          'shrink-0 text-xs ' + (active ? 'text-cream/80' : 'text-ink-soft')
+                        }
+                      >
+                        {hhmm(v.start)}–{hhmm(v.end)} · {fmtMinutes(v.minutes)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!fromMymap && (
         <div className="flex gap-2 border-b border-line px-5 py-3">
           <input
             type="text"
@@ -218,8 +419,9 @@ export default function PlacePickerSheet({ open, onClose, onAdd, initial = null 
             {searching ? '…' : 'Cerca'}
           </button>
         </div>
+        )}
 
-        {!initial && !results.length && savedPlaces.length > 0 && (
+        {!fromMymap && !initial && !results.length && savedPlaces.length > 0 && (
           <div className="border-b border-line px-5 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Luoghi salvati
@@ -243,13 +445,15 @@ export default function PlacePickerSheet({ open, onClose, onAdd, initial = null 
           </div>
         )}
 
-        <p className="px-5 pt-2 text-xs text-ink-soft">
-          Oppure tocca direttamente un punto sulla mappa: puoi scegliere
-          qualsiasi punto, anche se non viene riconosciuto un indirizzo.
-        </p>
+        {!fromMymap && (
+          <p className="px-5 pt-2 text-xs text-ink-soft">
+            Oppure tocca direttamente un punto sulla mappa: puoi scegliere
+            qualsiasi punto, anche se non viene riconosciuto un indirizzo.
+          </p>
+        )}
         {error && <p className="px-5 pt-1 text-xs text-delete-dark">{error}</p>}
 
-        {results.length > 0 && (
+        {!fromMymap && results.length > 0 && (
           <div className="max-h-32 overflow-y-auto px-3 pt-2">
             {results.map((r) => (
               <button
