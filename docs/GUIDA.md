@@ -69,9 +69,25 @@ Il luogo di una nota è un nome con coordinate. Dal pulsante "Luogo" si apre il 
   modificabile, poi "Aggiungi". Il nome è quello che hai dato a mano in MyMap, altrimenti viene cercato su OpenStreetMap.
   L'ultima sorgente usata viene ricordata.
 
-**Collegare MyMap** (Impostazioni → Integrazioni → MyMap): servono **URL del server MyMap** (HTTPS, senza barra finale), **email** e
-**password** dell'account MyMap. "Testa connessione" mostra quanti punti trovi sul server. Presuppone che MyMap sia usata con un account
-sul tuo server (non solo "su questo telefono"). C'è una guida scaricabile nella sezione stessa.
+**Collegare MyMap** (Impostazioni → Integrazioni → MyMap): servono **URL del server MyMap** (HTTPS, senza barra finale: è lo stesso
+indirizzo che inserisci nell'accesso di MyMap, ad esempio `https://pocketbase.fplinio.it`), **email** e **password** dell'account
+MyMap. Presuppone che MyMap sia usata con un account sul tuo server (non solo "su questo telefono"). C'è una guida scaricabile nella
+sezione stessa.
+
+- **Testa connessione** verifica l'accesso e mostra quanti **punti** ci sono sul server e quanti **nomi dati a mano** (i nomi dei posti
+  che hai assegnato in MyMap). Funziona anche prima di salvare.
+- **Salva** scrive i dati sul tuo profilo Annales. Se il server non ha ancora i campi MyMap (versione dell'app non ancora pubblicata),
+  lo segnala e non svuota gli input.
+
+**Problemi comuni**
+
+| Sintomo | Causa e rimedio |
+|---|---|
+| "Impossibile raggiungere il server MyMap" | URL sbagliato o non raggiungibile (deve esistere nel DNS ed essere HTTPS). Usa l'indirizzo che hai in MyMap. |
+| "Email o password di MyMap non valide" | Sono quelle dell'account **MyMap**, che può avere una password diversa da quella di Annales. |
+| Salvando i campi si svuotano / errore sui campi | Il database di produzione non ha ancora la migration dei campi MyMap: pubblica la nuova versione (push su `main`, poi `docker compose pull && docker compose up -d` sul NAS). |
+| Nel selettore vedo i nomi di OpenStreetMap e non i miei | I tuoi nomi non sono arrivati sul server: in MyMap devi essere collegato al server e le impostazioni risultare "Salvate nel profilo" (dare di nuovo un nome forza il salvataggio). "Testa connessione" dice quanti nomi trova. Il nome si abbina al posto entro 150 m. |
+| "Nessun posto registrato" in un giorno | Servono soste di almeno 20 minuti con il tracking attivo; prova a cambiare giorno con le frecce. |
 
 ## 7. Immich e Spotify
 

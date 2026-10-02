@@ -150,7 +150,9 @@ Altre variabili: `VITE_PB_URL` (build time) punta direttamente a un PocketBase e
 | Un recap non si genera | Chiave Gemini dell'utente; log `[recap]` del container; il cron non copre il passato. |
 | Immich/MyMap "non raggiungibile" | Rete/CORS/HTTPS dal browser; per MyMap anche email/password e che il server abbia la collection `points`. |
 | MyMap non propone posti | Nel giorno servono soste ≥ 20 minuti; controlla tracking attivo in MyMap, giorno scelto e il test di connessione (conta i punti). |
-| I campi di un'integrazione non si salvano | Migration non ancora deployata sul server (campi assenti su `users`). |
+| MyMap: nel selettore compaiono i nomi OpenStreetMap, non i miei | "Testa connessione" mostra i nomi trovati in `users.settings.names.list` del server MyMap. Zero = MyMap non ha sincronizzato il profilo (account sul server + "Salvate nel profilo"). Altrimenti il nome è oltre 150 m dal centro del posto del giorno (`customName` in `lib/mymap.js`). |
+| MyMap: "Impossibile raggiungere il server" | Quasi sempre URL errato (DNS inesistente) o non HTTPS. L'URL è quello usato dall'app MyMap (`https://pocketbase.fplinio.it`); il suo CORS è aperto a qualsiasi origine. |
+| I campi di un'integrazione non si salvano / si svuotano | Migration non ancora deployata sul server (campi assenti su `users`). `MymapIntegration` lo rileva (`rec.mymapUrl === undefined`) e mostra un errore. Dopo la pubblicazione: `pull` + `up -d` sul NAS. |
 | Aggiornamento non visibile | Service worker: `sw.js`/`index.html` sono `no-cache`; ricarica due volte o svuota la cache; verifica che l'Action sia finita e il NAS abbia fatto `pull`. |
 | Build CI bloccata | Il commit `179bd98` ha ritriggerato una build ferma (timeout 6 h su `build-and-push`); rilanciare da Actions → "Run workflow". |
 | Come cambio schema | Nuovo file in `pb_migrations/` (prefisso numerico crescente, API jsvm 0.28), poi deploy. Mai modificare i campi a mano dall'admin. |
