@@ -1,4 +1,4 @@
-# Annales – Architettura (v0.63.1)
+# Annales – Architettura (v0.64.0)
 
 Panoramica tecnica e guida per rispondere alle domande sul progetto. Per l'uso dell'app vedi [docs/GUIDA.md](docs/GUIDA.md); per la
 cronologia, `src/lib/changelog.js`; per il deploy, [deploy/README.md](deploy/README.md).
@@ -47,7 +47,8 @@ luoghi (`src/lib/leaflet.js`).
 | `immich.js`, `spotify.js`, `mymap.js` | Integrazioni esterne (vedi §5). |
 | `integrationDocs.js` | Guide `.md` scaricabili per Immich, Spotify, Gemini, MyMap. |
 | `importSheet.js` | Parser dell'export TSV/CSV per Importa → "Da foglio". |
-| `stats.js`, `exportData.js`, `prefs.js` (aspetto, per-dispositivo in localStorage), `pagesSkin.js`, `idCard.js`, `haptics.js`, `leaflet.js`, `changelog.js` | Supporto. |
+| `reminders.js` | Promemoria "nota del giorno" come notifiche locali Capacitor (solo app Android); elenco in `localStorage` (`annales.reminders`). |
+| `stats.js`, `exportData.js`, `prefs.js` (aspetto, per-dispositivo in localStorage), `pagesSkin.js`, `idCard.js`, `haptics.js` (plugin nativo nell'app, `navigator.vibrate` nel browser), `leaflet.js`, `changelog.js` | Supporto. |
 
 ## 4. Backend
 
@@ -139,7 +140,39 @@ Altre variabili: `VITE_PB_URL` (build time) punta direttamente a un PocketBase e
    all'avvio** del container PocketBase.
 4. I dati stanno nel volume `pb_data`: sopravvivono ad aggiornamenti e riavvii (si perdono solo con `down -v`).
 
-## 8. Domande frequenti: dove guardare
+## 8. App Android (Capacitor)
+
+La stessa PWA è impacchettata in un APK con **Capacitor 8** (`capacitor.config.json`: id `it.fplinio.annales`, `webDir: dist`). L'app
+gira su `https://localhost`, quindi non può usare la "propria origin": la build Android legge **`.env.android`** (`VITE_PB_URL=https://annales.fplinio.it`).
+
+| Cosa | Dove |
+|---|---|
+| Progetto nativo | `android/` (Gradle). `android/app/src/main/assets/public` e `build/` sono generati e ignorati da git. |
+| Permessi | `android/app/src/main/AndroidManifest.xml`: `INTERNET`, **`RECORD_AUDIO`** e `MODIFY_AUDIO_SETTINGS` (dettatura Gemini: la WebView di Capacitor chiede il microfono solo se è dichiarato nel manifest). Notifiche (`POST_NOTIFICATIONS`, allarmi esatti, riavvio) arrivano dal manifest del plugin `local-notifications`. |
+| Widget "Nuova nota" | `NewNoteWidget.java`, `NewNoteSmallWidget.java` + layout/drawable in `res/`. Aprono `https://localhost/note/new`; `src/components/WidgetLinks.jsx` lo intercetta (anche il tocco sulla notifica) e porta alla vista mese con la scelta Gemini / a mano. |
+| Promemoria | `src/lib/reminders.js` + `ReminderSettings.jsx` (Impostazioni → Promemoria, visibile solo se `Capacitor.isNativePlatform()`). |
+| Differenze nel frontend | `main.jsx` non registra il service worker nell'app; `haptics.js` usa il plugin nativo e un listener globale sui tocchi; `usePullToRefresh` nella vista mese (`listNotesInRange(..., { fresh: true })`). |
+| Download | `public/download/annales.apk` (copiato in `dist/download` dalla build web e servito da nginx), con link in Impostazioni → App Android (solo web). |
+
+**Compilare l'APK (sul PC):** servono **JDK 21** (`C:\Program Files\Eclipse Adoptium\jdk-21…`) e l'Android SDK 36 (`C:\Users\franc\Android\Sdk`).
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot'
+$env:ANDROID_HOME='C:\Users\franc\Android\Sdk'
+npm run android:build                      # build web in modalità android + cap sync
+cd android; .\gradlew.bat assembleDebug    # android/app/build/outputs/apk/debug/app-debug.apk
+copy app\build\outputs\apk\debug\app-debug.apk ..\public\download\annales.apk
+```
+
+Poi commit e push: il Dockerfile includerà l'APK nell'immagine web e dopo `pull`/`up -d` sul NAS sarà scaricabile da
+`https://annales.fplinio.it/download/annales.apk`. Alza `versionCode`/`versionName` in `android/app/build.gradle` a ogni APK nuovo.
+`android:build` toglie `dist/download` per non mettere l'APK dentro l'APK.
+
+**Firma:** l'APK è di **debug**, firmato con `~/.android/debug.keystore` del PC. Un APK compilato altrove (es. dal workflow manuale
+`.github/workflows/android-apk.yml`, artifact `annales-debug-apk`) ha un'altra firma e Android non lo installa sopra quello vecchio: va
+prima disinstallata l'app.
+
+## 9. Domande frequenti: dove guardare
 
 | Domanda | Dove |
 |---|---|
@@ -153,16 +186,20 @@ Altre variabili: `VITE_PB_URL` (build time) punta direttamente a un PocketBase e
 | MyMap: nel selettore compaiono i nomi OpenStreetMap, non i miei | "Testa connessione" mostra i nomi trovati in `users.settings.names.list` del server MyMap. Zero = MyMap non ha sincronizzato il profilo (account sul server + "Salvate nel profilo"). Altrimenti il nome è oltre 150 m dal centro del posto del giorno (`customName` in `lib/mymap.js`). |
 | MyMap: "Impossibile raggiungere il server" | Quasi sempre URL errato (DNS inesistente) o non HTTPS. L'URL è quello usato dall'app MyMap (`https://pocketbase.fplinio.it`); il suo CORS è aperto a qualsiasi origine. |
 | I campi di un'integrazione non si salvano / si svuotano | Migration non ancora deployata sul server (campi assenti su `users`). `MymapIntegration` lo rileva (`rec.mymapUrl === undefined`) e mostra un errore. Dopo la pubblicazione: `pull` + `up -d` sul NAS. |
+| App Android: "Detta un vocale" non registra / nessun permesso Microfono | `RECORD_AUDIO` mancava nel manifest (APK ≤ versionCode 1): senza dichiarazione Android non mostra la richiesta e il permesso non compare nelle impostazioni. Dalla v0.64.0 (versionCode 2) è dichiarato: installare il nuovo APK; se negato, Impostazioni telefono → App → Annales → Autorizzazioni. |
+| App Android: l'aggiornamento dell'APK non si installa | Firma diversa (debug keystore di un altro PC o della CI): disinstallare e reinstallare. Stessa firma = aggiornamento sopra. |
 | Aggiornamento non visibile | Service worker: `sw.js`/`index.html` sono `no-cache`; ricarica due volte o svuota la cache; verifica che l'Action sia finita e il NAS abbia fatto `pull`. |
 | Build CI bloccata | Il commit `179bd98` ha ritriggerato una build ferma (timeout 6 h su `build-and-push`); rilanciare da Actions → "Run workflow". |
 | Come cambio schema | Nuovo file in `pb_migrations/` (prefisso numerico crescente, API jsvm 0.28), poi deploy. Mai modificare i campi a mano dall'admin. |
 | Admin UI / superuser | Chiusa da nginx. `docker compose exec pocketbase /pb/pocketbase superuser upsert email password`, oppure pubblica temporaneamente la porta 8090. |
 
-## 9. Punti aperti
+## 10. Punti aperti
 
 - Le credenziali delle integrazioni (API key Immich, Gemini, password MyMap) sono **in chiaro** nel record utente: protette solo dalle
   regole per-proprietario.
 - Registrazione pubblica aperta: chiunque raggiunga il sito può creare un account (i dati restano isolati per utente).
 - Nessun test automatico: la verifica è manuale + `npm run lint` + `npm run build`.
 - Il bundle supera i 500 kB (warning di Vite): nessun code-splitting.
+- L'APK è di debug e committato in `public/download/` (circa 5 MB per versione, resta nella storia di git); non c'è firma di release
+  né pubblicazione su Play Store. Il workflow `android-apk.yml` è manuale e produce un APK con firma diversa.
 - Leaflet è caricato da CDN (`unpkg.com`): senza internet il selettore luoghi non mostra la mappa.

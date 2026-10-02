@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import Icon from './Icon'
 import { transcribeAudio, describeGeminiError } from '../lib/gemini'
 
@@ -139,7 +140,11 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
         })
       }, 1000)
     } catch {
-      setError('Microfono non disponibile: controlla i permessi del browser.')
+      setError(
+        Capacitor.isNativePlatform()
+          ? 'Microfono non disponibile: consenti il permesso Microfono ad Annales dalle impostazioni del telefono (Impostazioni → App → Annales → Autorizzazioni).'
+          : 'Microfono non disponibile: controlla i permessi del browser.',
+      )
     }
   }
 

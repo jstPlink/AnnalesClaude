@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#efe6cf" />
+            <corners android:radius="16dp" />
+            <stroke android:width="1dp" android:color="#cabfa8" />
+        </shape>
+    </item>
+    <item
+        android:bottom="9dp"
+        android:left="9dp"
+        android:right="9dp"
+        android:top="9dp"
+        android:drawable="@drawable/widget_grid_tile" />
+</layer-list>

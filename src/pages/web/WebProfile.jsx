@@ -45,6 +45,7 @@ import MoodGradientControls from '../../components/MoodGradientControls'
 import SongsUsageList from '../../components/SongsUsageList'
 import ExportButtons from '../../components/ExportButtons'
 import OfflineStorage from '../../components/OfflineStorage'
+import { Capacitor } from '@capacitor/core'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
 import Icon from '../../components/Icon'
@@ -978,6 +979,23 @@ export default function WebProfile() {
       <SettingsSection title="Uso offline" icon="cloud">
         <OfflineStorage />
       </SettingsSection>
+
+      {!Capacitor.isNativePlatform() && (
+        <SettingsSection title="App Android" icon="download">
+          <p className="mb-3 text-xs text-ink-soft sm:text-sm">
+            Scarica l'app per Android (file APK). Aprilo dal telefono e, se richiesto,
+            consenti l'installazione da questa fonte. Si accede con lo stesso account.
+          </p>
+          <a
+            href="/download/annales.apk"
+            download="annales.apk"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-cream px-4 py-2 text-sm font-bold text-ink transition hover:brightness-105"
+          >
+            <Icon name="download" size={14} className="shrink-0" />
+            Scarica l'app per Android
+          </a>
+        </SettingsSection>
+      )}
 
       <SettingsSection
         title="Import ed export"

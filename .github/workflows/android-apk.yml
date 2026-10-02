@@ -1,0 +1,29 @@
+name: android-apk
+
+# APK di debug dell'app Android (Capacitor). Si lancia a mano da
+# Actions → "Run workflow"; l'APK si scarica dagli artifact del run.
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run android:build
+      - name: Build APK di debug
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: annales-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

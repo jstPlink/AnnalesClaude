@@ -19,7 +19,7 @@ const COLLECTION = 'note'
 // Letto con cache (vedi src/lib/cache.js): con rete assente/lenta mostra i
 // dati salvati; se manca la cache esatta di questo intervallo lo ricava da
 // quella di tutte le note (riempita all'apertura, vedi prefetch.js).
-export async function listNotesInRange({ start, end }) {
+export async function listNotesInRange({ start, end }, { fresh = false } = {}) {
   // La collection non ha i campi autodate `created`/`updated`: ordinare solo
   // per `timeStart` (poi eventualmente lato client).
   return cachedRead(
@@ -30,6 +30,8 @@ export async function listNotesInRange({ start, end }) {
         sort: 'timeStart',
       }),
     {
+      // fresh (pull-to-refresh): aspetta la rete invece di servire la cache
+      softMs: fresh ? 30000 : undefined,
       fallback: async () => {
         const all = await cacheGet('notes:all')
         if (!all) return undefined

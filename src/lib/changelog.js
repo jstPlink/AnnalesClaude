@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.64.0',
+    date: '2026-10-02 18:46',
+    changes: [
+      "Nuova app Android (APK scaricabile da Impostazioni → App Android, da web): è Annales impacchettata con Capacitor, con lo stesso account e gli stessi dati. Nell'app non c'è il service worker e le vibrazioni al tocco usano il motore nativo.",
+      'App Android: widget \"Nuova nota\" per la schermata home (due formati) che apre subito la scelta Gemini / a mano, e Impostazioni → Promemoria con una o più notifiche periodiche \"scrivi la nota del giorno\" (orario e giorni a scelta, anche ad app chiusa).',
+      'Vista mese (telefono): tira verso il basso per aggiornare, leggendo le note direttamente dal server invece che dalla cache.',
+      "Fix app Android: la dettatura vocale (\"Detta un vocale\", note con Gemini) non poteva registrare perché mancava il permesso Microfono; ora l'app lo chiede e, se negato, spiega dove concederlo. Per averlo bisogna installare il nuovo APK.",
+    ],
+  },
+  {
     version: '0.63.1',
     date: '2026-10-02 11:44',
     changes: [

@@ -113,7 +113,26 @@ aggiorna in background. Due **linguette** sul bordo destro avvisano di connessio
 riprova. Le note salvate offline restano in coda e si inviano da sole al ritorno della rete. In Impostazioni → Uso offline: spazio
 occupato, numero di note e miniature, "Aggiorna ora" e "Svuota cache".
 
-## 10. Importare vecchie note (solo web)
+## 10. App Android
+
+Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli stessi dati.
+
+- **Installazione:** da web, Impostazioni → **App Android** → "Scarica l'app per Android". Apri il file dal telefono e, se richiesto,
+  consenti l'installazione da questa fonte. L'APK è "di debug", firmato con la chiave di debug del PC su cui è compilato: per aggiornare
+  l'app installa il nuovo APK sopra il vecchio. Se Android rifiuta l'aggiornamento (firma diversa) disinstalla prima l'app.
+- **Permessi:**
+  - **Microfono:** serve per "Detta un vocale" nelle note con Gemini. Android lo chiede alla prima registrazione; se l'hai negato:
+    Impostazioni del telefono → App → Annales → Autorizzazioni → Microfono. Un APK vecchio, senza il permesso nel manifest, non lo
+    chiede mai: va reinstallata la versione nuova.
+  - **Notifiche:** servono per i promemoria (Android 13+ le chiede alla prima attivazione).
+- **Widget "Nuova nota":** aggiungilo dalla schermata home (due formati). Un tocco apre l'app sulla scelta Gemini / a mano.
+- **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana; la notifica "scrivi la nota
+  del giorno" arriva anche ad app chiusa e senza rete, e toccandola si apre la scelta Gemini / a mano. Sono salvati sul dispositivo.
+- **Aggiorna tirando:** nella vista mese (telefono) tira verso il basso per rileggere le note dal server.
+- Dentro l'app non c'è service worker: l'interfaccia è nell'APK e si aggiorna installando un nuovo APK; i dati arrivano sempre dal
+  server `annales.fplinio.it`.
+
+## 11. Importare vecchie note (solo web)
 
 - **Da immagine:** screenshot di un vecchio diario; Gemini estrae le note, tu le rivedi e salvi.
 - **Da foglio (testo):** export TSV/CSV di Google Fogli (una riga = un giorno). Si indicano le colonne (mese, giorno, testo, titolo,

@@ -11,6 +11,7 @@ import { useIsWide } from './hooks/useIsWide'
 import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
 import StatusPills from './components/StatusPills'
+import WidgetLinks from './components/WidgetLinks'
 import SketchDefs from './components/SketchDefs'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
@@ -93,6 +94,7 @@ export default function App() {
       <NavProvider>
         <SketchDefs />
         <BrowserRouter>
+          <WidgetLinks />
           <Routes>
             <Route
               path="/login"

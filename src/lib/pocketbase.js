@@ -8,7 +8,8 @@ import PocketBase from 'pocketbase'
 //  - `npm run dev`: idem, con il proxy di Vite (vite.config.js) verso lo
 //    stack Docker locale;
 //  - VITE_PB_URL (build time) vince su tutto, per puntare a un backend
-//    esterno (vedi .env.example).
+//    esterno (vedi .env.example). L'app Android (Capacitor) gira su
+//    https://localhost, quindi la sua build lo richiede (`npm run android:build`).
 const PB_URL = import.meta.env.VITE_PB_URL?.trim() || window.location.origin
 
 // Fino alla v0.60 l'indirizzo si poteva cambiare da login/Impostazioni e restava

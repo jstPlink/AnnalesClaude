@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCacheRefresh } from '../hooks/useConnection'
-import { useNavigate } from 'react-router-dom'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useNav } from '../context/NavContext'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
@@ -23,6 +24,7 @@ const SWIPE_THRESHOLD = 55
 
 export default function MonthView() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { cursor, setCursor } = useNav()
   const { user } = useAuth()
   const [notes, setNotes] = useState([])
@@ -34,7 +36,15 @@ export default function MonthView() {
   const [allPeople, setAllPeople] = useState([])
   const [allTags, setAllTags] = useState([])
 
+  // Aperta dal widget "Nuova nota": mostra subito la scelta Gemini / a mano.
+  const widgetNewNote = location.state?.newNote
   useEffect(() => {
+    if (!widgetNewNote) return
+    setNoteChoiceOpen(true)
+    navigate('/', { replace: true, state: null })
+  }, [widgetNewNote, navigate])
+
+  const loadLists = useCallback(() => {
     listPeople()
       .then(setAllPeople)
       .catch(() => {})
@@ -42,12 +52,15 @@ export default function MonthView() {
       .then(setAllTags)
       .catch(() => {})
   }, [])
+  useEffect(() => {
+    loadLists()
+  }, [loadLists])
 
-  const load = useCallback(async ({ year, month }) => {
+  const load = useCallback(async ({ year, month }, { fresh = false } = {}) => {
     setLoading(true)
     setError('')
     try {
-      const list = await listNotesInRange(monthRange(year, month))
+      const list = await listNotesInRange(monthRange(year, month), { fresh })
       setNotes(list)
     } catch (err) {
       setError(describeError(err))
@@ -60,6 +73,12 @@ export default function MonthView() {
   useEffect(() => {
     load(cursor)
   }, [cursor, load])
+
+  const mainRef = useRef(null)
+  const { pull, refreshing } = usePullToRefresh(mainRef, async () => {
+    loadLists()
+    await load(cursor, { fresh: true })
+  })
 
   // dati arrivati in background dopo aver mostrato quelli salvati (rete lenta)
   useCacheRefresh(() => load(cursor))
@@ -139,6 +158,7 @@ export default function MonthView() {
       </MobileTopBar>
 
       <main
+        ref={mainRef}
         key={`${cursor.year}-${cursor.month}`}
         className="flex-1 overflow-y-auto no-scrollbar"
         style={{
@@ -148,6 +168,15 @@ export default function MonthView() {
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
       >
+        {(pull > 0 || refreshing) && (
+          <div
+            className="flex items-center justify-center text-xs font-semibold text-ink-soft"
+            style={{ height: pull }}
+          >
+            {refreshing ? 'Aggiorno…' : pull >= 35 ? 'Rilascia per aggiornare' : 'Tira per aggiornare'}
+          </div>
+        )}
+
         {error && (
           <p className="m-4 rounded-2xl bg-delete/10 px-4 py-3 text-sm text-delete-dark">
             {error}
