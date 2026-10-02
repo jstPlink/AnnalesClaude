@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.63.1',
+    date: '2026-10-02 11:44',
+    changes: [
+      "MyMap: i nomi dati a mano ai posti ora compaiono nel selettore luogo anche quando il centro del posto di un singolo giorno si scosta un po' da quello calcolato in MyMap (tolleranza 150 m invece di 120), e si aggiornano subito senza ricaricare Annales.",
+      'MyMap: \"Testa connessione\" indica sempre quanti nomi dati a mano trova sul server e, se sono zero, dove controllare la sincronizzazione.',
+      'MyMap: se il server non ha ancora i campi dell\'integrazione, \"Salva\" lo segnala invece di svuotare i campi.',
+    ],
+  },
+  {
     version: '0.63.0',
     date: '2026-10-02 10:38',
     changes: [

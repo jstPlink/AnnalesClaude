@@ -1,4 +1,4 @@
-# Annales – Architettura (v0.63.0)
+# Annales – Architettura (v0.63.1)
 
 Panoramica tecnica e guida per rispondere alle domande sul progetto. Per l'uso dell'app vedi [docs/GUIDA.md](docs/GUIDA.md); per la
 cronologia, `src/lib/changelog.js`; per il deploy, [deploy/README.md](deploy/README.md).
@@ -95,7 +95,10 @@ dell'utente. **Non** recuperano il passato: i periodi chiusi prima della funzion
   (`clean` + `visitPlaces`: sosta ≥ 20 min con punti entro 150 m dal primo, buchi fino a 3 h, soste entro 150 m unite).
 - `listMymapVisits(cfg, 'AAAA-MM-GG')` legge i punti del giorno (ora locale del browser), li pulisce e ritorna i posti in ordine
   cronologico. I nomi dati a mano in MyMap sono in `users.settings.names.list` (`[{lat,lon,name}]`, valgono entro 120 m); gli altri si
-  cercano su Nominatim (`lookupPlaceName`, una richiesta ogni 1,1 s, cache in memoria).
+  cercano su Nominatim (`lookupPlaceName`, una richiesta ogni 1,1 s, cache in memoria). Il centro di un posto è calcolato sul solo
+  giorno, quindi il confronto col nome usa 150 m (in MyMap 120 m sul centro globale); a ogni uso si fa `authRefresh` per rileggere
+  i nomi aggiornati. Se i nomi non compaiono: "Testa connessione" dice quanti ne trova; con zero, MyMap non li ha sincronizzati nel
+  profilo (serve account sul server e impostazioni "Salvate nel profilo").
 - Il selettore mostra la scelta Annales/MyMap solo se `mymapConfigFromUser(user)` è completo e non si sta modificando un luogo; la
   sorgente è ricordata in `localStorage` (`annales.placeSource`). I call site passano `mymap` e `dateKey` (NoteView, WebNote, WebImport).
 - Perché funzioni il server MyMap deve essere in **HTTPS** e raggiungibile dal browser (CORS di PocketBase è permissivo di default).

@@ -34,13 +34,21 @@ async function login({ url, email, password }) {
     client.autoCancellation(false)
     sessions.set(key, client)
   }
-  if (!client.authStore.isValid) {
+  // Il record utente porta i nomi dati a mano: si rilegge a ogni uso (authRefresh)
+  // così un nome appena dato in MyMap compare senza ricaricare Annales.
+  if (client.authStore.isValid) {
     try {
-      await client.collection('users').authWithPassword(email, password)
-    } catch (err) {
-      sessions.delete(key)
-      throw err
+      await client.collection('users').authRefresh()
+      return client
+    } catch {
+      client.authStore.clear()
     }
+  }
+  try {
+    await client.collection('users').authWithPassword(email, password)
+  } catch (err) {
+    sessions.delete(key)
+    throw err
   }
   return client
 }
@@ -137,10 +145,13 @@ function visitPlaces(pts) {
   return places
 }
 
-// Nome dato a mano in MyMap: vale per tutti i punti entro 120 m.
+// Nome dato a mano in MyMap. In MyMap vale entro 120 m dal centro del posto
+// calcolato su TUTTI i dati; qui il centro è quello di un solo giorno e può
+// scostarsi (deriva GPS, soste in punti diversi dello stesso posto), quindi
+// si accetta fino a 150 m, il raggio con cui MyMap unisce le visite.
 function customName(names, lat, lon) {
   let best = null
-  let bd = 0.12
+  let bd = 0.15
   for (const n of names) {
     if (typeof n?.lat !== 'number' || typeof n?.lon !== 'number') continue
     const d = km(n, { lat, lon })

@@ -63,10 +63,12 @@ export default function MymapIntegration({ web = false }) {
         email: email.trim(),
         password,
       })
-      const names = r.customNames ? `, ${r.customNames} nomi dati a mano` : ''
+      const names = r.customNames
+        ? `${r.customNames} nomi dati a mano.`
+        : 'nessun nome dato a mano trovato sul server: in MyMap, con l’account sul server, devono risultare "Salvate nel profilo" nelle impostazioni.'
       setStatus({
         ok: true,
-        message: `Connessione riuscita: ${r.points.toLocaleString('it-IT')} punti${names}.`,
+        message: `Connessione riuscita: ${r.points.toLocaleString('it-IT')} punti, ${names}`,
       })
     } catch (err) {
       setStatus({ ok: false, message: describeMymapError(err) })
