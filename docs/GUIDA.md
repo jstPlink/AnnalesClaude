@@ -38,13 +38,16 @@ passaggio è automatico in base alla larghezza della finestra.
   sono "da orologio", senza fusi.
 - **Mood:** un righello da 0 a 10 (salvato come 0–1). Il colore della nota, nel mese e nel giorno, segue il gradiente del mood.
 - **Testo:** editor con Markdown/anteprima. Dal menu Gemini si può ripulire/sintetizzare il testo o scriverlo da un prompt; si può
-  anche **dettare a voce** (la registrazione la trascrive Gemini).
+  anche **dettare a voce** (la registrazione la trascrive Gemini; se la trascrizione fallisce puoi ritentarla senza registrare di nuovo).
 - **Immagini:** dal dispositivo oppure da **Immich** (se collegato), con un calendario per saltare al giorno delle foto.
 - **Persone, tag, canzoni:** si scelgono da elenchi (le persone più usate sono in cima); persone e tag nuovi si creano al volo. Le
   canzoni si cercano su Spotify (se collegato) o si incolla un link.
 - **Luogo:** vedi §6.
 - **Nuova nota con Gemini:** dal pulsante "nuova nota" si può scegliere tra manuale e Gemini: scrivi un prompt e la bozza arriva già con
   titolo, testo, tag, persone e luogo, tutto da rivedere prima di salvare.
+- **Bozze:** una nota nuova che chiudi senza salvare (ad esempio con Indietro per sbaglio) non va persa: si salva da sola mentre scrivi e compare nella
+  linguetta **Bozze** sul bordo destro, da riprendere con un tocco o scartare col cestino. Sono sul dispositivo; le immagini non si conservano e vanno
+  riaggiunte. Spariscono quando la nota viene salvata.
 - **Senza rete:** il salvataggio va in coda e si sincronizza da solo (vedi §9).
 
 ## 5. Impostazioni
@@ -104,13 +107,15 @@ un prompt, "Nuova nota con Gemini", dettatura vocale, estrazione note da screens
   rigenerano da soli se modifichi una nota di un periodo già chiuso (una nota di oggi non fa nulla: ci pensa la notte).
 - I periodi chiusi **prima** che la funzione esistesse non hanno recap: si generano a mano col tasto "Genera/Rigenera" nelle viste.
 - Se Gemini è sovraccarico l'app riprova da sola un paio di volte.
+- Quando salvi una nota di un giorno già passato, il recap non si rigenera subito: viene messo in **coda** e il server lo aggiorna in background, uno
+  per volta (giorno, poi mese, poi anno) e a distanza di tempo, così salvare resta veloce. Una linguetta sul bordo destro dice cosa sta aggiornando.
 - Le "Istruzioni personalizzate" (tono, cosa evidenziare) valgono per tutte le richieste e si modificano anche al volo nei pannelli.
 
 ## 9. Uso offline e connessione debole
 
 All'apertura l'app scarica in locale note, persone, tag, luoghi e miniature. Con rete assente o lenta mostra subito i dati salvati e li
-aggiorna in background. Due **linguette** sul bordo destro avvisano di connessione debole/assente e di modifiche in coda; toccandole si
-riprova. Le note salvate offline restano in coda e si inviano da sole al ritorno della rete. In Impostazioni → Uso offline: spazio
+aggiorna in background. Le **linguette** sul bordo destro avvisano di connessione debole/assente e di modifiche in coda (toccandole si
+riprova), dei recap in aggiornamento e delle bozze. Le note salvate offline restano in coda e si inviano da sole al ritorno della rete. In Impostazioni → Uso offline: spazio
 occupato, numero di note e miniature, "Aggiorna ora" e "Svuota cache".
 
 ## 10. App Android
@@ -128,6 +133,7 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
 - **Widget "Nuova nota":** aggiungilo dalla schermata home (due formati). Un tocco apre l'app sulla scelta Gemini / a mano.
 - **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana; la notifica "scrivi la nota
   del giorno" arriva anche ad app chiusa e senza rete, e toccandola si apre la scelta Gemini / a mano. Sono salvati sul dispositivo.
+- **Vibrazione:** un tocco leggero solo sui pulsanti d'azione (non su schede, filtri e selezioni).
 - **Aggiorna tirando:** nella vista mese (telefono) tira verso il basso per rileggere le note dal server.
 - Dentro l'app non c'è service worker: l'interfaccia è nell'APK e si aggiorna installando un nuovo APK; i dati arrivano sempre dal
   server `annales.fplinio.it`.

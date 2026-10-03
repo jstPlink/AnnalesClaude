@@ -203,4 +203,4 @@ scripts/       generate-icons.js (+ icon-source.svg)
 
 ## Non incluso (fasi successive)
 
-APK nativo; HTTPS/reverse proxy (demandato all'infrastruttura del NAS).
+Pubblicazione su Play Store (l'app Android è un APK di debug, vedi `ARCHITETTURA.md` §8); HTTPS/reverse proxy (demandato all'infrastruttura del NAS).

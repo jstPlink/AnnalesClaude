@@ -1,4 +1,4 @@
-# Annales – Architettura (v0.64.0)
+# Annales – Architettura (v0.65.0)
 
 Panoramica tecnica e guida per rispondere alle domande sul progetto. Per l'uso dell'app vedi [docs/GUIDA.md](docs/GUIDA.md); per la
 cronologia, `src/lib/changelog.js`; per il deploy, [deploy/README.md](deploy/README.md).
@@ -27,10 +27,10 @@ luoghi (`src/lib/leaflet.js`).
 |---|---|
 | `App.jsx` | Rotte. `Screen` sceglie la variante **mobile** (`pages/*.jsx`) o **web** (`pages/web/Web*.jsx`) con `useIsWide`; la web ha `DesktopShell` con barra laterale. Tutte le rotte tranne `/login` sono dietro `RequireAuth`. |
 | `pages/` | Mobile: `MonthView`, `DayView`, `NoteView`, `DataView` (Andamento), `StatsView`, `FilterView` (Cerca), `Profile` (Impostazioni), `Login`. `pages/web/`: le stesse in versione desktop, più `WebImport`; `MonthPages`/`DayPages` = skin "Pagine" (l'unica rimasta). |
-| `components/` | UI condivisa: selettori (`PlacePickerSheet`, `PeoplePickerSheet`, `TagPickerSheet`, `AddSongSheet`, `AddImagesSheet`, `Immich*Picker`), Gemini (`GeminiSheet`, `NewNoteWithGeminiSheet`, `VoiceRecordButton`), `MymapIntegration`, `SettingsSection`, `StatusPills`/`PendingSync`/`OfflineStorage` (offline), `PeriodRecapCard`, `OnThisDay`… `components/web/` = `Sidebar`, `ProfileCard`. |
+| `components/` | UI condivisa: selettori (`PlacePickerSheet`, `PeoplePickerSheet`, `TagPickerSheet`, `AddSongSheet`, `AddImagesSheet`, `Immich*Picker`), Gemini (`GeminiSheet`, `NewNoteWithGeminiSheet`, `VoiceRecordButton`), `MymapIntegration`, `SettingsSection`, `StatusPills` + `SideTab` (linguette sul bordo destro: `PendingSync`, `RecapQueueTab`, `DraftsTab`, connessione), `OfflineStorage` (offline), `PeriodRecapCard`, `OnThisDay`… `components/web/` = `Sidebar`, `ProfileCard`. |
 | `lib/` | Logica senza UI (sotto). |
 | `context/` | `AuthContext` (utente corrente = `pb.authStore`, applica il gradiente mood), `NavContext` (mese/anno visibili). |
-| `hooks/` | `useIsWide`, `useConnection`. |
+| `hooks/` | `useIsWide`, `useConnection`, `useAutoDraft` (salva da sola la bozza di una nuova nota). |
 | `index.css` | Tutto lo stile "Pagine" (carta, cartoncini, nastri) e i token del tema. |
 
 ### `src/lib/`
@@ -40,6 +40,9 @@ luoghi (`src/lib/leaflet.js`).
 | `pocketbase.js` | Istanza `pb`. URL = `VITE_PB_URL` oppure **`window.location.origin`**. Autocancellazione richieste disattivata. |
 | `notes.js` | Tutto sulla collection `note` (liste per intervallo, create/update/delete, coda offline, ricerche, `parsePlace`, riassegnazioni di persone/luoghi, conteggi d'uso). |
 | `people.js`, `tags.js`, `places.js`, `importCsvs.js`, `recaps.js` | Accesso alle rispettive collection (sempre per-utente: `user` va valorizzato in creazione). |
+| `drafts.js` | Bozze delle note nuove lasciate a metà: `localStorage` per-utente (`annales.noteDrafts:<id>`), massimo 30. Le immagini non si conservano (solo il conteggio). Alimentano la linguetta `DraftsTab`; ripresa con `navigate('/note/new', { state: { aiDraft, draftId } })`. |
+| `recapQueue.js` | Legge la coda `recap_jobs` (solo lettura) e `pokeRecapQueue()` (da chiamare dopo un salvataggio) per la linguetta `RecapQueueTab`. |
+| `audio.js` | `blobToWav`: ripiego per la dettatura, ricodifica la registrazione in WAV 16 kHz se Gemini rifiuta WebM/MP4. |
 | `dates.js` | Date "da orologio" (nessun fuso). `toPbTime`, `parseWall`, `dayKey`, `addDaysKey`, etichette italiane. |
 | `mood.js` | Mood 0–1, gradiente di colori (personalizzabile, campo `moodGradient` dell'utente). |
 | `cache.js`, `prefetch.js`, `offlineQueue.js` | Lettura da cache IndexedDB con aggiornamento in background; precaricamento all'apertura; coda delle scritture offline (`flushQueue` in `notes.js`). |
@@ -48,7 +51,7 @@ luoghi (`src/lib/leaflet.js`).
 | `integrationDocs.js` | Guide `.md` scaricabili per Immich, Spotify, Gemini, MyMap. |
 | `importSheet.js` | Parser dell'export TSV/CSV per Importa → "Da foglio". |
 | `reminders.js` | Promemoria "nota del giorno" come notifiche locali Capacitor (solo app Android); elenco in `localStorage` (`annales.reminders`). |
-| `stats.js`, `exportData.js`, `prefs.js` (aspetto, per-dispositivo in localStorage), `pagesSkin.js`, `idCard.js`, `haptics.js` (plugin nativo nell'app, `navigator.vibrate` nel browser), `leaflet.js`, `changelog.js` | Supporto. |
+| `stats.js`, `exportData.js`, `prefs.js` (aspetto, per-dispositivo in localStorage), `pagesSkin.js`, `idCard.js`, `haptics.js` (solo sui pulsanti d'azione, intensità dimezzata: 4 ms nel browser, 10 ms nell'app Android; si chiama `haptic()` a mano, **nessun listener globale**), `leaflet.js`, `changelog.js` | Supporto. |
 
 ## 4. Backend
 
@@ -64,7 +67,8 @@ file: la logica sta in `pb_hooks/recap_lib.js`, caricata con `require()` dentro 
 | `tags` | `name`, `user` | |
 | `places` | `name`, `lat`, `lon`, `user` | Elenco curato; il campo `place` delle note è un JSON indipendente (non una relazione). |
 | `import_csvs` | `label`, `content`, `user` | Libreria dei file caricati in Importa. |
-| `recaps` | `period` (`day`/`month`/`year`), `key` (`AAAA-MM-GG`/`AAAA-MM`/`AAAA`), `text`, `user` | Scritti dal server di notte o dal tasto "Genera". |
+| `recaps` | `period` (`day`/`month`/`year`), `key` (`AAAA-MM-GG`/`AAAA-MM`/`AAAA`), `text`, `user` | Scritti dal server di notte, dalla coda o dal tasto "Genera". |
+| `recap_jobs` | `period`, `key`, `queuedAt` (ms), `user`; indice unico (user, period, key) | **Coda** dei recap da rigenerare. L'utente può solo leggerla; scrive solo il server (`$app` salta le regole). |
 
 Regole: tutte le collection sono **per-proprietario** (`user = @request.auth.id`; in creazione il client deve inviare `user`).
 
@@ -76,9 +80,21 @@ Regole: tutte le collection sono **per-proprietario** (`user = @request.auth.id`
 
 ### Hook e cron (`pb_hooks/`)
 
-`main.pb.js` registra: hook su create/update/delete di `note` (cascata sul recap del giorno, e di mese/anno se chiusi) e tre cron —
-`dailyRecap` (00:30 ogni notte), `monthlyRecap` (00:50 del giorno 1), `yearlyRecap` (01:10 del 1° gennaio). Usano la chiave Gemini
-dell'utente. **Non** recuperano il passato: i periodi chiusi prima della funzione si generano a mano dall'app.
+`main.pb.js` **registra soltanto**; la logica è in `recap_lib.js`, caricato con ``require(`${__hooks}/recap_lib.js`)`` dentro ogni handler
+(vincolo del JSVM: ogni handler gira isolato e non vede funzioni definite altrove, nemmeno nello stesso file — è l'errore
+`ReferenceError: X is not defined` che il 2026-09-30 bloccò il salvataggio delle note).
+
+- **Hook su create/update/delete di `note`** (`*AfterSuccess`): NON chiamano Gemini. Mettono in coda (`recap_jobs`, con `queuedAt` = adesso + 60 s,
+  che accorpa le modifiche ravvicinate) il giorno toccato — e quello di partenza se la data è cambiata — purché non sia oggi e l'utente abbia
+  una chiave Gemini. Salvare resta istantaneo anche con Gemini lento (prima il salvataggio restava appeso).
+- **Cron `recapQueue`** (ogni minuto): evade UN lavoro pronto per giro (richieste a Gemini distanziate), con al massimo 3 tentativi da 10 s.
+  Errore transitorio → il lavoro resta in coda e riprova dopo 2 minuti; errore non recuperabile (chiave non valida) → scartato. A cascata: finito un
+  giorno si accoda il suo mese (se non è il corrente), finito il mese il suo anno (se non è l'anno corrente). Un solo giro alla volta
+  (`$app.store()`).
+- **Cron notturni** `dailyRecap` (00:30), `monthlyRecap` (00:50 del giorno 1), `yearlyRecap` (01:10 del 1° gennaio): creano il recap del periodo appena
+  chiuso, riprovando ogni 10 s finché Gemini risponde. Usano la chiave dell'utente. Il fuso è `Europe/Rome` (`TZ` + `tzdata` in `pocketbase.Dockerfile`).
+- **Non** recuperano il passato: i periodi chiusi prima della funzione si generano a mano dall'app (tasto "Genera/Rigenera").
+- In app, `RecapQueueTab` legge `recap_jobs` (ogni 15 s finché c'è coda, e subito dopo un salvataggio) e mostra cosa sta aggiornando il server.
 
 ## 5. Integrazioni
 
@@ -151,10 +167,10 @@ gira su `https://localhost`, quindi non può usare la "propria origin": la build
 | Permessi | `android/app/src/main/AndroidManifest.xml`: `INTERNET`, **`RECORD_AUDIO`** e `MODIFY_AUDIO_SETTINGS` (dettatura Gemini: la WebView di Capacitor chiede il microfono solo se è dichiarato nel manifest). Notifiche (`POST_NOTIFICATIONS`, allarmi esatti, riavvio) arrivano dal manifest del plugin `local-notifications`. |
 | Widget "Nuova nota" | `NewNoteWidget.java`, `NewNoteSmallWidget.java` + layout/drawable in `res/`. Aprono `https://localhost/note/new`; `src/components/WidgetLinks.jsx` lo intercetta (anche il tocco sulla notifica) e porta alla vista mese con la scelta Gemini / a mano. |
 | Promemoria | `src/lib/reminders.js` + `ReminderSettings.jsx` (Impostazioni → Promemoria, visibile solo se `Capacitor.isNativePlatform()`). |
-| Differenze nel frontend | `main.jsx` non registra il service worker nell'app; `haptics.js` usa il plugin nativo e un listener globale sui tocchi; `usePullToRefresh` nella vista mese (`listNotesInRange(..., { fresh: true })`). |
+| Differenze nel frontend | `main.jsx` non registra il service worker nell'app; `haptics.js` usa il plugin nativo (vibrazione di 10 ms) solo sui pulsanti d'azione, senza listener globale; `usePullToRefresh` nella vista mese (`listNotesInRange(..., { fresh: true })`). |
 | Download | `public/download/annales.apk` (copiato in `dist/download` dalla build web e servito da nginx), con link in Impostazioni → App Android (solo web). |
 
-**Compilare l'APK (sul PC):** servono **JDK 21** (`C:\Program Files\Eclipse Adoptium\jdk-21…`) e l'Android SDK 36 (`C:\Users\franc\Android\Sdk`).
+**Compilare l'APK (sul PC):** servono **JDK 21** e l'Android SDK con piattaforma **36** (Capacitor 8). Sul PC `plink`: JDK 21 Temurin estratto in `C:\Users\plink\jdks\jdk-21.0.12.1+1` (zip da adoptium.net, nessun admin) e SDK in `C:\Users\plink\AppData\Local\Android\Sdk` (piattaforma 36 e build-tools 36.0.0 installati con `sdkmanager`); serve anche `android/local.properties` con `sdk.dir=…` (ignorato da git). Sull'altro PC (`franc`) i percorsi sono quelli sotto.
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot'
@@ -168,7 +184,9 @@ Poi commit e push: il Dockerfile includerà l'APK nell'immagine web e dopo `pull
 `https://annales.fplinio.it/download/annales.apk`. Alza `versionCode`/`versionName` in `android/app/build.gradle` a ogni APK nuovo.
 `android:build` toglie `dist/download` per non mettere l'APK dentro l'APK.
 
-**Firma:** l'APK è di **debug**, firmato con `~/.android/debug.keystore` del PC. Un APK compilato altrove (es. dal workflow manuale
+**Firma:** l'APK è di **debug**, firmato con `~/.android/debug.keystore` del PC (ogni PC ha la sua: passare da un PC all'altro richiede `adb uninstall it.fplinio.annales` e rifare l'accesso, i dati sono sul server).
+
+**Installare sul telefono (debug wireless):** `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`; con firma diversa `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → disinstalla e reinstalla. Versione attuale: versionCode 3 / versionName 1.2 (frontend v0.65.0). Un APK compilato altrove (es. dal workflow manuale
 `.github/workflows/android-apk.yml`, artifact `annales-debug-apk`) ha un'altra firma e Android non lo installa sopra quello vecchio: va
 prima disinstallata l'app.
 
@@ -176,7 +194,9 @@ prima disinstallata l'app.
 
 | Domanda | Dove |
 |---|---|
-| "Failed to create record" salvando una nota | Hook in `pb_hooks/` (un errore lì blocca il salvataggio: successo con la v0.62.0, corretto nella 0.62.1) e log del container PocketBase. |
+| "Failed to create record" salvando una nota | Hook in `pb_hooks/` (un errore lì blocca il salvataggio: successo con la v0.62.0, corretto nella 0.62.1) e log del container PocketBase. I dettagli sono nella tabella `_logs` di `pb_data/auxiliary.db` (campo `details`): copia il file fuori dal container e interrogalo con `sqlite3`. |
+| Salvare una nota si blocca / lentezza dopo il salvataggio | Dalla v0.65.0 gli hook non chiamano più Gemini: guarda la coda `recap_jobs` e la linguetta `RecapQueueTab`. Prima (≤ 0.62) la chiamata stava dentro l'hook. |
+| Ho chiuso una nota nuova senza salvare | Linguetta "Bozze" sul bordo destro (`DraftsTab`): `localStorage` del dispositivo, per-utente, immagini escluse. |
 | "Something went wrong" al login in locale | Il proxy non raggiunge un backend: `VITE_DEV_API` assente e niente stack su `localhost:8973`. Vedi §6. |
 | Una nota non compare / ordine sbagliato | Formato di `date`/`timeStart` (§4); nessun campo `created`. |
 | Una nota offline non è partita | Coda in `offlineQueue.js` + linguetta `PendingSync`; `flushQueue` in `notes.js`. |
