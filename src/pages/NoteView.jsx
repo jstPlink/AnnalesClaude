@@ -36,6 +36,7 @@ import { fileUrl } from '../lib/pocketbase'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { haptic } from '../lib/haptics'
+import { notifyNotesChanged } from '../lib/widgetSync'
 import { pokeRecapQueue } from '../lib/recapQueue'
 import { useAutoDraft } from '../hooks/useAutoDraft'
 import { useAuth } from '../context/AuthContext'
@@ -342,6 +343,7 @@ export default function NoteView() {
       // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
       if (creating) discardDraft()
       pokeRecapQueue() // il server rigenera in background il recap del giorno (se passato)
+      notifyNotesChanged() // widget della home (app Android)
       setRecord(rec)
       setCreatedId(rec.id)
       setExistingImages(rec.images || [])
@@ -405,6 +407,7 @@ export default function NoteView() {
     try {
       await deleteNote(effectiveId)
       pokeRecapQueue()
+      notifyNotesChanged()
       navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
       setBusy(false)

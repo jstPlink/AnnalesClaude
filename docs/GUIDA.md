@@ -131,6 +131,8 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
     chiede mai: va reinstallata la versione nuova.
   - **Notifiche:** servono per i promemoria (Android 13+ le chiede alla prima attivazione).
 - **Widget "Nuova nota":** aggiungilo dalla schermata home (due formati). Un tocco apre l'app sulla scelta Gemini / a mano.
+- **Widget 3×1 "Annales":** tre blocchi. **A sinistra** il mood dell'ultima settimana (in centesimi, da 0 a 100, con un quadratino di carta del colore del tuo gradiente e quanti giorni e note ha considerato; toccandolo si apre Andamento); **al centro** l'ultima nota: il giorno ("oggi", "ieri" o la data) e l'ora in cui è finita (toccandola si apre quel giorno); **a destra** il pulsante giallo in rilievo, un po' storto, per scrivere una nota nuova. Si aggiorna quando apri l'app, la riporti in primo piano o salvi/elimini una nota: una nota scritta da un altro dispositivo compare alla prossima apertura.
+- **Permessi:** Impostazioni → **Permessi** mostra cosa hai concesso all'app (microfono, notifiche, allarmi precisi, risparmio batteria), a cosa serve, e ha il pulsante per concederlo o per aprire la schermata di Android dove si cambia. Si aggiorna da solo quando torni nell'app.
 - **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana; la notifica "scrivi la nota
   del giorno" arriva anche ad app chiusa e senza rete, e toccandola si apre la scelta Gemini / a mano. Sono salvati sul dispositivo.
 - **Vibrazione:** un tocco leggero solo sui pulsanti d'azione (non su schede, filtri e selezioni).

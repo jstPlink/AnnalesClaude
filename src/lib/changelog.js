@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.66.0',
+    date: '2026-10-03 10:24',
+    changes: [
+      "Impostazioni → Permessi (app Android): cosa hai concesso all'app — microfono, notifiche, allarmi precisi e risparmio batteria — con a cosa serve ciascuno, il pulsante per concederlo o per aprire la schermata di Android giusta, e l'aggiornamento automatico quando torni nell'app. Nel browser mostra microfono e notifiche in sola lettura.",
+      "Nuovo widget 3×1 per la home (app Android), in tre blocchi: a sinistra il mood dell'ultima settimana (in centesimi, da 0 a 100, con un quadratino di carta del colore del tuo gradiente, giorni e note considerati); al centro l'ultima nota, con il giorno e l'ora in cui è finita; a destra il pulsante in rilievo, leggermente storto, per scrivere una nota nuova. Testi in un carattere scritto a mano. Toccando il mood si apre Andamento, toccando l'ultima nota il suo giorno. Si aggiorna quando apri l'app, torna in primo piano o salvi/elimini una nota.",
+    ],
+  },
+  {
     version: '0.65.0',
     date: '2026-10-03 03:22',
     changes: [

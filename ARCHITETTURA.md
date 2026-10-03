@@ -1,4 +1,4 @@
-# Annales – Architettura (v0.65.0)
+# Annales – Architettura (v0.66.0)
 
 Panoramica tecnica e guida per rispondere alle domande sul progetto. Per l'uso dell'app vedi [docs/GUIDA.md](docs/GUIDA.md); per la
 cronologia, `src/lib/changelog.js`; per il deploy, [deploy/README.md](deploy/README.md).
@@ -42,6 +42,8 @@ luoghi (`src/lib/leaflet.js`).
 | `people.js`, `tags.js`, `places.js`, `importCsvs.js`, `recaps.js` | Accesso alle rispettive collection (sempre per-utente: `user` va valorizzato in creazione). |
 | `drafts.js` | Bozze delle note nuove lasciate a metà: `localStorage` per-utente (`annales.noteDrafts:<id>`), massimo 30. Le immagini non si conservano (solo il conteggio). Alimentano la linguetta `DraftsTab`; ripresa con `navigate('/note/new', { state: { aiDraft, draftId } })`. |
 | `recapQueue.js` | Legge la coda `recap_jobs` (solo lettura) e `pokeRecapQueue()` (da chiamare dopo un salvataggio) per la linguetta `RecapQueueTab`. |
+| `permissions.js` | Permessi per Impostazioni → Permessi (`PermissionsSettings.jsx`): nell'app Android legge lo stato vero dal plugin nativo `AppPermissions`; nel browser usa la Permissions API (sola lettura). |
+| `widgetSync.js` | Riepilogo per il widget 3×1 della home (solo app Android): mood giornaliero degli ultimi 14 giorni + ultima nota + gradiente del mood, passati al plugin nativo `AnnalesWidget`. `refreshWidget()` all'avvio e al ritorno in primo piano (`WidgetSync.jsx`), `notifyNotesChanged()` dopo ogni salvataggio/eliminazione. |
 | `audio.js` | `blobToWav`: ripiego per la dettatura, ricodifica la registrazione in WAV 16 kHz se Gemini rifiuta WebM/MP4. |
 | `dates.js` | Date "da orologio" (nessun fuso). `toPbTime`, `parseWall`, `dayKey`, `addDaysKey`, etichette italiane. |
 | `mood.js` | Mood 0–1, gradiente di colori (personalizzabile, campo `moodGradient` dell'utente). |
@@ -165,6 +167,8 @@ gira su `https://localhost`, quindi non può usare la "propria origin": la build
 |---|---|
 | Progetto nativo | `android/` (Gradle). `android/app/src/main/assets/public` e `build/` sono generati e ignorati da git. |
 | Permessi | `android/app/src/main/AndroidManifest.xml`: `INTERNET`, **`RECORD_AUDIO`** e `MODIFY_AUDIO_SETTINGS` (dettatura Gemini: la WebView di Capacitor chiede il microfono solo se è dichiarato nel manifest). Notifiche (`POST_NOTIFICATIONS`, allarmi esatti, riavvio) arrivano dal manifest del plugin `local-notifications`. |
+| Plugin nativi locali | In `android/.../` e registrati in `MainActivity.java` **prima** di `super.onCreate`: `AppPermissionsPlugin` (stato di microfono, notifiche, allarmi precisi, risparmio batteria; apre le schermate di sistema) e `AnnalesWidgetPlugin` (riceve il riepilogo per il widget 3×1 e lo salva in SharedPreferences `annales_widget`). |
+| Widget 3×1 "Annales" | `AnnalesSummaryWidget.java` + `res/layout/widget_summary.xml`. **Tre blocchi concettuali, senza linee né riquadri**: a sinistra il mood dell'ultima settimana (media dei mood giornalieri degli ultimi 7 giorni, in centesimi (0–100), un quadratino di carta tinto col colore del gradiente dell'utente; tocco → `/dati`); al centro l'ultima nota con giorno ("oggi", "ieri", "28 set", "28 set ’25") e solo l'ora di fine (tocco → `/day/AAAA-MM-GG`; l'ultima nota è quella con data e ora di fine più recenti — le note non hanno un campo "salvata il"); a destra il pulsante in rilievo "Nuova nota", ruotato di 2° (apre `/note/new`). I due blocchi di testo hanno la stessa struttura e altezze fisse (didascalia / valore / riga sotto, stessa dimensione del valore) così le didascalie sono allineate; testi di valore e righe sotto ispessiti con un finto grassetto (ombra dello stesso colore, perché il font ha un solo peso); font di sistema `casual` (Coming Soon) per tutti i testi. `WidgetLinks.jsx` accetta solo `/note/new`, `/dati` e `/day/…`). I dati li manda l'app, quindi il widget è aggiornato all'ultima apertura/ritorno in primo piano/salvataggio (una nota scritta da un altro dispositivo compare alla prossima apertura); la finestra dei 7 giorni e "oggi/ieri" si calcolano al momento del disegno e il widget si ridisegna ogni ~30 min, quindi restano giusti a mezzanotte anche senza aprire l'app. |
 | Widget "Nuova nota" | `NewNoteWidget.java`, `NewNoteSmallWidget.java` + layout/drawable in `res/`. Aprono `https://localhost/note/new`; `src/components/WidgetLinks.jsx` lo intercetta (anche il tocco sulla notifica) e porta alla vista mese con la scelta Gemini / a mano. |
 | Promemoria | `src/lib/reminders.js` + `ReminderSettings.jsx` (Impostazioni → Promemoria, visibile solo se `Capacitor.isNativePlatform()`). |
 | Differenze nel frontend | `main.jsx` non registra il service worker nell'app; `haptics.js` usa il plugin nativo (vibrazione di 10 ms) solo sui pulsanti d'azione, senza listener globale; `usePullToRefresh` nella vista mese (`listNotesInRange(..., { fresh: true })`). |
@@ -186,7 +190,9 @@ Poi commit e push: il Dockerfile includerà l'APK nell'immagine web e dopo `pull
 
 **Firma:** l'APK è di **debug**, firmato con `~/.android/debug.keystore` del PC (ogni PC ha la sua: passare da un PC all'altro richiede `adb uninstall it.fplinio.annales` e rifare l'accesso, i dati sono sul server).
 
-**Installare sul telefono (debug wireless):** `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`; con firma diversa `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → disinstalla e reinstalla. Versione attuale: versionCode 3 / versionName 1.2 (frontend v0.65.0). Un APK compilato altrove (es. dal workflow manuale
+**Installare sul telefono (debug wireless):** `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`; con firma diversa `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → disinstalla e reinstalla. Versione attuale: versionCode 7 / versionName 1.6 (frontend v0.66.0).
+
+**Regola di aggiornamento dell'app Android (vale ogni volta che si chiede un aggiornamento dell'app):** dopo le modifiche si alza la versione (`package.json`, voce in `changelog.js`, `versionCode`/`versionName` in `android/app/build.gradle`), si compila l'APK (`npm run android:build` + `gradlew assembleDebug`) e, **se il telefono è collegato** (`adb devices` mostra `device`; con più voci usare `adb -s IP:porta`), lo si **invia subito** con `adb install -r app-debug.apk`, verificando `versionCode`/`versionName` con `dumpsys package it.fplinio.annales`. Se il telefono non è collegato lo si dice e l'APK resta in `android/app/build/outputs/apk/debug/`. Il debug wireless cade spesso: `adb mdns services` e `adb connect IP:porta` (vedi sotto per MyMap, stessa procedura). Un APK compilato altrove (es. dal workflow manuale
 `.github/workflows/android-apk.yml`, artifact `annales-debug-apk`) ha un'altra firma e Android non lo installa sopra quello vecchio: va
 prima disinstallata l'app.
 
@@ -196,6 +202,7 @@ prima disinstallata l'app.
 |---|---|
 | "Failed to create record" salvando una nota | Hook in `pb_hooks/` (un errore lì blocca il salvataggio: successo con la v0.62.0, corretto nella 0.62.1) e log del container PocketBase. I dettagli sono nella tabella `_logs` di `pb_data/auxiliary.db` (campo `details`): copia il file fuori dal container e interrogalo con `sqlite3`. |
 | Salvare una nota si blocca / lentezza dopo il salvataggio | Dalla v0.65.0 gli hook non chiamano più Gemini: guarda la coda `recap_jobs` e la linguetta `RecapQueueTab`. Prima (≤ 0.62) la chiamata stava dentro l'hook. |
+| Il widget 3×1 mostra "—" o dati vecchi | Il widget non interroga il server: mostra l'ultimo riepilogo mandato dall'app (apertura, ritorno in primo piano, salvataggio). Aprire l'app lo aggiorna; se mostra "apri l'app" non ha mai ricevuto dati (APK senza plugin `AnnalesWidget` o app mai aperta dopo l'installazione). Controllo: `adb shell run-as it.fplinio.annales cat shared_prefs/annales_widget.xml`. |
 | Ho chiuso una nota nuova senza salvare | Linguetta "Bozze" sul bordo destro (`DraftsTab`): `localStorage` del dispositivo, per-utente, immagini escluse. |
 | "Something went wrong" al login in locale | Il proxy non raggiunge un backend: `VITE_DEV_API` assente e niente stack su `localhost:8973`. Vedi §6. |
 | Una nota non compare / ordine sbagliato | Formato di `date`/`timeStart` (§4); nessun campo `created`. |

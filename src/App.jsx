@@ -12,6 +12,7 @@ import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
 import StatusPills from './components/StatusPills'
 import WidgetLinks from './components/WidgetLinks'
+import WidgetSync from './components/WidgetSync'
 import SketchDefs from './components/SketchDefs'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
@@ -95,6 +96,7 @@ export default function App() {
         <SketchDefs />
         <BrowserRouter>
           <WidgetLinks />
+          <WidgetSync />
           <Routes>
             <Route
               path="/login"

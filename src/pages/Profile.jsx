@@ -14,6 +14,7 @@ import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import OfflineStorage from '../components/OfflineStorage'
 import ReminderSettings from '../components/ReminderSettings'
+import PermissionsSettings from '../components/PermissionsSettings'
 import { remindersSupported } from '../lib/reminders'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
@@ -1006,6 +1007,10 @@ export default function Profile() {
             <ReminderSettings />
           </SettingsSection>
         )}
+
+        <SettingsSection title="Permessi" icon="check">
+          <PermissionsSettings />
+        </SettingsSection>
 
         <SettingsSection title="Uso offline" icon="cloud">
           <OfflineStorage />
