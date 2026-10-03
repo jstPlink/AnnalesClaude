@@ -9,6 +9,16 @@
 
 export const CHANGELOG = [
   {
+    version: '0.65.0',
+    date: '2026-10-03 03:22',
+    changes: [
+      "Bozze: se esci da una nuova nota senza salvare (ad esempio con Indietro per sbaglio) la nota resta in una linguetta Bozze sul bordo destro, da riprendere con un tocco o scartare. Si salva da sola mentre scrivi; le immagini non si conservano e vanno riaggiunte.",
+      "Salvare una nota non resta più appeso: i recap di giorno, mese e anno si aggiornano in background, uno alla volta e distanziati nel tempo. Una linguetta spiega cosa sta aggiornando il server.",
+      "Feedback aptico solo sui pulsanti d'azione (non su selezioni, schede, filtri e foto) e con intensità dimezzata.",
+      "Dettatura vocale da telefono: messaggi più chiari se il microfono è bloccato o occupato, e se Gemini rifiuta il formato registrato dal telefono si riprova in WAV.",
+    ],
+  },
+  {
     version: '0.64.0',
     date: '2026-10-02 18:46',
     changes: [

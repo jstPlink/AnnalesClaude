@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
-import { haptic } from '../lib/haptics'
 import {
   listImmichPeople,
   fetchImmichPersonThumbnailBlob,
@@ -65,7 +64,6 @@ export default function ImmichPeoplePicker({ open, baseUrl, apiKey, existingIds,
 
   async function pick(person) {
     if (adding) return
-    haptic()
     setAdding(person.id)
     try {
       await onPick(person)

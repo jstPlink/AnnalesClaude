@@ -36,6 +36,8 @@ import { fileUrl } from '../lib/pocketbase'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { haptic } from '../lib/haptics'
+import { pokeRecapQueue } from '../lib/recapQueue'
+import { useAutoDraft } from '../hooks/useAutoDraft'
 import { useAuth } from '../context/AuthContext'
 import {
   dayKey,
@@ -130,6 +132,8 @@ export default function NoteView() {
   // contenuto, tag/persone e luogo pre-compilati, tutti da rivedere qui
   // prima di salvare — non è mai stato scritto nulla sul server.
   const aiDraft = isNew ? location.state?.aiDraft : null
+  // Bozza ripresa dall'elenco "Bozze" (DraftsTab): si continua a salvare sotto lo stesso id.
+  const resumedDraftId = isNew ? location.state?.draftId : null
 
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
@@ -151,6 +155,7 @@ export default function NoteView() {
       title: aiDraft.title || '',
       content: aiDraft.content || '',
       place: aiDraft.place || null,
+      songs: aiDraft.songs || base.songs,
       mood: aiDraft.mood ?? base.mood,
       timeStart: aiDraft.timeStart || base.timeStart,
       timeEnd: aiDraft.timeEnd || base.timeEnd,
@@ -189,6 +194,17 @@ export default function NoteView() {
 
   const effectiveId = id || createdId
   const existsOnServer = Boolean(effectiveId)
+
+  // Una nuova nota abbandonata senza salvare (es. Indietro per sbaglio) resta
+  // nell'elenco Bozze: vedi src/lib/drafts.js.
+  const { discard: discardDraft } = useAutoDraft({
+    enabled: !existsOnServer,
+    draftId: resumedDraftId,
+    form,
+    peopleIds,
+    tagIds,
+    imageCount: newFiles.length,
+  })
 
   useEffect(() => {
     if (isNew) return
@@ -324,6 +340,8 @@ export default function NoteView() {
         : await updateNote(effectiveId, form, { newFiles, removedImages, peopleIds, tagIds })
 
       // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
+      if (creating) discardDraft()
+      pokeRecapQueue() // il server rigenera in background il recap del giorno (se passato)
       setRecord(rec)
       setCreatedId(rec.id)
       setExistingImages(rec.images || [])
@@ -365,6 +383,7 @@ export default function NoteView() {
     } catch (err) {
       savingRef.current = false
       setBusy(false)
+      if (err?.queued) discardDraft() // è in coda offline: non serve anche la bozza
       setDialog(
         err?.queued
           ? {
@@ -385,6 +404,7 @@ export default function NoteView() {
     setDialog(null)
     try {
       await deleteNote(effectiveId)
+      pokeRecapQueue()
       navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
       setBusy(false)

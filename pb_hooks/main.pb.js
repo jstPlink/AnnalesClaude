@@ -5,12 +5,12 @@
 //  - un cron per ciascun livello, poco dopo la mezzanotte di quando il
 //    periodo finisce (giorno: ogni notte; mese: il giorno 1; anno: il 1
 //    gennaio);
-//  - una cascata quando si crea/modifica/cancella una nota di un giorno che
-//    NON è oggi: si rigenera il recap di quel giorno; se il giorno non è
-//    nel mese corrente si rigenera anche quello del mese; se il mese non è
-//    nell'anno corrente anche quello dell'anno. Una nota di oggi non fa
-//    nulla: ci pensa il cron di stanotte, una volta che la giornata è
-//    davvero chiusa.
+//  - una coda quando si crea/modifica/cancella una nota di un giorno che
+//    NON è oggi: il giorno viene messo in coda e un cron al minuto ne evade
+//    uno per volta (richieste a Gemini distanziate, salvare non aspetta mai).
+//    Finito un giorno, se non è nel mese corrente si accoda il suo mese; finito
+//    il mese, se non è nell'anno corrente, il suo anno. Una nota di oggi non
+//    fa nulla: ci pensa il cron di stanotte, a giornata davvero chiusa.
 //
 // Questo file registra SOLO gli handler — tutta la logica vive in
 // recap_lib.js, caricato con require() dentro ciascun handler. È un vincolo
@@ -30,20 +30,34 @@
 // "Genera"/"Rigenera" (src/lib/recaps.js), che scrive qui con lo stesso
 // schema.
 
+// I tre hook sulle note NON generano niente: mettono in coda (recap_jobs) il
+// giorno toccato e basta, così salvare una nota resta istantaneo anche se
+// Gemini è lento. Chi lavora la coda è il cron "recapQueue" qui sotto.
 onRecordAfterCreateSuccess((e) => {
-  require(`${__hooks}/recap_lib.js`).cascadeFromNote($app, e.record)
+  require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, null)
   e.next()
 }, 'note')
 
 onRecordAfterUpdateSuccess((e) => {
-  require(`${__hooks}/recap_lib.js`).cascadeFromNote($app, e.record)
+  let original = null
+  try {
+    original = e.record.original()
+  } catch {
+    original = null // se non disponibile si accoda solo la data attuale
+  }
+  require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, original)
   e.next()
 }, 'note')
 
 onRecordAfterDeleteSuccess((e) => {
-  require(`${__hooks}/recap_lib.js`).cascadeFromNote($app, e.record)
+  require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, null)
   e.next()
 }, 'note')
+
+// Evade UN lavoro di coda al minuto (richieste a Gemini distanziate nel tempo).
+cronAdd('recapQueue', '* * * * *', () => {
+  require(`${__hooks}/recap_lib.js`).processRecapQueue($app)
+})
 
 cronAdd('dailyRecap', '30 0 * * *', () => {
   require(`${__hooks}/recap_lib.js`).runDailyRecapCron($app)

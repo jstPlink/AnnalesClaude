@@ -11,10 +11,7 @@ function PersonRow({ person, active, immichUrl, immichApiKey, usageCount, onTogg
   return (
     <button
       type="button"
-      onClick={() => {
-        haptic()
-        onToggle(person.id)
-      }}
+      onClick={() => onToggle(person.id)}
       className={
         'flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition ' +
         (active ? 'bg-tag' : 'hover:bg-tag/60')

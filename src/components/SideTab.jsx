@@ -5,13 +5,14 @@ import Icon from './Icon'
 // (StatusPills.jsx): chiusa è solo un'icona con un eventuale numero, così non
 // copre orari né altro; al tocco si allarga verso sinistra mostrando il testo
 // per intero e, se c'è, il pulsante dell'azione. Tocca di nuovo per chiuderla.
-export default function SideTab({ icon = 'cloud', badge = null, children, actionLabel, onAction, busy }) {
+export default function SideTab({ icon = 'cloud', badge = null, children, body = null, tone = 'warn', actionLabel, onAction, busy }) {
   const [open, setOpen] = useState(false)
 
   return (
     <div
       className={
-        'anim-drop pointer-events-auto flex max-w-[min(17rem,calc(100vw-0.5rem))] flex-col items-stretch overflow-hidden rounded-l-2xl border border-r-0 border-warn-dark bg-warn text-ink shadow-lg ' +
+        'anim-drop pointer-events-auto flex max-w-[min(17rem,calc(100vw-0.5rem))] flex-col items-stretch overflow-hidden rounded-l-2xl border border-r-0 text-ink shadow-lg ' +
+        (tone === 'paper' ? 'border-line bg-cream ' : 'border-warn-dark bg-warn ') +
         (open ? 'w-64' : 'w-auto')
       }
     >
@@ -32,6 +33,7 @@ export default function SideTab({ icon = 'cloud', badge = null, children, action
           </>
         )}
       </button>
+      {open && body}
       {open && onAction && (
         <button
           type="button"

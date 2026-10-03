@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import Icon from './Icon'
 import { transcribeAudio, describeGeminiError } from '../lib/gemini'
+import { blobToWav } from '../lib/audio'
 
 // Oltre i 3 minuti si ferma da sola: un vocale per un prompt di diario non
 // dovrebbe mai servirne di più, ed evita registrazioni lasciate aperte per
@@ -96,8 +97,19 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
     setState('transcribing')
     setError('')
     try {
-      const audioBase64 = await blobToBase64(blob)
-      const text = await transcribeAudio(apiKey, { audioBase64, mimeType })
+      let text
+      try {
+        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(blob), mimeType })
+      } catch (err) {
+        // Il telefono registra in WebM/MP4, formati che Gemini non dichiara
+        // di supportare: se rifiuta l'audio (400 che non riguarda la chiave)
+        // si riprova col WAV, quello ufficiale, ricavato dalla stessa registrazione.
+        const rejectedFormat =
+          err?.status === 400 && !/api key/i.test(err.message || '') && mimeType !== 'audio/wav'
+        if (!rejectedFormat) throw err
+        const wav = await blobToWav(blob)
+        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(wav), mimeType: 'audio/wav' })
+      }
       onTranscribed(text)
       setLastRecording(null) // andata a buon fine: non serve più tenerlo
     } catch (err) {
@@ -139,12 +151,23 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
           return s + 1
         })
       }, 1000)
-    } catch {
-      setError(
-        Capacitor.isNativePlatform()
-          ? 'Microfono non disponibile: consenti il permesso Microfono ad Annales dalle impostazioni del telefono (Impostazioni → App → Annales → Autorizzazioni).'
-          : 'Microfono non disponibile: controlla i permessi del browser.',
-      )
+    } catch (err) {
+      // motivo preciso, per capire al volo cosa non va sul telefono
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setError(
+          Capacitor.isNativePlatform()
+            ? 'Microfono bloccato: consenti il permesso Microfono ad Annales dalle impostazioni del telefono (Impostazioni → App → Annales → Autorizzazioni) e riprova.'
+            : "Microfono bloccato: consenti il microfono per questo sito (icona del lucchetto accanto all'indirizzo, oppure Impostazioni del telefono → App → permessi) e riprova.",
+        )
+      } else if (err?.name === 'NotFoundError') {
+        setError('Nessun microfono trovato su questo dispositivo.')
+      } else if (err?.name === 'NotReadableError' || err?.name === 'AbortError') {
+        setError(
+          "Il microfono è occupato da un'altra app (una chiamata, un'altra registrazione): chiudila e riprova.",
+        )
+      } else {
+        setError('Microfono non disponibile: ' + (err?.message || 'errore sconosciuto') + '.')
+      }
     }
   }
 

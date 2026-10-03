@@ -95,10 +95,7 @@ export default function TagPickerSheet({
                   <button
                     key={tag.id}
                     type="button"
-                    onClick={() => {
-                      haptic()
-                      onToggle(tag.id)
-                    }}
+                    onClick={() => onToggle(tag.id)}
                     className={
                       'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
                       (active

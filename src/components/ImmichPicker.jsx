@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
-import { haptic } from '../lib/haptics'
 import { dayKey, fullDayLabel, todayKey } from '../lib/dates'
 import {
   searchImmichPhotos,
@@ -129,7 +128,6 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
 
   function handleDateChange(e) {
     const value = e.target.value
-    haptic()
     setDateFilter(value)
     setItems([])
     setNextPage(null)
@@ -137,7 +135,6 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
   }
 
   function handleClearDate() {
-    haptic()
     setDateFilter('')
     setItems([])
     setNextPage(null)
@@ -147,7 +144,6 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
   const sections = useMemo(() => groupByDay(items), [items])
 
   function toggle(asset) {
-    haptic()
     setPendingFallback(null)
     setSelected((prev) =>
       prev.some((a) => a.id === asset.id)

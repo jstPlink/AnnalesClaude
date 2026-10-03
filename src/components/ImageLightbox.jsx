@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
-import { haptic } from '../lib/haptics'
 
 // Visualizzatore di immagini a schermo intero, con navigazione tra più
 // immagini. `images`: [{ url, key }]. `index` null = chiuso.
@@ -22,7 +21,6 @@ export default function ImageLightbox({ images = [], index, onClose, onIndex }) 
   if (!open) return null
 
   const go = (delta) => {
-    haptic()
     onIndex?.((index + delta + images.length) % images.length)
   }
 

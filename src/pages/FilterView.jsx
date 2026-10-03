@@ -122,7 +122,6 @@ export default function FilterView() {
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
 
   function togglePerson(id) {
-    haptic()
     set({
       personIds: filters.personIds.includes(id)
         ? filters.personIds.filter((x) => x !== id)
@@ -131,7 +130,6 @@ export default function FilterView() {
   }
 
   function toggleTag(id) {
-    haptic()
     set({
       tagIds: filters.tagIds.includes(id)
         ? filters.tagIds.filter((x) => x !== id)
@@ -142,14 +140,12 @@ export default function FilterView() {
   // Un solo luogo alla volta (il filtro sottostante confronta per nome, non
   // per relazione multipla come persone/tag): un secondo tap lo toglie.
   function togglePlace(name) {
-    haptic()
     set({ place: filters.place === name ? '' : name })
   }
 
   // Una sola canzone alla volta, come il luogo (non è una relazione, è un
   // titolo confrontato per uguaglianza — vedi listNotesFiltered).
   function toggleSong(title) {
-    haptic()
     set({ song: filters.song === title ? '' : title })
   }
 
@@ -304,10 +300,7 @@ export default function FilterView() {
                   <ChipButton
                     icon="map-pin"
                     active={filters.hasPlace}
-                    onClick={() => {
-                      haptic()
-                      set({ hasPlace: !filters.hasPlace })
-                    }}
+                    onClick={() => set({ hasPlace: !filters.hasPlace })}
                   >
                     Note con luoghi
                   </ChipButton>
@@ -490,10 +483,7 @@ export default function FilterView() {
                   <ChipButton
                     icon="music"
                     active={filters.hasSongs}
-                    onClick={() => {
-                      haptic()
-                      set({ hasSongs: !filters.hasSongs })
-                    }}
+                    onClick={() => set({ hasSongs: !filters.hasSongs })}
                   >
                     Note con canzoni
                   </ChipButton>
@@ -539,10 +529,7 @@ export default function FilterView() {
                   <ChipButton
                     key={s.key}
                     active={filters.sort === s.key}
-                    onClick={() => {
-                      haptic()
-                      set({ sort: s.key })
-                    }}
+                    onClick={() => set({ sort: s.key })}
                   >
                     {s.label}
                   </ChipButton>
