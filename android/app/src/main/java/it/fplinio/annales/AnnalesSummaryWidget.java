@@ -112,7 +112,11 @@ public class AnnalesSummaryWidget extends AppWidgetProvider {
             v.setTextViewText(R.id.sum_last_day, lastDay);
             v.setTextViewText(R.id.sum_last_sub, lastSub);
 
-            v.setOnClickPendingIntent(R.id.sum_btn_new, open(context, "/note/new", 11));
+            PendingIntent newNote = open(context, "/note/new", 11);
+            // il pulsante sono due copie che si alternano (animazione): il tocco vale su entrambe e sul contenitore
+            v.setOnClickPendingIntent(R.id.sum_btn_new, newNote);
+            v.setOnClickPendingIntent(R.id.sum_btn_new2, newNote);
+            v.setOnClickPendingIntent(R.id.sum_flipper, newNote);
             v.setOnClickPendingIntent(R.id.sum_block_mood, open(context, "/dati", 12));
             v.setOnClickPendingIntent(R.id.sum_block_last, open(context, lastPath, 13));
             manager.updateAppWidget(id, v);

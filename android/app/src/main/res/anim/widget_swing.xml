@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ondeggiamento del pulsante "Nuova nota", come un quadretto appeso a un chiodo: oscilla attorno a UN solo
+     punto (il centro del bordo alto, pivot 50% / 0%) con ampiezza che si smorza fino a fermarsi.
+     Velocità dimezzata rispetto alla prima versione (mezze oscillazioni lunghe il doppio, ~0,7-0,9 s):
+     dura 3,4 s in totale, quindi sta dentro l'intervallo di 4 s fra un'oscillazione e l'altra
+     (flipInterval in widget_summary.xml) e lascia ~0,6 s di quiete.
+     Ogni oscillazione è un rotate con angoli assoluti (gradi) che vive solo nella propria finestra
+     (fillEnabled + fillBefore/After false), altrimenti le trasformazioni si sommerebbero. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false">
+
+    <rotate
+        android:duration="640"
+        android:fillAfter="false"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromDegrees="0"
+        android:interpolator="@android:anim/decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="0%"
+        android:startOffset="0"
+        android:toDegrees="6" />
+    <rotate
+        android:duration="860"
+        android:fillAfter="false"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromDegrees="6"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="0%"
+        android:startOffset="640"
+        android:toDegrees="-4.5" />
+    <rotate
+        android:duration="800"
+        android:fillAfter="false"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromDegrees="-4.5"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="0%"
+        android:startOffset="1500"
+        android:toDegrees="3" />
+    <rotate
+        android:duration="700"
+        android:fillAfter="false"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromDegrees="3"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="0%"
+        android:startOffset="2300"
+        android:toDegrees="-1.5" />
+    <rotate
+        android:duration="400"
+        android:fillAfter="false"
+        android:fillBefore="false"
+        android:fillEnabled="true"
+        android:fromDegrees="-1.5"
+        android:interpolator="@android:anim/decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="0%"
+        android:startOffset="3000"
+        android:toDegrees="0" />
+</set>

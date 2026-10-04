@@ -9,6 +9,14 @@
 
 export const CHANGELOG = [
   {
+    version: '0.66.1',
+    date: '2026-10-04 07:00',
+    changes: [
+      "Fix app Android: aprendo l'app da un tasto del widget (Nuova nota, mood, ultima nota), dopo aver generato una nota con Gemini — o appena cambiavi pagina — l'app tornava alla scelta Gemini / a mano (o a Andamento / al giorno). Il link di avvio del widget veniva riletto a ogni cambio di pagina; ora si gestisce una volta sola.",
+      "Widget: il pulsante Nuova nota è appeso a un chiodo e ondeggia attorno a quel solo punto ogni 4 secondi, con oscillazioni lente (velocità dimezzata) che si smorzano fino a fermarsi. Il pulsante non viene più tagliato ai bordi. L'anteprima nel selettore dei widget ora mostra il widget com'è davvero, con dati d'esempio, invece dei trattini e del quadratino bianco; anche i due widget Nuova nota (2×1 e 1×1) hanno ora la loro anteprima, che prima mancava.",
+    ],
+  },
+  {
     version: '0.66.0',
     date: '2026-10-03 10:24',
     changes: [
