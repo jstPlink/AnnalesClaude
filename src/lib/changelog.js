@@ -9,6 +9,13 @@
 
 export const CHANGELOG = [
   {
+    version: '0.67.1',
+    date: '2026-10-04 18:00',
+    changes: [
+      "Widget: l'oscillazione del pulsante Nuova nota non scatta più (lobi sinusoidali continui al posto di cinque rotazioni raccordate male) e fra un'oscillazione e l'altra passano 4 secondi di quiete.",
+    ],
+  },
+  {
     version: '0.67.0',
     date: '2026-10-04 16:53',
     changes: [

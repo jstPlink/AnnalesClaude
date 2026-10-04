@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mezzo ciclo di seno: parte e torna a 0 con velocità continua, per concatenare lobi senza scatti. -->
+<cycleInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:cycles="0.5" />
