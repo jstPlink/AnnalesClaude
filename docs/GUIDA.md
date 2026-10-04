@@ -38,7 +38,7 @@ passaggio è automatico in base alla larghezza della finestra.
   sono "da orologio", senza fusi.
 - **Mood:** un righello da 0 a 10 (salvato come 0–1). Il colore della nota, nel mese e nel giorno, segue il gradiente del mood.
 - **Testo:** editor con Markdown/anteprima. Dal menu Gemini si può ripulire/sintetizzare il testo o scriverlo da un prompt; si può
-  anche **dettare a voce** (la registrazione la trascrive Gemini; se la trascrizione fallisce puoi ritentarla senza registrare di nuovo).
+  anche **dettare a voce** (la registrazione la trascrive Gemini, fino a **100 secondi** per registrazione: il pulsante mostra i secondi che restano e negli ultimi 15 diventa rosso e lampeggia; se la trascrizione fallisce puoi ritentarla senza registrare di nuovo).
 - **Immagini:** dal dispositivo oppure da **Immich** (se collegato), con un calendario per saltare al giorno delle foto.
 - **Persone, tag, canzoni:** si scelgono da elenchi (le persone più usate sono in cima); persone e tag nuovi si creano al volo. Le
   canzoni si cercano su Spotify (se collegato) o si incolla un link.
@@ -52,8 +52,7 @@ passaggio è automatico in base alla larghezza della finestra.
 
 ## 5. Impostazioni
 
-- **Aspetto:** tema (chiaro/scuro/sistema), font, sfondo (texture o una tua immagine, che resta solo sul dispositivo), animazioni,
-  cursore a matitina (solo mouse). Sono preferenze **per dispositivo**.
+- **Aspetto:** animazioni (sì/no/sistema) e sfondo: **Nessuno, Puntini, Righe, Quadretti** oppure **Immagine** (una tua foto, che resta solo sul dispositivo). Sono preferenze **per dispositivo**. Per ora l'app è solo **chiara**, col carattere **tondeggiante** e il cursore di sistema: non si scelgono più.
 - **Dati utente** (sincronizzati sull'account): **Colori del mood** (sei colori e le soglie), **Persone**, **Tag**, **Luoghi** (anche
   modifica di nome e posizione, che si propaga alle note), **Canzoni** (sola lettura, con quante note le usano). Cancellare una persona
   o un luogo collegato a delle note chiede se sostituirlo o toglierlo ovunque.
@@ -95,7 +94,7 @@ sezione stessa.
 ## 7. Immich e Spotify
 
 - **Immich:** URL del server + API key (Immich → Account → API Keys). Serve per scegliere foto e importare le persone riconosciute.
-- **Spotify:** Client ID e Client Secret di un'app creata su developer.spotify.com (solo ricerca nel catalogo).
+- **Spotify:** Client ID e Client Secret di un'app creata su developer.spotify.com (solo ricerca nel catalogo). Se li rimuovi **le canzoni già aggiunte restano**: stanno dentro ogni nota (titolo, link e copertina) e non dipendono dalle credenziali; perdi solo la ricerca dei brani — l'aggiunta incollando il link di un brano continua a funzionare, perché non richiede nessuna chiave.
 Entrambe hanno una guida scaricabile nella rispettiva sezione.
 
 ## 8. Gemini (IA)
@@ -115,7 +114,7 @@ un prompt, "Nuova nota con Gemini", dettatura vocale, estrazione note da screens
 
 All'apertura l'app scarica in locale note, persone, tag, luoghi e miniature. Con rete assente o lenta mostra subito i dati salvati e li
 aggiorna in background. Le **linguette** sul bordo destro avvisano di connessione debole/assente e di modifiche in coda (toccandole si
-riprova), dei recap in aggiornamento e delle bozze. Le note salvate offline restano in coda e si inviano da sole al ritorno della rete. In Impostazioni → Uso offline: spazio
+riprova), dei recap in aggiornamento e delle bozze. Le note salvate offline restano in coda e si inviano da sole al ritorno della rete. **Nell'app Android** note, persone, tag e luoghi si salvano nell'archivio privato dell'app sul telefono (sopravvivono alla chiusura e al riavvio), e così le note in coda; le **foto** invece no: senza service worker le miniature non vengono servite dalla cache, quindi offline non si vedono. In Impostazioni → Uso offline: spazio
 occupato, numero di note e miniature, "Aggiorna ora" e "Svuota cache".
 
 ## 10. App Android
@@ -132,10 +131,13 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
   - **Notifiche:** servono per i promemoria (Android 13+ le chiede alla prima attivazione).
 - **Widget "Nuova nota":** aggiungilo dalla schermata home (due formati). Un tocco apre l'app sulla scelta Gemini / a mano. Tutti e tre i widget (2×1, 1×1 e il 3×1 "Annales") hanno la loro anteprima nel selettore dei widget.
 - **Widget 3×1 "Annales":** tre blocchi. **A sinistra** il mood dell'ultima settimana (in centesimi, da 0 a 100, con un quadratino di carta del colore del tuo gradiente e quanti giorni e note ha considerato; toccandolo si apre Andamento); **al centro** l'ultima nota: il giorno ("oggi", "ieri" o la data) e l'ora in cui è finita (toccandola si apre quel giorno); **a destra** il pulsante giallo in rilievo, un po' storto, per scrivere una nota nuova: è appeso a un chiodo e ondeggia piano ogni 4 secondi. Nel selettore dei widget l'anteprima mostra il widget con dati d'esempio. Si aggiorna quando apri l'app, la riporti in primo piano o salvi/elimini una nota: una nota scritta da un altro dispositivo compare alla prossima apertura.
-- **Permessi:** Impostazioni → **Permessi** mostra cosa hai concesso all'app (microfono, notifiche, allarmi precisi, risparmio batteria), a cosa serve, e ha il pulsante per concederlo o per aprire la schermata di Android dove si cambia. Si aggiorna da solo quando torni nell'app.
-- **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana; la notifica "scrivi la nota
+- **Statistiche più ariose:** i numeri grandi delle schede in cima non sono più attraversati dalla linea tratteggiata.
+- **Foto che dondolano:** nelle viste Calendario e Giorno le polaroid oscillano a destra e a sinistra quando inclini il telefono (sono appese al nastro). Si spegne da Impostazioni → Permessi → Giroscopio, o disattivando le animazioni.
+- **Permessi:** Impostazioni → **Permessi** mostra cosa hai concesso all'app (microfono, notifiche, allarmi precisi, risparmio batteria) e se il giroscopio c'è (Android non chiede nessun permesso per quello), a cosa serve, e ha il pulsante per concederlo o per aprire la schermata di Android dove si cambia. Si aggiorna da solo quando torni nell'app.
+- **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana (da lunedì) e, per ciascuno, il **testo della notifica** che preferisci (vuoto = quello predefinito); la notifica "scrivi la nota
   del giorno" arriva anche ad app chiusa e senza rete, e toccandola si apre la scelta Gemini / a mano. Sono salvati sul dispositivo.
 - **Vibrazione:** un tocco leggero solo sui pulsanti d'azione (non su schede, filtri e selezioni).
+- **Vibrazione:** anche cambiando scheda di vista (Calendario / Andamento / Statistiche); dal widget un tic leggero appena l'app si apre dal tasto toccato.
 - **Aggiorna tirando:** nella vista mese (telefono) tira verso il basso per rileggere le note dal server.
 - Dentro l'app non c'è service worker: l'interfaccia è nell'APK e si aggiorna installando un nuovo APK; i dati arrivano sempre dal
   server `annales.fplinio.it`.

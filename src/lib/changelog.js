@@ -9,6 +9,18 @@
 
 export const CHANGELOG = [
   {
+    version: '0.67.0',
+    date: '2026-10-04 16:53',
+    changes: [
+      "Promemoria: il testo della notifica si personalizza (campo sotto ogni promemoria, vuoto = testo predefinito) e la settimana parte da lunedì.",
+      "Dettatura vocale: massimo 100 secondi per registrazione. Il pulsante mostra i secondi che restano e una barra che si consuma; negli ultimi 15 secondi diventa rosso, lampeggia e avvisa che sta per finire.",
+      "Vista Andamento: lo sfondo a quadretti ora è parte del grafico e coincide con gli assi (due quadretti per mese, righe 0/25/50/75/100 su una linea) invece di scorrere a parte.",
+      "Aptico: tornato sul cambio di scheda di vista (Calendario / Andamento / Statistiche). Dal widget, un tic leggero appena l'app si apre dal tasto toccato (il widget stesso non può far vibrare al tocco).",
+      "Impostazioni → Aspetto semplificato: niente più scelta di tema (per ora solo chiaro), font (solo tondeggiante) e cursore (solo quello di sistema). Gli sfondi sono Nessuno, Puntini, Righe, Quadretti e Immagine.",
+      "Statistiche: i numeri grandi non sono più attraversati dalla linea tratteggiata e hanno più aria attorno (etichetta, valore e sotto-testo di scontrini e targhette). Giroscopio: la direzione è corretta (la foto pende verso il basso del telefono, come un pendolo), prima ruotava al contrario. Giroscopio: nuova riga in Impostazioni → Permessi (Android non richiede nessun permesso, si vede se il sensore c'è) e le foto polaroid delle viste mese e giorno dondolano a destra e a sinistra quando inclini il telefono, appese al nastro. Si spegne dalla stessa riga o con le animazioni disattivate.",
+    ],
+  },
+  {
     version: '0.66.1',
     date: '2026-10-04 07:00',
     changes: [

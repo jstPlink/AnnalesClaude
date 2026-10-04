@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { App } from '@capacitor/app'
 import { haptic } from '../lib/haptics'
+import { getTilt, setTilt } from '../lib/prefs'
 import {
   openAppSettings,
   openBatterySettings,
@@ -50,6 +51,7 @@ function Row({ title, why, label, tone, action, actionLabel }) {
 export default function PermissionsSettings() {
   const [p, setP] = useState(null)
   const [error, setError] = useState('')
+  const [tilt, setTiltState] = useState(getTilt())
   const native = permissionsNative()
 
   const refresh = useCallback(async () => {
@@ -123,7 +125,7 @@ export default function PermissionsSettings() {
     <div className="space-y-3 text-xs sm:text-sm">
       <p className="text-ink-soft">
         {native
-          ? "Cosa hai concesso all'app Android. Se cambi un permesso nelle impostazioni del telefono, qui si aggiorna al tuo ritorno."
+          ? "Cosa hai concesso all'app Android (e i sensori che usa). Se cambi un permesso nelle impostazioni del telefono, qui si aggiorna al tuo ritorno."
           : 'Cosa hai concesso a questo sito nel browser. Per cambiarli usa le impostazioni del sito (lucchetto accanto all’indirizzo).'}
       </p>
 
@@ -136,6 +138,21 @@ export default function PermissionsSettings() {
         title="Notifiche"
         why="Servono per i promemoria “scrivi la nota del giorno”."
         {...notifRow}
+      />
+      <Row
+        title="Giroscopio"
+        why="Fa dondolare le foto a destra e a sinistra quando inclini il telefono. Android non chiede nessun permesso per questo sensore: qui si vede solo se c'è."
+        label={p.gyroscope === true ? 'Disponibile' : p.gyroscope === false ? 'Non disponibile' : 'Non rilevabile'}
+        tone={p.gyroscope === true ? 'ok' : p.gyroscope === false ? 'no' : 'na'}
+        actionLabel={tilt ? 'Spegni le foto che oscillano' : 'Accendi le foto che oscillano'}
+        action={
+          p.gyroscope === false
+            ? null
+            : () => {
+                setTilt(!tilt)
+                setTiltState(!tilt)
+              }
+        }
       />
       {native && p.exactAlarmsNeeded && (
         <Row

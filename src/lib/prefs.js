@@ -1,59 +1,25 @@
-// Preferenze di aspetto dell'app (tema, font, animazioni, sfondo).
+// Preferenze di aspetto dell'app (animazioni, sfondo, foto che oscillano).
 // Sono per-dispositivo: salvate in localStorage e applicate come attributi
 // data-* sull'elemento <html>, che il CSS in index.css legge.
+//
+// Tema, font e cursore NON sono più scelte dell'utente: per ora l'app è solo
+// chiara, con il font "tondeggiante" e il cursore di sistema (Windows). Il CSS
+// del tema scuro e degli altri font resta in index.css ma non viene attivato.
 
-const THEME_KEY = 'annales.theme'
-const FONT_KEY = 'annales.font'
 const ANIM_KEY = 'annales.anim'
 const PAPER_KEY = 'annales.paper'
 const PAPER_IMAGE_KEY = 'annales.paperImage'
-const CURSOR_KEY = 'annales.cursor'
-
-export const THEMES = ['system', 'light', 'dark']
-export const THEME_LABELS = { system: 'Sistema', light: 'Chiaro', dark: 'Scuro' }
-
-export const FONTS = ['rounded', 'sans', 'serif', 'mono']
-export const FONT_LABELS = {
-  rounded: 'Tondeggiante',
-  sans: 'Lineare',
-  serif: 'Serif',
-  mono: 'Monospazio',
-}
+const TILT_KEY = 'annales.tilt'
 
 export const ANIMS = ['system', 'on', 'off']
 export const ANIM_LABELS = { system: 'Sistema', on: 'Sì', off: 'No' }
 
-// Cursore del mouse a tema (matitina): spento di default, resta quello di
-// Windows finché non lo si attiva esplicitamente.
-export const CURSORS = ['off', 'on']
-export const CURSOR_LABELS = { off: 'Windows', on: 'Matitina' }
-
-export const PAPERS = [
-  'nessuna',
-  'puntini',
-  'rigato',
-  'quadretti',
-  'grana',
-  'margine',
-  'lino',
-  'vignetta',
-  'filigrana',
-  'sughero',
-  'legno',
-  'immagine',
-]
+export const PAPERS = ['nessuna', 'puntini', 'rigato', 'quadretti', 'immagine']
 export const PAPER_LABELS = {
   nessuna: 'Nessuno',
   puntini: 'Puntini',
-  rigato: 'Rigato',
+  rigato: 'Righe',
   quadretti: 'Quadretti',
-  grana: 'Grana',
-  margine: 'Margine',
-  lino: 'Lino',
-  vignetta: 'Vignetta',
-  filigrana: 'Filigrana',
-  sughero: 'Sughero',
-  legno: 'Legno',
   immagine: 'Immagine',
 }
 
@@ -66,20 +32,13 @@ function read(key, fallback, allowed) {
   }
 }
 
-export function getTheme() {
-  return read(THEME_KEY, 'light', THEMES)
-}
-export function getFont() {
-  return read(FONT_KEY, 'rounded', FONTS)
-}
 export function getAnim() {
   return read(ANIM_KEY, 'on', ANIMS)
 }
+// Uno sfondo scelto in passato e poi tolto dall'elenco (grana, lino, legno...)
+// torna a quello di partenza.
 export function getPaper() {
   return read(PAPER_KEY, 'rigato', PAPERS)
-}
-export function getCursor() {
-  return read(CURSOR_KEY, 'off', CURSORS)
 }
 // Sfondo personalizzato (data URL, solo per lo sfondo "immagine"). Vive in
 // localStorage come le altre preferenze di aspetto: per-dispositivo.
@@ -90,13 +49,12 @@ export function getPaperImage() {
     return ''
   }
 }
-function prefersDark() {
-  try {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  } catch {
-    return false
-  }
+// Foto che oscillano a destra e a sinistra leggendo il giroscopio (src/lib/tilt.js).
+// Attivo di default; si spegne da Impostazioni → Permessi.
+export function getTilt() {
+  return read(TILT_KEY, 'on', ['on', 'off']) === 'on'
 }
+
 function prefersReducedMotion() {
   try {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -105,11 +63,6 @@ function prefersReducedMotion() {
   }
 }
 
-function resolvedTheme() {
-  const t = getTheme()
-  if (t === 'light' || t === 'dark') return t
-  return prefersDark() ? 'dark' : 'light'
-}
 function resolvedAnim() {
   const a = getAnim()
   if (a === 'on' || a === 'off') return a
@@ -119,13 +72,9 @@ function resolvedAnim() {
 // Scrive gli attributi su <html>. Chiamata all'avvio e a ogni modifica.
 export function applyPrefs() {
   const root = document.documentElement
-  const dark = resolvedTheme() === 'dark'
-  root.dataset.theme = dark ? 'dark' : 'light'
-
-  const font = getFont()
-  if (font === 'rounded') delete root.dataset.font
-  else root.dataset.font = font
-
+  root.dataset.theme = 'light'
+  delete root.dataset.font // font tondeggiante (quello di partenza)
+  delete root.dataset.cursor // cursore di sistema
   root.dataset.anim = resolvedAnim()
 
   const paper = getPaper()
@@ -147,11 +96,9 @@ export function applyPrefs() {
   root.dataset.skinDay = 'pages'
   root.dataset.skinMonth = 'pages'
 
-  if (getCursor() === 'on') root.dataset.cursor = 'custom'
-  else delete root.dataset.cursor
-
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', dark ? '#211e18' : '#dbd1bd')
+  if (meta) meta.setAttribute('content', '#dbd1bd')
+  window.dispatchEvent(new Event('annales:prefs'))
 }
 
 function setKey(key, value) {
@@ -163,20 +110,14 @@ function setKey(key, value) {
   applyPrefs()
 }
 
-export function setTheme(v) {
-  setKey(THEME_KEY, v)
-}
-export function setFont(v) {
-  setKey(FONT_KEY, v)
-}
 export function setAnim(v) {
   setKey(ANIM_KEY, v)
 }
 export function setPaper(v) {
   setKey(PAPER_KEY, v)
 }
-export function setCursor(v) {
-  setKey(CURSOR_KEY, v)
+export function setTilt(on) {
+  setKey(TILT_KEY, on ? 'on' : 'off')
 }
 // Salva/rimuove l'immagine di sfondo personalizzata. `setPaperImage` torna
 // false se localStorage rifiuta il salvataggio (quota: immagine troppo
@@ -199,13 +140,9 @@ export function clearPaperImage() {
   applyPrefs()
 }
 
-// In modalità "Sistema", segue i cambi del SO in tempo reale (tema + motion).
+// In modalità "Sistema" per le animazioni, segue i cambi del SO in tempo reale.
 export function watchSystemTheme() {
   try {
-    const dark = window.matchMedia('(prefers-color-scheme: dark)')
-    dark.addEventListener('change', () => {
-      if (getTheme() === 'system') applyPrefs()
-    })
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     motion.addEventListener('change', () => {
       if (getAnim() === 'system') applyPrefs()

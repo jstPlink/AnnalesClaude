@@ -13,6 +13,7 @@ import Sidebar from './components/web/Sidebar'
 import StatusPills from './components/StatusPills'
 import WidgetLinks from './components/WidgetLinks'
 import WidgetSync from './components/WidgetSync'
+import TiltPhotos from './components/TiltPhotos'
 import SketchDefs from './components/SketchDefs'
 import Login from './pages/Login'
 import MonthView from './pages/MonthView'
@@ -97,6 +98,7 @@ export default function App() {
         <BrowserRouter>
           <WidgetLinks />
           <WidgetSync />
+          <TiltPhotos />
           <Routes>
             <Route
               path="/login"

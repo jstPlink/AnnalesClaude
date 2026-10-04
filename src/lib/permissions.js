@@ -20,7 +20,7 @@ async function webState(name) {
   }
 }
 
-// { microphone, notifications, exactAlarms, exactAlarmsNeeded, batteryUnrestricted }
+// { microphone, notifications, gyroscope, exactAlarms, exactAlarmsNeeded, batteryUnrestricted }
 //  - microphone: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | 'unknown'
 //  - gli altri: booleani (null = non applicabile nel browser)
 export async function readPermissions() {
@@ -30,6 +30,7 @@ export async function readPermissions() {
     native: false,
     microphone: await webState('microphone'),
     notifications: notif === 'granted' ? true : notif === 'denied' ? false : null,
+    gyroscope: typeof DeviceOrientationEvent === 'undefined' ? false : null, // null = lo si scopre solo quando arriva un evento
     exactAlarmsNeeded: false,
     exactAlarms: null,
     batteryUnrestricted: null,

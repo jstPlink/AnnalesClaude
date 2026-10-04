@@ -1,12 +1,31 @@
 import { useState } from 'react'
 import { haptic } from '../lib/haptics'
 import {
-  ALL_DAYS,
+  DEFAULT_TEXT,
   DAY_LABELS,
+  WEEK_ORDER,
   applyReminders,
   loadReminders,
   newReminder,
 } from '../lib/reminders'
+
+// Testo del promemoria: si scrive liberamente e si salva (e si riprogramma la
+// notifica) solo quando si esce dal campo, non a ogni lettera.
+function ReminderText({ value, onCommit }) {
+  const [draft, setDraft] = useState(value || '')
+  return (
+    <input
+      type="text"
+      value={draft}
+      maxLength={140}
+      placeholder={DEFAULT_TEXT}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => draft !== (value || '') && onCommit(draft)}
+      className="mt-2 w-full rounded-lg border border-line bg-cream px-2.5 py-1.5 text-xs text-ink"
+      aria-label="Testo della notifica"
+    />
+  )
+}
 
 // Impostazioni → Promemoria: una o più notifiche periodiche che ricordano di
 // scrivere la nota del giorno. Toccando la notifica si apre la scelta
@@ -37,8 +56,8 @@ export default function ReminderSettings() {
   return (
     <div className="space-y-3 text-xs sm:text-sm">
       <p className="text-ink-soft">
-        Ricevi una notifica per ricordarti di scrivere la nota del giorno. Toccandola puoi
-        scegliere se scriverla a mano o con Gemini.
+        Ricevi una notifica per ricordarti di scrivere la nota del giorno, con il testo che preferisci
+        (lascia vuoto per quello predefinito). Toccandola puoi scegliere se scriverla a mano o con Gemini.
       </p>
 
       {list.map((r) => (
@@ -74,7 +93,7 @@ export default function ReminderSettings() {
             </div>
           </div>
           <div className="mt-2 flex gap-1.5">
-            {ALL_DAYS.map((d) => (
+            {WEEK_ORDER.map((d) => (
               <button
                 key={d}
                 type="button"
@@ -91,6 +110,7 @@ export default function ReminderSettings() {
               </button>
             ))}
           </div>
+          <ReminderText key={r.id} value={r.text} onCommit={(text) => patch(r.id, { text })} />
         </div>
       ))}
 

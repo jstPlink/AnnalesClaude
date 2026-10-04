@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
@@ -51,6 +53,9 @@ public class AppPermissionsPlugin extends Plugin {
             exact = am != null && am.canScheduleExactAlarms();
         }
         r.put("exactAlarms", exact);
+        // sensori di movimento (foto che oscillano, src/lib/tilt.js): nessun permesso da concedere, si rileva solo se ci sono
+        SensorManager sm = (SensorManager) c.getSystemService(Context.SENSOR_SERVICE);
+        r.put("gyroscope", sm != null && (sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE) != null || sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null));
         PowerManager pm = (PowerManager) c.getSystemService(Context.POWER_SERVICE);
         r.put("batteryUnrestricted", pm != null && pm.isIgnoringBatteryOptimizations(c.getPackageName()));
         return r;

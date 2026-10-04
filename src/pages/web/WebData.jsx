@@ -153,7 +153,7 @@ export default function WebData() {
           <div className="wd-chart-body">
             <YearMoodChart
               data={data}
-              aspectRatio={0.361}
+              gridRows={8}
               monthFontSize={13}
               axisFontSize={13}
               fontFamily="'Annales Hand', 'Kalam', sans-serif"

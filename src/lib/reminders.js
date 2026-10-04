@@ -4,12 +4,16 @@ import { LocalNotifications } from '@capacitor/local-notifications'
 // Promemoria periodici "scrivi la nota del giorno" (solo app Android).
 // Salvati sul dispositivo (localStorage) e programmati come notifiche locali
 // ripetute: funzionano anche ad app chiusa e senza rete.
-//   { id, time: 'HH:MM', days: [0..6] (0 = domenica), enabled }
+//   { id, time: 'HH:MM', days: [0..6] (0 = domenica), enabled, text? }
+// `text` = testo della notifica (vuoto/assente = DEFAULT_TEXT).
 
 const KEY = 'annales.reminders'
 const CHANNEL = 'reminders'
 export const DAY_LABELS = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6]
+// La settimana si mostra da lunedì (i giorni restano numerati 0 = domenica ... 6 = sabato).
+export const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
+export const DEFAULT_TEXT = 'Com’è andata oggi? Scrivi la nota del giorno.'
 
 export const remindersSupported = () => Capacitor.isNativePlatform()
 
@@ -32,7 +36,7 @@ function save(list) {
 
 export function newReminder(list) {
   const id = list.reduce((m, r) => Math.max(m, r.id), 0) + 1
-  return { id, time: '21:00', days: ALL_DAYS, enabled: true }
+  return { id, time: '21:00', days: ALL_DAYS, enabled: true, text: '' }
 }
 
 // Un id di notifica per promemoria (ogni giorno) o per giorno della settimana.
@@ -70,7 +74,7 @@ export async function applyReminders(list) {
     const [hour, minute] = r.time.split(':').map(Number)
     const base = {
       title: 'Annales',
-      body: 'Com’è andata oggi? Scrivi la nota del giorno.',
+      body: (r.text || '').trim() || DEFAULT_TEXT,
       channelId: CHANNEL,
       extra: { newNote: true },
     }

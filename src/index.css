@@ -4082,9 +4082,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   position: relative;
   border-radius: 10px;
   overflow: hidden;
+  /* i quadretti sono nel grafico stesso (YearMoodChart.jsx), allineati ad assi e mesi */
   background-color: var(--color-tag);
-  background-image: repeating-linear-gradient(0deg, rgba(79, 143, 191, 0.12) 0 1px, transparent 1px 24px),
-    repeating-linear-gradient(90deg, rgba(79, 143, 191, 0.12) 0 1px, transparent 1px 24px);
 }
 .wd-chart-body svg {
   display: block;
@@ -5089,6 +5088,30 @@ li:last-child > .wd-month-row {
 .gms-voice-btn:disabled {
   opacity: 0.5;
 }
+.gms-voice-btn {
+  position: relative;
+  overflow: hidden;
+}
+/* barra del tempo che resta (vocale max 100 s): si consuma verso sinistra */
+.gms-voice-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(52, 44, 28, 0.12);
+}
+.gms-voice-bar i {
+  display: block;
+  height: 100%;
+  background: var(--color-delete-dark);
+  transition: width 1s linear;
+}
+/* ultimi secondi: sfondo rosato che lampeggia più in fretta */
+.gms-voice-btn.recording.ending {
+  background: rgba(200, 86, 76, 0.16);
+  animation-duration: 0.55s;
+}
 .gms-voice-btn.recording {
   border-style: solid;
   border-color: var(--color-delete-dark);
@@ -5573,14 +5596,14 @@ li:last-child > .wf-result {
   position: absolute;
   left: 0;
   right: 0;
-  top: 52px;
+  top: 44px;
   height: 0;
   border-top: 1.5px dashed rgba(120, 100, 60, 0.35);
 }
 .st-tile::after {
   content: '';
   position: absolute;
-  top: 46px;
+  top: 38px;
   left: -7px;
   width: 14px;
   height: 14px;
@@ -5600,7 +5623,7 @@ li:last-child > .wf-result {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-ink-soft);
-  margin-bottom: 18px;
+  margin-bottom: 26px;
 }
 .st-tile-label svg {
   width: 13px;
@@ -5616,7 +5639,7 @@ li:last-child > .wf-result {
   color: var(--color-ink);
 }
 .st-tile-sub {
-  margin-top: 4px;
+  margin-top: 8px;
   font-family: 'Annales Hand', 'Kalam', sans-serif;
   font-size: 0.78rem;
   color: var(--color-ink-soft);
@@ -5835,14 +5858,14 @@ li:last-child > .st-person-row {
   color: var(--color-ink-soft);
 }
 .st-mt-value {
-  margin-top: 2px;
+  margin-top: 5px;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
   font-size: 1rem;
   color: var(--color-ink);
 }
 .st-mt-sub {
-  margin-top: 1px;
+  margin-top: 3px;
   font-family: 'Annales Hand', 'Kalam', sans-serif;
   font-size: 0.74rem;
   color: var(--color-ink-soft);
@@ -6034,16 +6057,16 @@ li:last-child > .st-row {
     grid-column: 1 / -1;
   }
   .st-tile::before {
-    top: 41px;
+    top: 33px;
   }
   .st-tile::after {
-    top: 36px;
+    top: 27.5px;
     width: 11px;
     height: 11px;
   }
   .st-tile-label {
     font-size: 0.62rem;
-    margin-bottom: 13px;
+    margin-bottom: 19px;
   }
   .st-tile-label svg {
     width: 11px;
@@ -6053,6 +6076,7 @@ li:last-child > .st-row {
     font-size: 1.6rem;
   }
   .st-tile-sub {
+    margin-top: 6px;
     font-size: 0.7rem;
   }
   .prc-card {

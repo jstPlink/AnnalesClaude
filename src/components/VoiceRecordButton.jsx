@@ -4,10 +4,13 @@ import Icon from './Icon'
 import { transcribeAudio, describeGeminiError } from '../lib/gemini'
 import { blobToWav } from '../lib/audio'
 
-// Oltre i 3 minuti si ferma da sola: un vocale per un prompt di diario non
-// dovrebbe mai servirne di più, ed evita registrazioni lasciate aperte per
-// sbaglio (audio via via più pesante da inviare).
-const MAX_SECONDS = 180
+// Oltre i 100 secondi si ferma da sola: un vocale per una nota non dovrebbe
+// servirne di più, ed evita registrazioni lasciate aperte per sbaglio (audio
+// via via più pesante da inviare e da trascrivere). Il pulsante mostra il tempo
+// che resta e una barra che si consuma; negli ultimi WARN_SECONDS diventa
+// rossa e lampeggia, per avvisare che sta per fermarsi.
+const MAX_SECONDS = 100
+const WARN_SECONDS = 15
 
 const CANDIDATE_TYPES = [
   'audio/webm;codecs=opus',
@@ -174,9 +177,17 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
   return (
     <div className="gms-voice">
       {state === 'recording' ? (
-        <button type="button" onClick={stop} className="gms-voice-btn recording">
+        <button
+          type="button"
+          onClick={stop}
+          className={'gms-voice-btn recording' + (MAX_SECONDS - seconds <= WARN_SECONDS ? ' ending' : '')}
+        >
           <Icon name="square" size={13} />
-          Ferma · {seconds}s
+          Ferma · {MAX_SECONDS - seconds}s
+          {MAX_SECONDS - seconds <= WARN_SECONDS && ' · sta per finire'}
+          <span className="gms-voice-bar" aria-hidden="true">
+            <i style={{ width: `${Math.max(0, 100 - (seconds / MAX_SECONDS) * 100)}%` }} />
+          </span>
         </button>
       ) : (
         <button

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { haptic } from '../lib/haptics'
 
 const TABS = [
   { key: 'calendar', path: '/', label: 'Calendario' },
@@ -14,6 +15,7 @@ export default function ViewTabs({ active }) {
   const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === active))
 
   function go(path) {
+    haptic()
     navigate(path)
   }
 

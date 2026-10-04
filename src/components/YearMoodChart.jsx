@@ -4,13 +4,21 @@ import { MONTHS_IT } from '../lib/dates'
 // diversa (giorno/settimana/mese), niente gradiente. Aspetto regolabile per
 // adattarsi a mobile (alto, senza valori sull'asse, mesi alterni) e web
 // (più basso, con valori sull'asse, tutti i mesi) tramite le props.
+//
+// Lo sfondo a QUADRETTI è disegnato qui dentro, nello stesso SVG, e non più in
+// CSS: così scala insieme al grafico e i quadretti coincidono con gli assi.
+// Il lato del quadretto è 1/24 della larghezza utile (2 quadretti per mese, le
+// etichette dei mesi stanno su una linea verticale); l'altezza utile è un
+// multiplo del lato (`gridRows`, multiplo di 4) così le righe 0/25/50/75/100
+// cadono esattamente su una linea orizzontale. Quadretti quadrati: l'altezza
+// del grafico segue da lì (prima si fissava il rapporto altezza/larghezza).
 // data = risultato di yearWeeklyMood(): { daily, weekly, monthlySeries, hasData }
 // `bare` e `lineColors` esistono solo per la skin "Pagine" (WebData.jsx: il
 // cartoncino/bordo diventano lo sfondo a quadretti del chiamante, e le 3
 // linee un altro colore) — di default il componente resta quello di sempre.
 export default function YearMoodChart({
   data,
-  aspectRatio = 0.82, // altezza / larghezza del grafico
+  gridRows = 20, // righe di quadretti (multiplo di 4): più righe = grafico più alto
   monthFontSize = 22,
   axisFontSize = 24,
   fontFamily, // senza valore: eredita il font di default (mobile, invariato)
@@ -25,13 +33,15 @@ export default function YearMoodChart({
   },
 }) {
   const W = 1000
-  const H = Math.round(W * aspectRatio)
   const padL = showAxisValues ? 56 : 14
   const padR = 12
   const padT = 16
   const padB = 34
   const innerW = W - padL - padR
-  const innerH = H - padT - padB
+  const cols = 24 // 2 quadretti per mese
+  const cell = innerW / cols
+  const innerH = cell * gridRows
+  const H = Math.round(padT + innerH + padB)
 
   const x = (t) => padL + t * innerW
   const y = (m) => padT + (1 - m) * innerH
@@ -72,6 +82,22 @@ export default function YearMoodChart({
       style={{ width: '100%', height: 'auto', display: 'block' }}
       className={bare ? '' : 'rounded-2xl border border-line bg-tag'}
     >
+      {/* Sfondo a quadretti: linee verticali e orizzontali ogni `cell`, dentro l'area del grafico */}
+      <g stroke="rgba(79, 143, 191, 0.14)" strokeWidth="1" vectorEffect="non-scaling-stroke">
+        {Array.from({ length: cols + 1 }, (_, i) => (
+          <line key={'v' + i} x1={padL + i * cell} x2={padL + i * cell} y1={padT} y2={padT + innerH} vectorEffect="non-scaling-stroke" />
+        ))}
+        {Array.from({ length: gridRows + 1 }, (_, j) => (
+          <line key={'h' + j} x1={padL} x2={padL + innerW} y1={padT + j * cell} y2={padT + j * cell} vectorEffect="non-scaling-stroke" />
+        ))}
+      </g>
+      {/* Assi verticali: un tratto più marcato a inizio di ogni mese */}
+      <g stroke="rgba(79, 143, 191, 0.3)" strokeWidth="1" vectorEffect="non-scaling-stroke">
+        {Array.from({ length: 13 }, (_, i) => (
+          <line key={'m' + i} x1={x(i / 12)} x2={x(i / 12)} y1={padT} y2={padT + innerH} vectorEffect="non-scaling-stroke" />
+        ))}
+      </g>
+
       {/* Griglia orizzontale, con valori numerici a sinistra solo se richiesti */}
       {[0, 0.25, 0.5, 0.75, 1].map((m) => (
         <g key={m}>
