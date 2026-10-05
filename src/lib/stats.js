@@ -96,13 +96,19 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     wdN[wd] += 1
   }
   let bestWeekday = null
+  let worstWeekday = null
   for (let i = 0; i < 7; i += 1) {
     if (!wdN[i]) continue
     const m = wdSum[i] / wdN[i]
     if (!bestWeekday || m > bestWeekday.mood) {
       bestWeekday = { day: i, name: WEEKDAYS_IT[i], mood: m, count: wdN[i] }
     }
+    if (!worstWeekday || m < worstWeekday.mood) {
+      worstWeekday = { day: i, name: WEEKDAYS_IT[i], mood: m, count: wdN[i] }
+    }
   }
+  // un solo giorno della settimana con dati: non ha senso chiamarlo "peggiore"
+  if (worstWeekday && bestWeekday && worstWeekday.day === bestWeekday.day) worstWeekday = null
 
   // Note per mese (0-11), e mese con mood medio più alto/più basso (almeno
   // un giorno scritto). Il mood di ogni mese è la media dei mood-giorno
@@ -188,6 +194,7 @@ export function computeYearStats(yearNotes, { allPeople = [], allTags = [] } = {
     bestWeek,
     worstWeek,
     bestWeekday,
+    worstWeekday,
     notesByMonth,
     bestMonth,
     worstMonth,

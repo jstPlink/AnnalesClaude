@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from './Icon'
+import { haptic } from '../lib/haptics'
 
 // Sezione delle Impostazioni (web e mobile, stesse classi CSS scalate via
 // @media (max-width: 480px)): intestazione a "cartoncino a quadretti"
@@ -19,6 +20,10 @@ export default function SettingsSection({
   children,
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const toggle = () => {
+    haptic()
+    setOpen((v) => !v)
+  }
 
   if (nested) {
     return (
@@ -29,7 +34,7 @@ export default function SettingsSection({
             <span className="ws-sub-title">{title}</span>
           </div>
         ) : (
-          <button type="button" onClick={() => setOpen((v) => !v)} className="ws-sub-head">
+          <button type="button" onClick={toggle} className="ws-sub-head">
             {icon && <Icon name={icon} size={15} className="ws-sub-icon shrink-0" />}
             <span className="ws-sub-title">{title}</span>
             <Icon
@@ -66,7 +71,7 @@ export default function SettingsSection({
       {noCollapse ? (
         <div className={headerCls}>{headerContent}</div>
       ) : (
-        <button type="button" onClick={() => setOpen((v) => !v)} className={headerCls}>
+        <button type="button" onClick={toggle} className={headerCls}>
           {headerContent}
         </button>
       )}

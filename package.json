@@ -1,7 +1,7 @@
 {
   "name": "annales-diario",
   "private": true,
-  "version": "0.68.0",
+  "version": "0.72.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "icons": "node scripts/generate-icons.js",
     "android:build": "vite build --mode android && node -e \"require('fs').rmSync('dist/download',{recursive:true,force:true})\" && cap sync android",
     "android:open": "cap open android",
-    "icons:android": "node scripts/generate-android-icons.js"
+    "icons:android": "node scripts/generate-android-icons.js",
+    "sounds:android": "node scripts/generate-sounds.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

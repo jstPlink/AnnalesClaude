@@ -1,16 +1,14 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // Recap automatici (giorno/mese/anno) scritti con Gemini, lato server: non
-// serve aprire l'app perché restino aggiornati. Tre trigger:
-//  - un cron per ciascun livello, poco dopo la mezzanotte di quando il
-//    periodo finisce (giorno: ogni notte; mese: il giorno 1; anno: il 1
-//    gennaio);
-//  - una coda quando si crea/cancella una nota, o se ne modifica descrizione o mood, di un giorno che
-//    NON è oggi: il giorno viene messo in coda e un cron al minuto ne evade
-//    uno per volta (richieste a Gemini distanziate, salvare non aspetta mai).
-//    Finito un giorno, se non è nel mese corrente si accoda il suo mese; finito
-//    il mese, se non è nell'anno corrente, il suo anno. Una nota di oggi non
-//    fa nulla: ci pensa il cron di stanotte, a giornata davvero chiusa.
+// serve aprire l'app perché restino aggiornati.
+//  - Creando/cancellando una nota, o modificandone descrizione o mood, i
+//    recap toccati (giorno, mese e anno della nota) vengono SEGNATI da
+//    aggiornare in una coda (recap_jobs); salvare non chiama mai Gemini.
+//  - Ogni sera alle 23:00 (ora di Roma, TZ del container) un cron li evade
+//    TUTTI in blocco: prima i giorni, poi i mesi, poi gli anni, una richiesta
+//    a Gemini alla volta. Due ritentativi (23:20 e 23:40) riprendono quello
+//    che fosse rimasto per un errore transitorio di Gemini.
 //
 // Questo file registra SOLO gli handler — tutta la logica vive in
 // recap_lib.js, caricato con require() dentro ciascun handler. È un vincolo
@@ -30,9 +28,9 @@
 // "Genera"/"Rigenera" (src/lib/recaps.js), che scrive qui con lo stesso
 // schema.
 
-// I tre hook sulle note NON generano niente: mettono in coda (recap_jobs) il
-// giorno toccato e basta, così salvare una nota resta istantaneo anche se
-// Gemini è lento. Chi lavora la coda è il cron "recapQueue" qui sotto.
+// I tre hook sulle note NON generano niente: segnano in coda (recap_jobs) i
+// recap da aggiornare e basta, così salvare una nota resta istantaneo anche se
+// Gemini è lento. Chi lavora la coda è il cron "recapBatch" qui sotto.
 onRecordAfterCreateSuccess((e) => {
   require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, null)
   e.next()
@@ -43,11 +41,11 @@ onRecordAfterUpdateSuccess((e) => {
   try {
     original = e.record.original()
   } catch {
-    original = null // se non disponibile si accoda solo la data attuale
+    original = null // se non disponibile si segna comunque la data attuale
   }
   // Il recap cambia solo se cambiano la descrizione o il mood: titolo, orari,
   // persone, luogo, canzoni o immagini non lo toccano. (Se l'originale non è
-  // disponibile si accoda comunque, per sicurezza.)
+  // disponibile si segna comunque, per sicurezza.)
   const changed =
     !original ||
     original.get('content') !== e.record.get('content') ||
@@ -63,19 +61,14 @@ onRecordAfterDeleteSuccess((e) => {
   e.next()
 }, 'note')
 
-// Evade UN lavoro di coda al minuto (richieste a Gemini distanziate nel tempo).
-cronAdd('recapQueue', '* * * * *', () => {
-  require(`${__hooks}/recap_lib.js`).processRecapQueue($app)
+// Tutti i recap segnati da aggiornare, in blocco, alle 23:00; poi due
+// ritentativi per ciò che fosse rimasto in coda (errori transitori di Gemini).
+cronAdd('recapBatch', '0 23 * * *', () => {
+  require(`${__hooks}/recap_lib.js`).runRecapBatch($app)
 })
-
-cronAdd('dailyRecap', '30 0 * * *', () => {
-  require(`${__hooks}/recap_lib.js`).runDailyRecapCron($app)
+cronAdd('recapBatchRetry1', '20 23 * * *', () => {
+  require(`${__hooks}/recap_lib.js`).runRecapBatch($app)
 })
-
-cronAdd('monthlyRecap', '50 0 1 * *', () => {
-  require(`${__hooks}/recap_lib.js`).runMonthlyRecapCron($app)
-})
-
-cronAdd('yearlyRecap', '10 1 1 1 *', () => {
-  require(`${__hooks}/recap_lib.js`).runYearlyRecapCron($app)
+cronAdd('recapBatchRetry2', '40 23 * * *', () => {
+  require(`${__hooks}/recap_lib.js`).runRecapBatch($app)
 })

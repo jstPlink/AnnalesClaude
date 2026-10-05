@@ -18,6 +18,7 @@ import MonthPages from './web/MonthPages'
 import { listNotesInRange, groupByDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
+import { playSound } from '../lib/sounds'
 import { MONTHS_IT, addMonths, monthDayKeys, monthRange, todayKey } from '../lib/dates'
 
 const SWIPE_THRESHOLD = 55
@@ -99,6 +100,7 @@ export default function MonthView() {
     const dy = e.clientY - drag.current.y
     drag.current = null
     if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+      playSound('flip') // pagina che si sfoglia
       go(dx < 0 ? 1 : -1)
     }
   }

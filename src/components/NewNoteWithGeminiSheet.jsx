@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import GeminiWait from './GeminiWait'
 import VoiceRecordButton from './VoiceRecordButton'
+import GeminiUsage from './GeminiUsage'
 import {
   draftNoteFromPrompt,
   describeGeminiError,
@@ -194,6 +195,7 @@ export default function NewNoteWithGeminiSheet({
                   setRestoredDraft(false)
                 }}
               />
+              <GeminiUsage />
               <button
                 type="button"
                 disabled={!prompt.trim()}
@@ -210,7 +212,7 @@ export default function NewNoteWithGeminiSheet({
                   className="gms-instructions-label"
                 >
                   <Icon name="edit" size={13} />
-                  Istruzioni personalizzate
+                  Istruzioni per le note
                   <Icon
                     name="chevron-right"
                     size={12}

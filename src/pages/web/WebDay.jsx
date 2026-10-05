@@ -132,7 +132,7 @@ export default function WebDay() {
         periodKey={date}
         notes={notes}
         apiKey={user?.geminiApiKey?.trim()}
-        className="mx-auto mb-3 w-3/5 shrink-0"
+        className="mx-auto mb-3 w-[78%] shrink-0"
       />
 
       {/* Il foglio NON si scorre, sta tutto nella pagina (fit) — altezza

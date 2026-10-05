@@ -28,10 +28,11 @@ function isRetryableStatus(status) {
 // intoppi transitori: ogni 10 secondi finché non arriva un risultato, senza
 // bisogno di nessuna revisione. Una chiave non valida (400/401/403) non è
 // transitoria: lì ci si ferma subito, non ha senso riprovare all'infinito.
-// `maxAttempts` (opzionale) limita i tentativi: la coda (processRecapQueue)
-// ne usa pochi e, se non riesce, rimanda il lavoro al giro successivo invece
-// di tenere occupato il cron; i cron notturni lo lasciano illimitato.
-function callGeminiText(apiKey, promptText, maxAttempts) {
+// `maxAttempts` (opzionale) limita i tentativi: il blocco delle 23:00
+// (runRecapBatch) ne usa pochi e, se non riesce, lascia i recap in coda per i
+// ritentativi di 23:20 e 23:40 invece di tenere occupato il cron. `jsonMode`
+// chiede a Gemini una risposta JSON (usata dalla richiesta unica di generateBatch).
+function callGeminiText(apiKey, promptText, maxAttempts, jsonMode) {
   const url =
     'https://generativelanguage.googleapis.com/v1beta/models/' +
     GEMINI_MODEL +
@@ -46,7 +47,14 @@ function callGeminiText(apiKey, promptText, maxAttempts) {
         method: 'POST',
         url: url,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+        body: JSON.stringify(
+          jsonMode
+            ? {
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: { responseMimeType: 'application/json' },
+              }
+            : { contents: [{ parts: [{ text: promptText }] }] },
+        ),
       })
     } catch (err) {
       console.log('[recap] rete non raggiungibile (tentativo ' + attempt + '), riprovo tra 10s: ' + err)
@@ -94,31 +102,6 @@ function monthKeyOf(dKey) {
 function yearOf(mKey) {
   return mKey.slice(0, 4)
 }
-// L'unico punto che guarda l'orologio vero (del container: vedi TZ=Europe/Rome
-// nel Dockerfile) invece di leggere una data salvata — serve a sapere cosa è
-// "oggi"/"il mese corrente"/"l'anno corrente" adesso.
-function todayKeyLocal() {
-  const d = new Date()
-  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
-}
-function currentMonthKeyLocal() {
-  return todayKeyLocal().slice(0, 7)
-}
-function currentYearLocal() {
-  return '' + new Date().getFullYear()
-}
-function addDaysToKey(dKey, n) {
-  const p = dKey.split('-')
-  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + n)
-  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
-}
-function prevMonthKey(mKey) {
-  const p = mKey.split('-')
-  const total = Number(p[0]) * 12 + (Number(p[1]) - 1) - 1
-  const y = Math.floor(total / 12)
-  const m = ((total % 12) + 12) % 12
-  return y + '-' + pad2(m + 1)
-}
 function dayRangeFilter(dKey) {
   return { start: dKey + ' 00:00:00.000Z', end: dKey + ' 23:59:59.999Z' }
 }
@@ -154,14 +137,6 @@ function recapInstructionsFor(app, userId) {
       : ''
   } catch {
     return ''
-  }
-}
-
-function usersWithGeminiKey(app) {
-  try {
-    return app.findRecordsByFilter('users', "geminiApiKey != ''", '', 500, 0, {})
-  } catch {
-    return []
   }
 }
 
@@ -226,25 +201,35 @@ function noteLine(rec) {
   return '[' + (isFinite(mood) ? mood : 50) + '] ' + title + (excerpt ? ' — ' + excerpt : '')
 }
 
-// ---- generazione dei tre livelli ----
+// ---- generazione in blocco: UNA richiesta a Gemini per utente ----
+//
+// Alle 23:00 tutti i recap segnati da aggiornare (giorni, mesi, anni) di un
+// utente si chiedono a Gemini in UNA sola richiesta, che risponde con un
+// oggetto JSON {days, months, years}: una richiesta al posto di una per ogni
+// recap, così si risparmiano le richieste giornaliere della chiave. I livelli
+// dipendono l'uno dall'altro (il mese si basa sui recap dei giorni, l'anno su
+// quelli dei mesi): nel prompt si chiede di scrivere prima i giorni, poi i mesi
+// usando i giorni appena scritti, poi gli anni. Se i giorni da fare sono troppi
+// per una risposta sola (> MAX_DAYS_PER_REQUEST, es. dopo molte modifiche
+// accumulate) si dividono in più richieste, poi una per mesi e anni.
 
-function generateDayRecap(app, userId, dateKey, maxAttempts) {
-  const notes = notesForUserInRange(app, userId, dayRangeFilter(dateKey))
-  if (!notes.length) {
-    deleteRecapIfExists(app, userId, 'day', dateKey)
+const MAX_DAYS_PER_REQUEST = 25
+const MAX_RAW_LINES = 300 // note grezze passate per un mese/anno senza recap inferiori
+
+function jsonFromText(text) {
+  try {
+    return JSON.parse(text)
+  } catch {
+    const m = String(text).match(/\{[\s\S]*\}/)
+    if (m) {
+      try {
+        return JSON.parse(m[0])
+      } catch {
+        return null
+      }
+    }
     return null
   }
-  const apiKey = geminiApiKeyFor(app, userId)
-  if (!apiKey) return null
-  const rows = notes.map(noteLine).join('\n')
-  const prompt =
-    recapInstructionsFor(app, userId) +
-    'Queste sono le note di diario scritte in un solo giorno (formato: [mood 0-100] titolo — estratto). ' +
-    'Scrivi un breve recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 2-4 frasi: ' +
-    'cosa è successo, persone e luoghi citati, il tono della giornata. Tono caldo, diretto. ' +
-    'Rispondi SOLO col testo del recap, senza titolo né elenchi puntati.\n\n' +
-    rows
-  return saveRecap(app, userId, 'day', dateKey, callGeminiText(apiKey, prompt, maxAttempts))
 }
 
 function dayRecapsForMonth(app, userId, monthKey) {
@@ -262,34 +247,6 @@ function dayRecapsForMonth(app, userId, monthKey) {
   }
 }
 
-function generateMonthRecap(app, userId, monthKey, maxAttempts) {
-  const apiKey = geminiApiKeyFor(app, userId)
-  if (!apiKey) return null
-  const days = dayRecapsForMonth(app, userId, monthKey)
-  let rows
-  let intro
-  if (days.length) {
-    rows = days.map((r) => r.get('key') + ': ' + r.get('text')).join('\n')
-    intro = 'Questi sono i recap giornalieri di un mese di diario (un giorno per riga). '
-  } else {
-    const notes = notesForUserInRange(app, userId, monthRangeFilter(monthKey))
-    if (!notes.length) {
-      deleteRecapIfExists(app, userId, 'month', monthKey)
-      return null
-    }
-    rows = notes.map((r) => dayKeyOf(r.get('date')) + ' ' + noteLine(r)).join('\n')
-    intro = 'Queste sono le note di diario di un mese (formato: data [mood 0-100] titolo — estratto). '
-  }
-  const prompt =
-    recapInstructionsFor(app, userId) +
-    intro +
-    'Scrivi un recap personale del mese in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 4-6 frasi: ' +
-    "temi ricorrenti, persone e luoghi che tornano, andamento dell'umore nel tempo, due o tre momenti salienti. " +
-    'Tono caldo e sintetico. Rispondi SOLO col recap, senza titolo né elenchi puntati.\n\n' +
-    rows
-  return saveRecap(app, userId, 'month', monthKey, callGeminiText(apiKey, prompt, maxAttempts))
-}
-
 function monthRecapsForYear(app, userId, year) {
   try {
     return app.findRecordsByFilter(
@@ -305,50 +262,163 @@ function monthRecapsForYear(app, userId, year) {
   }
 }
 
-function generateYearRecap(app, userId, year, maxAttempts) {
-  const apiKey = geminiApiKeyFor(app, userId)
-  if (!apiKey) return null
-  const months = monthRecapsForYear(app, userId, year)
-  let rows
-  let intro
-  if (months.length) {
-    rows = months.map((r) => r.get('key') + ': ' + r.get('text')).join('\n')
-    intro = 'Questi sono i recap mensili di un anno di diario (un mese per riga). '
-  } else {
-    const notes = notesForUserInRange(app, userId, yearRangeFilter(year))
-    if (!notes.length) {
-      deleteRecapIfExists(app, userId, 'year', year)
-      return null
-    }
-    rows = notes.map((r) => dayKeyOf(r.get('date')) + ' ' + noteLine(r)).join('\n')
-    intro = 'Queste sono le note di diario di un anno (formato: data [mood 0-100] titolo — estratto). '
-  }
-  const prompt =
-    recapInstructionsFor(app, userId) +
-    intro +
-    "Scrivi un recap personale dell'anno in italiano, rivolto a chi le ha scritte (\"hai…\", \"ti…\"), di 5-8 frasi: " +
-    "come si è evoluto l'anno, temi ricorrenti, persone e luoghi importanti, l'andamento dell'umore, i momenti più salienti. " +
-    'Tono caldo, come un ricordo personale. Rispondi SOLO col recap, senza titolo né elenchi puntati.\n\n' +
-    rows
-  return saveRecap(app, userId, 'year', year, callGeminiText(apiKey, prompt, maxAttempts))
+function rawNoteRows(app, userId, range) {
+  return notesForUserInRange(app, userId, range)
+    .slice(0, MAX_RAW_LINES)
+    .map((r) => dayKeyOf(r.get('date')) + ' ' + noteLine(r))
 }
 
-// ---- coda dei recap da rigenerare ----
+// Sezione del prompt per un mese; null se il mese non ha niente da riassumere.
+function monthSection(app, userId, mKey, writtenDays) {
+  const existing = dayRecapsForMonth(app, userId, mKey).filter((r) => !writtenDays[r.get('key')])
+  const rewritten = Object.keys(writtenDays).filter((k) => monthKeyOf(k) === mKey)
+  let body = ''
+  if (existing.length) {
+    body += 'Recap giornalieri già esistenti:\n' + existing.map((r) => r.get('key') + ': ' + r.get('text')).join('\n') + '\n'
+  }
+  if (rewritten.length) {
+    body += 'Giorni riscritti in questa stessa richiesta (usa i recap che scrivi nella sezione GIORNI): ' + rewritten.join(', ') + '\n'
+  }
+  if (!existing.length && !rewritten.length) {
+    const rows = rawNoteRows(app, userId, monthRangeFilter(mKey))
+    if (!rows.length) return null
+    body += 'Note del mese (formato: data [mood 0-100] titolo — estratto):\n' + rows.join('\n') + '\n'
+  }
+  return body
+}
+
+// Sezione del prompt per un anno; null se l'anno non ha niente da riassumere.
+function yearSection(app, userId, year, writtenMonths) {
+  const existing = monthRecapsForYear(app, userId, year).filter((r) => !writtenMonths[r.get('key')])
+  const rewritten = Object.keys(writtenMonths).filter((k) => yearOf(k) === year)
+  let body = ''
+  if (existing.length) {
+    body += 'Recap mensili già esistenti:\n' + existing.map((r) => r.get('key') + ': ' + r.get('text')).join('\n') + '\n'
+  }
+  if (rewritten.length) {
+    body += 'Mesi riscritti in questa stessa richiesta (usa i recap che scrivi nella sezione MESI): ' + rewritten.join(', ') + '\n'
+  }
+  if (!existing.length && !rewritten.length) {
+    const rows = rawNoteRows(app, userId, yearRangeFilter(year))
+    if (!rows.length) return null
+    body += "Note dell'anno (formato: data [mood 0-100] titolo — estratto):\n" + rows.join('\n') + '\n'
+  }
+  return body
+}
+
+// Genera in UNA richiesta i recap indicati (liste di chiavi: giorni
+// AAAA-MM-GG, mesi AAAA-MM, anni AAAA) e li salva. Ritorna le chiavi
+// "periodo|chiave" concluse (anche quelle senza note, il cui recap viene
+// eliminato). Lancia un errore transitorio se Gemini non risponde o risponde
+// in modo inutilizzabile; quelli non transitori (chiave non valida) passano.
+function generateBatch(app, userId, dayKeys, monthKeys, yearKeys, maxAttempts) {
+  const done = []
+  const apiKey = geminiApiKeyFor(app, userId)
+  if (!apiKey) throw new Error('Nessuna chiave Gemini')
+
+  // giorni: senza note il recap non ha motivo di esistere
+  const daySections = {}
+  for (const dKey of dayKeys) {
+    const notes = notesForUserInRange(app, userId, dayRangeFilter(dKey))
+    if (!notes.length) {
+      deleteRecapIfExists(app, userId, 'day', dKey)
+      done.push('day|' + dKey)
+    } else {
+      daySections[dKey] = notes.map(noteLine).join('\n')
+    }
+  }
+  const writtenDays = {}
+  for (const k of Object.keys(daySections)) writtenDays[k] = true
+
+  const monthSections = {}
+  for (const mKey of monthKeys) {
+    const body = monthSection(app, userId, mKey, writtenDays)
+    if (body === null) {
+      deleteRecapIfExists(app, userId, 'month', mKey)
+      done.push('month|' + mKey)
+    } else {
+      monthSections[mKey] = body
+    }
+  }
+  const writtenMonths = {}
+  for (const k of Object.keys(monthSections)) writtenMonths[k] = true
+
+  const yearSections = {}
+  for (const year of yearKeys) {
+    const body = yearSection(app, userId, year, writtenMonths)
+    if (body === null) {
+      deleteRecapIfExists(app, userId, 'year', year)
+      done.push('year|' + year)
+    } else {
+      yearSections[year] = body
+    }
+  }
+
+  const nDays = Object.keys(daySections).length
+  const nMonths = Object.keys(monthSections).length
+  const nYears = Object.keys(yearSections).length
+  if (!nDays && !nMonths && !nYears) return done
+
+  let prompt =
+    recapInstructionsFor(app, userId) +
+    'Devi scrivere dei recap per un diario personale, in italiano, rivolti a chi ha scritto le note ("hai…", "ti…"). ' +
+    'Rispondi con UN SOLO oggetto JSON, senza altro testo, di questa forma: ' +
+    '{"days":{"AAAA-MM-GG":"testo"},"months":{"AAAA-MM":"testo"},"years":{"AAAA":"testo"}} ' +
+    'con ESATTAMENTE le chiavi richieste nelle sezioni qui sotto (un oggetto vuoto per i livelli non richiesti). ' +
+    'Ogni testo è solo il recap, senza titolo né elenchi puntati. ' +
+    'Come scrivere: GIORNO = 2-4 frasi, cosa è successo, persone e luoghi citati, il tono della giornata, tono caldo e diretto. ' +
+    "MESE = 4-6 frasi, temi ricorrenti, persone e luoghi che tornano, andamento dell'umore nel tempo, due o tre momenti salienti, tono caldo e sintetico. " +
+    "ANNO = 5-8 frasi, come si è evoluto l'anno, temi ricorrenti, persone e luoghi importanti, l'andamento dell'umore, i momenti più salienti, tono caldo come un ricordo personale. " +
+    'I livelli dipendono l\'uno dall\'altro: scrivi prima i giorni, poi i mesi usando anche i recap dei giorni che hai appena scritto, poi gli anni usando quelli dei mesi.\n'
+
+  if (nDays) {
+    prompt += '\n### GIORNI DA SCRIVERE (per ognuno: note nel formato [mood 0-100] titolo — estratto)\n'
+    for (const k of Object.keys(daySections).sort()) prompt += '\n[' + k + ']\n' + daySections[k] + '\n'
+  }
+  if (nMonths) {
+    prompt += '\n### MESI DA SCRIVERE\n'
+    for (const k of Object.keys(monthSections).sort()) prompt += '\n[' + k + ']\n' + monthSections[k]
+  }
+  if (nYears) {
+    prompt += '\n### ANNI DA SCRIVERE\n'
+    for (const k of Object.keys(yearSections).sort()) prompt += '\n[' + k + ']\n' + yearSections[k]
+  }
+
+  const parsed = jsonFromText(callGeminiText(apiKey, prompt, maxAttempts, true))
+  if (!parsed || typeof parsed !== 'object') {
+    console.log('[recap] risposta di Gemini non in formato JSON, riprovo al prossimo giro')
+    throw transientError()
+  }
+  const take = (period, sections, group) => {
+    for (const k of Object.keys(sections)) {
+      const text = group && typeof group[k] === 'string' ? group[k].trim() : ''
+      if (text) {
+        saveRecap(app, userId, period, k, text)
+        done.push(period + '|' + k)
+      } else {
+        console.log('[recap] ' + period + ' ' + k + ': manca nella risposta, resta in coda')
+      }
+    }
+  }
+  take('day', daySections, parsed.days)
+  take('month', monthSections, parsed.months)
+  take('year', yearSections, parsed.years)
+  return done
+}
+
+// ---- recap da aggiornare, tutti in blocco alle 23:00 ----
 //
-// Il salvataggio di una nota NON chiama Gemini: l'hook si limita a mettere in
-// coda (collection recap_jobs) il giorno toccato, se non è oggi — oggi ci pensa
-// il cron di stanotte. Poi processRecapQueue, una volta al minuto, ne evade UNO
-// per volta: le richieste a Gemini restano distanziate nel tempo anche dopo
-// tante modifiche, e salvare non resta mai in attesa. A cascata, finito un
-// giorno si mette in coda il suo mese (se non è quello corrente), finito il
-// mese il suo anno (se non è quello corrente): un livello per giro.
+// Il salvataggio di una nota NON chiama Gemini: l'hook si limita a segnare in
+// coda (collection recap_jobs) i recap da aggiornare — il giorno della nota e,
+// insieme, il suo mese e il suo anno. Poi runRecapBatch, alle 23:00 (e due
+// ritentativi a 23:20 e 23:40 per ciò che fosse rimasto), li evade TUTTI in
+// blocco: per ogni utente UNA richiesta a Gemini per tutti i suoi recap (vedi
+// generateBatch); più modifiche allo stesso periodo contano come una.
 
-const QUEUE_DEBOUNCE_MS = 60 * 1000 // una modifica ravvicinata all'altra si accorpa
-const QUEUE_RETRY_MS = 2 * 60 * 1000 // errore transitorio: riprova fra due minuti
-const QUEUE_ATTEMPTS = 3 // tentativi (10 s l'uno) per giro, prima di rimandare
+const BATCH_ATTEMPTS = 3 // tentativi (10 s l'uno) per richiesta, poi resta in coda
+const BATCH_SPACING_MS = 2000 // pausa fra due richieste a Gemini dello stesso utente
 
-function enqueueRecapJob(app, userId, period, key, readyInMs) {
-  const when = Date.now() + (readyInMs || 0)
+function enqueueRecapJob(app, userId, period, key) {
   let job = null
   try {
     job = app.findFirstRecordByFilter(
@@ -365,7 +435,7 @@ function enqueueRecapJob(app, userId, period, key, readyInMs) {
     job.set('period', period)
     job.set('key', key)
   }
-  job.set('queuedAt', when)
+  job.set('queuedAt', Date.now())
   app.save(job)
 }
 
@@ -377,114 +447,97 @@ function dayKeyOfRecord(rec) {
   }
 }
 
-// Chiamata dagli hook sulle note (creazione/modifica/cancellazione): veloce,
-// solo scritture sul database locale.
+// Chiamata dagli hook sulle note (creazione, modifica di descrizione/mood,
+// cancellazione): veloce, solo scritture sul database locale. Segna giorno,
+// mese e anno della nota (e quelli della data di partenza, se è cambiata).
 function queueFromNote(app, record, original) {
   const userId = record.get('user')
   if (!userId || !geminiApiKeyFor(app, userId)) return
-  const today = todayKeyLocal()
   const keys = {}
   keys[dayKeyOfRecord(record)] = true
   keys[dayKeyOfRecord(original)] = true // data cambiata: serve rifare anche il giorno di partenza
   for (const dKey of Object.keys(keys)) {
-    if (!dKey || dKey === today) continue // oggi: ci pensa il cron di stanotte
+    if (!dKey) continue
     try {
-      enqueueRecapJob(app, userId, 'day', dKey, QUEUE_DEBOUNCE_MS)
+      enqueueRecapJob(app, userId, 'day', dKey)
+      enqueueRecapJob(app, userId, 'month', monthKeyOf(dKey))
+      enqueueRecapJob(app, userId, 'year', yearOf(dKey))
     } catch (err) {
-      console.log('[recap] coda giorno ' + dKey + ' utente ' + userId + ': ' + err)
+      console.log('[recap] segno da aggiornare ' + dKey + ' utente ' + userId + ': ' + err)
     }
   }
 }
 
-function processRecapQueue(app) {
-  // un solo giro alla volta (un giro può durare ~30 s con Gemini lento)
-  if (app.store().get('recapQueueBusy')) return
-  app.store().set('recapQueueBusy', true)
+function processUserJobs(app, userId, jobs) {
+  const keysOf = (period) =>
+    jobs
+      .filter((j) => j.get('period') === period)
+      .map((j) => j.get('key'))
+      .sort()
+  const days = keysOf('day')
+  const months = keysOf('month')
+  const years = keysOf('year')
+  const done = {}
+  const run = (d, m, y) => {
+    const finished = generateBatch(app, userId, d, m, y, BATCH_ATTEMPTS)
+    for (const k of finished) done[k] = true
+    sleep(BATCH_SPACING_MS)
+  }
+  try {
+    if (days.length > MAX_DAYS_PER_REQUEST) {
+      for (let i = 0; i < days.length; i += MAX_DAYS_PER_REQUEST) {
+        run(days.slice(i, i + MAX_DAYS_PER_REQUEST), [], [])
+      }
+      if (months.length || years.length) run([], months, years)
+    } else {
+      run(days, months, years)
+    }
+  } catch (err) {
+    if (err && err.transient) {
+      // Gemini sovraccarico o irraggiungibile: quello che non è concluso resta in coda per il prossimo giro
+      console.log('[recap] utente ' + userId + ' rimandato: ' + err)
+    } else {
+      // errore non recuperabile (es. chiave non valida): inutile riprovare
+      console.log('[recap] utente ' + userId + ' scartato: ' + err)
+      for (const j of jobs) app.delete(j)
+      return
+    }
+  }
+  for (const j of jobs) {
+    if (done[j.get('period') + '|' + j.get('key')]) app.delete(j)
+  }
+}
+
+function runRecapBatch(app) {
+  // un solo giro alla volta (il blocco può durare minuti con tanti recap)
+  if (app.store().get('recapBatchBusy')) return
+  app.store().set('recapBatchBusy', true)
   try {
     let jobs = []
     try {
-      jobs = app.findRecordsByFilter('recap_jobs', 'queuedAt <= {:t}', 'queuedAt', 1, 0, {
-        t: Date.now() - QUEUE_DEBOUNCE_MS,
-      })
+      jobs = app.findRecordsByFilter('recap_jobs', 'queuedAt >= 0', 'queuedAt', 5000, 0, {})
     } catch {
       jobs = []
     }
-    if (!jobs.length) return
-    const job = jobs[0]
-    const userId = job.get('user')
-    const period = job.get('period')
-    const key = job.get('key')
-    try {
-      if (period === 'day') {
-        const rec = generateDayRecap(app, userId, key, QUEUE_ATTEMPTS)
-        if (rec && monthKeyOf(key) !== currentMonthKeyLocal()) {
-          enqueueRecapJob(app, userId, 'month', monthKeyOf(key), QUEUE_DEBOUNCE_MS)
-        }
-      } else if (period === 'month') {
-        const rec = generateMonthRecap(app, userId, key, QUEUE_ATTEMPTS)
-        if (rec && yearOf(key) !== currentYearLocal()) {
-          enqueueRecapJob(app, userId, 'year', yearOf(key), QUEUE_DEBOUNCE_MS)
-        }
-      } else if (period === 'year') {
-        generateYearRecap(app, userId, key, QUEUE_ATTEMPTS)
-      }
-      app.delete(job)
-    } catch (err) {
-      if (err && err.transient) {
-        // Gemini sovraccarico o irraggiungibile: il lavoro resta in coda, riprova più tardi
-        job.set('queuedAt', Date.now() + QUEUE_RETRY_MS)
-        app.save(job)
-        console.log('[recap] ' + period + ' ' + key + ' rimandato: ' + err)
-      } else {
-        // errore non recuperabile (es. chiave non valida): inutile riprovare
-        console.log('[recap] ' + period + ' ' + key + ' scartato: ' + err)
-        app.delete(job)
+    const byUser = {}
+    for (const j of jobs) {
+      const u = j.get('user')
+      if (!byUser[u]) byUser[u] = []
+      byUser[u].push(j)
+    }
+    for (const userId of Object.keys(byUser)) {
+      try {
+        processUserJobs(app, userId, byUser[userId])
+      } catch (err) {
+        console.log('[recap] utente ' + userId + ': ' + err)
       }
     }
   } finally {
-    app.store().set('recapQueueBusy', false)
-  }
-}
-
-// ---- punti d'ingresso per i cron notturni (vedi main.pb.js) ----
-
-function runDailyRecapCron(app) {
-  const targetDay = addDaysToKey(todayKeyLocal(), -1)
-  for (const u of usersWithGeminiKey(app)) {
-    try {
-      generateDayRecap(app, u.id, targetDay)
-    } catch (err) {
-      console.log('[recap] cron giorno ' + targetDay + ' utente ' + u.id + ': ' + err)
-    }
-  }
-}
-
-function runMonthlyRecapCron(app) {
-  const targetMonth = prevMonthKey(currentMonthKeyLocal())
-  for (const u of usersWithGeminiKey(app)) {
-    try {
-      generateMonthRecap(app, u.id, targetMonth)
-    } catch (err) {
-      console.log('[recap] cron mese ' + targetMonth + ' utente ' + u.id + ': ' + err)
-    }
-  }
-}
-
-function runYearlyRecapCron(app) {
-  const targetYear = '' + (Number(currentYearLocal()) - 1)
-  for (const u of usersWithGeminiKey(app)) {
-    try {
-      generateYearRecap(app, u.id, targetYear)
-    } catch (err) {
-      console.log('[recap] cron anno ' + targetYear + ' utente ' + u.id + ': ' + err)
-    }
+    app.store().set('recapBatchBusy', false)
   }
 }
 
 module.exports = {
   queueFromNote,
-  processRecapQueue,
-  runDailyRecapCron,
-  runMonthlyRecapCron,
-  runYearlyRecapCron,
+  runRecapBatch,
 }

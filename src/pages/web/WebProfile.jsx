@@ -41,11 +41,13 @@ import PersonAvatar from '../../components/PersonAvatar'
 import ImmichPeoplePicker from '../../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../../components/PlacePickerSheet'
 import AppearanceControls from '../../components/AppearanceControls'
+import SoundSettings from '../../components/SoundSettings'
 import MoodGradientControls from '../../components/MoodGradientControls'
 import SongsUsageList from '../../components/SongsUsageList'
 import ExportButtons from '../../components/ExportButtons'
 import OfflineStorage from '../../components/OfflineStorage'
 import RecapInstructions from '../../components/RecapInstructions'
+import GeminiLimitsSettings from '../../components/GeminiLimitsSettings'
 import { Capacitor } from '@capacitor/core'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
@@ -504,6 +506,10 @@ export default function WebProfile() {
         <AppearanceControls />
       </SettingsSection>
 
+      <SettingsSection title="Suoni" icon="music">
+        <SoundSettings />
+      </SettingsSection>
+
       <SettingsSection title="Dati utente" icon="list">
         <SettingsSection nested title="Colori del mood" icon="sparkles">
           <MoodGradientControls />
@@ -942,7 +948,7 @@ export default function WebProfile() {
           </button>
         </div>
 
-        <SettingsSection nested noCollapse title="Istruzioni personalizzate" icon="edit">
+        <SettingsSection nested noCollapse title="Istruzioni per le note" icon="edit">
           <p className="text-sm text-ink-soft">
             Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
             usare, cosa evidenziare o evitare...). Salvate sul tuo account:
@@ -977,6 +983,10 @@ export default function WebProfile() {
 
         <SettingsSection nested noCollapse title="Istruzioni per i riassunti" icon="sparkles">
           <RecapInstructions />
+        </SettingsSection>
+
+        <SettingsSection nested noCollapse title="Limiti di richieste" icon="info">
+          <GeminiLimitsSettings />
         </SettingsSection>
         </SettingsSection>
       </SettingsSection>

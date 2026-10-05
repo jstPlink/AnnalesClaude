@@ -4,7 +4,7 @@ import { saveRecapCustomInstructions } from '../lib/gemini'
 import { describeError } from '../lib/notes'
 
 // Impostazioni → Gemini → "Istruzioni per i riassunti": testo fisso aggiunto a
-// TUTTI i recap (giorno, mese, anno), sia quelli scritti dal server di notte
+// TUTTI i recap (giorno, mese, anno), sia quelli scritti dal server (alle 23:00)
 // sia quelli generati a mano. Salvato sull'account (`recapCustomInstructions`).
 export default function RecapInstructions() {
   const { user } = useAuth()
@@ -37,7 +37,7 @@ export default function RecapInstructions() {
     <div className="space-y-2">
       <p className="text-xs text-ink-soft sm:text-sm">
         Aggiunte a tutti i riassunti di Gemini (giorno, mese e anno): tono da usare, cosa
-        evidenziare o evitare. Valgono anche per quelli scritti dal server di notte.
+        evidenziare o evitare. Valgono anche per quelli scritti dal server (alle 23:00).
       </p>
       <textarea
         rows={6}

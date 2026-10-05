@@ -290,7 +290,7 @@ export default function WebMonth() {
         notes={notes}
         label={`${MONTHS_IT[cursor.month]} ${cursor.year}`}
         apiKey={user?.geminiApiKey?.trim()}
-        className="mb-5 max-w-md"
+        className="mx-auto mb-5 w-[78%]"
       />
 
       <MonthPages

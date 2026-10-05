@@ -9,11 +9,13 @@ import PlacePickerSheet from '../components/PlacePickerSheet'
 import SettingsSection from '../components/SettingsSection'
 import MymapIntegration from '../components/MymapIntegration'
 import AppearanceControls from '../components/AppearanceControls'
+import SoundSettings from '../components/SoundSettings'
 import MoodGradientControls from '../components/MoodGradientControls'
 import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import OfflineStorage from '../components/OfflineStorage'
 import RecapInstructions from '../components/RecapInstructions'
+import GeminiLimitsSettings from '../components/GeminiLimitsSettings'
 import ReminderSettings from '../components/ReminderSettings'
 import PermissionsSettings from '../components/PermissionsSettings'
 import { remindersSupported } from '../lib/reminders'
@@ -537,6 +539,10 @@ export default function Profile() {
           <AppearanceControls />
         </SettingsSection>
 
+        <SettingsSection title="Suoni" icon="music">
+          <SoundSettings />
+        </SettingsSection>
+
         <SettingsSection title="Dati utente" icon="list">
           <SettingsSection nested title="Colori del mood" icon="sparkles">
             <MoodGradientControls />
@@ -966,7 +972,7 @@ export default function Profile() {
                 </button>
               </div>
 
-              <SettingsSection nested noCollapse title="Istruzioni personalizzate" icon="edit">
+              <SettingsSection nested noCollapse title="Istruzioni per le note" icon="edit">
                 <p className="text-xs text-ink-soft">
                   Aggiunte a ogni richiesta di "Nuova nota con Gemini" (tono da
                   usare, cosa evidenziare o evitare...). Salvate sul tuo
@@ -1003,6 +1009,10 @@ export default function Profile() {
 
               <SettingsSection nested noCollapse title="Istruzioni per i riassunti" icon="sparkles">
                 <RecapInstructions />
+              </SettingsSection>
+
+              <SettingsSection nested noCollapse title="Limiti di richieste" icon="info">
+                <GeminiLimitsSettings />
               </SettingsSection>
             </SettingsSection>
         </SettingsSection>

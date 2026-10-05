@@ -14,11 +14,11 @@ import { describeGeminiError } from '../lib/gemini'
 const TITLES = { day: 'Recap del giorno', month: 'Recap del mese', year: "Recap dell'anno" }
 
 // Recap di un periodo (giorno/vista giorno, mese/vista mese, anno/statistiche):
-// di norma è già pronto, generato di notte lato server (pb_hooks/main.pb.js),
-// quindi qui si legge e basta — non richiede nessuna revisione. Il tasto
-// "Genera"/"Rigenera" serve per i periodi che il cron non ha ancora coperto
-// (passati, da prima che questa funzione esistesse) o per un testo nuovo su
-// richiesta. Nascosta del tutto se non c'è ancora niente da mostrare e non
+// di norma è già pronto, aggiornato ogni sera alle 23:00 lato server
+// (pb_hooks/main.pb.js), quindi qui si legge e basta — non richiede nessuna
+// revisione. Il tasto "Genera"/"Rigenera" serve per i periodi che il server non
+// ha ancora coperto (passati, da prima che questa funzione esistesse), per
+// averlo subito senza aspettare le 23:00, o per un testo nuovo su richiesta. Nascosta del tutto se non c'è ancora niente da mostrare e non
 // si può nemmeno generarlo (nessuna nota, o nessuna chiave Gemini).
 export default function PeriodRecapCard({
   period, // 'day' | 'month' | 'year'
@@ -27,6 +27,8 @@ export default function PeriodRecapCard({
   label, // etichetta leggibile per il prompt (mese/anno) — non serve per 'day'
   apiKey,
   title,
+  tab, // testo di una targhetta (stile .st-label delle Statistiche) sopra la card: sparisce insieme alla card
+  hideTitle = false, // il titolo sta già nella targhetta: dentro la card resta solo il tasto
   className = '',
 }) {
   const [text, setText] = useState(undefined) // undefined = in caricamento, null = non generato
@@ -71,13 +73,15 @@ export default function PeriodRecapCard({
     }
   }
 
-  return (
-    <section className={'prc-card ' + className}>
-      <div className="prc-head">
-        <p className="prc-title">
-          <Icon name="sparkles" size={14} className="shrink-0" />
-          {title || TITLES[period]}
-        </p>
+  const card = (
+    <section className={'prc-card ' + (tab ? '' : className)}>
+      <div className={'prc-head' + (hideTitle ? ' prc-head-end' : '')}>
+        {!hideTitle && (
+          <p className="prc-title">
+            <Icon name="sparkles" size={14} className="shrink-0" />
+            {title || TITLES[period]}
+          </p>
+        )}
         {!loading && apiKey && notes?.length > 0 && (
           <button type="button" onClick={regenerate} className="prc-btn">
             {text ? 'Rigenera' : 'Genera'}
@@ -93,5 +97,15 @@ export default function PeriodRecapCard({
       )}
       {error && <p className="prc-error">{error}</p>}
     </section>
+  )
+  if (!tab) return card
+  return (
+    <div className={className}>
+      <span className="st-label">
+        <Icon name="sparkles" size={12} />
+        {tab}
+      </span>
+      {card}
+    </div>
   )
 }

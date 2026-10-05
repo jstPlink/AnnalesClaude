@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { LocalNotifications } from '@capacitor/local-notifications'
+import { applyReminders, loadReminders } from '../lib/reminders'
 
 // App Android: gestisce i link aperti dall'esterno (widget della home) e il
 // tocco sulle notifiche dei promemoria.
@@ -50,6 +51,14 @@ export default function WidgetLinks() {
       handle.then((h) => h.remove()).catch(() => {})
       notif.then((h) => h.remove()).catch(() => {})
     }
+  }, [])
+
+  // Riallinea all'avvio le notifiche dei promemoria con quelle salvate: dopo un
+  // aggiornamento che cambia il canale (suono nuovo) quelle già programmate
+  // puntavano al canale vecchio.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    applyReminders(loadReminders()).catch(() => {})
   }, [])
 
   return null

@@ -12,6 +12,7 @@ import {
   setPaperImage,
   clearPaperImage,
 } from '../lib/prefs'
+import { getSoundsOn, playSound, setSoundsOn } from '../lib/sounds'
 
 // Ridimensiona un'immagine scelta dall'utente a un lato massimo e la
 // converte in data URL JPEG: così sta in localStorage (dove vivono le
@@ -75,6 +76,7 @@ function Segmented({ label, options, labels, value, onChange }) {
 // (localStorage + attributi su <html>, vedi src/lib/prefs.js).
 export default function AppearanceControls() {
   const [anim, setAnimState] = useState(getAnim())
+  const [sounds, setSoundsState] = useState(getSoundsOn() ? 'on' : 'off')
   const [paper, setPaperState] = useState(getPaper())
   const [paperImage, setPaperImageState] = useState(getPaperImage())
   const [imageError, setImageError] = useState('')
@@ -117,6 +119,18 @@ export default function AppearanceControls() {
         onChange={(v) => {
           setAnimState(v)
           setAnim(v)
+        }}
+      />
+
+      <Segmented
+        label="Suoni"
+        options={['on', 'off']}
+        labels={{ on: 'Sì', off: 'No' }}
+        value={sounds}
+        onChange={(v) => {
+          setSoundsState(v)
+          setSoundsOn(v === 'on')
+          if (v === 'on') playSound('save')
         }}
       />
 

@@ -38,7 +38,7 @@ passaggio è automatico in base alla larghezza della finestra.
   sono "da orologio", senza fusi.
 - **Mood:** un righello da 0 a 10 (salvato come 0–1). Il colore della nota, nel mese e nel giorno, segue il gradiente del mood.
 - **Testo:** editor con Markdown/anteprima. Dal menu Gemini si può ripulire/sintetizzare il testo o scriverlo da un prompt; si può
-  anche **dettare a voce** (la registrazione la trascrive Gemini, fino a **100 secondi** per registrazione: il pulsante mostra i secondi che restano e negli ultimi 15 diventa rosso e lampeggia; se la trascrizione fallisce puoi ritentarla senza registrare di nuovo).
+  anche **dettare a voce** (la registrazione la trascrive Gemini, fino a **120 secondi** per registrazione: il pulsante è la barra, mostra il tempo che passa e si riempie da sinistra; negli ultimi 30 secondi si allarga mostrando quanto manca, diventa rosso e lampeggia, e il telefono vibra a 30, 20, 10 e 5 secondi dalla fine; ogni vocale viene **salvato sul dispositivo** appena finisci di registrare e si cancella solo quando la trascrizione riesce: se Gemini è intasato o ha finito le richieste, sotto il pulsante compare l'elenco dei vocali non ancora trascritti, con «Trascrivi» ed «Elimina», anche dopo aver chiuso il pannello o l'app).
 - **Immagini:** dal dispositivo oppure da **Immich** (se collegato), con un calendario per saltare al giorno delle foto.
 - **Persone, tag, canzoni:** si scelgono da elenchi (le persone più usate sono in cima); persone e tag nuovi si creano al volo. Le
   canzoni si cercano su Spotify (se collegato) o si incolla un link.
@@ -52,7 +52,8 @@ passaggio è automatico in base alla larghezza della finestra.
 
 ## 5. Impostazioni
 
-- **Aspetto:** animazioni (sì/no/sistema) e sfondo: **Nessuno, Puntini, Righe, Quadretti** oppure **Immagine** (una tua foto, che resta solo sul dispositivo). Sono preferenze **per dispositivo**. Per ora l'app è solo **chiara**, col carattere **tondeggiante** e il cursore di sistema: non si scelgono più.
+- **Suoni:** in Aspetto si accendono o spengono (sì/no); nella sezione **Suoni** si regola il volume (con un tasto per provarlo). Sono per dispositivo e comprendono il «tic» dei pulsanti, il cambio mese/anno, l'apertura di giorni e note, il salvataggio e l'eliminazione delle note e la dettatura vocale. Il suono della notifica dei promemoria è una campanella a parte e segue il volume delle notifiche del telefono.
+- **Aspetto:** animazioni (sì/no/sistema), suoni (sì/no) e sfondo: **Nessuno, Puntini, Righe, Quadretti** oppure **Immagine** (una tua foto, che resta solo sul dispositivo). Sono preferenze **per dispositivo**. Per ora l'app è solo **chiara**, col carattere **tondeggiante** e il cursore di sistema: non si scelgono più.
 - **Dati utente** (sincronizzati sull'account): **Colori del mood** (sei colori e le soglie), **Persone**, **Tag**, **Luoghi** (anche
   modifica di nome e posizione, che si propaga alle note), **Canzoni** (sola lettura, con quante note le usano). Cancellare una persona
   o un luogo collegato a delle note chiede se sostituirlo o toglierlo ovunque.
@@ -102,14 +103,16 @@ Entrambe hanno una guida scaricabile nella rispettiva sezione.
 Serve una **chiave API** di Google AI Studio (Impostazioni → Integrazioni → Gemini). Abilita: ripulire/sintetizzare il testo, scrivere da
 un prompt, "Nuova nota con Gemini", dettatura vocale, estrazione note da screenshot (Importa) e i **recap automatici**:
 
-- Ogni notte il server prepara il recap del giorno appena finito; il 1° del mese quello del mese, il 1° gennaio quello dell'anno. Si
-  rigenerano da soli se modifichi una nota di un periodo già chiuso (una nota di oggi non fa nulla: ci pensa la notte).
+- Quando scrivi, modifichi (descrizione o mood) o elimini una nota, i recap toccati (giorno, mese e anno) vengono **segnati da aggiornare**;
+  ogni sera alle **23:00** il server li rigenera tutti insieme, con **una sola richiesta a Gemini** (giorni, mesi e anni insieme): così consuma poche richieste. Se Gemini non risponde,
+  riprova alle 23:20 e alle 23:40.
 - I periodi chiusi **prima** che la funzione esistesse non hanno recap: si generano a mano col tasto "Genera/Rigenera" nelle viste.
 - Se Gemini è sovraccarico l'app riprova da sola un paio di volte.
-- Quando salvi una nota di un giorno già passato, il recap non si rigenera subito: viene messo in **coda** e il server lo aggiorna in background, uno
-  per volta (giorno, poi mese, poi anno) e a distanza di tempo, così salvare resta veloce. Una linguetta sul bordo destro dice cosa sta aggiornando.
+- Una linguetta sul bordo destro ricorda che i recap sono in attesa delle 23:00. Se non vuoi aspettare, il tasto "Genera/Rigenera" nelle viste
+  lo fa subito.
+- **Quante richieste restano.** Google non lo comunica: l'app conta le richieste partite da questo telefono/computer e le mostra (ultimo minuto, ultima ora, ultime 24 ore) sotto il pulsante del vocale e nei pannelli Gemini. Se in Impostazioni → Gemini → **Limiti di richieste** scrivi i limiti della tua chiave (li trovi in Google AI Studio, nei limiti di frequenza del progetto: richieste al minuto e al giorno), l'app mostra anche quante ne restano e le evidenzia quando sono quasi finite. Non include i recap delle 23:00 né altri dispositivi con la stessa chiave. Se il limite giornaliero è finito, il messaggio lo dice (si azzera a mezzanotte, ora del Pacifico, di solito verso le 9 in Italia).
 - Le "Istruzioni per i riassunti" (Impostazioni → Gemini) valgono per tutti i recap di giorno, mese e anno, anche per quelli scritti dal server. Modificando una nota il recap si rifà solo se cambiano descrizione o mood.
-- Le "Istruzioni personalizzate" (tono, cosa evidenziare) valgono per tutte le richieste e si modificano anche al volo nei pannelli.
+- Le "Istruzioni per le note" (tono, cosa evidenziare) valgono per tutte le richieste e si modificano anche al volo nei pannelli.
 
 ## 9. Uso offline e connessione debole
 

@@ -1,7 +1,7 @@
-// Coda dei recap da rigenerare (collection `recap_jobs`, scritta solo dal
-// server — vedi pb_hooks/recap_lib.js): serve a far vedere in app cosa sta
-// facendo il server in background dopo aver salvato una nota di un giorno
-// passato (src/components/RecapQueueTab.jsx).
+// Recap segnati da aggiornare (collection `recap_jobs`, scritta solo dal
+// server — vedi pb_hooks/recap_lib.js): il server li rigenera tutti in blocco
+// ogni sera alle 23:00. Serve a far vedere in app cosa è in attesa dopo aver
+// salvato una nota (src/components/RecapQueueTab.jsx).
 import { pb } from './pocketbase'
 import { MONTHS_IT, dayMonthLabel } from './dates'
 
@@ -31,7 +31,13 @@ export function jobLabel(job) {
 // esiste ancora (server non aggiornato) o la rete manca.
 export async function fetchRecapQueue() {
   try {
-    const res = await pb.collection('recap_jobs').getList(1, 3, { sort: 'queuedAt', skipTotal: false })
+    // Solo i giorni: per ogni giorno modificato sono segnati anche mese e anno,
+    // ma contarli tutti darebbe tre voci per una sola nota.
+    const res = await pb.collection('recap_jobs').getList(1, 3, {
+      filter: 'period = "day"',
+      sort: 'queuedAt',
+      skipTotal: false,
+    })
     return { total: res.totalItems, items: res.items }
   } catch {
     return { total: 0, items: [] }

@@ -8,7 +8,11 @@ import { LocalNotifications } from '@capacitor/local-notifications'
 // `text` = testo della notifica (vuoto/assente = DEFAULT_TEXT).
 
 const KEY = 'annales.reminders'
-const CHANNEL = 'reminders'
+// Un canale Android non si può modificare dopo la creazione: per dargli il suono
+// proprio (res/raw/annales_reminder.wav, vedi scripts/generate-sounds.js) ne
+// serve uno nuovo, e il vecchio ('reminders', suono predefinito) si elimina.
+const CHANNEL = 'reminders-bell'
+const OLD_CHANNEL = 'reminders'
 export const DAY_LABELS = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6]
 // La settimana si mostra da lunedì (i giorni restano numerati 0 = domenica ... 6 = sabato).
@@ -63,10 +67,12 @@ export async function applyReminders(list) {
   const active = list.filter((r) => r.enabled && r.days.length)
   if (!active.length) return true
   if (!(await ensurePermission())) return false
+  await LocalNotifications.deleteChannel({ id: OLD_CHANNEL }).catch(() => {})
   await LocalNotifications.createChannel({
     id: CHANNEL,
     name: 'Promemoria nota del giorno',
     importance: 4,
+    sound: 'annales_reminder.wav',
   }).catch(() => {})
 
   const notifications = []

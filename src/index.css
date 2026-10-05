@@ -4151,6 +4151,9 @@ li:last-child > .wd-month-row {
   display: block;
 }
 .wd-month-bars-ticks {
+  /* block: era uno span inline, senza larghezza propria, quindi i numeri
+     posizionati in percentuale finivano tutti addossati al primo giorno */
+  display: block;
   position: relative;
   height: 12px;
   margin-top: 2px;
@@ -4477,6 +4480,9 @@ li:last-child > .wd-month-row {
   font-weight: 700;
   font-size: 0.86rem;
   letter-spacing: 0.02em;
+  /* lo spazio del font digitale è strettissimo: "30 ottobre 2026" si leggeva
+     "30ottobre2026" */
+  word-spacing: 0.55em;
   color: #202822;
   white-space: nowrap;
   text-transform: uppercase;
@@ -5092,24 +5098,39 @@ li:last-child > .wd-month-row {
   position: relative;
   overflow: hidden;
 }
-/* barra del tempo che resta (vocale max 100 s): si consuma verso sinistra */
-.gms-voice-bar {
+/* Pulsante di registrazione (vocale max 120 s): il pulsante stesso è la barra
+   del tempo, si riempie da sinistra a destra. Negli ultimi 30 s si allarga
+   (.gms-voice-more) per contenere il testo "mancano Ns"; il riempimento è una
+   percentuale del pulsante, quindi segue l'allargamento senza scatti. */
+.gms-voice-fill {
   position: absolute;
-  left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
-  height: 3px;
-  background: rgba(52, 44, 28, 0.12);
-}
-.gms-voice-bar i {
-  display: block;
-  height: 100%;
-  background: var(--color-delete-dark);
+  left: 0;
+  background: rgba(200, 86, 76, 0.3);
   transition: width 1s linear;
 }
-/* ultimi secondi: sfondo rosato che lampeggia più in fretta */
+.gms-voice-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.gms-voice-more {
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  vertical-align: bottom;
+  transition: max-width 0.6s ease, opacity 0.6s ease;
+}
+.gms-voice-btn.recording.ending .gms-voice-more {
+  max-width: 11em;
+  opacity: 1;
+}
+/* ultimi secondi: lampeggia più in fretta */
 .gms-voice-btn.recording.ending {
-  background: rgba(200, 86, 76, 0.16);
   animation-duration: 0.55s;
 }
 .gms-voice-btn.recording {
@@ -5131,6 +5152,39 @@ li:last-child > .wd-month-row {
   margin-top: 6px;
   font-size: 0.74rem;
   color: var(--color-delete-dark);
+}
+.gms-voice-saved {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1.5px dashed var(--color-line);
+  border-radius: 12px;
+  background: var(--color-cream);
+  font-size: 0.74rem;
+  color: var(--color-ink-soft);
+}
+.gms-voice-saved ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.gms-voice-saved li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 0;
+}
+.gms-voice-saved li span {
+  flex: 1;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.gms-voice-discard {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-delete-dark);
+}
+.gms-voice-saved button:disabled {
+  opacity: 0.5;
 }
 .gms-voice-retry {
   font-size: 0.74rem;
@@ -5668,6 +5722,9 @@ li:last-child > .wf-result {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+}
+.prc-head-end {
+  justify-content: flex-end;
 }
 .prc-title {
   display: flex;

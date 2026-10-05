@@ -1,16 +1,32 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import Icon from './Icon'
 import { transcribeAudio, describeGeminiError } from '../lib/gemini'
 import { blobToWav } from '../lib/audio'
+import { hapticAlert } from '../lib/haptics'
+import { playSound } from '../lib/sounds'
+import { deleteVoice, listVoices, saveVoice } from '../lib/voiceStore'
 
-// Oltre i 100 secondi si ferma da sola: un vocale per una nota non dovrebbe
+const fmtLen = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+const fmtAgo = (t) => {
+  const m = Math.round((Date.now() - t) / 60000)
+  if (m < 1) return 'adesso'
+  if (m < 60) return `${m} min fa`
+  const h = Math.round(m / 60)
+  return h < 24 ? `${h} h fa` : `${Math.round(h / 24)} g fa`
+}
+
+// Oltre i 120 secondi si ferma da sola: un vocale per una nota non dovrebbe
 // servirne di più, ed evita registrazioni lasciate aperte per sbaglio (audio
 // via via più pesante da inviare e da trascrivere). Il pulsante mostra il tempo
-// che resta e una barra che si consuma; negli ultimi WARN_SECONDS diventa
-// rossa e lampeggia, per avvisare che sta per fermarsi.
-const MAX_SECONDS = 100
-const WARN_SECONDS = 15
+// trascorso (che cresce) e si riempie da sinistra verso destra; negli ultimi
+// WARN_SECONDS si allarga per fare spazio al testo "mancano Ns", diventa rosso
+// e lampeggia. Una vibrazione avvisa quando mancano ALERT_AT secondi.
+const MAX_SECONDS = 120
+const WARN_SECONDS = 30
+const ALERT_AT = [30, 20, 10, 5]
+
+const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
 const CANDIDATE_TYPES = [
   'audio/webm;codecs=opus',
@@ -52,11 +68,14 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
   // automatici di transcribeAudio esauriti…) si può ritrascrivere lo STESSO
   // audio con un tasto, invece di dover rifare da capo una registrazione
   // magari lunga.
-  const [lastRecording, setLastRecording] = useState(null) // { blob, mimeType } | null
+  const [lastRecording, setLastRecording] = useState(null) // { blob, mimeType, id } | null
+  // Elenco dei vocali salvati sul dispositivo e non ancora trascritti.
+  const [saved, setSaved] = useState([])
   const mediaRef = useRef(null)
   const chunksRef = useRef([])
   const streamRef = useRef(null)
   const timerRef = useRef(null)
+  const elapsedRef = useRef(0)
 
   // Il browser nasconde del tutto navigator.mediaDevices fuori da un
   // "contesto sicuro" (HTTPS, o localhost): niente errore, l'API proprio non
@@ -80,6 +99,14 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
     [],
   )
 
+  // Vocali salvati sul dispositivo e non ancora trascritti (anche di sessioni
+  // precedenti): vedi lib/voiceStore.js.
+  const refreshSaved = useCallback(async () => setSaved(await listVoices()), [])
+  useEffect(() => {
+    const t = setTimeout(refreshSaved, 0)
+    return () => clearTimeout(t)
+  }, [refreshSaved])
+
   if (!apiKey) return null
   if (!supported) {
     return (
@@ -93,10 +120,11 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
 
   function stop() {
     clearInterval(timerRef.current)
+    playSound('recStop')
     mediaRef.current?.stop()
   }
 
-  async function transcribe(blob, mimeType) {
+  async function transcribe(blob, mimeType, id) {
     setState('transcribing')
     setError('')
     try {
@@ -115,16 +143,28 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
       }
       onTranscribed(text)
       setLastRecording(null) // andata a buon fine: non serve più tenerlo
+      await deleteVoice(id) // né sul dispositivo
     } catch (err) {
-      setLastRecording({ blob, mimeType }) // tenuto da parte per "Riprova"
+      setLastRecording({ blob, mimeType, id }) // tenuto da parte per "Riprova"
       setError(describeGeminiError(err))
     } finally {
       setState('idle')
+      refreshSaved()
     }
   }
 
   function retryTranscription() {
-    if (lastRecording) transcribe(lastRecording.blob, lastRecording.mimeType)
+    if (lastRecording) transcribe(lastRecording.blob, lastRecording.mimeType, lastRecording.id)
+  }
+
+  // Ritrascrive un vocale salvato (anche di una sessione precedente).
+  function retrySaved(v) {
+    transcribe(v.blob, v.mimeType, v.id)
+  }
+  async function discardSaved(v) {
+    await deleteVoice(v.id)
+    if (lastRecording?.id === v.id) setLastRecording(null)
+    refreshSaved()
   }
 
   async function start() {
@@ -139,20 +179,30 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
       rec.ondataavailable = (e) => {
         if (e.data.size) chunksRef.current.push(e.data)
       }
-      rec.onstop = () => {
+      rec.onstop = async () => {
         streamRef.current?.getTracks().forEach((t) => t.stop())
-        const blob = new Blob(chunksRef.current, { type: rec.mimeType || mimeType || 'audio/webm' })
-        transcribe(blob, rec.mimeType || mimeType || 'audio/webm')
+        const type = rec.mimeType || mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type })
+        // Salvato subito sul dispositivo, PRIMA di trascrivere: se Gemini è
+        // intasato o si chiude l'app il vocale non va perso.
+        const id = await saveVoice({ blob, mimeType: type, seconds: elapsedRef.current })
+        refreshSaved()
+        transcribe(blob, type, id)
       }
       mediaRef.current = rec
       rec.start()
+      playSound('recStart')
+      elapsedRef.current = 0
       setSeconds(0)
       setState('recording')
       timerRef.current = setInterval(() => {
-        setSeconds((s) => {
-          if (s + 1 >= MAX_SECONDS) stop()
-          return s + 1
-        })
+        const elapsed = ++elapsedRef.current
+        setSeconds(elapsed)
+        if (ALERT_AT.includes(MAX_SECONDS - elapsed)) {
+          hapticAlert()
+          playSound('recWarn')
+        }
+        if (elapsed >= MAX_SECONDS) stop()
       }, 1000)
     } catch (err) {
       // motivo preciso, per capire al volo cosa non va sul telefono
@@ -182,11 +232,18 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
           onClick={stop}
           className={'gms-voice-btn recording' + (MAX_SECONDS - seconds <= WARN_SECONDS ? ' ending' : '')}
         >
-          <Icon name="square" size={13} />
-          Ferma · {MAX_SECONDS - seconds}s
-          {MAX_SECONDS - seconds <= WARN_SECONDS && ' · sta per finire'}
-          <span className="gms-voice-bar" aria-hidden="true">
-            <i style={{ width: `${Math.max(0, 100 - (seconds / MAX_SECONDS) * 100)}%` }} />
+          <span
+            className="gms-voice-fill"
+            aria-hidden="true"
+            style={{ width: `${Math.min(100, (seconds / MAX_SECONDS) * 100)}%` }}
+          />
+          <span className="gms-voice-label">
+            <Icon name="square" size={13} />
+            Ferma · {fmtTime(seconds)}
+            <span className="gms-voice-more">
+              {' '}
+              · mancano {Math.max(0, MAX_SECONDS - seconds)}s
+            </span>
           </span>
         </button>
       ) : (
@@ -212,6 +269,40 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
             </>
           )}
         </p>
+      )}
+      {saved.length > 0 && state !== 'recording' && (
+        <div className="gms-voice-saved">
+          <p>
+            {saved.length === 1
+              ? 'Hai 1 vocale salvato sul dispositivo, non ancora trascritto:'
+              : `Hai ${saved.length} vocali salvati sul dispositivo, non ancora trascritti:`}
+          </p>
+          <ul>
+            {saved.map((v) => (
+              <li key={v.id}>
+                <span>
+                  {fmtLen(v.seconds || 0)} · {fmtAgo(v.createdAt)}
+                </span>
+                <button
+                  type="button"
+                  disabled={state === 'transcribing'}
+                  onClick={() => retrySaved(v)}
+                  className="gms-voice-retry"
+                >
+                  Trascrivi
+                </button>
+                <button
+                  type="button"
+                  disabled={state === 'transcribing'}
+                  onClick={() => discardSaved(v)}
+                  className="gms-voice-discard"
+                >
+                  Elimina
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )

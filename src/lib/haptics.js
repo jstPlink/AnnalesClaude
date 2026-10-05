@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
+import { playSound } from './sounds'
 
 let last = 0
 
@@ -10,10 +11,13 @@ let last = 0
 // nell'app Android una vibrazione breve da 10 ms, invece dell'impatto
 // "leggero" predefinito). Nel browser usa navigator.vibrate, dove supportato.
 // Chiamate ravvicinate (< 40 ms) vengono unite.
-export function haptic(ms = 4) {
+// `sound` = suono che accompagna il tocco (vedi sounds.js; i suoni si spengono
+// da Impostazioni → Aspetto).
+export function haptic(ms = 4, sound = 'tap') {
   const now = Date.now()
   if (now - last < 40) return
   last = now
+  playSound(sound)
   try {
     if (Capacitor.isNativePlatform()) {
       if (Capacitor.getPlatform() === 'android') {
@@ -21,6 +25,20 @@ export function haptic(ms = 4) {
       } else {
         Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
       }
+    } else if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(ms)
+    }
+  } catch {
+    /* non supportato: ignora */
+  }
+}
+
+// Vibrazione più lunga e ben percepibile, per gli avvisi (es. mancano 30/20/10/5
+// secondi alla fine di un vocale). Non unita alle chiamate vicine.
+export function hapticAlert(ms = 220) {
+  try {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.vibrate({ duration: ms }).catch(() => {})
     } else if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       navigator.vibrate(ms)
     }

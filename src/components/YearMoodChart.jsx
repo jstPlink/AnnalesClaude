@@ -83,7 +83,7 @@ export default function YearMoodChart({
       className={bare ? '' : 'rounded-2xl border border-line bg-tag'}
     >
       {/* Sfondo a quadretti: linee verticali e orizzontali ogni `cell`, dentro l'area del grafico */}
-      <g stroke="rgba(79, 143, 191, 0.14)" strokeWidth="1" vectorEffect="non-scaling-stroke">
+      <g stroke="rgba(79, 143, 191, 0.12)" strokeWidth="1" vectorEffect="non-scaling-stroke">
         {Array.from({ length: cols + 1 }, (_, i) => (
           <line key={'v' + i} x1={padL + i * cell} x2={padL + i * cell} y1={padT} y2={padT + innerH} vectorEffect="non-scaling-stroke" />
         ))}
@@ -92,7 +92,7 @@ export default function YearMoodChart({
         ))}
       </g>
       {/* Assi verticali: un tratto più marcato a inizio di ogni mese */}
-      <g stroke="rgba(79, 143, 191, 0.3)" strokeWidth="1" vectorEffect="non-scaling-stroke">
+      <g stroke="rgba(79, 143, 191, 0.255)" strokeWidth="1" vectorEffect="non-scaling-stroke">
         {Array.from({ length: 13 }, (_, i) => (
           <line key={'m' + i} x1={x(i / 12)} x2={x(i / 12)} y1={padT} y2={padT + innerH} vectorEffect="non-scaling-stroke" />
         ))}
@@ -106,10 +106,10 @@ export default function YearMoodChart({
             x2={W - padR}
             y1={y(m)}
             y2={y(m)}
-            stroke="var(--color-line)"
+            stroke="rgb(79, 143, 191)"
             strokeWidth="1"
             strokeDasharray={m === 0.5 ? '' : '3 4'}
-            opacity={m === 0.5 ? 0.9 : 0.5}
+            opacity={m === 0.5 ? 0.3 : 0.2}
           />
           {showAxisValues && (
             <text

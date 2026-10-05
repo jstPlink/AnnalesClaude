@@ -7,6 +7,7 @@ import { MONTHS_IT, dayKey } from './dates'
 import { plainText } from './notes'
 import { timesInText } from './importSheet'
 import { pb } from './pocketbase'
+import { logGeminiRequest } from './geminiUsage'
 
 // Salva le istruzioni personalizzate sull'account (campo `geminiCustomInstructions`
 // di `users`) — usata sia da Impostazioni sia dai pannelli dove si scrive il
@@ -86,9 +87,11 @@ async function callGeminiOnce(apiKey, contents) {
       body: JSON.stringify({ contents }),
     },
   )
+  logGeminiRequest(res.status) // contatore richieste (vedi geminiUsage.js)
   if (!res.ok) {
     let detail = ''
     let retryDelaySeconds = null
+    let quotaId = ''
     try {
       const data = await res.json()
       detail = data?.error?.message || ''
@@ -100,6 +103,13 @@ async function callGeminiOnce(apiKey, contents) {
       )
       const m = String(retryInfo?.retryDelay || '').match(/([\d.]+)\s*s/)
       if (m) retryDelaySeconds = Math.ceil(Number(m[1]))
+      // QuotaFailure dice QUALE limite è scattato (es. ...PerDay... o ...PerMinute...)
+      const quota = data?.error?.details?.find((d) =>
+        String(d?.['@type'] || '').includes('QuotaFailure'),
+      )
+      quotaId = (quota?.violations || [])
+        .map((v) => `${v?.quotaId || ''} ${v?.quotaMetric || ''}`)
+        .join(' ')
     } catch {
       // risposta non JSON, ignora
     }
@@ -112,6 +122,7 @@ async function callGeminiOnce(apiKey, contents) {
     const err = new Error(detail || 'Richiesta a Gemini non riuscita.')
     err.status = res.status
     err.retryDelaySeconds = retryDelaySeconds
+    err.quotaId = quotaId
     throw err
   }
   const data = await res.json()
@@ -588,6 +599,10 @@ export function describeGeminiError(err) {
   if (!err) return 'Errore sconosciuto.'
   if (err.status === 400 || err.status === 403) return 'Chiave API Gemini non valida.'
   if (err.status === 429) {
+    // limite GIORNALIERO: inutile riprovare tra poco
+    if (/perday|per_day|daily/i.test(err.quotaId || '')) {
+      return 'Hai esaurito le richieste giornaliere di Gemini per questa chiave. Si azzerano a mezzanotte (ora del Pacifico, di solito verso le 9 in Italia): fino ad allora non posso trascrivere o generare. Il vocale è salvato sul dispositivo: potrai ritrascriverlo più tardi.'
+    }
     const s = err.retryDelaySeconds
     if (s != null) {
       const label =

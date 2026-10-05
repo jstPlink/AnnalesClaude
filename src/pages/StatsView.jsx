@@ -322,6 +322,14 @@ export default function StatsView() {
               />
             </div>
 
+            <PeriodRecapCard
+              period="year"
+              periodKey={String(year)}
+              notes={yearNotes}
+              apiKey={geminiApiKey}
+              className="mt-5"
+            />
+
             {stats.noteCount > 0 && (
               <section className="mt-5">
                 <span className="st-label">
@@ -583,14 +591,6 @@ export default function StatsView() {
                 </div>
               </section>
             )}
-
-            <PeriodRecapCard
-              period="year"
-              periodKey={String(year)}
-              notes={yearNotes}
-              apiKey={geminiApiKey}
-              className="mt-5"
-            />
 
             {!stats.noteCount && (
               <p className="py-10 text-center text-ink-soft">

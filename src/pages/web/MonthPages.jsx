@@ -5,6 +5,7 @@ import { plainText, parsePlace } from '../../lib/notes'
 import { parseWall, weekdayLong, todayKey } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 import Icon from '../../components/Icon'
+import { haptic } from '../../lib/haptics'
 import {
   hash,
   handFor,
@@ -258,7 +259,10 @@ export default function MonthPages({
             <button
               key={pg.key}
               type="button"
-              onClick={() => onNavigate(`/day/${pg.key}`)}
+              onClick={() => {
+                haptic(4, 'page')
+                onNavigate(`/day/${pg.key}`)
+              }}
               style={{
                 '--r': `${tilt(pg.key, 1.3).toFixed(2)}deg`,
                 '--mp-cw': pg.cw,

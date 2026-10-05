@@ -5,6 +5,7 @@ import { moodColor } from '../../lib/mood'
 import { durationMinutes, parseWall } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 import Icon from '../../components/Icon'
+import { haptic } from '../../lib/haptics'
 import {
   hash,
   handFor,
@@ -240,7 +241,10 @@ export default function DayPages({
               <button
                 key={it.id}
                 type="button"
-                onClick={() => onNavigate(`/note/${it.id}`)}
+                onClick={() => {
+                  haptic(4, 'page')
+                  onNavigate(`/note/${it.id}`)
+                }}
                 className={'day-note' + (it.imgs.length > 0 ? ' has-photo' : '')}
                 // --cw qui (non solo su .dn-card): .dn-side ne ha bisogno per
                 // calcolare la propria posizione ("cw + 4%") ed è un fratello

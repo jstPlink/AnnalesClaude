@@ -1,3 +1,4 @@
+import { playSound } from '../../lib/sounds'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getConnection } from '../../lib/cache'
@@ -299,6 +300,7 @@ export default function WebNote() {
       if (creating) discardDraft()
       pokeRecapQueue() // il server rigenera in background il recap del giorno (se passato)
       notifyNotesChanged() // widget della home (app Android)
+      playSound('save')
       setRecord(rec)
       setCreatedId(rec.id)
       setExistingImages(rec.images || [])
@@ -365,6 +367,7 @@ export default function WebNote() {
       await deleteNote(effectiveId)
       pokeRecapQueue()
       notifyNotesChanged()
+      playSound('delete')
       navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
       setBusy(false)

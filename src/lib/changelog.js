@@ -9,6 +9,87 @@
 
 export const CHANGELOG = [
   {
+    version: '0.72.1',
+    date: '2026-10-05 09:28',
+    changes: [
+      "Statistiche (web): dopo le targhette c'è il recap dell'anno con la sua targhetta; sotto, le persone più presenti a sinistra e le note per mese a destra, in una colonna; poi «In evidenza» su due colonne (sinistra settimana e mese migliori/peggiori, destra giorno più su e più giù di morale, tag e luogo più frequenti).",
+      "Statistiche: nuovo «Giorno più giù di morale», il giorno della settimana col mood medio più basso.",
+    ],
+  },
+  {
+    version: '0.72.0',
+    date: '2026-10-05 09:20',
+    changes: [
+      "Dettatura vocale: ogni vocale è salvato sul dispositivo appena finisci di registrare e resta finché non viene trascritto; se Gemini è intasato compare l'elenco dei vocali da trascrivere («Trascrivi» / «Elimina»), anche dopo aver chiuso pannello o app.",
+      "Web: il recap del giorno è più largo del 30%; il recap del mese è centrato e ha la stessa larghezza di quello del giorno.",
+      "Statistiche: il recap dell'anno sta sotto le tre targhette (note totali, note dell'anno, mood medio).",
+      "Andamento: i numeri dei giorni nella riga di ogni mese non sono più tutti addossati al primo giorno; le linee della griglia del grafico, web e mobile, hanno lo stesso colore e sono più leggere del 15%.",
+    ],
+  },
+  {
+    version: '0.71.0',
+    date: '2026-10-05 08:06',
+    changes: [
+      "Riassunti Gemini: alle 23:00 giorni, mesi e anni da aggiornare si chiedono a Gemini in UNA sola richiesta (JSON), invece di una per recap: molte meno richieste al giorno.",
+      "Gemini: contatore delle richieste fatte da questo dispositivo (ultimo minuto, ultima ora, ultime 24 ore) nei pannelli Gemini e sotto la dettatura; in Impostazioni → Gemini → «Limiti di richieste» si scrivono i limiti della chiave (da Google AI Studio) per vedere anche quante ne restano.",
+      "Gemini: se il limite scattato è quello giornaliero il messaggio lo dice chiaramente (si azzera verso le 9 in Italia) e ricorda di non chiudere il pannello per ritrascrivere il vocale.",
+    ],
+  },
+  {
+    version: '0.70.0',
+    date: '2026-10-05 08:01',
+    changes: [
+      "Riassunti Gemini: ogni modifica segna da aggiornare il recap del giorno, del mese e dell'anno, e il server li rigenera tutti in blocco ogni sera alle 23:00 (prima i giorni, poi i mesi, poi gli anni; ritentativi alle 23:20 e alle 23:40). Prima si aggiornavano uno alla volta durante il giorno e dopo la mezzanotte.",
+      "La linguetta dei recap in attesa ora avvisa che l'aggiornamento è previsto per le 23:00.",
+    ],
+  },
+  {
+    version: '0.69.2',
+    date: '2026-10-05 07:57',
+    changes: [
+      "Suoni: scorrendo di lato per cambiare mese si sente una pagina che viene sfogliata.",
+    ],
+  },
+  {
+    version: '0.69.1',
+    date: '2026-10-05 07:48',
+    changes: [
+      "App Android: lo schermo non ruota più, resta sempre in verticale.",
+    ],
+  },
+  {
+    version: '0.69.0',
+    date: '2026-10-05 07:47',
+    changes: [
+      "Suoni: un «tic» ai pulsanti, due note al cambio di mese e anno, un fruscio di carta aprendo giorni e note, una campanella al salvataggio e un suono diverso all'eliminazione di una nota, e i suoni della dettatura vocale (avvio, stop e avviso degli ultimi secondi). Sono sintetizzati dall'app, senza file audio.",
+      "Impostazioni: «Suoni» in Aspetto per accenderli o spegnerli e una nuova sezione «Suoni» per il volume (per dispositivo).",
+      "App Android: la notifica dei promemoria ha un suono proprio (campanella a due note).",
+    ],
+  },
+  {
+    version: '0.68.3',
+    date: '2026-10-05 07:43',
+    changes: [
+      "Dettatura vocale: fino a 120 secondi. Il pulsante è la barra: mostra il tempo che cresce e si riempie da sinistra verso destra; negli ultimi 30 secondi si allarga per far spazio a «mancano Ns», diventa rosso e lampeggia.",
+      "Dettatura vocale: vibrazione quando mancano 30, 20, 10 e 5 secondi.",
+    ],
+  },
+  {
+    version: '0.68.2',
+    date: '2026-10-05 07:15',
+    changes: [
+      "Feedback aptico su tutti i pulsanti per cambiare anno o mese (frecce, etichette e voci dei menu) e al tocco di una pagina: il giorno nel mese e la nota nel giorno.",
+    ],
+  },
+  {
+    version: '0.68.1',
+    date: '2026-10-05 07:06',
+    changes: [
+      "Impostazioni: feedback aptico quando apri o chiudi una categoria; «Istruzioni personalizzate» diventa «Istruzioni per le note».",
+      "Vista del giorno: «30 ottobre 2026» nell'orologio è di nuovo leggibile (gli spazi del font digitale erano quasi nulli).",
+    ],
+  },
+  {
     version: '0.68.0',
     date: '2026-10-05 06:44',
     changes: [

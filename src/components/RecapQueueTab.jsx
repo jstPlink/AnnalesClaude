@@ -3,12 +3,11 @@ import SideTab from './SideTab'
 import { useAuth } from '../context/AuthContext'
 import { fetchRecapQueue, jobLabel, onRecapQueuePoke } from '../lib/recapQueue'
 
-const POLL_MS = 15_000
+const POLL_MS = 60_000
 
-// Linguetta che spiega cosa sta facendo il server dopo aver salvato una nota
-// di un giorno passato: i recap (giorno → mese → anno) si rigenerano in
-// background, uno per volta e distanziati nel tempo, per non appesantire il
-// salvataggio. Compare solo finché c'è qualcosa in coda.
+// Linguetta che avvisa dei recap in attesa: dopo aver salvato una nota, i recap
+// toccati (giorno → mese → anno) sono segnati da aggiornare e il server li
+// rigenera tutti in blocco alle 23:00. Compare solo finché c'è qualcosa in coda.
 export default function RecapQueueTab() {
   const { isAuthed } = useAuth()
   const [queue, setQueue] = useState({ total: 0, items: [] })
@@ -41,9 +40,10 @@ export default function RecapQueueTab() {
   const more = queue.total - 1
   return (
     <SideTab icon="sparkles" tone="paper" badge={queue.total}>
-      Aggiorno in background il recap del{first ? ` ${jobLabel(first)}` : ''}
-      {more > 0 ? ` (e altri ${more} in coda)` : ''}. Lo faccio con calma, una richiesta
-      a Gemini alla volta, così salvare le note resta veloce: puoi continuare a usare l&apos;app.
+      Stasera alle 23:00 aggiorno il recap del{first ? ` ${jobLabel(first)}` : ''}
+      {more > 0 ? ` (e di altri ${more} ${more === 1 ? 'giorno' : 'giorni'})` : ''}, poi
+      quello del mese e dell&apos;anno. Li preparo tutti insieme in blocco, così salvare le
+      note resta veloce.
     </SideTab>
   )
 }

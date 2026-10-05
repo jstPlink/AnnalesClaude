@@ -1,13 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 import { MONTHS_IT } from '../lib/dates'
+import { haptic } from '../lib/haptics'
 
 // Freccia ai lati della targhetta: renderizzata dal chiamante solo quando
 // passa uno stepper (`onYearStep`/`onMonthStep`/`onStep`) — altrimenti la
 // targhetta resta senza, invariata per chi non ne ha bisogno.
 function PlaqueArrow({ dir, onClick, label }) {
   return (
-    <button type="button" className="mplaque-arrow" onClick={onClick} aria-label={label}>
+    <button type="button" className="mplaque-arrow" onClick={() => {
+      haptic(4, 'nav')
+      onClick()
+    }} aria-label={label}>
       <Icon
         name={dir === 'prev' ? 'chevron-left' : 'chevron-right'}
         size={14}
@@ -21,7 +25,10 @@ function PlaqueArrow({ dir, onClick, label }) {
 // semplice accanto all'orologio, invece che incorporata nella targhetta.
 function ClockArrow({ dir, onClick, label }) {
   return (
-    <button type="button" className="mclock-arrow" onClick={onClick} aria-label={label}>
+    <button type="button" className="mclock-arrow" onClick={() => {
+      haptic(4, 'nav')
+      onClick()
+    }} aria-label={label}>
       <Icon
         name={dir === 'prev' ? 'chevron-left' : 'chevron-right'}
         size={16}
@@ -96,7 +103,10 @@ function ClockDropdownList({ items, wide }) {
           <button
             key={key}
             type="button"
-            onClick={onClick}
+            onClick={() => {
+              haptic(4, 'nav')
+                            onClick()
+            }}
             className={'mn-item' + (active ? ' active' : '')}
           >
             {label}
@@ -179,6 +189,7 @@ export default function YearPill({
             <button
               type="button"
               onClick={() => {
+                haptic(4, 'nav')
                 setOpenMonth((v) => !v)
                 setOpenYear(false)
               }}
@@ -213,6 +224,7 @@ export default function YearPill({
             <button
               type="button"
               onClick={() => {
+                haptic(4, 'nav')
                 setOpenYear((v) => !v)
                 setOpenMonth(false)
               }}
@@ -251,6 +263,7 @@ export default function YearPill({
           <button
             type="button"
             onClick={() => {
+              haptic(4, 'nav')
               setOpenMonth((v) => !v)
               setOpenYear(false)
             }}
@@ -269,6 +282,7 @@ export default function YearPill({
           <button
             type="button"
             onClick={() => {
+              haptic(4, 'nav')
               setOpenYear((v) => !v)
               setOpenMonth(false)
             }}
@@ -288,6 +302,7 @@ export default function YearPill({
                 key={y}
                 type="button"
                 onClick={() => {
+                  haptic(4, 'nav')
                   onChange(y)
                   setOpenYear(false)
                 }}
@@ -309,6 +324,7 @@ export default function YearPill({
                 key={m}
                 type="button"
                 onClick={() => {
+                  haptic(4, 'nav')
                   onMonthChange(i)
                   setOpenMonth(false)
                 }}
@@ -335,7 +351,14 @@ export default function YearPill({
           {onStep && <ClockArrow dir="prev" label="Precedente" onClick={() => onStep(-1)} />}
           <LabelTag
             type={readOnly ? undefined : 'button'}
-            onClick={readOnly ? undefined : () => setOpenYear((v) => !v)}
+            onClick={
+              readOnly
+                ? undefined
+                : () => {
+                    haptic(4, 'nav')
+                    setOpenYear((v) => !v)
+                  }
+            }
             className="mclock-face"
           >
             <span className="mclock-screen">
@@ -375,7 +398,14 @@ export default function YearPill({
         {onStep && <PlaqueArrow dir="prev" label="Precedente" onClick={() => onStep(-1)} />}
         <LabelTag
           type={readOnly ? undefined : 'button'}
-          onClick={readOnly ? undefined : () => setOpenYear((v) => !v)}
+          onClick={
+              readOnly
+                ? undefined
+                : () => {
+                    haptic(4, 'nav')
+                    setOpenYear((v) => !v)
+                  }
+            }
           className="mplaque-label"
         >
           {layout === 'row' && subtitle ? (
@@ -402,6 +432,7 @@ export default function YearPill({
               key={y}
               type="button"
               onClick={() => {
+                haptic(4, 'nav')
                 onChange(y)
                 setOpenYear(false)
               }}
