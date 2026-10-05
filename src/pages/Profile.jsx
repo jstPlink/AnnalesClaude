@@ -13,6 +13,7 @@ import MoodGradientControls from '../components/MoodGradientControls'
 import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import OfflineStorage from '../components/OfflineStorage'
+import RecapInstructions from '../components/RecapInstructions'
 import ReminderSettings from '../components/ReminderSettings'
 import PermissionsSettings from '../components/PermissionsSettings'
 import { remindersSupported } from '../lib/reminders'
@@ -998,6 +999,10 @@ export default function Profile() {
                 >
                   {savingGeminiInstructions ? 'Salvo…' : 'Salva'}
                 </button>
+              </SettingsSection>
+
+              <SettingsSection nested noCollapse title="Istruzioni per i riassunti" icon="sparkles">
+                <RecapInstructions />
               </SettingsSection>
             </SettingsSection>
         </SettingsSection>

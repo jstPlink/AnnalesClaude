@@ -108,6 +108,7 @@ un prompt, "Nuova nota con Gemini", dettatura vocale, estrazione note da screens
 - Se Gemini è sovraccarico l'app riprova da sola un paio di volte.
 - Quando salvi una nota di un giorno già passato, il recap non si rigenera subito: viene messo in **coda** e il server lo aggiorna in background, uno
   per volta (giorno, poi mese, poi anno) e a distanza di tempo, così salvare resta veloce. Una linguetta sul bordo destro dice cosa sta aggiornando.
+- Le "Istruzioni per i riassunti" (Impostazioni → Gemini) valgono per tutti i recap di giorno, mese e anno, anche per quelli scritti dal server. Modificando una nota il recap si rifà solo se cambiano descrizione o mood.
 - Le "Istruzioni personalizzate" (tono, cosa evidenziare) valgono per tutte le richieste e si modificano anche al volo nei pannelli.
 
 ## 9. Uso offline e connessione debole

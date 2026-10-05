@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.68.0',
+    date: '2026-10-05 06:44',
+    changes: [
+      "Riassunti Gemini: nelle Impostazioni (Integrazioni → Gemini) c'è il campo «Istruzioni per i riassunti», aggiunto a tutti i recap di giorno, mese e anno, anche a quelli scritti dal server di notte.",
+      "Riassunti Gemini: modificando una nota il recap si rifà solo se cambiano la descrizione o il mood (non più per titolo, orari, persone, luogo, canzoni o immagini).",
+      "App Android: icona con fondo scuro, icona dedicata nelle notifiche; nel widget l'ultima nota è espressa in «x giorni fa».",
+    ],
+  },
+  {
     version: '0.67.1',
     date: '2026-10-04 18:00',
     changes: [

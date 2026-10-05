@@ -142,6 +142,21 @@ function geminiApiKeyFor(app, userId) {
   }
 }
 
+// Istruzioni fisse dell'utente per i riassunti (campo recapCustomInstructions,
+// Impostazioni → Gemini): prefisso del prompt, vuoto se assenti.
+function recapInstructionsFor(app, userId) {
+  try {
+    const t = (app.findRecordById('users', userId).get('recapCustomInstructions') || '').trim()
+    return t
+      ? "Istruzioni fisse dell'utente su come scrivere i riassunti (rispettale sempre, a meno che non contraddicano il formato richiesto sotto): " +
+          t +
+          '\n\n'
+      : ''
+  } catch {
+    return ''
+  }
+}
+
 function usersWithGeminiKey(app) {
   try {
     return app.findRecordsByFilter('users', "geminiApiKey != ''", '', 500, 0, {})
@@ -223,6 +238,7 @@ function generateDayRecap(app, userId, dateKey, maxAttempts) {
   if (!apiKey) return null
   const rows = notes.map(noteLine).join('\n')
   const prompt =
+    recapInstructionsFor(app, userId) +
     'Queste sono le note di diario scritte in un solo giorno (formato: [mood 0-100] titolo — estratto). ' +
     'Scrivi un breve recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 2-4 frasi: ' +
     'cosa è successo, persone e luoghi citati, il tono della giornata. Tono caldo, diretto. ' +
@@ -265,6 +281,7 @@ function generateMonthRecap(app, userId, monthKey, maxAttempts) {
     intro = 'Queste sono le note di diario di un mese (formato: data [mood 0-100] titolo — estratto). '
   }
   const prompt =
+    recapInstructionsFor(app, userId) +
     intro +
     'Scrivi un recap personale del mese in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 4-6 frasi: ' +
     "temi ricorrenti, persone e luoghi che tornano, andamento dell'umore nel tempo, due o tre momenti salienti. " +
@@ -307,6 +324,7 @@ function generateYearRecap(app, userId, year, maxAttempts) {
     intro = 'Queste sono le note di diario di un anno (formato: data [mood 0-100] titolo — estratto). '
   }
   const prompt =
+    recapInstructionsFor(app, userId) +
     intro +
     "Scrivi un recap personale dell'anno in italiano, rivolto a chi le ha scritte (\"hai…\", \"ti…\"), di 5-8 frasi: " +
     "come si è evoluto l'anno, temi ricorrenti, persone e luoghi importanti, l'andamento dell'umore, i momenti più salienti. " +

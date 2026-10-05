@@ -4,7 +4,8 @@
   "webDir": "dist",
   "backgroundColor": "#dbd1bd",
   "plugins": {
-    "CapacitorHttp": { "enabled": true }
+    "CapacitorHttp": { "enabled": true },
+    "LocalNotifications": { "smallIcon": "ic_stat_annales", "iconColor": "#d9645a" }
   },
   "android": {
     "allowMixedContent": false

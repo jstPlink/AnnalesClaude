@@ -19,6 +19,27 @@ export async function saveGeminiCustomInstructions(text) {
   })
 }
 
+// Istruzioni fisse per TUTTI i riassunti (recap giorno/mese/anno): campo
+// `recapCustomInstructions` di `users`, usato anche dal server (recap_lib.js).
+// Restituisce il record aggiornato.
+export async function saveRecapCustomInstructions(text) {
+  const userId = pb.authStore.record?.id
+  if (!userId) throw new Error('Non autenticato.')
+  return pb.collection('users').update(userId, {
+    recapCustomInstructions: text.trim(),
+  })
+}
+
+// Prefisso del prompt con le istruzioni dell'utente per i riassunti.
+function recapInstructionsPrefix(text) {
+  const t = (text || '').trim()
+  return t
+    ? `Istruzioni fisse dell'utente su come scrivere i riassunti (rispettale sempre, a meno che non contraddicano il formato richiesto sotto): ${t}
+
+`
+    : ''
+}
+
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
 
 // gemini-2.5-flash è stato ritirato per i nuovi utenti (l'API risponde 404
@@ -496,7 +517,11 @@ export async function segmentDayIntoNotes(
 }
 
 // Recap di un periodo: poche frasi che riassumono un insieme di note.
-export async function recapNotes(apiKey, notes, { label = '', onRetry } = {}) {
+export async function recapNotes(
+  apiKey,
+  notes,
+  { label = '', onRetry, customInstructions = '' } = {},
+) {
   if (!notes || !notes.length) throw new Error('Nessuna nota nel periodo.')
   const rows = [...notes]
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
@@ -508,6 +533,7 @@ export async function recapNotes(apiKey, notes, { label = '', onRetry } = {}) {
       return `${d} [${mood}] ${title}${body ? ' — ' + body : ''}`
     })
   const prompt =
+    recapInstructionsPrefix(customInstructions) +
     `Queste sono le note di diario ${label ? 'del ' + label : 'di un periodo'} ` +
     '(formato: data [mood 0-100] titolo — estratto). ' +
     'Scrivi un recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), ' +
@@ -522,7 +548,7 @@ export async function recapNotes(apiKey, notes, { label = '', onRetry } = {}) {
 // tasto "Genera"/"Rigenera" sul recap giornaliero (src/lib/recaps.js). Lo
 // stesso testo, con lo stesso stile, lo scrive anche il cron notturno lato
 // server (pb_hooks/main.pb.js) — qui è la versione richiamabile a mano.
-export async function dayRecap(apiKey, notes, onRetry) {
+export async function dayRecap(apiKey, notes, onRetry, customInstructions = '') {
   if (!notes || !notes.length) throw new Error('Nessuna nota in questo giorno.')
   const rows = notes.map((n) => {
     const mood = Math.round(Number(n.mood) * 100)
@@ -531,6 +557,7 @@ export async function dayRecap(apiKey, notes, onRetry) {
     return `[${mood}] ${title}${body ? ' — ' + body : ''}`
   })
   const prompt =
+    recapInstructionsPrefix(customInstructions) +
     'Queste sono le note di diario scritte in un solo giorno (formato: [mood 0-100] titolo — estratto). ' +
     'Scrivi un breve recap personale in italiano, rivolto a chi le ha scritte ("hai…", "ti…"), di 2-4 frasi: ' +
     'cosa è successo, persone e luoghi citati, il tono della giornata. Tono caldo, diretto. ' +

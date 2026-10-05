@@ -64,7 +64,7 @@ file: la logica sta in `pb_hooks/recap_lib.js`, caricata con `require()` dentro 
 
 | Collection | Campi principali | Note |
 |---|---|---|
-| `users` | email, name, avatar + `immichUrl`, `immichApiKey`, `spotifyClientId`, `spotifyClientSecret`, `geminiApiKey`, `geminiCustomInstructions`, `moodGradient` (JSON), `mymapUrl`, `mymapEmail`, `mymapPassword` | Registrazione pubblica aperta; la privacy sta nelle regole per-proprietario. L'utente può eliminare il proprio account. |
+| `users` | email, name, avatar + `immichUrl`, `immichApiKey`, `spotifyClientId`, `spotifyClientSecret`, `geminiApiKey`, `geminiCustomInstructions`, `recapCustomInstructions` (istruzioni per tutti i recap, anche lato server), `moodGradient` (JSON), `mymapUrl`, `mymapEmail`, `mymapPassword` | Registrazione pubblica aperta; la privacy sta nelle regole per-proprietario. L'utente può eliminare il proprio account. |
 | `note` | `title`, `content` (Markdown), `mood` (0–1), `date`, `timeStart`/`timeEnd`, `place` (testo JSON `{name,lat,lon}` o stringa), `songs` (JSON), `images` (file multipli), `people`/`tags` (relation multiple), `user` | **Niente `created`/`updated`**: ordinare per `timeStart` o `date`. |
 | `people` | `name`, `immichPersonId`, `tapeColor`, `user` | |
 | `tags` | `name`, `user` | |
@@ -192,7 +192,7 @@ Poi commit e push: il Dockerfile includerà l'APK nell'immagine web e dopo `pull
 
 **Firma:** l'APK è di **debug**, firmato con `~/.android/debug.keystore` del PC (ogni PC ha la sua: passare da un PC all'altro richiede `adb uninstall it.fplinio.annales` e rifare l'accesso, i dati sono sul server).
 
-**Installare sul telefono (debug wireless):** `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`; con firma diversa `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → disinstalla e reinstalla. Versione attuale: versionCode 13 / versionName 1.12 (frontend v0.67.0).
+**Installare sul telefono (debug wireless):** `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`; con firma diversa `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → disinstalla e reinstalla. Versione attuale: versionCode 15 / versionName 1.14 (frontend v0.68.0).
 
 **Regola di aggiornamento dell'app Android (vale ogni volta che si chiede un aggiornamento dell'app):** dopo le modifiche si alza la versione (`package.json`, voce in `changelog.js`, `versionCode`/`versionName` in `android/app/build.gradle`), si compila l'APK (`npm run android:build` + `gradlew assembleDebug`) e, **se il telefono è collegato** (`adb devices` mostra `device`; con più voci usare `adb -s IP:porta`), lo si **invia subito** con `adb install -r app-debug.apk`, verificando `versionCode`/`versionName` con `dumpsys package it.fplinio.annales`. Se il telefono non è collegato lo si dice e l'APK resta in `android/app/build/outputs/apk/debug/`. Il debug wireless cade spesso: `adb mdns services` e `adb connect IP:porta` (vedi sotto per MyMap, stessa procedura). Un APK compilato altrove (es. dal workflow manuale
 `.github/workflows/android-apk.yml`, artifact `annales-debug-apk`) ha un'altra firma e Android non lo installa sopra quello vecchio: va
@@ -238,7 +238,7 @@ prima disinstallata l'app.
 
 ## 11. Stato del lavoro e passaggio di consegne (2026-10-04)
 
-**Versioni.** Frontend **0.67.1**, Android **versionCode 14 / 1.13**. La 0.67.1 corregge solo l'oscillazione del widget (lobi sinusoidali, 4 s di pausa). La 0.67.0 (commit `a1c5b52`) ha portato: promemoria con testo personalizzato e settimana da lunedì, dettatura max 100 s con conto alla rovescia, griglia del grafico Andamento allineata, aptico sulle schede di vista, Aspetto semplificato, giroscopio + foto che oscillano, schede Statistiche con più aria (`MainActivity` con tic aptico dal widget, `AppPermissionsPlugin` con `gyroscope`). Le voci sono in `changelog.js` e nelle guide. Per pubblicare: `npm run lint`, `npm run build`, commit `vX.Y.Z — …` e push (poi la build GitHub, e `docker compose pull && docker compose up -d` sul NAS).
+**Versioni.** Frontend **0.68.0**, Android **versionCode 15 / 1.14**. La 0.68.0: istruzioni per i riassunti (`recapCustomInstructions`, migration `1758000018`), recap rifatto solo se cambiano descrizione o mood (hook in `pb_hooks/main.pb.js`), icona Android scura, icona di stato delle notifiche, widget con «x giorni fa».  La 0.67.1 corregge solo l'oscillazione del widget (lobi sinusoidali, 4 s di pausa). La 0.67.0 (commit `a1c5b52`) ha portato: promemoria con testo personalizzato e settimana da lunedì, dettatura max 100 s con conto alla rovescia, griglia del grafico Andamento allineata, aptico sulle schede di vista, Aspetto semplificato, giroscopio + foto che oscillano, schede Statistiche con più aria (`MainActivity` con tic aptico dal widget, `AppPermissionsPlugin` con `gyroscope`). Le voci sono in `changelog.js` e nelle guide. Per pubblicare: `npm run lint`, `npm run build`, commit `vX.Y.Z — …` e push (poi la build GitHub, e `docker compose pull && docker compose up -d` sul NAS).
 
 **APK 1.12.** Compilato (`android/app/build/outputs/apk/debug/app-debug.apk`) ma **non installato**: il debug wireless del telefono era caduto (`adb connect` rifiutato). Riattivalo (Opzioni sviluppatore → Debug wireless), poi `adb devices` / `adb mdns services` e `adb -s <seriale> install -r …` (regola in §8). Sul telefono c'è ancora la 1.11.
 

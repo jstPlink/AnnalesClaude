@@ -5,7 +5,7 @@
 //  - un cron per ciascun livello, poco dopo la mezzanotte di quando il
 //    periodo finisce (giorno: ogni notte; mese: il giorno 1; anno: il 1
 //    gennaio);
-//  - una coda quando si crea/modifica/cancella una nota di un giorno che
+//  - una coda quando si crea/cancella una nota, o se ne modifica descrizione o mood, di un giorno che
 //    NON è oggi: il giorno viene messo in coda e un cron al minuto ne evade
 //    uno per volta (richieste a Gemini distanziate, salvare non aspetta mai).
 //    Finito un giorno, se non è nel mese corrente si accoda il suo mese; finito
@@ -45,7 +45,16 @@ onRecordAfterUpdateSuccess((e) => {
   } catch {
     original = null // se non disponibile si accoda solo la data attuale
   }
-  require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, original)
+  // Il recap cambia solo se cambiano la descrizione o il mood: titolo, orari,
+  // persone, luogo, canzoni o immagini non lo toccano. (Se l'originale non è
+  // disponibile si accoda comunque, per sicurezza.)
+  const changed =
+    !original ||
+    original.get('content') !== e.record.get('content') ||
+    original.get('mood') !== e.record.get('mood')
+  if (changed) {
+    require(`${__hooks}/recap_lib.js`).queueFromNote($app, e.record, original)
+  }
   e.next()
 }, 'note')
 

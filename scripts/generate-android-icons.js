@@ -8,7 +8,7 @@ import sharp from 'sharp'
 const here = dirname(fileURLToPath(import.meta.url))
 const res = resolve(here, '..', 'android', 'app', 'src', 'main', 'res')
 const svg = await readFile(resolve(here, 'icon-source.svg'))
-const BG = '#efe9df' // stesso fondo delle icone maskable della PWA
+const BG = '#2b2218' // fondo scuro: contrasta con la carta chiara dell'icona
 
 const dens = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
 
@@ -34,7 +34,7 @@ for (const [name, k] of Object.entries(dens)) {
     await sharp(square).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer(),
   )
   // adaptive: primo piano trasparente, l'icona sta nel 60% centrale (zona sicura)
-  const fg = Math.round(full * 0.6)
+  const fg = Math.round(full * 0.64)
   const fgPng = await sharp(svg).resize(fg, fg).png().toBuffer()
   await writeFile(
     resolve(dir, 'ic_launcher_foreground.png'),

@@ -130,7 +130,7 @@ public class AnnalesSummaryWidget extends AppWidgetProvider {
         return String.format(Locale.US, "%04d-%02d-%02d", c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
-    /** "oggi", "ieri" oppure "28 set" (con l'anno abbreviato, "28 set ’25", se non è quello corrente). */
+    /** "oggi", "ieri" oppure "x giorni fa" (giorni di calendario, non ore). */
     private static String dayLabel(String date) {
         if (date.equals(ymd(0))) return "oggi";
         if (date.equals(ymd(-1))) return "ieri";
@@ -138,9 +138,15 @@ public class AnnalesSummaryWidget extends AppWidgetProvider {
             int y = Integer.parseInt(date.substring(0, 4));
             int m = Integer.parseInt(date.substring(5, 7));
             int d = Integer.parseInt(date.substring(8, 10));
-            String s = d + " " + MONTHS[m - 1];
-            if (y != Calendar.getInstance().get(Calendar.YEAR)) s += " ’" + String.format(Locale.US, "%02d", y % 100);
-            return s;
+            Calendar then = Calendar.getInstance();
+            then.set(y, m - 1, d, 12, 0, 0);
+            Calendar now = Calendar.getInstance();
+            now.set(Calendar.HOUR_OF_DAY, 12);
+            now.set(Calendar.MINUTE, 0);
+            now.set(Calendar.SECOND, 0);
+            long days = Math.round((now.getTimeInMillis() - then.getTimeInMillis()) / 86400000.0);
+            if (days < 0) return "oggi"; // data nel futuro (orologi sfasati)
+            return days + " giorni fa";
         } catch (Exception e) {
             return date;
         }

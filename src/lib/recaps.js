@@ -38,6 +38,9 @@ export const getYearRecap = (year) => getRecap('year', String(year))
 
 // Un solo record per (utente, periodo, chiave) — vedi l'indice unico in
 // pb_migrations/1758000016_recaps_collection.js.
+// Istruzioni dell'utente per i riassunti (Impostazioni → Gemini).
+const recapInstructions = () => pb.authStore.record?.recapCustomInstructions || ''
+
 async function saveRecap(period, key, text) {
   const userId = pb.authStore.record?.id
   if (!userId) throw new Error('Non autenticato.')
@@ -48,19 +51,27 @@ async function saveRecap(period, key, text) {
 }
 
 export async function regenerateDayRecap(apiKey, dateKey, notes, onRetry) {
-  const text = await geminiDayRecap(apiKey, notes, onRetry)
+  const text = await geminiDayRecap(apiKey, notes, onRetry, recapInstructions())
   await saveRecap('day', dateKey, text)
   return text
 }
 
 export async function regenerateMonthRecap(apiKey, monthKey, notes, label, onRetry) {
-  const text = await recapNotes(apiKey, notes, { label, onRetry })
+  const text = await recapNotes(apiKey, notes, {
+    label,
+    onRetry,
+    customInstructions: recapInstructions(),
+  })
   await saveRecap('month', monthKey, text)
   return text
 }
 
 export async function regenerateYearRecap(apiKey, year, notes, onRetry) {
-  const text = await recapNotes(apiKey, notes, { label: String(year), onRetry })
+  const text = await recapNotes(apiKey, notes, {
+    label: String(year),
+    onRetry,
+    customInstructions: recapInstructions(),
+  })
   await saveRecap('year', String(year), text)
   return text
 }
