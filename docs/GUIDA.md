@@ -31,7 +31,10 @@ passaggio è automatico in base alla larghezza della finestra.
 | **Statistiche** | `/statistiche` | Persone più presenti, giorni/settimane/mesi migliori e peggiori, note migliori e peggiori, tag e luogo più usati, note per mese, recap dell'anno. Ogni voce cliccabile apre le note corrispondenti. |
 | **Cerca** | `/filtri` | Filtri per periodo, mood, testo, luogo, persone, tag, canzoni; ordinamento e numero massimo di risultati. |
 | **Importa** (solo web) | `/importa` | Migrazione di note da uno screenshot (Gemini) o da un foglio di calcolo esportato (TSV/CSV). |
-| **Impostazioni** | `/profilo` | Aspetto, dati utente, integrazioni, uso offline, novità, account. |
+| **Impostazioni** | `/profilo` | Aspetto, dati utente, integrazioni, uso offline, novità, archivio e account. |
+| **Mood Lab** (nascosto) | `/mood-lab` | Banco di prova della formula del mood; vedi §5. |
+
+**Indietro.** Il tasto/gesto «indietro» di Android e le frecce dell'app risalgono a livelli: nota → giorno (o Cerca/Impostazioni) → schermata principale (Calendario, Andamento o Statistiche); prima si chiude l'eventuale pannello aperto. Cambiare giorno con le frecce non aggiunge livelli. Dalla schermata principale il tasto di Android esce dall'app.
 
 ## 4. Scrivere una nota
 
@@ -49,6 +52,9 @@ passaggio è automatico in base alla larghezza della finestra.
 - **Note in sospeso:** una nota nuova che chiudi senza salvare (ad esempio con Indietro per sbaglio, o con la ✕ del pannello Gemini) non va persa: si salva da sola, compare un
   avviso a centro schermo e la nota appare nella linguetta con la **matitina** sul bordo destro (icona matita = a mano, scintille = Gemini, con testo e vocali), da riprendere con un tocco o scartare col cestino. Sono sul dispositivo; le immagini non si conservano e vanno
   riaggiunte. Spariscono quando la nota viene salvata.
+- **Persone, tag, luoghi:** mentre scrivi il nome da aggiungere compaiono quelli già presenti che combaciano; se il nome esiste già non si crea una copia (nei selettori viene scelto). Tag e luoghi sono in ordine alfabetico su 2 colonne (3 da web).
+- **Bollino del mood:** nella vista giorno un cartoncino quadrato in alto a destra mostra il mood calcolato del giorno (0–100).
+- **Vocali:** dopo la registrazione il vocale resta salvato con un titolo e lo trascrivi quando vuoi con «Trascrivi»; nella nota con Gemini i vocali già trascritti restano finché non salvi la nota.
 - **Senza rete:** il salvataggio va in coda e si sincronizza da solo (vedi §9).
 
 ## 5. Impostazioni
@@ -59,6 +65,8 @@ passaggio è automatico in base alla larghezza della finestra.
   modifica di nome e posizione, che si propaga alle note), **Canzoni** (sola lettura, con quante note le usano). Cancellare una persona
   o un luogo collegato a delle note chiede se sostituirlo o toglierlo ovunque.
 - **Integrazioni:** Immich, **MyMap**, Spotify, Gemini (vedi §6–§8).
+- **Archivio e account:** dice dove sono i tuoi dati (su questo dispositivo o sul tuo server) e permette di cambiare; «Esci» c'è solo con un server.
+- **Mood Lab (nascosto):** in fondo alle Impostazioni, toccando 5 volte di seguito la riga «Annales · versione», si apre il Mood Lab: un banco di prova per la formula del mood con dati di esempio (non tocca le tue note). Con **Applica all'app** la formula che hai impostato (curva delle note, peso di durata e persone, curva dei giorni nel mese) diventa quella di tutto il tuo account; **Formula originale** la ripristina.
 - **Uso offline**, **Novità** (changelog), **Esporta** (JSON o Markdown di tutto il diario) e **Account** (cambio nome, email e password;
   esci; elimina account con doppia conferma, che cancella anche note, persone e tag).
 

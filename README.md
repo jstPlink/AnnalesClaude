@@ -204,13 +204,22 @@ problema del codice — l'app mostra comunque un messaggio d'errore esplicito.
 
 ```
 src/
-  lib/         pocketbase.js, notes.js (API collection note), dates.js, mood.js
-  context/     AuthContext.jsx
-  components/  PhoneShell, Footer, YearPill, MoodBar, MoodSlider,
-               ImageCarousel, CircleButton, Icon, RequireAuth
-  pages/       Login, MonthView, DayView, NoteView
-scripts/       generate-icons.js (+ icon-source.svg)
+  lib/         pocketbase.js (client: server o locale), backend.js, localPocketBase.js,
+               notes.js, mood.js (formula del mood), navStack.js, dates.js, gemini.js, ...
+  context/     AuthContext.jsx, NavContext.jsx
+  hooks/       useIsWide, useBack (indietro a pila), useAutoDraft, ...
+  components/  PhoneShell, DraftsTab, NavStack, Toaster, ExistingMatches, selettori (persone,
+               tag, luoghi, immagini), Gemini, ...
+  pages/       Login, BackendChooser, MonthView, DayView, NoteView, DataView, StatsView,
+               FilterView, Profile, MoodLab; pages/web/ = varianti desktop
+public/
+  mood-lab.html  banco di prova della formula del mood (aperto da /mood-lab)
+pb_migrations/ schema di PocketBase (campi, regole)
+pb_hooks/      recap con Gemini (cron serale)
+scripts/       icone PWA e Android, suoni
 ```
+
+Per i dettagli (formule, navigazione, backend locale, deploy) vedi [ARCHITETTURA.md](ARCHITETTURA.md).
 
 ## Non incluso (fasi successive)
 

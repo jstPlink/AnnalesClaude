@@ -27,11 +27,11 @@ luoghi (`src/lib/leaflet.js`).
 | Cartella | Contenuto |
 |---|---|
 | `App.jsx` | Rotte. `Screen` sceglie la variante **mobile** (`pages/*.jsx`) o **web** (`pages/web/Web*.jsx`) con `useIsWide`; la web ha `DesktopShell` con barra laterale. Tutte le rotte tranne `/login` sono dietro `RequireAuth`. |
-| `pages/` | Mobile: `MonthView`, `DayView`, `NoteView`, `DataView` (Andamento), `StatsView`, `FilterView` (Cerca), `Profile` (Impostazioni), `Login`. `pages/web/`: le stesse in versione desktop, più `WebImport`; `MonthPages`/`DayPages` = skin "Pagine" (l'unica rimasta). |
-| `components/` | UI condivisa: selettori (`PlacePickerSheet`, `PeoplePickerSheet`, `TagPickerSheet`, `AddSongSheet`, `AddImagesSheet`, `Immich*Picker`), Gemini (`GeminiSheet`, `NewNoteWithGeminiSheet`, `VoiceRecordButton` (registrazione max 120 s: il pulsante è la barra, mostra il tempo trascorso e si riempie da sinistra; negli ultimi 30 s si allarga con «mancano Ns», diventa rosso e lampeggia; vibra a 30/20/10/5 s dalla fine)), `MymapIntegration`, `SettingsSection`, `StatusPills` + `SideTab` (linguette sul bordo destro: `PendingSync`, `RecapQueueTab`, `DraftsTab`, connessione), `OfflineStorage` (offline), `PeriodRecapCard`, `OnThisDay`… `components/web/` = `Sidebar`, `ProfileCard`. |
+| `pages/` | Mobile: `MonthView`, `DayView`, `NoteView`, `DataView` (Andamento), `StatsView`, `FilterView` (Cerca), `Profile` (Impostazioni), `Login`, `MoodLab` (rotta `/mood-lab`, nascosta, per mobile e web), `BackendChooser` (scelta dell'archivio, mostrata da `main.jsx` prima di App). `pages/web/`: le stesse in versione desktop, più `WebImport`; `MonthPages`/`DayPages` = skin "Pagine" (l'unica rimasta). |
+| `components/` | UI condivisa: selettori (`PlacePickerSheet`, `PeoplePickerSheet`, `TagPickerSheet`, `AddSongSheet`, `AddImagesSheet`, `Immich*Picker`), Gemini (`GeminiSheet`, `NewNoteWithGeminiSheet`, `VoiceRecordButton` (registrazione max 120 s: il pulsante è la barra, mostra il tempo trascorso e si riempie da sinistra; negli ultimi 30 s si allarga con «mancano Ns», diventa rosso e lampeggia; vibra a 30/20/10/5 s dalla fine)), `MymapIntegration`, `SettingsSection`, `StatusPills` + `SideTab` (linguette sul bordo destro: `PendingSync`, `RecapQueueTab`, `DraftsTab`, connessione), `OfflineStorage` (offline), `PeriodRecapCard`, `OnThisDay`… Altri: `NavStack` (pila di navigazione + tasto indietro di Android), `Toaster` (avviso a centro schermo), `ExistingMatches` (nomi già presenti mentre si scrive), `BackendInfo` (Impostazioni → Archivio e account), `SupportSection` (contatti da variabili di build), `VersionTap` (5 tocchi → Mood Lab), `DraftsTab` (linguetta unica delle note in sospeso, a mano e Gemini). `components/web/` = `Sidebar`, `ProfileCard`. |
 | `lib/` | Logica senza UI (sotto). |
-| `context/` | `AuthContext` (utente corrente = `pb.authStore`, applica il gradiente mood), `NavContext` (mese/anno visibili). |
-| `hooks/` | `useIsWide`, `useConnection`, `useAutoDraft` (salva da sola la bozza di una nuova nota). |
+| `context/` | `AuthContext` (utente corrente = `pb.authStore`, applica il gradiente mood e la formula del mood: `setMoodGradient`, `setMoodFormula`), `NavContext` (mese/anno visibili). |
+| `hooks/` | `useIsWide`, `useConnection`, `useAutoDraft` (salva da sola la bozza di una nuova nota), `useBack` (`useGoBack` per i pulsanti freccia, `useBackClose` per i pannelli). |
 | `index.css` | Tutto lo stile "Pagine" (carta, cartoncini, nastri) e i token del tema. |
 
 ### `src/lib/`
@@ -53,7 +53,10 @@ luoghi (`src/lib/leaflet.js`).
 | `widgetSync.js` | Riepilogo per il widget 3×1 della home (solo app Android): mood giornaliero degli ultimi 14 giorni + ultima nota + gradiente del mood, passati al plugin nativo `AnnalesWidget`. `refreshWidget()` all'avvio e al ritorno in primo piano (`WidgetSync.jsx`), `notifyNotesChanged()` dopo ogni salvataggio/eliminazione. |
 | `audio.js` | `blobToWav`: ripiego per la dettatura, ricodifica la registrazione in WAV 16 kHz se Gemini rifiuta WebM/MP4. |
 | `dates.js` | Date "da orologio" (nessun fuso). `toPbTime`, `parseWall`, `dayKey`, `addDaysKey`, etichette italiane. |
-| `mood.js` | Mood 0–1, gradiente di colori (personalizzabile, campo `moodGradient` dell'utente). |
+| `mood.js` | Mood 0–1, gradiente di colori (personalizzabile, campo `moodGradient` dell'utente) e **formula del mood**: `dayMood` (media pesata delle note), `monthMoodFromDays`, `setMoodFormula`/`getMoodFormula` (formula personalizzata dal Mood Lab, campo `moodFormula`; vedi §14). |
+| `navStack.js` | Pila di navigazione a livelli e registro dei pannelli aperti (vedi §13). |
+| `sort.js` | `sortByName`: ordine alfabetico italiano per tag e luoghi. |
+| `toast.js` | `toast('testo', ms)`: avviso mostrato da `Toaster`. |
 | `cache.js`, `prefetch.js`, `offlineQueue.js` | Lettura da cache IndexedDB con aggiornamento in background; precaricamento all'apertura; coda delle scritture offline (`flushQueue` in `notes.js`). |
 | `gemini.js` | REST diretta a Gemini con la chiave dell'utente (modello in `MODEL`). Pulizia testo, bozze, estrazione da screenshot, trascrizione vocale, retry su sovraccarico. |
 | `immich.js`, `spotify.js`, `mymap.js` | Integrazioni esterne (vedi §5). |
@@ -281,3 +284,20 @@ Cambiare scelta = `resetBackend()` + ricarica: `pb` è una costante di modulo cr
 (sono nel server; il tasto «Genera/Rigenera» invece funziona, chiama Gemini dal dispositivo), la coda offline (le scritture non falliscono mai per la rete),
 la cache di lettura (`cachedRead` va dritto ai dati) e le sezioni Supporto/Uso offline; email e password non si mostrano. La modalità locale è provata a mano
 (creazione/modifica/eliminazione note con immagini, filtri, persistenza dopo ricarica): non c'è test automatico.
+
+## 13. Navigazione: pila a livelli (`lib/navStack.js`)
+
+«Indietro» non usa la cronologia del browser (che si riempie di passaggi intermedi come i cambi di giorno), ma una pila propria:
+
+- **Livello 0** — schermate principali: Calendario `/`, Andamento `/dati`, Statistiche `/statistiche`.
+- **Livello 1** — aperte da una principale: giorno `/day/..`, Cerca `/filtri`, Impostazioni `/profilo`, Importa, Mood Lab.
+- **Livello 2** — la nota `/note/..`.
+- **Pannelli** (selettori, Gemini, immagini, finestre di avviso): si registrano con `useBackClose(open, onClose)` e stanno sopra a tutto.
+
+`NavStack` (dentro il router) chiama `trackLocation(path)` a ogni cambio pagina: un livello più alto = si aggiunge; livello più basso = si tolgono i livelli sopra; stesso livello = si **sostituisce** la cima (cambiare giorno, scheda o aprire Impostazioni da un giorno non allunga la pila). `goBack(navigate)` chiude prima il pannello in cima, altrimenti toglie la cima e va alla pagina sotto (`navigate(prev, { replace: true })`); dalla schermata principale restituisce `'root'` e nell'app Android si esce (`NavStack` registra il `backButton` di Capacitor). I pulsanti freccia delle pagine usano `useGoBack()` (senza nulla sotto vanno al calendario). Una pagina aperta da un link diretto (widget, notifica) ha sotto il calendario. La pila sta in `sessionStorage` (`annales.navStack`). Il pannello «Nuova nota con Gemini» chiuso con «indietro» si comporta come la ✕ (salva la bozza).
+
+## 14. Mood Lab e formula del mood
+
+`public/mood-lab.html` è una pagina statica autonoma (nata come artifact «Laboratorio Umore») con due banchi di prova: **Nota → Giorno** (curva a 7 punti del peso di una nota in base al suo mood, più fattori durata e persone) e **Giorno → Mese** (curva del peso dei giorni). Usa dati di esempio (seed), non le note vere; i preset si salvano in `localStorage` (`mood-lab:*`). `pages/MoodLab.jsx` la mostra in un `iframe` (rotta `/mood-lab`, mobile con `PhoneShell` + `MobileTopBar`); si raggiunge toccando 5 volte `VersionTap`. Il service worker non deve trasformarla in `index.html` (`navigateFallbackDenylist` in `vite.config.js`).
+
+**Applicazione all'app.** Lab e pagina madre si parlano con `postMessage` (stessa origin): `mood-lab-ready` → `mood-lab-init` (formula in uso), `mood-lab-apply` / `mood-lab-reset` → `mood-lab-status`. `MoodLab.jsx` valida con `normalizeMoodFormula`, salva `users.moodFormula` (JSON, migration `1758000020`; per account, quindi personale) e chiama `setMoodFormula`; `AuthContext` la rilegge a ogni avvio. Con la formula: `dayMood` = media pesata con `curva(mood) × (1 + peso·durata/180 min) × (1 + peso·persone/6)`; `monthMoodFromDays` pesa i giorni con la curva del mese (`yearWeeklyMood`, `stats.js`). Senza formula valgono le regole originali: `extremeWeight` = 0,15 + 0,85·smoothstep (campionata in `BUILTIN_MOOD_CURVE`), mese = media semplice. Il mood **delle note** salvate non cambia: si ricalcolano solo giorno e mese. Dopo l'applicazione l'app si ricarica su `/`.
