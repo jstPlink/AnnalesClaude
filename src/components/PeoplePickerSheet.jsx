@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import ExistingMatches, { findExact } from './ExistingMatches'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 import PersonAvatar from './PersonAvatar'
 import { haptic } from '../lib/haptics'
@@ -79,11 +81,19 @@ export default function PeoplePickerSheet({
     }
   }, [people, usageCounts, selectedIds])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   async function handleCreate() {
     const name = newName.trim()
     if (!name || creating) return
+    // già presente: la si sceglie, senza crearne una copia
+    const dup = findExact(people, name)
+    if (dup) {
+      if (!selectedIds.includes(dup.id)) onToggle(dup.id)
+      setNewName('')
+      return
+    }
     haptic()
     setCreating(true)
     setError('')
@@ -140,6 +150,17 @@ export default function PeoplePickerSheet({
             {creating ? '…' : 'Crea'}
           </button>
         </div>
+        <ExistingMatches
+          query={newName}
+          items={people}
+          selectedIds={selectedIds}
+          onPick={(p) => {
+            if (!selectedIds.includes(p.id)) onToggle(p.id)
+            setNewName('') // svuota la barra per scrivere un nuovo nome
+          }}
+          label="Persone già presenti"
+          className="border-b border-line px-5 py-2"
+        />
         {error && <p className="px-5 pt-2 text-xs text-delete-dark">{error}</p>}
 
         <div className="flex-1 overflow-y-auto px-5 py-4">

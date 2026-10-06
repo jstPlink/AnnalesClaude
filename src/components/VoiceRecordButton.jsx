@@ -69,6 +69,8 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
   const [state, setState] = useState('idle') // idle | recording | transcribing
   const [seconds, setSeconds] = useState(0)
   const [error, setError] = useState('')
+  // testo di avanzamento mostrato nel pulsante mentre Gemini trascrive (con i tentativi)
+  const [progress, setProgress] = useState('')
   // Elenco dei vocali salvati sul dispositivo e non ancora trascritti.
   const [saved, setSaved] = useState([])
   const mediaRef = useRef(null)
@@ -134,10 +136,13 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
   async function transcribe(blob, mimeType, id) {
     setState('transcribing')
     setError('')
+    const onRetry = (attempt, max) =>
+      setProgress(`Gemini non risponde: nuovo tentativo ${attempt + 1} di ${max}…`)
+    setProgress('Trascrivo… tentativo 1 di 5')
     try {
       let text
       try {
-        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(blob), mimeType })
+        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(blob), mimeType }, onRetry)
       } catch (err) {
         // Il telefono registra in WebM/MP4, formati che Gemini non dichiara
         // di supportare: se rifiuta l'audio (400 che non riguarda la chiave)
@@ -146,14 +151,19 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
           err?.status === 400 && !/api key/i.test(err.message || '') && mimeType !== 'audio/wav'
         if (!rejectedFormat) throw err
         const wav = await blobToWav(blob)
-        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(wav), mimeType: 'audio/wav' })
+        setProgress('Riprovo con un altro formato audio…')
+        text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(wav), mimeType: 'audio/wav' }, onRetry)
       }
       onTranscribed(text)
-      await deleteVoice(id) // né sul dispositivo
+      // Nella nota con Gemini il vocale originale resta (segnato «trascritto») fino a
+      // quando la nota non viene creata; fuori da lì si cancella subito.
+      if (draftId) await updateVoice(id, { transcribed: true })
+      else await deleteVoice(id)
     } catch (err) {
       setError(describeGeminiError(err))
     } finally {
       setState('idle')
+      setProgress('')
       refreshSaved()
     }
   }
@@ -256,7 +266,7 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
           className="gms-voice-btn"
         >
           <Icon name="mic" size={13} />
-          {state === 'transcribing' ? 'Trascrivo…' : 'Detta un vocale'}
+          {state === 'transcribing' ? progress || 'Trascrivo…' : 'Detta un vocale'}
         </button>
       )}
       {error && (
@@ -264,12 +274,13 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
           {error}
         </p>
       )}
-      {saved.length > 0 && state !== 'recording' && (
+      {saved.length > 0 && (
         <div className="gms-voice-saved">
           <p>
             {saved.length === 1
               ? '1 vocale salvato sul dispositivo, da trascrivere quando vuoi:'
               : `${saved.length} vocali salvati sul dispositivo, da trascrivere quando vuoi:`}
+            {draftId && saved.some((v) => v.transcribed) ? ' (i trascritti restano finché non crei la nota)' : ''}
           </p>
           <ul>
             {saved.map((v) => (
@@ -287,11 +298,12 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
                   className="gms-voice-title"
                 />
                 <span className="gms-voice-meta">
+                  {v.transcribed ? '✓ trascritto · ' : ''}
                   {fmtLen(v.seconds || 0)} · {fmtAgo(v.createdAt)}
                 </span>
                 <button
                   type="button"
-                  disabled={state === 'transcribing'}
+                  disabled={state !== 'idle'}
                   onClick={() => retrySaved(v)}
                   className="gms-voice-retry"
                 >
@@ -299,7 +311,7 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, dra
                 </button>
                 <button
                   type="button"
-                  disabled={state === 'transcribing'}
+                  disabled={state !== 'idle'}
                   onClick={() => discardSaved(v)}
                   className="gms-voice-discard"
                 >

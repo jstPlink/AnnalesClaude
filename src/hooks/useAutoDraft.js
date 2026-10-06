@@ -9,7 +9,7 @@ import { toast } from '../lib/toast'
 // dalla pagina (tasto Indietro, cambio scheda, chiusura): è proprio il caso
 // "tornato indietro per sbaglio" a cui serve. `discard()` la toglie, da
 // chiamare quando la nota è stata salvata (o messa in coda offline).
-export function useAutoDraft({ enabled, draftId, form, peopleIds, tagIds, imageCount }) {
+export function useAutoDraft({ enabled, draftId, form, peopleIds, tagIds, imageCount, extra }) {
   const [id] = useState(() => draftId || newDraftId())
   const discardedRef = useRef(false)
   const latestRef = useRef(null) // l'ultimo contenuto da salvare, o null se non c'è nulla
@@ -39,8 +39,9 @@ export function useAutoDraft({ enabled, draftId, form, peopleIds, tagIds, imageC
       peopleIds,
       tagIds,
       imageCount: imageCount || 0,
+      ...extra,
     }),
-    [id, dateKey, title, content, mood, timeStart, timeEnd, place, songs, peopleIds, tagIds, imageCount],
+    [extra, id, dateKey, title, content, mood, timeStart, timeEnd, place, songs, peopleIds, tagIds, imageCount],
   )
 
   useEffect(() => {

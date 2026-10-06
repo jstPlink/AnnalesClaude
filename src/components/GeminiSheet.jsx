@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
+import { useBackClose } from '../hooks/useBack'
 import GeminiWait from './GeminiWait'
 import VoiceRecordButton from './VoiceRecordButton'
 import GeminiUsage from './GeminiUsage'
@@ -57,6 +58,7 @@ export default function GeminiSheet({
     setCustomOpen(false)
   }, [open, customInstructions])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   const ready = Boolean(apiKey)

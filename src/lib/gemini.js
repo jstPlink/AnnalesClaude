@@ -626,8 +626,8 @@ export function describeGeminiError(err) {
     }
     return 'Limite di richieste Gemini raggiunto, riprova tra poco (di solito entro un minuto).'
   }
-  if (err.status === 503)
-    return 'Il server di Gemini è sovraccarico: ho già riprovato automaticamente 5 volte (a 3, 5, 7 e 9 secondi) senza successo, riprova tra poco.'
+  if (err.status >= 500)
+    return 'Il server Gemini è sovraccarico. Effettuati 5 tentativi senza successo, riprova tra poco.'
   if (err.status) return `Errore Gemini (${err.status}): ${err.message}`
   if (err.name === 'TypeError') return 'Impossibile raggiungere Gemini (rete).'
   return err.message || String(err)

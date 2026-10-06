@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { sortByName } from '../lib/sort'
+import ExistingMatches from './ExistingMatches'
+import { useBackClose } from '../hooks/useBack'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
 import { loadLeaflet, searchPlaces, reverseGeocode } from '../lib/leaflet'
@@ -216,6 +219,7 @@ export default function PlacePickerSheet({
     setVisitNames({})
   }, [open])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   function chooseSource(next) {
@@ -421,13 +425,28 @@ export default function PlacePickerSheet({
         </div>
         )}
 
+        {!fromMymap && !initial && (
+          <ExistingMatches
+            query={query}
+            items={savedPlaces}
+            onPick={(p) => {
+              setQuery('')
+              onAdd(p)
+              onClose()
+            }}
+            label="Luoghi già salvati"
+            className="border-b border-line px-5 py-2"
+          />
+        )}
+
         {!fromMymap && !initial && !results.length && savedPlaces.length > 0 && (
           <div className="border-b border-line px-5 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Luoghi salvati
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {savedPlaces.map((p) => (
+            {/* scorre se i luoghi sono tanti: prima la lista non si poteva scorrere e spingeva via la mappa */}
+            <div className="grid max-h-40 grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain pr-1">
+              {sortByName(savedPlaces).map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -435,10 +454,10 @@ export default function PlacePickerSheet({
                     onAdd(p)
                     onClose()
                   }}
-                  className="flex items-center gap-1.5 rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-cream"
+                  className="flex min-w-0 items-center gap-1.5 rounded-full border border-line bg-tag px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-cream"
                 >
                   <Icon name="map-pin" size={12} className="text-ink-soft" />
-                  {p.name}
+                  <span className="min-w-0 truncate">{p.name}</span>
                 </button>
               ))}
             </div>

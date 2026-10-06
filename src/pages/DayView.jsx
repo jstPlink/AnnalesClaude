@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCacheRefresh } from '../hooks/useConnection'
+import { useGoBack } from '../hooks/useBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PhoneShell from '../components/PhoneShell'
@@ -33,6 +34,7 @@ function startMinutes(value) {
 export default function DayView() {
   const { date } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const { user } = useAuth()
   const [notes, setNotes] = useState([])
   const [people, setPeople] = useState([])
@@ -117,7 +119,7 @@ export default function DayView() {
           className="mchev"
           onClick={() => {
             haptic()
-            navigate('/')
+            goBack()
           }}
           title="Indietro"
           aria-label="Indietro"

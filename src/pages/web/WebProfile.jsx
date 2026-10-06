@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import VersionTap from '../../components/VersionTap'
+import ExistingMatches, { findExact } from '../../components/ExistingMatches'
 import { useAuth } from '../../context/AuthContext'
 import { pb, isLocal } from '../../lib/pocketbase'
 import {
@@ -56,6 +58,7 @@ import Icon from '../../components/Icon'
 import ProfileCard from '../../components/web/ProfileCard'
 import SettingsSection from '../../components/SettingsSection'
 import SupportSection from '../../components/SupportSection'
+import { sortByName } from '../../lib/sort'
 import MymapIntegration from '../../components/MymapIntegration'
 
 // Link a una guida .md scaricabile su come ottenere il token/credenziali.
@@ -248,6 +251,11 @@ export default function WebProfile() {
   async function addTag() {
     const name = newTag.trim()
     if (!name || creatingTag) return
+    const dup = findExact(tags, name)
+    if (dup) {
+      setTagsError(`«${dup.name}» esiste già.`)
+      return
+    }
     setCreatingTag(true)
     setTagsError('')
     try {
@@ -384,6 +392,11 @@ export default function WebProfile() {
   async function addLocalPerson() {
     const name = newPersonName.trim()
     if (!name || creatingPerson) return
+    const dup = findExact(people, name)
+    if (dup) {
+      setPeopleError(`«${dup.name}» esiste già.`)
+      return
+    }
     setCreatingPerson(true)
     setPeopleError('')
     try {
@@ -567,6 +580,7 @@ export default function WebProfile() {
             </button>
           )}
         </div>
+        <ExistingMatches className="mt-2" query={newPersonName} items={people} label="Persone già presenti" />
 
         {people.length > 0 && (
           <div className="mt-4 space-y-1">
@@ -603,14 +617,14 @@ export default function WebProfile() {
         {tagsError && <p className="mt-3 text-sm text-delete-dark">{tagsError}</p>}
 
         {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {tags.map((tag) => (
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {sortByName(tags).map((tag) => (
               <span
                 key={tag.id}
-                className="flex items-center gap-2 rounded-lg border border-line bg-cream py-1.5 pl-3 pr-2 text-sm font-medium text-ink"
+                className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-cream py-1.5 pl-3 pr-2 text-sm font-medium text-ink"
               >
                 <Icon name="tag" size={13} className="shrink-0 text-ink-soft" />
-                {tag.name}
+                <span className="min-w-0 flex-1 truncate">{tag.name}</span>
                 <button
                   type="button"
                   title="Rimuovi"
@@ -643,6 +657,7 @@ export default function WebProfile() {
             {creatingTag ? '…' : 'Crea'}
           </button>
         </div>
+        <ExistingMatches className="mt-2" query={newTag} items={tags} label="Tag già presenti" />
         </SettingsSection>
 
         <SettingsSection nested title="Luoghi" icon="map-pin">
@@ -655,11 +670,11 @@ export default function WebProfile() {
         {placesError && <p className="mt-3 text-sm text-delete-dark">{placesError}</p>}
 
         {places.length > 0 && (
-          <div className="mt-4 space-y-1">
-            {places.map((place) => {
+          <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-1">
+            {sortByName(places).map((place) => {
               const editing = editingPlace?.id === place.id
               return (
-                <div key={place.id} className="rounded-xl px-1 py-1.5">
+                <div key={place.id} className={'min-w-0 rounded-xl px-1 py-1.5' + (editing ? ' col-span-3' : '')}>
                   {editing ? (
                     <div className="space-y-2">
                       <input
@@ -710,7 +725,7 @@ export default function WebProfile() {
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-cream text-ink-soft">
                         <Icon name="map-pin" size={14} />
                       </span>
-                      <span className="flex-1 text-sm font-medium text-ink">{place.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{place.name}</span>
                       {placesUsage && (
                         <span className="shrink-0 text-xs tabular-nums text-ink-soft">
                           {placesUsage[place.name.trim().toLowerCase()] || 0}{' '}
@@ -1075,6 +1090,8 @@ export default function WebProfile() {
           <DeleteAccount />
         </div>
       </SettingsSection>
+
+      <VersionTap className="mt-6" />
 
       {immichReady && (
         <ImmichPeoplePicker

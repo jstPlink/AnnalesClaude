@@ -7,7 +7,7 @@ import {
 } from 'react'
 import { pb, isLocal } from '../lib/pocketbase'
 import { resetBackend } from '../lib/backend'
-import { setMoodGradient } from '../lib/mood'
+import { setMoodFormula, setMoodGradient } from '../lib/mood'
 
 const AuthContext = createContext(null)
 
@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
   // È una scrittura idempotente su una cache di modulo (src/lib/mood.js), e
   // `user` cambia via authStore.onChange, quindi ogni modifica si propaga.
   setMoodGradient(user?.moodGradient)
+  setMoodFormula(user?.moodFormula) // formula del mood scelta nel Mood Lab (per account)
 
   useEffect(() => {
     const unsubscribe = pb.authStore.onChange((_token, record) => {

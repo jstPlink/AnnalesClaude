@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import ExistingMatches, { findExact } from './ExistingMatches'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
 import { createTag } from '../lib/tags'
+import { sortByName } from '../lib/sort'
 
 // Dialog per selezionare i tag di una nota: tra quelli già esistenti, o
 // creandone uno nuovo al volo (aggiunto subito all'elenco locale e
@@ -19,11 +22,19 @@ export default function TagPickerSheet({
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   async function handleCreate() {
     const name = newTag.trim()
     if (!name || creating) return
+    // già presente: lo si sceglie, senza crearne una copia
+    const dup = findExact(tags, name)
+    if (dup) {
+      if (!selectedIds.includes(dup.id)) onToggle(dup.id)
+      setNewTag('')
+      return
+    }
     haptic()
     setCreating(true)
     setError('')
@@ -80,6 +91,17 @@ export default function TagPickerSheet({
             {creating ? '…' : 'Crea'}
           </button>
         </div>
+        <ExistingMatches
+          query={newTag}
+          items={tags}
+          selectedIds={selectedIds}
+          onPick={(t) => {
+            if (!selectedIds.includes(t.id)) onToggle(t.id)
+            setNewTag('') // svuota la barra per scrivere un nuovo nome
+          }}
+          label="Tag già presenti"
+          className="border-b border-line px-5 py-2"
+        />
         {error && <p className="px-5 pt-2 text-xs text-delete-dark">{error}</p>}
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -88,8 +110,8 @@ export default function TagPickerSheet({
               Nessun tag ancora. Creane uno qui sopra.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag) => {
+            <div className="grid grid-cols-2 gap-1.5">
+              {sortByName(tags).map((tag) => {
                 const active = selectedIds.includes(tag.id)
                 return (
                   <button
@@ -97,14 +119,14 @@ export default function TagPickerSheet({
                     type="button"
                     onClick={() => onToggle(tag.id)}
                     className={
-                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                      'flex min-w-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ' +
                       (active
                         ? 'bg-ink text-cream'
                         : 'border border-line bg-tag text-ink')
                     }
                   >
                     <Icon name="tag" size={12} className={active ? 'text-cream' : 'text-ink-soft'} />
-                    {tag.name}
+                    <span className="min-w-0 truncate">{tag.name}</span>
                   </button>
                 )
               })}

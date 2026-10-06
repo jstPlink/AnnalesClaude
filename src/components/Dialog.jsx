@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { haptic } from '../lib/haptics'
+import { useBackClose } from '../hooks/useBack'
 
 // Finestra modale semplice (es. per notificare errori di salvataggio).
 export default function Dialog({ open, title, lines = [], tone = 'error', onClose }) {
@@ -10,6 +11,7 @@ export default function Dialog({ open, title, lines = [], tone = 'error', onClos
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   return (

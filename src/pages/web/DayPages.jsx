@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { plainText, parsePlace } from '../../lib/notes'
-import { moodColor } from '../../lib/mood'
+import { dayMood, moodColor } from '../../lib/mood'
 import { durationMinutes, parseWall } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
 import Icon from '../../components/Icon'
@@ -204,12 +204,28 @@ export default function DayPages({
     return Math.min(2.1, 1 + items.length * 0.14 + extras * 0.05).toFixed(2)
   }, [items])
 
+  // Mood del giorno (stessa media pesata della vista mese), solo con le note del giorno
+  const ownNotes = useMemo(() => notes.filter((n) => !n.carriedFromPrevious), [notes])
+  const moodValue = ownNotes.length ? dayMood(ownNotes) : null
+
   const trackH = fit ? fitH : TRACK_H
   const pxPerMin = trackH / DAY_MIN
 
   return (
     <div className={'day-outer' + (fit ? ' fit' : '')}>
       <div className="day-sheet" style={{ '--deco': deco }}>
+        {moodValue != null && (
+          <span
+            className="day-mood"
+            style={{ '--dm': moodColor(moodValue) }}
+            title="Mood del giorno"
+            aria-label={`Mood del giorno: ${Math.round(moodValue * 100)}`}
+          >
+            <span className="day-mood-tape" aria-hidden="true" />
+            <span className="day-mood-cap">MOOD</span>
+            <b>{Math.round(moodValue * 100)}</b>
+          </span>
+        )}
         <div
           className="day-track"
           ref={trackRef}

@@ -485,7 +485,8 @@ export function checkSavedNote(rec, expected) {
   const norm = (s) => String(s ?? '').replace(/\r\n/g, '\n').trim()
   const plain = plainText
 
-  if (norm(rec.title) !== norm(expected.title)) {
+  // i titoli si salvano sempre in maiuscolo (vedi commonFields)
+  if (norm(rec.title) !== norm(expected.title).toUpperCase()) {
     problems.push('Il titolo salvato non corrisponde a quello inserito.')
   }
   if (plain(rec.content) !== plain(expected.content)) {

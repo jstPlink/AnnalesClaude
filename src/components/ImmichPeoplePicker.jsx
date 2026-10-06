@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 import {
   listImmichPeople,
@@ -55,6 +56,7 @@ export default function ImmichPeoplePicker({ open, baseUrl, apiKey, existingIds,
       .finally(() => setLoading(false))
   }, [open, baseUrl, apiKey])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   const available = people.filter(

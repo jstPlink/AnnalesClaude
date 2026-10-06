@@ -1,0 +1,1345 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mood Lab</title>
+<style>
+  /* Palette carta del diario (src/index.css, tema chiaro) — tool a tema fisso. */
+  :root {
+    --bg: #e8e0cf;
+    --surface: #f4efe2;
+    --surface-2: #e2d9c6;
+    --ink: #3a3226;
+    --ink-soft: #7a7160;
+    --line: #b8ae98;
+    --accent: #3a3226;
+    --accent-ink: #f4efe2;
+    --shadow: rgba(58, 50, 38, 0.18);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .num { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  header {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 20px 4px;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+
+  .stats {
+    max-width: 1180px;
+    margin: 14px auto 0;
+    padding: 0 20px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    box-shadow: 0 1px 2px var(--shadow);
+  }
+  .stat b { font-size: 1.05rem; }
+  .stat span { color: var(--ink-soft); }
+
+  .apply-bar {
+    max-width: 1180px;
+    margin: 12px auto 0;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .apply-bar[hidden] { display: none; }
+  .apply-text { flex: 1 1 260px; font-size: 0.82rem; color: var(--ink-soft); }
+  .apply-btn {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+  }
+  .apply-btn.secondary { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+  .apply-btn:disabled { opacity: 0.5; cursor: default; }
+  .apply-status { flex: 1 0 100%; font-size: 0.8rem; font-weight: 600; }
+  .apply-status.err { color: #a63a2e; }
+
+  .tool-tabs {
+    max-width: 1180px;
+    margin: 10px auto 0;
+    padding: 0 20px;
+    display: flex;
+    gap: 6px;
+  }
+  .tool-tab {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 9px 9px 0 0;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .tool-tab.active { background: var(--surface); color: var(--ink); }
+  .tool-tab:hover { color: var(--ink); }
+
+  .app {
+    max-width: 1180px;
+    margin: 14px auto 40px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 330px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .panel { position: static !important; max-height: none !important; }
+  }
+  @media (max-width: 480px) {
+    .card-body { flex-wrap: wrap; }
+    .card-head { width: auto; }
+  }
+
+  /* Pannello del banco Nota->Giorno più largo, per i parametri su due colonne. */
+  #view-note-day .app { grid-template-columns: 1fr 400px; }
+  @media (max-width: 860px) {
+    #view-note-day .app { grid-template-columns: 1fr; }
+  }
+  .group.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+  }
+  .group.two-col h3 { grid-column: 1 / -1; }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 85%;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    min-height: 72px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px var(--shadow);
+    overflow: hidden;
+  }
+  .card-tab {
+    flex: none;
+    width: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tab, var(--surface-2));
+    color: var(--tab-ink, var(--ink-soft));
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card-tab { transition: none; }
+  }
+  .card.is-empty .card-tab {
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    font-weight: 400;
+    opacity: 0.6;
+  }
+  .card-body {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: none;
+    width: 130px;
+  }
+  .card-head .wd { font-weight: 600; }
+  .card-head .cnt { color: var(--ink-soft); font-size: 0.78rem; }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-height: 20px;
+    flex: 1;
+  }
+  .chip {
+    display: inline-block;
+    border-radius: 50%;
+    flex: none;
+    cursor: default;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .empty-note {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  .month-rows { display: flex; flex-direction: column; gap: 10px; }
+  .month-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+  .month-row-label { flex: none; width: 60px; font-weight: 600; }
+  .month-bars { flex: 1; display: flex; gap: 2px; min-width: 0; }
+  .day-bar { flex: 1; height: 34px; border-radius: 2px; min-width: 0; }
+  .month-total {
+    flex: none;
+    width: 56px;
+    text-align: center;
+    padding: 9px 4px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+  @media (max-width: 480px) {
+    .month-row { flex-wrap: wrap; }
+    .month-total { margin-left: 72px; }
+  }
+
+  .panel {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+  .panel h2 { margin: 0 0 6px; font-size: 1rem; }
+  .panel .hint {
+    margin: 0 0 14px;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+  }
+  .presets {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .presets button {
+    font: inherit;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--accent); }
+
+  .seed-row { display: flex; gap: 8px; align-items: center; }
+  .seed-row input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .dice-btn {
+    flex: none;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    cursor: pointer;
+  }
+  .dice-btn:hover { border-color: var(--accent); }
+
+  .save-preset-row { display: flex; gap: 8px; margin: 2px 0 10px; }
+  .save-preset-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .save-preset-row button {
+    flex: none;
+    font: inherit;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    cursor: pointer;
+  }
+  .save-preset-row button:hover { border-color: var(--accent); }
+
+  .preset-chip {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+  .preset-chip:hover { border-color: var(--accent); }
+  .preset-chip button {
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .preset-chip .preset-apply { padding: 6px 4px 6px 10px; }
+  .preset-chip .preset-del { padding: 6px 10px 6px 4px; color: var(--ink-soft); }
+  .preset-chip .preset-del:hover { color: var(--ink); }
+  .curve-svg {
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    user-select: none;
+  }
+  .curve-axis { stroke: var(--line); stroke-width: 1.5; }
+  .curve-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
+  .curve-label { font-size: 9px; fill: var(--ink-soft); font-family: inherit; }
+  .curve-path { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+  .curve-point {
+    fill: var(--surface);
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    cursor: grab;
+  }
+  .curve-point:hover, .curve-point.dragging { fill: var(--accent); cursor: grabbing; }
+  .curve-hit { fill: transparent; cursor: grab; }
+
+  #savedPresets:empty::after {
+    content: "Nessun preset salvato.";
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+  .presets button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .group {
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .group:first-of-type { border-top: none; padding-top: 0; }
+  .group h3 {
+    margin: 0 0 10px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+  }
+  .field-label output { color: var(--accent); font-weight: 600; }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+
+  .legend { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .gradient-bar {
+    height: 14px;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    margin-top: 4px;
+  }
+
+  details.formula-ref {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  details.formula-ref summary {
+    cursor: pointer;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+  details.formula-ref p { margin: 8px 0 0; }
+  details.formula-ref code {
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- Telefono: tutto in una colonna, controlli da dito ---------- */
+  html { -webkit-text-size-adjust: 100%; }
+  body { overflow-x: hidden; }
+  @media (max-width: 640px) {
+    header { padding: 14px 12px 2px; }
+    header h1 { font-size: 1.15rem; }
+    header p { font-size: 0.8rem; }
+    .apply-bar, .stats, .tool-tabs, .app { padding-left: 12px; padding-right: 12px; }
+    .apply-bar { margin: 10px 12px 0; padding: 10px 12px; }
+    .apply-bar { max-width: none; }
+    .apply-text { flex: 1 1 100%; }
+    .apply-btn { flex: 1 1 140px; min-height: 40px; }
+    .stats { gap: 8px; margin-top: 10px; }
+    .stat { padding: 6px 10px; flex: 1 1 auto; }
+    .tool-tabs { margin-top: 10px; gap: 4px; }
+    .tool-tab { flex: 1 1 0; padding: 10px 6px; font-size: 0.8rem; text-align: center; }
+    .app { margin: 10px 0 24px; gap: 14px; }
+    #view-note-day .app, .app { grid-template-columns: minmax(0, 1fr); }
+    .cards { max-width: 100%; }
+    .card { min-height: 64px; }
+    .card-tab { width: 42px; }
+    .card-body { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
+    .card-head { width: auto; flex: 1 1 100%; }
+    .month-row { padding: 10px 12px; gap: 8px; }
+    .month-row-label { width: 100%; }
+    .month-bars { flex: 1 1 100%; order: 3; }
+    .day-bar { height: 28px; }
+    .month-total { margin-left: auto; width: 60px; }
+    .panel { padding: 14px 12px; border-radius: 10px; }
+    .group.two-col { grid-template-columns: minmax(0, 1fr); }
+    .field { margin-bottom: 16px; }
+    .field-label { font-size: 0.88rem; }
+    /* cursori e campi più facili da usare col dito */
+    input[type="range"] { height: 32px; margin: 0; }
+    input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
+    input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; }
+    .seed-row input[type="number"], .save-preset-row input[type="text"] { font-size: 16px; padding: 9px 10px; min-height: 40px; }
+    .dice-btn, .save-preset-row button, .presets button, .preset-chip button { min-height: 38px; font-size: 0.85rem; }
+    .presets { gap: 8px; }
+    .curve-svg { margin: 0 -4px; width: calc(100% + 8px); }
+    .curve-label { font-size: 11px; }
+    .curve-point { r: 7; }
+    details.formula-ref { font-size: 0.82rem; }
+  }
+  @media (max-width: 640px) {
+    .panel { display: flex; flex-direction: column; }
+    .panel > * { order: 0; }
+    .panel > #genGroup, .panel > #genGroupM { order: 20; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; }
+    .panel > .legend { order: 21; }
+    .panel > details.formula-ref { order: 22; }
+    .panel > .group:first-of-type { border-top: none; }
+    body { padding-bottom: 64px; }
+    .jump {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+      display: flex; gap: 8px; padding: 8px 12px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(6px);
+    }
+    .jump button {
+      flex: 1; min-height: 40px; font: inherit; font-size: 0.85rem; font-weight: 700;
+      border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface-2); color: var(--ink); cursor: pointer;
+    }
+  }
+  .jump { display: none; }
+  @media (max-width: 640px) { .jump { display: flex; } }
+  @media (max-width: 360px) {
+    .tool-tab { font-size: 0.74rem; }
+  }
+</style>
+
+<header>
+  <h1>Mood Lab</h1>
+  <p>Banco di prova per calibrare come si combina l'umore: all'avvio mostra la formula in uso nell'app. Due banchi di prova: dalle note al giorno, e dai giorni al mese — sono dati di esempio, non le tue note vere.</p>
+</header>
+
+<div class="apply-bar" id="applyBar" hidden>
+  <span class="apply-text">La formula che imposti qui (curve del giorno e del mese, durata e persone) può essere usata in <b>tutta l'app</b>, solo per il tuo account.</span>
+  <button type="button" id="applyBtn" class="apply-btn">✓ Applica all'app</button>
+  <button type="button" id="resetAppBtn" class="apply-btn secondary">↺ Formula originale</button>
+  <span id="applyStatus" class="apply-status" role="status"></span>
+</div>
+
+<div class="tool-tabs">
+  <button type="button" class="tool-tab active" data-view="note-day">Nota → Giorno</button>
+  <button type="button" class="tool-tab" data-view="day-month">Giorno → Mese</button>
+</div>
+
+<section id="view-note-day" class="tool-view">
+<div class="app">
+  <div class="cards" id="cards"></div>
+
+  <aside class="panel">
+    <h2>Formula del giorno</h2>
+    <p class="hint">Ogni nota pesa in base a quanto il suo umore è estremo, più eventuali fattori extra. Il mood del giorno è la loro media pesata.</p>
+
+    <div class="group two-col" id="genGroup" style="border-top:none; padding-top:0;">
+      <h3>Dati di esempio</h3>
+      <div class="field">
+        <div class="field-label"><span>Seed</span></div>
+        <div class="seed-row">
+          <input type="number" id="seed" value="42">
+          <button type="button" id="diceSeed" class="dice-btn" title="Nuovo seed casuale">🎲</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Media note giorno</span><output class="num" id="out-avgNotesPerDay">1.5</output></div>
+        <input type="range" id="avgNotesPerDay" min="0" max="5" step="0.1" value="1.5">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Variabilità note giorno</span><output class="num" id="out-notesVariability">1.0</output></div>
+        <input type="range" id="notesVariability" min="0" max="3" step="0.1" value="1">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Umore medio note</span><output class="num" id="out-avgMood">65%</output></div>
+        <input type="range" id="avgMood" min="0" max="100" step="1" value="65">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Variabilità umore note</span><output class="num" id="out-moodVariability">15%</output></div>
+        <input type="range" id="moodVariability" min="0" max="40" step="1" value="15">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Tendenza umore basso</span><output class="num" id="out-lowMoodTendency">15%</output></div>
+        <input type="range" id="lowMoodTendency" min="0" max="50" step="1" value="15">
+      </div>
+    </div>
+
+    <div class="presets">
+      <button type="button" data-preset="current">Formula attuale</button>
+      <button type="button" data-preset="simple">Media semplice</button>
+    </div>
+
+    <div class="save-preset-row">
+      <input type="text" id="presetName" placeholder="Nome preset" maxlength="40">
+      <button type="button" id="savePresetBtn">💾 Salva</button>
+    </div>
+    <div class="presets" id="savedPresets"></div>
+
+    <div class="group">
+      <h3>Curva del peso</h3>
+      <p class="hint" style="margin:0 0 8px;">Trascina i punti: quanto pesa una nota in base al suo umore. A sinistra le note negative, al centro quelle neutre, a destra quelle positive.</p>
+      <svg id="curveSvg" viewBox="0 0 300 238" class="curve-svg">
+        <line x1="30" y1="10" x2="30" y2="212.5" class="curve-axis"></line>
+        <line x1="30" y1="212.5" x2="290" y2="212.5" class="curve-axis"></line>
+        <line x1="30" y1="111.25" x2="290" y2="111.25" class="curve-grid"></line>
+        <line x1="160" y1="10" x2="160" y2="212.5" class="curve-grid"></line>
+        <text x="26" y="14" class="curve-label" text-anchor="end">5</text>
+        <text x="26" y="115" class="curve-label" text-anchor="end">2.5</text>
+        <text x="26" y="216.5" class="curve-label" text-anchor="end">0</text>
+        <text x="30" y="228" class="curve-label" text-anchor="middle">no</text>
+        <text x="160" y="228" class="curve-label" text-anchor="middle">neutro</text>
+        <text x="290" y="228" class="curve-label" text-anchor="middle">sì</text>
+        <path id="curvePath" class="curve-path"></path>
+        <g id="curvePoints"></g>
+      </svg>
+      <button type="button" id="resetCurve" class="dice-btn" style="margin-top:6px;">↺ Curva di default</button>
+    </div>
+
+    <div class="group two-col">
+      <h3>Fattori extra per nota</h3>
+      <div class="field">
+        <div class="field-label"><span>Durata più lunga conta di più</span><output class="num" id="out-durationWeight">0.0</output></div>
+        <input type="range" id="durationWeight" min="0" max="5" step="0.1" value="0">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Più persone coinvolte contano di più</span><output class="num" id="out-peopleWeight">0.0</output></div>
+        <input type="range" id="peopleWeight" min="0" max="5" step="0.1" value="0">
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="gradient-bar" id="gradientBar"></div>
+      <div class="legend-labels"><span>0</span><span>50</span><span>100</span></div>
+    </div>
+
+    <details class="formula-ref">
+      <summary>Come funziona il calcolo</summary>
+      <p>La curva a sinistra dà il <code>base</code> di ogni nota leggendo il suo peso direttamente in base al valore di umore (interpolazione morbida tra i 5 punti trascinabili).</p>
+      <p>Il peso finale moltiplica <code>base</code> per <code>(1 + peso · fattore)</code> di durata e persone coinvolte (ciascuno normalizzato 0–1 sul valore più alto tra le note di esempio).</p>
+      <p>Umore del giorno = <code>Σ(umore · peso) / Σ(peso)</code>. Con "Media semplice" la curva è piatta a 1: tutti i pesi diventano uguali.</p>
+    </details>
+  </aside>
+</div>
+</section>
+
+<section id="view-day-month" class="tool-view" hidden>
+<div class="stats">
+  <div class="stat"><b class="num" id="statAvgM">–</b><span>umore medio (4 mesi)</span></div>
+  <div class="stat"><b class="num" id="statBestM">–</b><span>mese migliore</span></div>
+  <div class="stat"><b class="num" id="statWorstM">–</b><span>mese più difficile</span></div>
+</div>
+
+<div class="app">
+  <div class="month-rows" id="monthRows"></div>
+
+  <aside class="panel">
+    <h2>Formula del mese</h2>
+    <p class="hint">4 mesi ipotetici da 30 giorni ciascuno: ogni giorno pesa nel mood del mese in base a quanto il suo umore è estremo, esattamente come le note pesano nel mood del giorno nell'altro banco di prova.</p>
+
+    <div class="group" id="genGroupM" style="border-top:none; padding-top:0;">
+      <h3>Dati di esempio</h3>
+      <div class="field">
+        <div class="field-label"><span>Seed</span></div>
+        <div class="seed-row">
+          <input type="number" id="seedM" value="7">
+          <button type="button" id="diceSeedM" class="dice-btn" title="Nuovo seed casuale">🎲</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Umore tipico</span><output class="num" id="out-typicalMoodM">68%</output></div>
+        <input type="range" id="typicalMoodM" min="0" max="100" step="1" value="68">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Variabilità dei giorni tipici</span><output class="num" id="out-spreadM">9%</output></div>
+        <input type="range" id="spreadM" min="2" max="30" step="1" value="9">
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Giorni fuori norma</span><output class="num" id="out-outlierShareM">12%</output></div>
+        <input type="range" id="outlierShareM" min="0" max="50" step="1" value="12">
+      </div>
+    </div>
+
+    <div class="presets">
+      <button type="button" data-preset-month="valley">Curva a valle</button>
+      <button type="button" data-preset-month="simple">Media semplice</button>
+    </div>
+
+    <div class="save-preset-row">
+      <input type="text" id="presetNameM" placeholder="Nome preset" maxlength="40">
+      <button type="button" id="savePresetBtnM">💾 Salva</button>
+    </div>
+    <div class="presets" id="savedPresetsM"></div>
+
+    <div class="group">
+      <h3>Curva del peso</h3>
+      <p class="hint" style="margin:0 0 8px;">Trascina i punti: quanto pesa un giorno nel mood del mese, in base al suo umore.</p>
+      <svg id="curveSvgM" viewBox="0 0 300 238" class="curve-svg">
+        <line x1="30" y1="10" x2="30" y2="212.5" class="curve-axis"></line>
+        <line x1="30" y1="212.5" x2="290" y2="212.5" class="curve-axis"></line>
+        <line x1="30" y1="111.25" x2="290" y2="111.25" class="curve-grid"></line>
+        <line x1="160" y1="10" x2="160" y2="212.5" class="curve-grid"></line>
+        <text x="26" y="14" class="curve-label" text-anchor="end">5</text>
+        <text x="26" y="115" class="curve-label" text-anchor="end">2.5</text>
+        <text x="26" y="216.5" class="curve-label" text-anchor="end">0</text>
+        <text x="30" y="228" class="curve-label" text-anchor="middle">no</text>
+        <text x="160" y="228" class="curve-label" text-anchor="middle">neutro</text>
+        <text x="290" y="228" class="curve-label" text-anchor="middle">sì</text>
+        <path id="curvePathM" class="curve-path"></path>
+        <g id="curvePointsM"></g>
+      </svg>
+      <button type="button" id="resetCurveM" class="dice-btn" style="margin-top:6px;">↺ Curva di default</button>
+    </div>
+
+    <div class="legend">
+      <div class="gradient-bar" id="gradientBarM"></div>
+      <div class="legend-labels"><span>0</span><span>50</span><span>100</span></div>
+    </div>
+
+    <details class="formula-ref">
+      <summary>Come funziona il calcolo</summary>
+      <p>Ogni mese ha 30 giorni: la maggior parte si addensa intorno a "Umore tipico" (± "Variabilità"), come un mese reale dove i giorni si somigliano — una quota di "Giorni fuori norma" pesca invece ovunque sulla scala, per le giornate anomale in positivo o in negativo.</p>
+      <p>Mood del mese = <code>Σ(umore del giorno · peso) / Σ(peso)</code>, dove il peso di ciascun giorno si legge dalla curva qui sopra.</p>
+    </details>
+  </aside>
+</div>
+</section>
+
+<nav class="jump" aria-label="Sezioni">
+  <button type="button" data-jump="results">↑ Risultati</button>
+  <button type="button" data-jump="params">↓ Parametri</button>
+</nav>
+
+<script>
+  // --- Stessa scala colori di src/lib/mood.js ---
+  const STOPS = [
+    { t: 0.0, c: [224, 101, 94] },
+    { t: 0.2, c: [231, 154, 77] },
+    { t: 0.4, c: [230, 207, 92] },
+    { t: 0.6, c: [166, 208, 110] },
+    { t: 0.8, c: [94, 169, 214] },
+    { t: 1.0, c: [139, 143, 214] },
+  ];
+  function clamp01(n) { return Number.isNaN(n) || n == null ? 0 : Math.min(1, Math.max(0, n)); }
+  function lerp(a, b, k) { return Math.round(a + (b - a) * k); }
+  function moodColor(value) {
+    const v = clamp01(Number(value));
+    for (let i = 0; i < STOPS.length - 1; i++) {
+      const lo = STOPS[i], hi = STOPS[i + 1];
+      if (v >= lo.t && v <= hi.t) {
+        const k = hi.t === lo.t ? 0 : (v - lo.t) / (hi.t - lo.t);
+        return `rgb(${lerp(lo.c[0], hi.c[0], k)}, ${lerp(lo.c[1], hi.c[1], k)}, ${lerp(lo.c[2], hi.c[2], k)})`;
+      }
+    }
+    const last = STOPS[STOPS.length - 1].c;
+    return `rgb(${last[0]}, ${last[1]}, ${last[2]})`;
+  }
+  function moodTextColor(value) {
+    const v = clamp01(Number(value));
+    let rgb = [255, 255, 255];
+    for (let i = 0; i < STOPS.length - 1; i++) {
+      const lo = STOPS[i], hi = STOPS[i + 1];
+      if (v >= lo.t && v <= hi.t) {
+        const k = hi.t === lo.t ? 0 : (v - lo.t) / (hi.t - lo.t);
+        rgb = [lerp(lo.c[0], hi.c[0], k), lerp(lo.c[1], hi.c[1], k), lerp(lo.c[2], hi.c[2], k)];
+        break;
+      }
+    }
+    const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+    return lum > 0.62 ? "#3a3226" : "#fdf7ea";
+  }
+
+  // --- Dati di esempio (fittizi) ---
+  const MONTH = { year: 2026, monthIndex: 3, label: "Aprile 2026" };
+  const WD = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+  const DAYS_COUNT = 13;
+  const CAPS = { duration: 180, people: 6 };
+
+  // --- Generatore di note fittizie (seedato, per riprodurre la stessa "apparenza") ---
+  const NEUTRAL_TITLES = ["Giornata di routine", "Spesa e commissioni", "Bucato e pulizie",
+    "Lavoro al computer", "Serata tranquilla", "Solita routine in ufficio", "Poco da raccontare",
+    "Giornata nella norma", "Chiamata veloce con mamma"];
+  const POSITIVE_TITLES = ["Bella sorpresa", "Cena con amici", "Ottime notizie dal lavoro",
+    "Passeggiata al sole", "Weekend rilassante", "Piccola vittoria", "Complimenti ricevuti",
+    "Serata di risate", "Compleanno da festeggiare"];
+  const NEGATIVE_TITLES = ["Giornata pesante", "Discussione stressante", "Mal di testa",
+    "Ritardo e nervi", "Brutta notizia", "Stanchezza accumulata", "Piccola delusione",
+    "Litigio da chiarire", "Troppi impegni insieme"];
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gaussian(rng, sigma) {
+    const u1 = Math.max(rng(), 1e-9);
+    const u2 = rng();
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2) * sigma;
+  }
+
+  // gen = { daysCount, avgNotesPerDay, notesVariability, avgMood (0-1),
+  //         moodVariability (0-1), lowMoodTendency (0-1) }
+  function generateDays(gen, rng) {
+    const days = [];
+    for (let day = 1; day <= gen.daysCount; day++) {
+      const count = Math.max(0, Math.round(gen.avgNotesPerDay + gaussian(rng, gen.notesVariability)));
+      const notes = [];
+      for (let i = 0; i < count; i++) {
+        const mood = rng() < gen.lowMoodTendency
+          ? clamp01(rng() * gen.avgMood)
+          : clamp01(gen.avgMood + gaussian(rng, gen.moodVariability));
+        const pool = mood < 0.4 ? NEGATIVE_TITLES : mood > 0.6 ? POSITIVE_TITLES : NEUTRAL_TITLES;
+        notes.push({
+          title: pool[Math.floor(rng() * pool.length)],
+          mood,
+          durationMin: Math.round(15 + rng() * 165),
+          people: Math.floor(rng() * 7),
+        });
+      }
+      days.push({ day, notes });
+    }
+    return days;
+  }
+
+  let DAYS = [];
+
+  // --- Curva del peso: N punti trascinabili equispaziati sull'umore, interpolati
+  // con una Catmull-Rom uniforme così la curva resta morbida tra un punto e l'altro. ---
+  // Formula ORIGINALE dell'app (src/lib/mood.js: 0,15 + 0,85·smoothstep), campionata su 7 punti.
+  const DEFAULT_CURVE = [1, 0.7796, 0.3704, 0.15, 0.3704, 0.7796, 1];
+  const VALLEY_CURVE = [1, 0.473, 0.052, 0, 0.052, 0.473, 1];
+  const FLAT_CURVE = [1, 1, 1, 1, 1, 1, 1];
+
+  function catmullRom(p0, p1, p2, p3, t) {
+    return 0.5 * (
+      2 * p1 +
+      (-p0 + p2) * t +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+      (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t
+    );
+  }
+  const MAX_WEIGHT = 5; // il peso letto dalla curva può superare 1, fino a questo tetto
+  function clampWeight(w) {
+    return Number.isNaN(w) || w == null ? 0 : Math.min(MAX_WEIGHT, Math.max(0, w));
+  }
+  function catmullRomAt(points, mood) {
+    const m = clamp01(Number(mood));
+    const segCount = points.length - 1;
+    let i = Math.min(segCount - 1, Math.floor(m * segCount));
+    const t = m * segCount - i;
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? points[i + 1];
+    return clampWeight(catmullRom(p0, p1, p2, p3, t));
+  }
+
+  // Editor a punti trascinabili per una curva "umore -> peso" (usato sia dal
+  // banco Nota->Giorno che da Giorno->Mese, ciascuno con la propria istanza).
+  // Il peso di ogni punto va da 0 a MAX_WEIGHT (non solo 0-1).
+  function createCurveEditor({ svgId, pathId, groupId, resetId, defaultPoints }) {
+    let points = defaultPoints.slice();
+    const positions = defaultPoints.map((_, i) => i / (defaultPoints.length - 1));
+    const svg = document.getElementById(svgId);
+    const pathEl = document.getElementById(pathId);
+    const group = document.getElementById(groupId);
+    const PLOT = { left: 30, right: 290, top: 10, bottom: 212.5 }; // altezza grafico +50% (era 145)
+    const moodXPixel = (x) => PLOT.left + x * (PLOT.right - PLOT.left);
+    const weightYPixel = (w) => PLOT.top + (1 - clampWeight(w) / MAX_WEIGHT) * (PLOT.bottom - PLOT.top);
+    const pixelToWeight = (y) => clamp01(1 - (y - PLOT.top) / (PLOT.bottom - PLOT.top)) * MAX_WEIGHT;
+
+    function weightAt(mood) { return catmullRomAt(points, mood); }
+    function buildPath() {
+      const steps = 60;
+      const pts = [];
+      for (let i = 0; i <= steps; i++) {
+        const x = i / steps;
+        pts.push(`${i === 0 ? "M" : "L"}${moodXPixel(x).toFixed(1)},${weightYPixel(weightAt(x)).toFixed(1)}`);
+      }
+      return pts.join(" ");
+    }
+    function draw() {
+      pathEl.setAttribute("d", buildPath());
+      circles.forEach(({ dot }, i) => dot.setAttribute("cy", weightYPixel(points[i])));
+    }
+
+    let onChangeCb = null;
+    let draggingIndex = null;
+    function onDrag(e) {
+      if (draggingIndex === null) return;
+      const rect = svg.getBoundingClientRect();
+      const localY = (e.clientY - rect.top) * (238 / rect.height);
+      points[draggingIndex] = pixelToWeight(localY);
+      draw();
+      if (onChangeCb) onChangeCb();
+    }
+    function endDrag() {
+      if (draggingIndex === null) return;
+      circles[draggingIndex].dot.classList.remove("dragging");
+      draggingIndex = null;
+      svg.removeEventListener("pointermove", onDrag);
+      svg.removeEventListener("pointerup", endDrag);
+      svg.removeEventListener("pointercancel", endDrag);
+    }
+    function startDrag(e, i) {
+      e.preventDefault();
+      draggingIndex = i;
+      circles[i].dot.classList.add("dragging");
+      try { svg.setPointerCapture(e.pointerId); } catch { /* capture non essenziale al drag */ }
+      svg.addEventListener("pointermove", onDrag);
+      svg.addEventListener("pointerup", endDrag);
+      svg.addEventListener("pointercancel", endDrag);
+    }
+
+    const circles = positions.map((x, i) => {
+      const px = moodXPixel(x);
+      const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hit.setAttribute("cx", px);
+      hit.setAttribute("cy", weightYPixel(points[i]));
+      hit.setAttribute("r", window.matchMedia("(pointer: coarse)").matches ? 22 : 14);
+      hit.setAttribute("class", "curve-hit");
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", px);
+      dot.setAttribute("cy", weightYPixel(points[i]));
+      dot.setAttribute("r", 5);
+      dot.setAttribute("class", "curve-point");
+      group.appendChild(hit);
+      group.appendChild(dot);
+      [hit, dot].forEach((el) => el.addEventListener("pointerdown", (e) => startDrag(e, i)));
+      return { hit, dot };
+    });
+
+    document.getElementById(resetId).addEventListener("click", () => {
+      points = defaultPoints.slice();
+      draw();
+      if (onChangeCb) onChangeCb();
+    });
+
+    draw();
+
+    return {
+      getPoints: () => points.slice(),
+      setPoints: (arr) => { points = arr.slice(); draw(); },
+      weightAt,
+      onChange: (cb) => { onChangeCb = cb; },
+    };
+  }
+
+  const dayCurve = createCurveEditor({
+    svgId: "curveSvg", pathId: "curvePath", groupId: "curvePoints", resetId: "resetCurve",
+    defaultPoints: DEFAULT_CURVE,
+  });
+
+  function factorFor(value, cap, weight) {
+    return 1 + weight * clamp01(value / cap);
+  }
+
+  function computeDay(notes, p) {
+    if (!notes.length) return { mood: null, notes: [] };
+    const infos = notes.map((note) => {
+      const base = dayCurve.weightAt(note.mood);
+      const durF = factorFor(note.durationMin, CAPS.duration, p.durationWeight);
+      const pplF = factorFor(note.people, CAPS.people, p.peopleWeight);
+      return { ...note, weight: base * durF * pplF };
+    });
+    const wsum = infos.reduce((a, b) => a + b.weight, 0);
+    const mood = wsum > 0
+      ? infos.reduce((a, b) => a + b.mood * b.weight, 0) / wsum
+      : infos.reduce((a, b) => a + b.mood, 0) / notes.length;
+    return { mood, notes: infos };
+  }
+
+  function readParams() {
+    return {
+      curve: dayCurve.getPoints(),
+      durationWeight: Number(document.getElementById("durationWeight").value),
+      peopleWeight: Number(document.getElementById("peopleWeight").value),
+    };
+  }
+
+  const cardsEl = document.getElementById("cards");
+
+  function render() {
+    const p = readParams();
+
+    for (const [id, val] of Object.entries(p)) {
+      if (id === "curve") continue;
+      const out = document.getElementById("out-" + id);
+      if (out) out.textContent = val.toFixed(1);
+    }
+
+    const html = DAYS.map(({ day, notes }) => {
+      const date = new Date(MONTH.year, MONTH.monthIndex, day);
+      const wd = WD[date.getDay()];
+
+      if (!notes.length) {
+        return `<article class="card is-empty">
+          <div class="card-tab is-empty">·</div>
+          <div class="card-body">
+            <div class="card-head"><span class="wd">${wd} ${day}</span></div>
+            <p class="empty-note">nessuna nota</p>
+          </div>
+        </article>`;
+      }
+
+      const { mood, notes: infos } = computeDay(notes, p);
+      const maxW = Math.max(...infos.map((n) => n.weight));
+      const chips = infos.map((n) => {
+        const size = Math.round(10 + 14 * (maxW > 0 ? n.weight / maxW : 0));
+        const title = `${n.title} — umore ${Math.round(n.mood * 100)}%, peso ${n.weight.toFixed(2)} ` +
+          `(${n.durationMin} min, ${n.people} persone)`;
+        return `<span class="chip" title="${title.replace(/"/g, "&quot;")}" ` +
+          `style="width:${size}px;height:${size}px;background:${moodColor(n.mood)}"></span>`;
+      }).join("");
+
+      return `<article class="card" style="--tab:${moodColor(mood)};--tab-ink:${moodTextColor(mood)}">
+        <div class="card-tab"><b>${Math.round(mood * 100)}</b></div>
+        <div class="card-body">
+          <div class="card-head">
+            <span class="wd">${wd} ${day}</span>
+            <span class="cnt">${notes.length} ${notes.length === 1 ? "nota" : "note"}</span>
+          </div>
+          <div class="chips">${chips}</div>
+        </div>
+      </article>`;
+    }).join("");
+
+    cardsEl.innerHTML = html;
+  }
+
+  const PRESETS = {
+    current: { curve: DEFAULT_CURVE, durationWeight: 0, peopleWeight: 0 },
+    simple: { curve: [1, 1, 1, 1, 1, 1, 1], durationWeight: 0, peopleWeight: 0 },
+  };
+  function applyFormulaValues(values) {
+    for (const [id, val] of Object.entries(values)) {
+      if (id === "curve") {
+        dayCurve.setPoints(val);
+        continue;
+      }
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    }
+    render();
+  }
+  function applyPreset(name) {
+    applyFormulaValues(PRESETS[name]);
+  }
+
+  // --- Preset personalizzati salvati nel browser (localStorage, solo su questo dispositivo) ---
+  const CUSTOM_PRESETS_KEY = "mood-lab:custom-presets";
+  function loadCustomPresets() {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_PRESETS_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveCustomPresets(presets) {
+    try { localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(presets)); }
+    catch { /* storage non disponibile: il preset resta solo in sessione */ }
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function renderSavedPresets() {
+    const presets = loadCustomPresets();
+    const container = document.getElementById("savedPresets");
+    container.innerHTML = Object.keys(presets).map((name) => `
+      <span class="preset-chip">
+        <button type="button" class="preset-apply" data-name="${escapeHtml(name)}">${escapeHtml(name)}</button>
+        <button type="button" class="preset-del" data-name="${escapeHtml(name)}" title="Elimina preset">×</button>
+      </span>`).join("");
+    container.querySelectorAll(".preset-apply").forEach((btn) => btn.addEventListener("click", () => {
+      const preset = loadCustomPresets()[btn.dataset.name];
+      if (preset) applyFormulaValues(preset);
+    }));
+    container.querySelectorAll(".preset-del").forEach((btn) => btn.addEventListener("click", () => {
+      const presets = loadCustomPresets();
+      delete presets[btn.dataset.name];
+      saveCustomPresets(presets);
+      renderSavedPresets();
+    }));
+  }
+  function saveCurrentAsPreset() {
+    const input = document.getElementById("presetName");
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const presets = loadCustomPresets();
+    presets[name] = readParams();
+    saveCustomPresets(presets);
+    input.value = "";
+    renderSavedPresets();
+  }
+  document.getElementById("savePresetBtn").addEventListener("click", saveCurrentAsPreset);
+  document.getElementById("presetName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); saveCurrentAsPreset(); }
+  });
+  renderSavedPresets();
+
+  const FORMULA_SLIDER_IDS = ["durationWeight", "peopleWeight"];
+  FORMULA_SLIDER_IDS.forEach((id) => document.getElementById(id).addEventListener("input", render));
+  document.querySelectorAll("button[data-preset]").forEach((btn) =>
+    btn.addEventListener("click", () => applyPreset(btn.dataset.preset))
+  );
+
+  function updateGenOutputs() {
+    document.getElementById("out-avgNotesPerDay").textContent = document.getElementById("avgNotesPerDay").value;
+    document.getElementById("out-notesVariability").textContent = document.getElementById("notesVariability").value;
+    document.getElementById("out-avgMood").textContent = document.getElementById("avgMood").value + "%";
+    document.getElementById("out-moodVariability").textContent = document.getElementById("moodVariability").value + "%";
+    document.getElementById("out-lowMoodTendency").textContent = document.getElementById("lowMoodTendency").value + "%";
+  }
+  function regenerateData() {
+    let seed = Number(document.getElementById("seed").value);
+    if (!Number.isFinite(seed)) seed = 42;
+    const gen = {
+      daysCount: DAYS_COUNT,
+      avgNotesPerDay: Number(document.getElementById("avgNotesPerDay").value),
+      notesVariability: Number(document.getElementById("notesVariability").value),
+      avgMood: Number(document.getElementById("avgMood").value) / 100,
+      moodVariability: Number(document.getElementById("moodVariability").value) / 100,
+      lowMoodTendency: Number(document.getElementById("lowMoodTendency").value) / 100,
+    };
+    DAYS = generateDays(gen, mulberry32(seed));
+    updateGenOutputs();
+    render();
+  }
+  ["avgNotesPerDay", "notesVariability", "avgMood", "moodVariability", "lowMoodTendency"].forEach((id) =>
+    document.getElementById(id).addEventListener("input", regenerateData)
+  );
+  document.getElementById("seed").addEventListener("change", regenerateData);
+  document.getElementById("diceSeed").addEventListener("click", () => {
+    document.getElementById("seed").value = Math.floor(Math.random() * 1000000);
+    regenerateData();
+  });
+
+  dayCurve.onChange(render);
+
+  const GRADIENT_CSS = "linear-gradient(90deg, " +
+    STOPS.map((s) => `rgb(${s.c[0]},${s.c[1]},${s.c[2]}) ${s.t * 100}%`).join(", ") + ")";
+  document.getElementById("gradientBar").style.background = GRADIENT_CSS;
+
+  regenerateData();
+
+  // ============================================================
+  // Banco "Giorno -> Mese": stessa logica, un livello più su.
+  // ============================================================
+  const MONTHS_COUNT = 4;
+  const DAYS_PER_MONTH = 30;
+
+  const monthCurve = createCurveEditor({
+    svgId: "curveSvgM", pathId: "curvePathM", groupId: "curvePointsM", resetId: "resetCurveM",
+    defaultPoints: FLAT_CURVE,
+  });
+  document.getElementById("gradientBarM").style.background = GRADIENT_CSS;
+
+  // Un mese reale non oscilla uniformemente su tutta la scala: la maggior
+  // parte dei giorni si addensa intorno a un umore "tipico" (i giorni si
+  // somigliano), con una piccola quota di giornate fuori norma che possono
+  // cadere ovunque — in positivo o in negativo.
+  function generateMonthsData(seed, typicalMood, spread, outlierShare) {
+    const rng = mulberry32(seed);
+    const months = [];
+    for (let m = 0; m < MONTHS_COUNT; m++) {
+      const days = [];
+      for (let d = 0; d < DAYS_PER_MONTH; d++) {
+        days.push(
+          rng() < outlierShare
+            ? rng()
+            : clamp01(typicalMood + gaussian(rng, spread))
+        );
+      }
+      months.push({ label: `Mese ${m + 1}`, days });
+    }
+    return months;
+  }
+
+  function aggregateMonth(days) {
+    let wsum = 0, acc = 0;
+    for (const m of days) {
+      const w = monthCurve.weightAt(m);
+      wsum += w;
+      acc += m * w;
+    }
+    return wsum > 0 ? acc / wsum : days.reduce((a, b) => a + b, 0) / days.length;
+  }
+
+  let MONTHS_DATA = [];
+
+  function renderMonths() {
+    let sum = 0, best = null, worst = null;
+    const html = MONTHS_DATA.map(({ label, days }) => {
+      const mood = aggregateMonth(days);
+      sum += mood;
+      if (best === null || mood > best.mood) best = { mood };
+      if (worst === null || mood < worst.mood) worst = { mood };
+      const bars = days.map((d) =>
+        `<span class="day-bar" style="background:${moodColor(d)}" title="umore ${Math.round(d * 100)}%"></span>`
+      ).join("");
+      return `<div class="month-row">
+        <span class="month-row-label">${label}</span>
+        <div class="month-bars">${bars}</div>
+        <div class="month-total" style="background:${moodColor(mood)};color:${moodTextColor(mood)}">${Math.round(mood * 100)}%</div>
+      </div>`;
+    }).join("");
+    document.getElementById("monthRows").innerHTML = html;
+    document.getElementById("statAvgM").textContent = MONTHS_DATA.length ? Math.round((sum / MONTHS_DATA.length) * 100) + "%" : "–";
+    document.getElementById("statBestM").textContent = best ? Math.round(best.mood * 100) + "%" : "–";
+    document.getElementById("statWorstM").textContent = worst ? Math.round(worst.mood * 100) + "%" : "–";
+  }
+  monthCurve.onChange(renderMonths);
+
+  function updateGenOutputsM() {
+    document.getElementById("out-typicalMoodM").textContent = document.getElementById("typicalMoodM").value + "%";
+    document.getElementById("out-spreadM").textContent = document.getElementById("spreadM").value + "%";
+    document.getElementById("out-outlierShareM").textContent = document.getElementById("outlierShareM").value + "%";
+  }
+  function regenerateMonths() {
+    let seed = Number(document.getElementById("seedM").value);
+    if (!Number.isFinite(seed)) seed = 7;
+    const typicalMood = Number(document.getElementById("typicalMoodM").value) / 100;
+    const spread = Number(document.getElementById("spreadM").value) / 100;
+    const outlierShare = Number(document.getElementById("outlierShareM").value) / 100;
+    MONTHS_DATA = generateMonthsData(seed, typicalMood, spread, outlierShare);
+    updateGenOutputsM();
+    renderMonths();
+  }
+  ["typicalMoodM", "spreadM", "outlierShareM"].forEach((id) =>
+    document.getElementById(id).addEventListener("input", regenerateMonths)
+  );
+  document.getElementById("seedM").addEventListener("change", regenerateMonths);
+  document.getElementById("diceSeedM").addEventListener("click", () => {
+    document.getElementById("seedM").value = Math.floor(Math.random() * 1000000);
+    regenerateMonths();
+  });
+
+  document.querySelectorAll("button[data-preset-month]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      monthCurve.setPoints(btn.dataset.presetMonth === "simple" ? FLAT_CURVE : VALLEY_CURVE);
+      renderMonths();
+    })
+  );
+
+  // --- Preset personalizzati del banco Giorno->Mese (solo la curva) ---
+  const CUSTOM_PRESETS_KEY_M = "mood-lab:month-presets";
+  function loadCustomPresetsM() {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_PRESETS_KEY_M)) || {}; }
+    catch { return {}; }
+  }
+  function saveCustomPresetsM(presets) {
+    try { localStorage.setItem(CUSTOM_PRESETS_KEY_M, JSON.stringify(presets)); }
+    catch { /* storage non disponibile: il preset resta solo in sessione */ }
+  }
+  function renderSavedPresetsM() {
+    const presets = loadCustomPresetsM();
+    const container = document.getElementById("savedPresetsM");
+    container.innerHTML = Object.keys(presets).map((name) => `
+      <span class="preset-chip">
+        <button type="button" class="preset-apply" data-name="${escapeHtml(name)}">${escapeHtml(name)}</button>
+        <button type="button" class="preset-del" data-name="${escapeHtml(name)}" title="Elimina preset">×</button>
+      </span>`).join("");
+    container.querySelectorAll(".preset-apply").forEach((btn) => btn.addEventListener("click", () => {
+      const points = loadCustomPresetsM()[btn.dataset.name];
+      if (points) { monthCurve.setPoints(points); renderMonths(); }
+    }));
+    container.querySelectorAll(".preset-del").forEach((btn) => btn.addEventListener("click", () => {
+      const presets = loadCustomPresetsM();
+      delete presets[btn.dataset.name];
+      saveCustomPresetsM(presets);
+      renderSavedPresetsM();
+    }));
+  }
+  document.getElementById("savePresetBtnM").addEventListener("click", () => {
+    const input = document.getElementById("presetNameM");
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const presets = loadCustomPresetsM();
+    presets[name] = monthCurve.getPoints();
+    saveCustomPresetsM(presets);
+    input.value = "";
+    renderSavedPresetsM();
+  });
+  document.getElementById("presetNameM").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); document.getElementById("savePresetBtnM").click(); }
+  });
+  renderSavedPresetsM();
+
+  regenerateMonths();
+
+  // --- Telefono: salta tra risultati e parametri ---
+  document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => {
+    const view = document.querySelector(".tool-view:not([hidden])");
+    const target = btn.dataset.jump === "params" ? view.querySelector(".panel") : view.querySelector(".cards, .month-rows");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+
+  // --- Tab: passa dal banco Nota->Giorno al banco Giorno->Mese ---
+  document.querySelectorAll(".tool-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tool-tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("view-note-day").hidden = btn.dataset.view !== "note-day";
+      document.getElementById("view-day-month").hidden = btn.dataset.view !== "day-month";
+    });
+  });
+
+  // ============================================================
+  // Collegamento con l'app (solo quando la pagina è dentro l'app, in un iframe):
+  // riceve la formula in uso e permette di applicarla a tutta l'app.
+  // ============================================================
+  (function bridge() {
+    if (window.parent === window) return;
+    const bar = document.getElementById("applyBar");
+    const status = document.getElementById("applyStatus");
+    bar.hidden = false;
+    const send = (msg) => window.parent.postMessage(msg, location.origin);
+    function setStatus(text, err) {
+      status.textContent = text;
+      status.classList.toggle("err", Boolean(err));
+    }
+    function currentFormula() {
+      return {
+        curve: dayCurve.getPoints(),
+        durationWeight: Number(document.getElementById("durationWeight").value),
+        peopleWeight: Number(document.getElementById("peopleWeight").value),
+        monthCurve: monthCurve.getPoints(),
+      };
+    }
+    document.getElementById("applyBtn").addEventListener("click", () => {
+      setStatus("Applico…");
+      send({ type: "mood-lab-apply", formula: currentFormula() });
+    });
+    document.getElementById("resetAppBtn").addEventListener("click", () => {
+      setStatus("Ripristino…");
+      send({ type: "mood-lab-reset" });
+    });
+    window.addEventListener("message", (e) => {
+      if (e.origin !== location.origin || e.source !== window.parent) return;
+      const msg = e.data;
+      if (!msg || typeof msg !== "object") return;
+      if (msg.type === "mood-lab-init" && msg.formula) {
+        const f = msg.formula;
+        applyFormulaValues({ curve: f.curve, durationWeight: f.durationWeight, peopleWeight: f.peopleWeight });
+        monthCurve.setPoints(f.monthCurve || FLAT_CURVE);
+        renderMonths();
+        setStatus("Formula personalizzata in uso nell'app.");
+      } else if (msg.type === "mood-lab-init") {
+        setStatus("Stai usando la formula originale dell'app.");
+      } else if (msg.type === "mood-lab-status") {
+        setStatus(msg.message, !msg.ok);
+      }
+    });
+    send({ type: "mood-lab-ready" });
+  })();
+</script>
+
+</body></html>

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import VersionTap from '../components/VersionTap'
+import ExistingMatches, { findExact } from '../components/ExistingMatches'
+import { useGoBack } from '../hooks/useBack'
 import PhoneShell from '../components/PhoneShell'
 import MobileTopBar from '../components/MobileTopBar'
 import Icon from '../components/Icon'
@@ -8,6 +11,7 @@ import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../components/PlacePickerSheet'
 import SettingsSection from '../components/SettingsSection'
 import SupportSection from '../components/SupportSection'
+import { sortByName } from '../lib/sort'
 import MymapIntegration from '../components/MymapIntegration'
 import AppearanceControls from '../components/AppearanceControls'
 import SoundSettings from '../components/SoundSettings'
@@ -79,6 +83,7 @@ function TokenHelp({ which }) {
 
 export default function Profile() {
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const { user, logout } = useAuth()
 
   const [immichUrl, setImmichUrl] = useState(user?.immichUrl || '')
@@ -257,6 +262,11 @@ export default function Profile() {
   async function addTag() {
     const name = newTag.trim()
     if (!name || creatingTag) return
+    const dup = findExact(tags, name)
+    if (dup) {
+      setTagsError(`«${dup.name}» esiste già.`)
+      return
+    }
     setCreatingTag(true)
     setTagsError('')
     try {
@@ -396,6 +406,11 @@ export default function Profile() {
   async function addLocalPerson() {
     const nm = newPersonName.trim()
     if (!nm || creatingPerson) return
+    const dup = findExact(people, nm)
+    if (dup) {
+      setPeopleError(`«${dup.name}» esiste già.`)
+      return
+    }
     setCreatingPerson(true)
     setPeopleError('')
     try {
@@ -524,7 +539,7 @@ export default function Profile() {
           className="mchev"
           onClick={() => {
             haptic()
-            navigate(-1)
+            goBack()
           }}
           title="Indietro"
           aria-label="Indietro"
@@ -579,6 +594,7 @@ export default function Profile() {
                 {creatingPerson ? '…' : 'Crea'}
               </button>
             </div>
+            <ExistingMatches query={newPersonName} items={people} label="Persone già presenti" />
             <div className="flex gap-2">
               <button
                 type="button"
@@ -647,14 +663,14 @@ export default function Profile() {
             </p>
             {tagsError && <p className="text-xs text-delete-dark">{tagsError}</p>}
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
+              <div className="grid grid-cols-2 gap-1.5">
+                {sortByName(tags).map((tag) => (
                   <span
                     key={tag.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
+                    className="flex min-w-0 items-center gap-1.5 rounded-lg border border-line bg-tag py-1 pl-2 pr-1.5 text-sm font-medium text-ink"
                   >
                     <Icon name="tag" size={12} className="shrink-0 text-ink-soft" />
-                    {tag.name}
+                    <span className="min-w-0 flex-1 truncate">{tag.name}</span>
                     <button
                       type="button"
                       title="Rimuovi"
@@ -686,6 +702,7 @@ export default function Profile() {
                 {creatingTag ? '…' : 'Crea'}
               </button>
             </div>
+            <ExistingMatches query={newTag} items={tags} label="Tag già presenti" />
           </SettingsSection>
 
           <SettingsSection nested title="Luoghi" icon="map-pin">
@@ -699,11 +716,11 @@ export default function Profile() {
               <p className="text-xs text-delete-dark">{placesError}</p>
             )}
             {places.length > 0 && (
-              <div className="space-y-1">
-                {places.map((place) => {
+              <div className="grid grid-cols-2 gap-1">
+                {sortByName(places).map((place) => {
                   const editing = editingPlace?.id === place.id
                   return (
-                    <div key={place.id} className="rounded-xl px-1 py-1">
+                    <div key={place.id} className={'min-w-0 rounded-xl px-1 py-1' + (editing ? ' col-span-2' : '')}>
                       {editing ? (
                         <div className="space-y-2">
                           <input
@@ -752,7 +769,7 @@ export default function Profile() {
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-ink-soft">
                             <Icon name="map-pin" size={14} />
                           </span>
-                          <span className="flex-1 text-sm font-medium text-ink">
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
                             {place.name}
                           </span>
                           {placesUsage && (
@@ -1079,9 +1096,7 @@ export default function Profile() {
           </div>
         </SettingsSection>
 
-        <p className="mt-3 text-center text-sm text-ink-soft">
-          Annales · versione {__APP_VERSION__}
-        </p>
+        <VersionTap className="mt-3" />
       </main>
 
       {immichReady && (

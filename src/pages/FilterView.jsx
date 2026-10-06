@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useGoBack } from '../hooks/useBack'
 import PhoneShell from '../components/PhoneShell'
 import MobileTopBar from '../components/MobileTopBar'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -63,6 +64,7 @@ function ChipButton({ active, onClick, icon, square, children }) {
 
 export default function FilterView() {
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const { user } = useAuth()
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
@@ -188,7 +190,7 @@ export default function FilterView() {
           className="mchev"
           onClick={() => {
             haptic()
-            navigate(-1)
+            goBack()
           }}
           title="Indietro"
           aria-label="Indietro"

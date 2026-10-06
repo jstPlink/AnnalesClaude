@@ -12,6 +12,7 @@ import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
 import StatusPills from './components/StatusPills'
 import Toaster from './components/Toaster'
+import NavStack from './components/NavStack'
 import WidgetLinks from './components/WidgetLinks'
 import WidgetSync from './components/WidgetSync'
 import TiltPhotos from './components/TiltPhotos'
@@ -33,6 +34,7 @@ import WebData from './pages/web/WebData'
 import WebStats from './pages/web/WebStats'
 import WebFilter from './pages/web/WebFilter'
 import WebImport from './pages/web/WebImport'
+import MoodLab from './pages/MoodLab'
 
 // Shell desktop: barra laterale fissa + area contenuti scrollabile.
 function DesktopShell({ children }) {
@@ -116,6 +118,14 @@ export default function App() {
               }
             />
             <Route
+              path="/mood-lab"
+              element={
+                <RequireAuth>
+                  <Screen mobile={MoodLab} desktop={MoodLab} />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/profilo"
               element={
                 <RequireAuth>
@@ -183,6 +193,7 @@ export default function App() {
           </Routes>
           <StatusPills />
           <Toaster />
+          <NavStack />
         </BrowserRouter>
       </NavProvider>
     </AuthProvider>

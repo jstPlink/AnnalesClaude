@@ -5,6 +5,7 @@
 // quello aperto quando si è premuto «nuova nota», altrimenti oggi.
 // localStorage per-utente, come lib/drafts.js.
 import { pb } from './pocketbase'
+import { deleteVoice, listVoices } from './voiceStore'
 
 const listeners = new Set()
 let cache = { raw: null, list: [] }
@@ -62,3 +63,11 @@ export function subscribeGeminiDrafts(fn) {
 }
 
 export const newGeminiDraftId = () => `g${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+
+// A nota creata davvero: via la bozza, il suo testo e TUTTI i vocali originali
+// (finché la nota non è confermata restano sul dispositivo, anche se già trascritti).
+export async function discardGeminiDraft(id) {
+  if (!id) return
+  removeGeminiDraft(id)
+  for (const v of await listVoices()) if (v.draftId === id) await deleteVoice(v.id)
+}

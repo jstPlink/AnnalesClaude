@@ -1,5 +1,6 @@
 import { playSound } from '../../lib/sounds'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useGoBack } from '../../hooks/useBack'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getConnection } from '../../lib/cache'
 import MoodSlider from '../../components/MoodSlider'
@@ -33,6 +34,7 @@ import { listTags } from '../../lib/tags'
 import { notifyNotesChanged } from '../../lib/widgetSync'
 import { pokeRecapQueue } from '../../lib/recapQueue'
 import { useAutoDraft } from '../../hooks/useAutoDraft'
+import { discardGeminiDraft } from '../../lib/geminiDrafts'
 import { useAuth } from '../../context/AuthContext'
 import {
   dayKey,
@@ -106,6 +108,7 @@ const snapshot = (f) =>
 export default function WebNote() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const location = useLocation()
   const [search] = useSearchParams()
   const { user } = useAuth()
@@ -117,6 +120,9 @@ export default function WebNote() {
   const aiDraft = isNew ? location.state?.aiDraft : null
   // Bozza ripresa dall'elenco "Bozze" (DraftsTab): si continua a salvare sotto lo stesso id.
   const resumedDraftId = isNew ? location.state?.draftId : null
+  // bozza di «Nuova nota con Gemini» da cui nasce questa nota: si cancella (con i vocali) al salvataggio
+  const geminiDraftId = isNew ? aiDraft?.geminiDraftId || null : null
+  const draftExtra = useMemo(() => (geminiDraftId ? { geminiDraftId } : undefined), [geminiDraftId])
 
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
@@ -185,6 +191,7 @@ export default function WebNote() {
     peopleIds,
     tagIds,
     imageCount: newFiles.length,
+    extra: draftExtra,
   })
 
   useEffect(() => {
@@ -314,7 +321,10 @@ export default function WebNote() {
         ? await createNote(form, { newFiles, peopleIds, tagIds })
         : await updateNote(effectiveId, form, { newFiles, removedImages, peopleIds, tagIds })
 
-      if (creating) discardDraft()
+      if (creating) {
+        discardDraft()
+        discardGeminiDraft(geminiDraftId)
+      }
       pokeRecapQueue() // il server rigenera in background il recap del giorno (se passato)
       notifyNotesChanged() // widget della home (app Android)
       playSound('save')
@@ -361,7 +371,10 @@ export default function WebNote() {
     } catch (err) {
       savingRef.current = false
       setBusy(false)
-      if (err?.queued) discardDraft() // è in coda offline: non serve anche la bozza
+      if (err?.queued) {
+        discardDraft() // è in coda offline: non serve anche la bozza
+        discardGeminiDraft(geminiDraftId)
+      }
       setDialog(
         err?.queued
           ? {
@@ -430,7 +443,7 @@ export default function WebNote() {
             type="button"
             onClick={() => {
               haptic()
-              navigate(-1)
+              goBack()
             }}
             className="ne-back"
           >

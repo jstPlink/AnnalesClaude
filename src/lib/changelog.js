@@ -9,6 +9,64 @@
 
 export const CHANGELOG = [
   {
+    version: '0.78.1',
+    date: '2026-10-07 07:10',
+    changes: [
+      "Mood Lab su telefono sistemato: barra in alto come le altre pagine (rispetta il notch), pagina a tutta larghezza, una sola colonna, cursori e pulsanti da dito, punti della curva più facili da trascinare, prima la curva e i fattori della formula e in fondo i dati di esempio, con i tasti «Risultati/Parametri» per saltare tra le due parti.",
+    ],
+  },
+  {
+    version: '0.78.0',
+    date: '2026-10-07 06:30',
+    changes: [
+      "Mood Lab: il banco di prova della formula del mood (da note a giorno e da giorni a mese, con dati di esempio e curve del peso trascinabili) è dentro l'app. Si apre toccando 5 volte di seguito la riga «Annales · versione» in fondo alle Impostazioni.",
+      "Con «Applica all'app» la formula messa a punto nel Mood Lab (curva delle note, peso di durata e persone, curva dei giorni nel mese) viene salvata sul tuo account e usata in tutta l'app: mood dei giorni e dei mesi, andamento, statistiche, widget. «Formula originale» ripristina quella di prima. Ogni utente ha la sua.",
+    ],
+  },
+  {
+    version: '0.77.0',
+    date: '2026-10-07 05:00',
+    changes: [
+      "Vista giorno: un cartoncino quadrato appeso in alto a destra del foglio mostra il mood calcolato del giorno (0–100, nel colore del mood), con la stessa media della vista mese.",
+    ],
+  },
+  {
+    version: '0.76.2',
+    date: '2026-10-07 04:00',
+    changes: [
+      "Selettori di persone, tag e luoghi: toccando un risultato già presente la barra di ricerca si svuota, così puoi scrivere subito un nuovo nome.",
+    ],
+  },
+  {
+    version: '0.76.1',
+    date: '2026-10-07 03:40',
+    changes: [
+      "Vocali già trascritti: il pulsante resta «Trascrivi» (niente più «Trascrivi di nuovo»).",
+      "Quando scrivi il nome di una persona, un tag o un luogo da aggiungere, l'app mostra quelli già presenti che combaciano (anche in parte). Se il nome esiste già non ne crea una copia: nei selettori lo sceglie, in Impostazioni avvisa.",
+    ],
+  },
+  {
+    version: '0.76.0',
+    date: '2026-10-07 03:00',
+    changes: [
+      "Indietro a livelli: la pagina principale è il Calendario (o Andamento/Statistiche); su questa si aprono giorno, Cerca e Impostazioni; sopra possono aprirsi la nota e i pannelli. Il tasto/gesto «indietro» di Android e le frecce dell'app chiudono prima il pannello aperto, poi risalgono di un livello (cambiare giorno o scheda non aggiunge livelli); dalla schermata principale esce dall'app.",
+      "Vista mese: il recap del mese ha la targhetta «Recap del mese» dentro la card, come nel giorno.",
+      "Vista mese: nomi dei giorni più grandi del 10% e titoli delle note ridotti di un altro 5%.",
+      "Aggiungi luogo (nota): i luoghi salvati sono su 3 colonne e la lista si può scorrere.",
+    ],
+  },
+  {
+    version: '0.75.8',
+    date: '2026-10-07 02:00',
+    changes: [
+      "Vista mese: con i titoli in maiuscolo la pagina diventava enorme. Ora i titoli sono il 20% più piccoli del nome del giorno (con una piccola correzione per ciascun font) e il cartoncino è largo solo quanto serve ai titoli, senza arrivare al bordo destro.",
+      "Salvataggio nota: corretto l'avviso falso «il titolo salvato non corrisponde» (il titolo ora si salva in maiuscolo e il controllo lo sapeva).",
+      "Tag e luoghi: targhette in due colonne sul telefono e tre sul computer, in ordine alfabetico (selettori e Impostazioni).",
+      "Gemini non raggiungibile: «Il server Gemini è sovraccarico. Effettuati 5 tentativi senza successo, riprova tra poco».",
+      "Vocali: premendo «Trascrivi» il pulsante «Detta un vocale» mostra l'avanzamento e i tentativi; i vocali già trascritti restano (segnati «trascritto») finché non salvi la nota creata; l'elenco dei vocali non sparisce più mentre ne registri un altro.",
+    ],
+  },
+  {
     version: '0.75.7',
     date: '2026-10-07 00:40',
     changes: [

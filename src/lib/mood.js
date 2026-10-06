@@ -1,4 +1,4 @@
-import { parseWall } from './dates'
+import { durationMinutes, parseWall } from './dates'
 
 // Gestione del valore `mood` (0–1) e della sua rappresentazione a colori.
 
@@ -209,9 +209,109 @@ function extremeWeight(m) {
   return 0.15 + 0.85 * s
 }
 
+// ---- Formula personalizzata (Mood Lab) ----
+// L'utente può mettere a punto la formula nel Mood Lab (src/pages/MoodLab.jsx) e
+// applicarla a tutta l'app: viene salvata sull'account (campo `moodFormula`) e
+// letta qui, come il gradiente. Contiene una curva a 7 punti (peso di una nota in
+// base al suo mood), due fattori extra (durata e persone della nota) e, facoltativa,
+// una curva per pesare i giorni nel mood del mese. Senza formula valgono le regole
+// originali qui sotto.
+export const BUILTIN_MOOD_CURVE = [1, 0.7796, 0.3704, 0.15, 0.3704, 0.7796, 1] // = extremeWeight
+const MAX_WEIGHT = 5
+const DURATION_CAP_MIN = 180
+const PEOPLE_CAP = 6
+
+function isCurve(c) {
+  return Array.isArray(c) && c.length === 7 && c.every((v) => Number.isFinite(Number(v)) && v >= 0 && v <= MAX_WEIGHT)
+}
+
+// Ritorna la formula ripulita, o null se il valore non è valido.
+export function normalizeMoodFormula(f) {
+  if (!f || typeof f !== 'object' || !isCurve(f.curve)) return null
+  const factor = (v) => (Number.isFinite(Number(v)) ? Math.min(MAX_WEIGHT, Math.max(0, Number(v))) : 0)
+  return {
+    curve: f.curve.map(Number),
+    durationWeight: factor(f.durationWeight),
+    peopleWeight: factor(f.peopleWeight),
+    monthCurve: isCurve(f.monthCurve) ? f.monthCurve.map(Number) : null,
+  }
+}
+
+let FORMULA = null
+
+// Chiamata all'avvio e a ogni salvataggio dal contesto di autenticazione.
+export function setMoodFormula(saved) {
+  FORMULA = normalizeMoodFormula(saved)
+}
+
+export function getMoodFormula() {
+  return FORMULA
+}
+
+function catmullRom(p0, p1, p2, p3, t) {
+  return (
+    0.5 *
+    (2 * p1 +
+      (-p0 + p2) * t +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+      (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t)
+  )
+}
+
+// Peso letto dalla curva a 7 punti equispaziati su 0–1 (interpolazione morbida).
+function curveWeight(points, m) {
+  const v = clamp01(Number(m))
+  const seg = points.length - 1
+  const i = Math.min(seg - 1, Math.floor(v * seg))
+  const t = v * seg - i
+  const w = catmullRom(points[i - 1] ?? points[i], points[i], points[i + 1], points[i + 2] ?? points[i + 1], t)
+  return Math.min(MAX_WEIGHT, Math.max(0, w))
+}
+
+function formulaDayMood(notes) {
+  let wsum = 0
+  let acc = 0
+  let sum = 0
+  let n = 0
+  for (const note of notes) {
+    const m = Number(note.mood)
+    if (Number.isNaN(m)) continue
+    const dur = durationMinutes(note.timeStart, note.timeEnd) || 0
+    const people = Array.isArray(note.people) ? note.people.length : Number(note.peopleCount) || 0
+    const w =
+      curveWeight(FORMULA.curve, m) *
+      (1 + FORMULA.durationWeight * clamp01(dur / DURATION_CAP_MIN)) *
+      (1 + FORMULA.peopleWeight * clamp01(people / PEOPLE_CAP))
+    wsum += w
+    acc += m * w
+    sum += m
+    n += 1
+  }
+  if (!n) return 0
+  return wsum > 0 ? acc / wsum : sum / n
+}
+
+// Mood del mese a partire dai mood dei giorni scritti: media semplice, oppure
+// pesata con la curva del mese se la formula personalizzata ne ha una. null se non ci sono giorni.
+export function monthMoodFromDays(vals) {
+  if (!vals.length) return null
+  const mc = FORMULA?.monthCurve
+  if (!mc) return vals.reduce((a, b) => a + b, 0) / vals.length
+  let wsum = 0
+  let acc = 0
+  for (const v of vals) {
+    const w = curveWeight(mc, v)
+    wsum += w
+    acc += v * w
+  }
+  return wsum > 0 ? acc / wsum : vals.reduce((a, b) => a + b, 0) / vals.length
+}
+
 // Mood del giorno: media delle note pesata con extremeWeight, così le note
-// "neutre" (mood ~0.5) contano poco e quelle marcate contano molto.
+// "neutre" (mood ~0.5) contano poco e quelle marcate contano molto. Con una
+// formula personalizzata (setMoodFormula) pesa invece con la sua curva e i suoi fattori.
 export function dayMood(notes) {
+  if (FORMULA) return formulaDayMood(notes)
   const vals = notes
     .map((n) => Number(n.mood))
     .filter((n) => !Number.isNaN(n))
@@ -276,7 +376,11 @@ export function yearWeeklyMood(year, notes) {
     monthly.push({
       month: mo - 1,
       count: monthNotes.length,
-      mood: monthNotes.length ? dayMood(monthNotes) : null,
+      mood: monthNotes.length
+        ? FORMULA?.monthCurve
+          ? monthMoodFromDays(groups.filter((g) => g.mood != null).map((g) => g.mood))
+          : dayMood(monthNotes)
+        : null,
       groups,
     })
   }

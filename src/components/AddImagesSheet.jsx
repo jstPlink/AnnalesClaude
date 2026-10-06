@@ -1,10 +1,12 @@
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
+import { useBackClose } from '../hooks/useBack'
 import { haptic } from '../lib/haptics'
 
 // Piccolo menu per scegliere la sorgente delle immagini da aggiungere:
 // dispositivo locale oppure Immich (se configurato in Profilo).
 export default function AddImagesSheet({ open, onClose, onDevice, onImmich }) {
+  useBackClose(open, onClose)
   if (!open) return null
 
   // In portal su <body>: annidato nella pagina nota, il fixed poteva restare

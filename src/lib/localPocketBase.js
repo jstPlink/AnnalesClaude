@@ -19,7 +19,7 @@ const FILES = 'files'
 
 // Campi "speciali" per collection (il server li conosce dallo schema).
 const SCHEMAS = {
-  users: { files: ['avatar'], multi: [], json: ['moodGradient', 'settings'], number: [], date: [] },
+  users: { files: ['avatar'], multi: [], json: ['moodGradient', 'settings', 'moodFormula'], number: [], date: [] },
   note: {
     files: ['images'],
     multi: ['images', 'people', 'tags'],

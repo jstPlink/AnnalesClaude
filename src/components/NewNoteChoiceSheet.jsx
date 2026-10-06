@@ -1,5 +1,6 @@
 import Icon from './Icon'
 import { haptic } from '../lib/haptics'
+import { useBackClose } from '../hooks/useBack'
 
 // Scelta rapida da telefono prima di aprire una nuova nota: con Gemini
 // (genera una bozza da un prompt o dalle foto) oppure a mano. Sostituisce il
@@ -8,6 +9,7 @@ import { haptic } from '../lib/haptics'
 // carta/cartoncino della barra mobile (.ncs-*, in index.css), non più il
 // pannello bianco generico degli altri picker (tag/luogo/canzone).
 export default function NewNoteChoiceSheet({ open, onClose, onGemini, onManual }) {
+  useBackClose(open, onClose)
   if (!open) return null
 
   return (

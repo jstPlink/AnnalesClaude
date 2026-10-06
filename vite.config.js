@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
           navigateFallback: '/index.html',
           // API e admin UI di PocketBase sono sulla stessa origin dell'app
           // (proxy nginx): non devono mai ricevere la pagina index.html.
-          navigateFallbackDenylist: [/^\/api\//, /^\/_\//],
+          navigateFallbackDenylist: [/^\/api\//, /^\/_\//, /^\/mood-lab\.html/],
           // Le altre chiamate API di PocketBase non passano dalla cache del
           // service worker: i dati offline stanno in IndexedDB (src/lib/cache.js).
           runtimeCaching: [

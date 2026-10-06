@@ -1,11 +1,13 @@
 import Icon from './Icon'
 import { moodColor, moodTextColor } from '../lib/mood'
+import { useBackClose } from '../hooks/useBack'
 import { dayKey, dayMonthLabel, timeLabel } from '../lib/dates'
 
 // Dialog che elenca un gruppo di note (es. tutte quelle di un giorno della
 // settimana, o di una settimana), cliccabili per aprire la nota. Usato dalle
 // Statistiche per "Giorno più su di morale" e "Settimana migliore".
 export default function NotesListSheet({ open, title, subtitle, notes, onClose, onSelectNote }) {
+  useBackClose(open, onClose)
   if (!open) return null
 
   return (

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 import { addDaysKey, dayKey, fullDayLabel, todayKey } from '../lib/dates'
 import {
@@ -290,6 +291,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, dateKey, onClose, 
     }
   }
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   // In portal su <body>: se no, essendo annidato nella pagina nota (dentro

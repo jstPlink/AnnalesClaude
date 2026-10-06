@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 import {
   fetchSpotifyTrack,
@@ -34,6 +35,7 @@ export default function AddSongSheet({ open, onClose, onAdd, spotifyClientId, sp
     setToken('')
   }, [open, spotifyReady])
 
+  useBackClose(open, onClose)
   if (!open) return null
 
   async function runSearch() {

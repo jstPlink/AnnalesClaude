@@ -1,5 +1,6 @@
 import { playSound } from '../lib/sounds'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useGoBack } from '../hooks/useBack'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getConnection } from '../lib/cache'
 import PhoneShell from '../components/PhoneShell'
@@ -40,6 +41,7 @@ import { haptic } from '../lib/haptics'
 import { notifyNotesChanged } from '../lib/widgetSync'
 import { pokeRecapQueue } from '../lib/recapQueue'
 import { useAutoDraft } from '../hooks/useAutoDraft'
+import { discardGeminiDraft } from '../lib/geminiDrafts'
 import { useAuth } from '../context/AuthContext'
 import {
   dayKey,
@@ -126,6 +128,7 @@ const snapshot = (f) =>
 export default function NoteView() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const location = useLocation()
   const [search] = useSearchParams()
   const { user } = useAuth()
@@ -137,6 +140,9 @@ export default function NoteView() {
   const aiDraft = isNew ? location.state?.aiDraft : null
   // Bozza ripresa dall'elenco "Bozze" (DraftsTab): si continua a salvare sotto lo stesso id.
   const resumedDraftId = isNew ? location.state?.draftId : null
+  // bozza di «Nuova nota con Gemini» da cui nasce questa nota: si cancella (con i vocali) al salvataggio
+  const geminiDraftId = isNew ? aiDraft?.geminiDraftId || null : null
+  const draftExtra = useMemo(() => (geminiDraftId ? { geminiDraftId } : undefined), [geminiDraftId])
 
   const immichUrl = user?.immichUrl?.trim()
   const immichApiKey = user?.immichApiKey?.trim()
@@ -207,6 +213,7 @@ export default function NoteView() {
     peopleIds,
     tagIds,
     imageCount: newFiles.length,
+    extra: draftExtra,
   })
 
   useEffect(() => {
@@ -343,7 +350,10 @@ export default function NoteView() {
         : await updateNote(effectiveId, form, { newFiles, removedImages, peopleIds, tagIds })
 
       // Adotta il record salvato: eventuali nuovi salvataggi diventano update.
-      if (creating) discardDraft()
+      if (creating) {
+        discardDraft()
+        discardGeminiDraft(geminiDraftId)
+      }
       pokeRecapQueue() // il server rigenera in background il recap del giorno (se passato)
       notifyNotesChanged() // widget della home (app Android)
       playSound('save')
@@ -388,7 +398,10 @@ export default function NoteView() {
     } catch (err) {
       savingRef.current = false
       setBusy(false)
-      if (err?.queued) discardDraft() // è in coda offline: non serve anche la bozza
+      if (err?.queued) {
+        discardDraft() // è in coda offline: non serve anche la bozza
+        discardGeminiDraft(geminiDraftId)
+      }
       setDialog(
         err?.queued
           ? {
@@ -448,7 +461,7 @@ export default function NoteView() {
             type="button"
             onClick={() => {
               haptic()
-              navigate(-1)
+              goBack()
             }}
             className="mchev"
             title="Indietro"

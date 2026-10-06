@@ -1197,7 +1197,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   margin: 0;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
   font-weight: 400;
-  font-size: 1.42rem;
+  font-size: var(--mp-wd-fs, 1.562rem);
   line-height: 1.1;
   /* feriali in nero ~70%; weekend in rosso */
   color: var(--mp-wd);
@@ -1232,7 +1232,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   /* larghezza in base a quanto testo ha il giorno (--mp-cw da
      MonthPages.jsx: cardWidthFor), non più una percentuale fissa uguale
      per ogni giorno */
-  width: var(--mp-cw, 33%);
+  /* solo la larghezza che serve ai titoli (non più una percentuale fissa) */
+  width: fit-content;
+  max-width: 46%;
   margin: 0.2rem 0 0;
   padding: 11px 18px 20px 16px;
   list-style: none;
@@ -1345,20 +1347,20 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-n[data-hand='a'] {
   font-family: 'Annales Marker', 'Caveat', cursive;
   font-weight: 700;
-  font-size: 1.32rem;
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 0.92);
 }
 .mp-n[data-hand='b'] {
   font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: 1.02rem;
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69);
   margin-left: 0.4rem;
 }
 .mp-n[data-hand='c'] {
   font-family: 'Annales Hand Gochi', 'Gochi Hand', cursive;
-  font-size: 1.08rem;
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69);
 }
 .mp-n[data-hand='d'] {
   font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
-  font-size: 1.14rem;
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 1.06);
   margin-left: 0.25rem;
 }
 .mp-empty {
@@ -1807,8 +1809,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-page {
     padding-left: 50px;
   }
-  .mp-wd {
-    font-size: 1.24rem;
+  .mp-page {
+    --mp-wd-fs: 1.364rem;
   }
   .mp-side {
     left: 42%;
@@ -1887,8 +1889,8 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-head {
     gap: 7px;
   }
-  .mp-wd {
-    font-size: 1.16rem;
+  .mp-page {
+    --mp-wd-fs: 1.276rem;
   }
   /* cartoncino, targhette e foto affiancati sulla stessa riga */
   .mp-notes-row {
@@ -1902,24 +1904,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
      Margine un po' più negativo del solito per compensare la foto
      ingrandita (vedi .mp-pola-mobile) senza restringere il cartoncino. */
   .mp-notes {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
-    width: auto;
-    max-width: none;
+    width: fit-content;
+    max-width: 100%;
     margin: 0 0 0 -26px;
     padding: 9px 14px 15px 13px;
-  }
-  .mp-n[data-hand='a'] {
-    font-size: 1.14rem;
-  }
-  .mp-n[data-hand='b'] {
-    font-size: 0.95rem;
-  }
-  .mp-n[data-hand='c'] {
-    font-size: 0.98rem;
-  }
-  .mp-n[data-hand='d'] {
-    font-size: 1rem;
   }
   /* niente frammenti di testo sullo sfondo: troppo rumore sul piccolo */
   .mp-scribbles {
@@ -1992,6 +1982,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   .mp-pola-mobile {
     display: block;
     position: relative;
+    margin-left: auto; /* la foto resta a destra anche se il cartoncino è stretto */
     flex: 0 0 auto;
     z-index: 3;
     width: 80px;
@@ -8479,4 +8470,55 @@ li:last-child > .st-row {
   .toast-half-right {
     animation-duration: 0.01s;
   }
+}
+
+/* Bollino del mood del giorno: cartoncino quadrato nel colore del mood, appeso
+   in alto a destra del foglio della vista giorno (stesso contorno delle linguette
+   del mese: colore base scurito del 20%). */
+.day-mood {
+  position: absolute;
+  z-index: 6;
+  top: -16px;
+  right: 18px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 4px;
+  color: #33291c;
+  --dm-base: color-mix(in srgb, var(--dm, #c9b98c) 55%, #efe6d0);
+  background-color: var(--dm-base);
+  background-image: var(--dp-grain, none);
+  background-size: 120px 120px;
+  background-blend-mode: multiply;
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--dm-base) 80%, #000),
+    3px 6px 10px rgba(20, 12, 4, 0.35);
+  transform: rotate(3deg);
+  pointer-events: none;
+}
+.day-mood-cap {
+  font-family: 'Annales Hand', 'Kalam', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+.day-mood b {
+  font-family: 'Annales Marker', 'Caveat', cursive;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.day-mood-tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 34px;
+  height: 14px;
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 2px rgba(20, 12, 4, 0.25);
 }

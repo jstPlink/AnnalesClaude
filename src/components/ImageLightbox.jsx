@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useBackClose } from '../hooks/useBack'
 import Icon from './Icon'
 
 // Visualizzatore di immagini a schermo intero, con navigazione tra più
 // immagini. `images`: [{ url, key }]. `index` null = chiuso.
 export default function ImageLightbox({ images = [], index, onClose, onIndex }) {
   const open = index != null && images[index]
+  useBackClose(Boolean(open), onClose)
 
   useEffect(() => {
     if (!open) return

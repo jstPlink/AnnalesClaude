@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
+import { useBackClose } from '../hooks/useBack'
 import GeminiWait from './GeminiWait'
 import VoiceRecordButton from './VoiceRecordButton'
 import GeminiUsage from './GeminiUsage'
@@ -65,6 +66,8 @@ export default function NewNoteWithGeminiSheet({
   draft: resumeDraft = null,
 }) {
   const [prompt, setPrompt] = useState('')
+  const closeRef = useRef(null)
+  useBackClose(open, () => closeRef.current?.())
   const [draftId, setDraftId] = useState('')
   const [placeholder, setPlaceholder] = useState(PROMPT_PLACEHOLDERS[0])
   const [loading, setLoading] = useState(false)
@@ -115,6 +118,9 @@ export default function NewNoteWithGeminiSheet({
 
   // Chiusura col pulsante ✕ (o toccando fuori): se c'è qualcosa di scritto o
   // registrato resta come bozza e lo si dice.
+  // «indietro» chiude come la ✕: la nota resta salvata come bozza
+  closeRef.current = closeSheet
+
   async function closeSheet() {
     const voices = (await listVoices()).filter((v) => v.draftId === draftId)
     if (prompt.trim() || voices.length) {
@@ -159,12 +165,11 @@ export default function NewNoteWithGeminiSheet({
         mood: draft.mood,
         timeStart: draft.timeStart,
         timeEnd: draft.timeEnd,
+        geminiDraftId: draftId,
       })
-      // nota generata: la bozza non serve più (restano solo eventuali vocali
-      // non ancora trascritti, per non perderli)
-      const left = (await listVoices()).filter((v) => v.draftId === draftId)
-      if (left.length) saveGeminiDraft({ id: draftId, dateKey, text: '' })
-      else removeGeminiDraft(draftId)
+      // La bozza (testo + vocali originali) resta sul dispositivo finché la nota
+      // generata non viene davvero salvata: lo farà la pagina nota (discardGeminiDraft).
+      saveGeminiDraft({ id: draftId, dateKey, text: prompt })
       onClose()
     } catch (err) {
       setError(describeGeminiError(err))

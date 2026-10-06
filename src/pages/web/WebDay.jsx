@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCacheRefresh } from '../../hooks/useConnection'
+import { useGoBack } from '../../hooks/useBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Icon from '../../components/Icon'
@@ -31,6 +32,7 @@ function startMinutes(value) {
 export default function WebDay() {
   const { date } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const { user } = useAuth()
   const [notes, setNotes] = useState([])
   const [people, setPeople] = useState([])
@@ -97,7 +99,7 @@ export default function WebDay() {
             type="button"
             onClick={() => {
               haptic()
-              navigate('/')
+              goBack()
             }}
             className="ne-back justify-self-start"
           >
