@@ -27,18 +27,34 @@ export function jobLabel(job) {
   return `l'anno ${job.key}`
 }
 
-// { total, items: [{period, key}] } — vuota anche se la collection non
-// esiste ancora (server non aggiornato) o la rete manca.
+// Etichetta breve di una voce dell'elenco: "5 ottobre", "ottobre 2026", "2026".
+export function jobShortLabel(job) {
+  if (job.period === 'day') return dayMonthLabel(job.key)
+  if (job.period === 'month') {
+    const [y, m] = job.key.split('-')
+    return `${MONTHS_IT[Number(m) - 1]} ${y}`
+  }
+  return job.key
+}
+
+const ORDER = { day: 0, month: 1, year: 2 }
+
+// { total, items: [{period, key}] } con TUTTI i recap segnati da aggiornare, nel
+// modo in cui li lavora il server: prima i giorni, poi i mesi, poi gli anni
+// (ciascun gruppo dal più vecchio al più recente). Vuota anche se la collection
+// non esiste ancora (server non aggiornato) o la rete manca.
 export async function fetchRecapQueue() {
   try {
-    // Solo i giorni: per ogni giorno modificato sono segnati anche mese e anno,
-    // ma contarli tutti darebbe tre voci per una sola nota.
-    const res = await pb.collection('recap_jobs').getList(1, 3, {
-      filter: 'period = "day"',
-      sort: 'queuedAt',
-      skipTotal: false,
-    })
-    return { total: res.totalItems, items: res.items }
+    const all = await pb.collection('recap_jobs').getFullList({ batch: 200 })
+    // mese e anno in corso non si aggiornano finché non finiscono
+    const now = new Date()
+    const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const curYear = String(now.getFullYear())
+    const items = all.filter(
+      (j) => !((j.period === 'month' && j.key === curMonth) || (j.period === 'year' && j.key === curYear)),
+    )
+    items.sort((a, b) => ORDER[a.period] - ORDER[b.period] || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+    return { total: items.length, items }
   } catch {
     return { total: 0, items: [] }
   }

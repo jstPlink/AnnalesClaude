@@ -47,7 +47,7 @@ import SongsUsageList from '../../components/SongsUsageList'
 import ExportButtons from '../../components/ExportButtons'
 import OfflineStorage from '../../components/OfflineStorage'
 import RecapInstructions from '../../components/RecapInstructions'
-import GeminiLimitsSettings from '../../components/GeminiLimitsSettings'
+import GeminiUsage from '../../components/GeminiUsage'
 import { Capacitor } from '@capacitor/core'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
@@ -985,8 +985,8 @@ export default function WebProfile() {
           <RecapInstructions />
         </SettingsSection>
 
-        <SettingsSection nested noCollapse title="Limiti di richieste" icon="info">
-          <GeminiLimitsSettings />
+        <SettingsSection nested noCollapse title="Richieste a Gemini" icon="info">
+          <GeminiUsage />
         </SettingsSection>
         </SettingsSection>
       </SettingsSection>

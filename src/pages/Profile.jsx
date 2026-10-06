@@ -15,7 +15,7 @@ import SongsUsageList from '../components/SongsUsageList'
 import ExportButtons from '../components/ExportButtons'
 import OfflineStorage from '../components/OfflineStorage'
 import RecapInstructions from '../components/RecapInstructions'
-import GeminiLimitsSettings from '../components/GeminiLimitsSettings'
+import GeminiUsage from '../components/GeminiUsage'
 import ReminderSettings from '../components/ReminderSettings'
 import PermissionsSettings from '../components/PermissionsSettings'
 import { remindersSupported } from '../lib/reminders'
@@ -520,7 +520,10 @@ export default function Profile() {
         <button
           type="button"
           className="mchev"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            haptic()
+            navigate(-1)
+          }}
           title="Indietro"
           aria-label="Indietro"
         >
@@ -1011,8 +1014,8 @@ export default function Profile() {
                 <RecapInstructions />
               </SettingsSection>
 
-              <SettingsSection nested noCollapse title="Limiti di richieste" icon="info">
-                <GeminiLimitsSettings />
+              <SettingsSection nested noCollapse title="Richieste a Gemini" icon="info">
+                <GeminiUsage />
               </SettingsSection>
             </SettingsSection>
         </SettingsSection>

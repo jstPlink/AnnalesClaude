@@ -44,7 +44,7 @@ export default function DraftsTab() {
           {drafts.map((d) => (
             <li key={d.id} className="flex items-center gap-1.5 rounded-xl border border-line bg-tag pl-2.5">
               <button type="button" onClick={() => resume(d)} className="min-w-0 flex-1 py-1.5 text-left">
-                <span className="block truncate text-xs font-bold">{d.title.trim() || 'Senza titolo'}</span>
+                <span className="title-2 text-xs font-bold">{d.title.trim() || 'Senza titolo'}</span>
                 <span className="block truncate text-[11px] text-ink-soft">
                   {dayMonthLabel(d.dateKey)} · {ago(d.savedAt)}
                   {d.imageCount ? ` · ${d.imageCount} immagini da riaggiungere` : ''}

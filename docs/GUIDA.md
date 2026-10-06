@@ -24,7 +24,7 @@ passaggio è automatico in base alla larghezza della finestra.
 | Schermata | Percorso | Cosa fa |
 |---|---|---|
 | **Calendario** (mese) | `/` | Un foglio per ogni giorno con note: umore medio, titoli, persone, luogo, canzone, foto. Si cambia mese con le frecce o scorrendo; l'app apre sul mese corrente. In cima "In questo giorno" (note degli anni passati) e il recap del mese. |
-| **Giorno** | `/day/AAAA-MM-GG` | Le note del giorno su una timeline di 24 ore (altezza del blocco = durata). Recap del giorno in cima. |
+| **Giorno** | `/day/AAAA-MM-GG` | Le note del giorno su una timeline di 24 ore (altezza del blocco = durata); un giorno senza note mostra comunque la timeline, vuota, e il blocco «Recap del giorno». I titoli lunghi vanno su due righe (nell'editor della nota il titolo va a capo da solo). Recap del giorno in cima. |
 | **Nota** | `/note/new?date=…` e `/note/:id` | Editor: data, orari, mood, titolo, testo, e i pulsanti per immagini, persone, tag, canzoni, luogo. Salva (verde) o elimina (rosso). |
 | **Andamento** | `/dati` | Grafico dell'umore nell'anno e mese per mese; da web ogni barretta apre quel giorno. |
 | **Statistiche** | `/statistiche` | Persone più presenti, giorni/settimane/mesi migliori e peggiori, note migliori e peggiori, tag e luogo più usati, note per mese, recap dell'anno. Ogni voce cliccabile apre le note corrispondenti. |
@@ -39,7 +39,7 @@ passaggio è automatico in base alla larghezza della finestra.
 - **Mood:** un righello da 0 a 10 (salvato come 0–1). Il colore della nota, nel mese e nel giorno, segue il gradiente del mood.
 - **Testo:** editor con Markdown/anteprima. Dal menu Gemini si può ripulire/sintetizzare il testo o scriverlo da un prompt; si può
   anche **dettare a voce** (la registrazione la trascrive Gemini, fino a **120 secondi** per registrazione: il pulsante è la barra, mostra il tempo che passa e si riempie da sinistra; negli ultimi 30 secondi si allarga mostrando quanto manca, diventa rosso e lampeggia, e il telefono vibra a 30, 20, 10 e 5 secondi dalla fine; ogni vocale viene **salvato sul dispositivo** appena finisci di registrare e si cancella solo quando la trascrizione riesce: se Gemini è intasato o ha finito le richieste, sotto il pulsante compare l'elenco dei vocali non ancora trascritti, con «Trascrivi» ed «Elimina», anche dopo aver chiuso il pannello o l'app).
-- **Immagini:** dal dispositivo oppure da **Immich** (se collegato), con un calendario per saltare al giorno delle foto.
+- **Immagini:** dal dispositivo oppure da **Immich** (se collegato). Il selettore di Immich si apre sul **giorno della nota** che stai scrivendo; in cima il pulsante «Giorni successivi» e in fondo «Giorni precedenti» caricano altri 3 giorni per volta, nel caso le foto siano state caricate dopo o prima. Il campo «Vai al giorno» salta a un altro giorno e «Mostra tutte» torna all'elenco delle più recenti. Toccando una foto della nota (anche da web) si apre a schermo intero.
 - **Persone, tag, canzoni:** si scelgono da elenchi (le persone più usate sono in cima); persone e tag nuovi si creano al volo. Le
   canzoni si cercano su Spotify (se collegato) o si incolla un link.
 - **Luogo:** vedi §6.
@@ -103,14 +103,15 @@ Entrambe hanno una guida scaricabile nella rispettiva sezione.
 Serve una **chiave API** di Google AI Studio (Impostazioni → Integrazioni → Gemini). Abilita: ripulire/sintetizzare il testo, scrivere da
 un prompt, "Nuova nota con Gemini", dettatura vocale, estrazione note da screenshot (Importa) e i **recap automatici**:
 
-- Quando scrivi, modifichi (descrizione o mood) o elimini una nota, i recap toccati (giorno, mese e anno) vengono **segnati da aggiornare**;
-  ogni sera alle **23:00** il server li rigenera tutti insieme, con **una sola richiesta a Gemini** (giorni, mesi e anni insieme): così consuma poche richieste. Se Gemini non risponde,
-  riprova alle 23:20 e alle 23:40.
+- Quando scrivi, modifichi (descrizione o mood) o elimini una nota, i recap toccati vengono **segnati da aggiornare**: il giorno e, se sono già
+  finiti, anche il suo mese e il suo anno (il mese e l'anno in corso si riassumono quando finiscono: il primo del mese o dell'anno).
+  Ogni sera alle **23:00** il server li rigenera tutti insieme, con **una sola richiesta a Gemini**: così consuma poche richieste. Se Gemini non
+  risponde, riprova alle 23:20 e alle 23:40.
 - I periodi chiusi **prima** che la funzione esistesse non hanno recap: si generano a mano col tasto "Genera/Rigenera" nelle viste.
-- Se Gemini è sovraccarico l'app riprova da sola un paio di volte.
-- Una linguetta sul bordo destro ricorda che i recap sono in attesa delle 23:00. Se non vuoi aspettare, il tasto "Genera/Rigenera" nelle viste
+- Se una richiesta a Gemini fallisce per un intoppo momentaneo (server sovraccarico, rete, limite al minuto) l'app riprova da sola dopo 3, 5, 7 e 9 secondi: in tutto 5 tentativi prima di mostrare l'errore. Non riprova se la chiave non è valida o se il limite giornaliero è esaurito.
+- Una linguetta sul bordo destro («Aggiornamento recap alle 23.00») ricorda che i recap sono in attesa e, toccandola, li elenca: prima i giorni, poi i mesi, poi gli anni. Se non vuoi aspettare, il tasto "Genera/Rigenera" nelle viste
   lo fa subito.
-- **Quante richieste restano.** Google non lo comunica: l'app conta le richieste partite da questo telefono/computer e le mostra (ultimo minuto, ultima ora, ultime 24 ore) sotto il pulsante del vocale e nei pannelli Gemini. Se in Impostazioni → Gemini → **Limiti di richieste** scrivi i limiti della tua chiave (li trovi in Google AI Studio, nei limiti di frequenza del progetto: richieste al minuto e al giorno), l'app mostra anche quante ne restano e le evidenzia quando sono quasi finite. Non include i recap delle 23:00 né altri dispositivi con la stessa chiave. Se il limite giornaliero è finito, il messaggio lo dice (si azzera a mezzanotte, ora del Pacifico, di solito verso le 9 in Italia).
+- **Contatore richieste.** L'app conta le richieste a Gemini partite da questo telefono/computer (ultimo minuto, ultima ora, ultime 24 ore) e le mostra sotto il pulsante del vocale, nei pannelli dove scrivi una nota con Gemini e in Impostazioni → Gemini → «Richieste a Gemini». Non include i recap delle 23:00 né altri dispositivi con la stessa chiave.
 - Le "Istruzioni per i riassunti" (Impostazioni → Gemini) valgono per tutti i recap di giorno, mese e anno, anche per quelli scritti dal server. Modificando una nota il recap si rifà solo se cambiano descrizione o mood.
 - Le "Istruzioni per le note" (tono, cosa evidenziare) valgono per tutte le richieste e si modificano anche al volo nei pannelli.
 
@@ -140,7 +141,8 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
 - **Permessi:** Impostazioni → **Permessi** mostra cosa hai concesso all'app (microfono, notifiche, allarmi precisi, risparmio batteria) e se il giroscopio c'è (Android non chiede nessun permesso per quello), a cosa serve, e ha il pulsante per concederlo o per aprire la schermata di Android dove si cambia. Si aggiorna da solo quando torni nell'app.
 - **Promemoria:** Impostazioni → **Promemoria** (solo nell'app). Uno o più orari con i giorni della settimana (da lunedì) e, per ciascuno, il **testo della notifica** che preferisci (vuoto = quello predefinito); la notifica "scrivi la nota
   del giorno" arriva anche ad app chiusa e senza rete, e toccandola si apre la scelta Gemini / a mano. Sono salvati sul dispositivo.
-- **Vibrazione:** un tocco leggero solo sui pulsanti d'azione (non su schede, filtri e selezioni).
+- **Vibrazione:** un tocco leggero sui pulsanti d'azione e sui tasti «indietro» (non su schede, filtri e selezioni).
+- **Linguette sul bordo destro:** toccandole si aprono (o si chiudono) con un piccolo scatto e un suono, se i suoni sono accesi.
 - **Vibrazione:** anche cambiando scheda di vista (Calendario / Andamento / Statistiche); dal widget un tic leggero appena l'app si apre dal tasto toccato.
 - **Aggiorna tirando:** nella vista mese (telefono) tira verso il basso per rileggere le note dal server.
 - Dentro l'app non c'è service worker: l'interfaccia è nell'APK e si aggiorna installando un nuovo APK; i dati arrivano sempre dal

@@ -8,6 +8,7 @@ import PeriodRecapCard from '../../components/PeriodRecapCard'
 import { listNotesInRange, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
 import { addDaysKey, dayRange, fullDayLabel, parseWall } from '../../lib/dates'
+import { haptic } from '../../lib/haptics'
 
 // Stessa logica della vista giorno mobile (src/pages/DayView.jsx): l'intera
 // giornata (24h) viene compressa per stare tutta nell'altezza disponibile
@@ -87,7 +88,14 @@ export default function WebDay() {
             non dov'è capitato dopo il pulsante indietro. La 3° colonna
             vuota è solo per bilanciare le due 1fr. */}
         <header className="relative z-[1] grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
-          <button type="button" onClick={() => navigate('/')} className="ne-back justify-self-start">
+          <button
+            type="button"
+            onClick={() => {
+              haptic()
+              navigate('/')
+            }}
+            className="ne-back justify-self-start"
+          >
             <Icon name="chevron-left" size={16} strokeWidth={2.6} />
             Torna al mese
           </button>
@@ -132,6 +140,10 @@ export default function WebDay() {
         periodKey={date}
         notes={notes}
         apiKey={user?.geminiApiKey?.trim()}
+        tab="Recap del giorno"
+        tabInside
+        hideTitle
+        alwaysShow
         className="mx-auto mb-3 w-[78%] shrink-0"
       />
 
@@ -142,17 +154,6 @@ export default function WebDay() {
       <div className="min-h-0 flex-1 overflow-hidden">
         {loading ? (
           <p className="p-6 text-center text-ink-soft">Carico…</p>
-        ) : !notes.length ? (
-          <div className="mx-auto flex w-3/5 flex-col items-center gap-3 py-16 text-center">
-            <p className="text-ink-soft">Nessuna nota per questo giorno.</p>
-            <button
-              type="button"
-              onClick={() => navigate(`/note/new?date=${date}`)}
-              className="rounded-full border border-line bg-tag px-5 py-2.5 text-sm font-bold text-ink transition hover:bg-cream"
-            >
-              Crea la prima nota
-            </button>
-          </div>
         ) : (
           <DayPages
             date={date}
@@ -162,6 +163,7 @@ export default function WebDay() {
             immichUrl={user?.immichUrl?.trim()}
             immichApiKey={user?.immichApiKey?.trim()}
             fit
+            onCreate={() => navigate(`/note/new?date=${date}`)}
           />
         )}
       </div>

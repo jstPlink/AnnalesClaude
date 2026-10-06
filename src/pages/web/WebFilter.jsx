@@ -585,7 +585,7 @@ export default function WebFilter() {
                           {Math.round(Number(n.mood) * 100)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="wf-result-title block truncate">
+                          <span className="wf-result-title title-2">
                             {n.title || (
                               <span className="italic text-ink-soft">Senza titolo</span>
                             )}

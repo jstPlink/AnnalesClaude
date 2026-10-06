@@ -120,7 +120,7 @@ function NoteRow({ note, onClick, style }) {
         {Math.round(Number(note.mood) * 100)}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="st-row-title truncate">
+        <span className="st-row-title title-2">
           {note.title || <span className="italic text-ink-soft">Senza titolo</span>}
         </span>
         <span className="st-row-meta truncate">
@@ -333,60 +333,6 @@ export default function WebStats() {
         className="mt-8"
       />
 
-      {(stats.topPeople.length > 0 || stats.noteCount > 0) && (
-        <div className="mt-8 grid items-start gap-8 lg:grid-cols-2">
-          {stats.topPeople.length > 0 ? (
-            <section>
-              <span className="st-label">
-                <Icon name="user" size={12} />
-                Persone più presenti
-              </span>
-              <ol className="st-people">
-                {stats.topPeople.map((p, i) => (
-                  <li key={p.id} className="st-person-row">
-                    <span className="st-rank">{i + 1}</span>
-                    <PersonAvatar
-                      person={p.person || { name: p.name }}
-                      immichUrl={immichUrl}
-                      immichApiKey={immichApiKey}
-                      size={28}
-                    />
-                    <span className="st-person-name">{p.name}</span>
-                    <span className="st-person-count">
-                      {p.count} {p.count === 1 ? 'nota' : 'note'}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ) : (
-            <span aria-hidden="true" />
-          )}
-
-          {stats.noteCount > 0 && (
-            <section>
-              <span className="st-label alt">
-                <Icon name="calendar" size={12} />
-                Note per mese
-              </span>
-              <div className="st-rows st-months">
-                <ul>
-                  {stats.notesByMonth.map((m, i) => (
-                    <li key={m.month}>
-                      <MonthRow
-                        month={m}
-                        style={{ '--i': i }}
-                        onClick={() => openMonthNotes(m.month, m.count)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
       {(stats.bestWeek ||
         stats.worstWeek ||
         stats.bestMonth ||
@@ -486,6 +432,61 @@ export default function WebStats() {
           </div>
         </section>
       )}
+
+      {(stats.topPeople.length > 0 || stats.noteCount > 0) && (
+        <div className="mt-8 grid items-start gap-8 lg:grid-cols-2">
+          {stats.topPeople.length > 0 ? (
+            <section>
+              <span className="st-label">
+                <Icon name="user" size={12} />
+                Persone più presenti
+              </span>
+              <ol className="st-people">
+                {stats.topPeople.map((p, i) => (
+                  <li key={p.id} className="st-person-row">
+                    <span className="st-rank">{i + 1}</span>
+                    <PersonAvatar
+                      person={p.person || { name: p.name }}
+                      immichUrl={immichUrl}
+                      immichApiKey={immichApiKey}
+                      size={28}
+                    />
+                    <span className="st-person-name">{p.name}</span>
+                    <span className="st-person-count">
+                      {p.count} {p.count === 1 ? 'nota' : 'note'}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+
+          {stats.noteCount > 0 && (
+            <section>
+              <span className="st-label alt">
+                <Icon name="calendar" size={12} />
+                Note per mese
+              </span>
+              <div className="st-rows st-months">
+                <ul>
+                  {stats.notesByMonth.map((m, i) => (
+                    <li key={m.month}>
+                      <MonthRow
+                        month={m}
+                        style={{ '--i': i }}
+                        onClick={() => openMonthNotes(m.month, m.count)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {stats.topDays.length > 0 && (

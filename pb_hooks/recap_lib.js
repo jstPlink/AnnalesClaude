@@ -439,6 +439,44 @@ function enqueueRecapJob(app, userId, period, key) {
   app.save(job)
 }
 
+// L'orologio vero (del container: TZ=Europe/Rome nel Dockerfile): serve a sapere
+// qual è il mese e l'anno CORRENTI, che non si aggiornano finché non finiscono.
+function pad2b(n) {
+  return n < 10 ? '0' + n : '' + n
+}
+function currentMonthKey() {
+  const d = new Date()
+  return d.getFullYear() + '-' + pad2b(d.getMonth() + 1)
+}
+function currentYearKey() {
+  return '' + new Date().getFullYear()
+}
+
+function usersWithGeminiKey(app) {
+  try {
+    return app.findRecordsByFilter('users', "geminiApiKey != ''", '', 500, 0, {})
+  } catch {
+    return []
+  }
+}
+
+// Il primo del mese chiude il mese precedente (e il primo gennaio anche l'anno):
+// quei recap si segnano qui, così alle 23:00 di quel giorno vengono scritti.
+function markClosedPeriods(app) {
+  const d = new Date()
+  if (d.getDate() !== 1) return
+  const prevMonth = new Date(d.getFullYear(), d.getMonth() - 1, 1)
+  const mKey = prevMonth.getFullYear() + '-' + pad2b(prevMonth.getMonth() + 1)
+  for (const u of usersWithGeminiKey(app)) {
+    try {
+      enqueueRecapJob(app, u.id, 'month', mKey)
+      if (d.getMonth() === 0) enqueueRecapJob(app, u.id, 'year', '' + prevMonth.getFullYear())
+    } catch (err) {
+      console.log('[recap] chiusura periodi utente ' + u.id + ': ' + err)
+    }
+  }
+}
+
 function dayKeyOfRecord(rec) {
   try {
     return rec ? dayKeyOf(rec.get('date')) : ''
@@ -448,8 +486,10 @@ function dayKeyOfRecord(rec) {
 }
 
 // Chiamata dagli hook sulle note (creazione, modifica di descrizione/mood,
-// cancellazione): veloce, solo scritture sul database locale. Segna giorno,
-// mese e anno della nota (e quelli della data di partenza, se è cambiata).
+// cancellazione): veloce, solo scritture sul database locale. Segna il giorno
+// della nota (e quello di partenza, se la data è cambiata) e, SOLO se non sono
+// quelli correnti, il suo mese e il suo anno: un mese o un anno ancora in corso
+// non si riassumono finché non sono finiti (lo fa markClosedPeriods).
 function queueFromNote(app, record, original) {
   const userId = record.get('user')
   if (!userId || !geminiApiKeyFor(app, userId)) return
@@ -460,15 +500,27 @@ function queueFromNote(app, record, original) {
     if (!dKey) continue
     try {
       enqueueRecapJob(app, userId, 'day', dKey)
-      enqueueRecapJob(app, userId, 'month', monthKeyOf(dKey))
-      enqueueRecapJob(app, userId, 'year', yearOf(dKey))
+      if (monthKeyOf(dKey) !== currentMonthKey()) enqueueRecapJob(app, userId, 'month', monthKeyOf(dKey))
+      if (yearOf(dKey) !== currentYearKey()) enqueueRecapJob(app, userId, 'year', yearOf(dKey))
     } catch (err) {
       console.log('[recap] segno da aggiornare ' + dKey + ' utente ' + userId + ': ' + err)
     }
   }
 }
 
-function processUserJobs(app, userId, jobs) {
+function processUserJobs(app, userId, allJobs) {
+  // mese e anno in corso non si riassumono ancora (vecchi segnali: si scartano)
+  const jobs = []
+  for (const j of allJobs) {
+    const p = j.get('period')
+    const k = j.get('key')
+    if ((p === 'month' && k === currentMonthKey()) || (p === 'year' && k === currentYearKey())) {
+      app.delete(j)
+    } else {
+      jobs.push(j)
+    }
+  }
+  if (!jobs.length) return
   const keysOf = (period) =>
     jobs
       .filter((j) => j.get('period') === period)
@@ -513,6 +565,11 @@ function runRecapBatch(app) {
   if (app.store().get('recapBatchBusy')) return
   app.store().set('recapBatchBusy', true)
   try {
+    try {
+      markClosedPeriods(app)
+    } catch (err) {
+      console.log('[recap] chiusura periodi: ' + err)
+    }
     let jobs = []
     try {
       jobs = app.findRecordsByFilter('recap_jobs', 'queuedAt >= 0', 'queuedAt', 5000, 0, {})

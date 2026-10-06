@@ -49,6 +49,7 @@ import {
   timeInputValue,
   MONTHS_IT,
 } from '../lib/dates'
+import TitleInput from '../components/TitleInput'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -443,7 +444,16 @@ export default function NoteView() {
     <PhoneShell>
       <MobileTopBar className="mtop-note">
         <div className="mtop-row1">
-          <button type="button" onClick={() => navigate(-1)} className="mchev" title="Indietro" aria-label="Indietro">
+          <button
+            type="button"
+            onClick={() => {
+              haptic()
+              navigate(-1)
+            }}
+            className="mchev"
+            title="Indietro"
+            aria-label="Indietro"
+          >
             <Icon name="chevron-left" size={19} strokeWidth={2.8} />
           </button>
           <span className="mtop-year">{year}</span>
@@ -525,11 +535,10 @@ export default function NoteView() {
         <div className="ne-sheet mt-4 flex min-h-[35dvh] flex-none flex-col">
           <span className="ne-tape ne-tape-a" aria-hidden="true" />
           <span className="ne-tape ne-tape-b" aria-hidden="true" />
-          <input
-            type="text"
+          <TitleInput
             placeholder="Titolo della nota"
             value={form.title}
-            onChange={(e) => set({ title: e.target.value })}
+            onChange={(title) => set({ title })}
             className="ne-title shrink-0"
           />
           <RichText
@@ -816,6 +825,7 @@ export default function NoteView() {
       {immichReady && (
         <ImmichPicker
           open={immichOpen}
+          dateKey={form.dateKey}
           baseUrl={immichUrl}
           apiKey={immichApiKey}
           onClose={() => setImmichOpen(false)}

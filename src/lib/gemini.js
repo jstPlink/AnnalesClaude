@@ -134,16 +134,29 @@ async function callGeminiOnce(apiKey, contents) {
   return text
 }
 
-const OVERLOAD_RETRY_DELAY_MS = 5000
-const OVERLOAD_MAX_ATTEMPTS = 3
+// Se una richiesta fallisce per un intoppo momentaneo si riprova da sole: dopo
+// 3 secondi, poi 5, poi 7 e infine 9 — in tutto 5 tentativi prima di arrendersi.
+const RETRY_DELAYS_MS = [3000, 5000, 7000, 9000]
+const OVERLOAD_MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1
+
+// Vale la pena riprovare? Sì per i guasti momentanei (server sovraccarico o
+// in errore, limite al minuto, rete assente); no per chiave non valida, richiesta
+// sbagliata o limite GIORNALIERO esaurito: riprovare non cambierebbe nulla.
+function isRetryable(err) {
+  const s = err?.status
+  if (s == null) return err?.name === 'TypeError' // fetch fallita: rete
+  if (s === 429) return !/perday|per_day|daily/i.test(err.quotaId || '')
+  return s >= 500
+}
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-// Il modello risponde spesso 503 "overloaded" nelle ore di punta: è un
-// intoppo momentaneo, non un errore dell'utente, quindi si riprova da soli
-// prima di arrendersi. `onRetry(attempt, maxAttempts)` (opzionale) avvisa
+// Il modello risponde spesso 503 "overloaded" nelle ore di punta (e a volte
+// la rete o il limite al minuto fanno cilecca): sono intoppi momentanei, non
+// errori dell'utente, quindi si riprova da soli (vedi RETRY_DELAYS_MS) prima di
+// arrendersi. `onRetry(attempt, maxAttempts)` (opzionale) avvisa
 // chi ha in corso una UI di attesa (vedi GeminiWait) che si sta ritentando.
 async function callGeminiParts(apiKey, parts, { onRetry } = {}) {
   return callGeminiTurns(apiKey, [{ role: 'user', parts }], { onRetry })
@@ -158,9 +171,9 @@ async function callGeminiTurns(apiKey, contents, { onRetry } = {}) {
       return await callGeminiOnce(apiKey, contents)
     } catch (err) {
       lastErr = err
-      if (err.status !== 503 || attempt === OVERLOAD_MAX_ATTEMPTS) throw err
+      if (!isRetryable(err) || attempt === OVERLOAD_MAX_ATTEMPTS) throw err
       onRetry?.(attempt, OVERLOAD_MAX_ATTEMPTS)
-      await wait(OVERLOAD_RETRY_DELAY_MS)
+      await wait(RETRY_DELAYS_MS[attempt - 1])
     }
   }
   throw lastErr
@@ -614,7 +627,7 @@ export function describeGeminiError(err) {
     return 'Limite di richieste Gemini raggiunto, riprova tra poco (di solito entro un minuto).'
   }
   if (err.status === 503)
-    return 'Il server di Gemini è sovraccarico: ho già riprovato automaticamente un paio di volte senza successo, riprova tra poco.'
+    return 'Il server di Gemini è sovraccarico: ho già riprovato automaticamente 5 volte (a 3, 5, 7 e 9 secondi) senza successo, riprova tra poco.'
   if (err.status) return `Errore Gemini (${err.status}): ${err.message}`
   if (err.name === 'TypeError') return 'Impossibile raggiungere Gemini (rete).'
   return err.message || String(err)

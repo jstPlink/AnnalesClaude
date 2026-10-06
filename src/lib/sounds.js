@@ -151,6 +151,14 @@ const SOUNDS = {
     tone(c, o, { freq: 360, to: 160, dur: 0.22, type: 'triangle', gain: 0.24 })
     noise(c, o, { dur: 0.14, gain: 0.16, freq: 1200, q: 0.8, at: 0.04 })
   },
+  // linguetta laterale che si apre / si chiude: due note brevi, su e giù
+  tabOpen: (c, o) => {
+    tone(c, o, { freq: 440, to: 620, dur: 0.09, type: 'triangle', gain: 0.22 })
+    tone(c, o, { freq: 880, dur: 0.12, type: 'triangle', gain: 0.16, at: 0.06 })
+  },
+  tabClose: (c, o) => {
+    tone(c, o, { freq: 700, to: 420, dur: 0.1, type: 'triangle', gain: 0.2 })
+  },
   // dettatura: avvio, stop, avviso degli ultimi secondi
   recStart: (c, o) => tone(c, o, { freq: 520, to: 880, dur: 0.13, gain: 0.22 }),
   recStop: (c, o) => tone(c, o, { freq: 880, to: 440, dur: 0.14, gain: 0.22 }),

@@ -147,7 +147,7 @@ function NoteRow({ note, onClick, style }) {
         {Math.round(Number(note.mood) * 100)}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="st-row-title truncate">
+        <span className="st-row-title title-2">
           {note.title || <span className="italic text-ink-soft">Senza titolo</span>}
         </span>
         <span className="st-row-meta truncate">
@@ -330,6 +330,91 @@ export default function StatsView() {
               className="mt-5"
             />
 
+            {(stats.bestWeek ||
+              stats.worstWeek ||
+              stats.bestWeekday ||
+              stats.bestMonth ||
+              stats.worstMonth ||
+              stats.topTag ||
+              stats.topPlace) && (
+              <section className="mt-5">
+                <span className="st-label alt">
+                  <Icon name="layers" size={11} />
+                  In evidenza
+                </span>
+                <div className="st-minitiles">
+                  {stats.bestWeek && (
+                    <StatCard
+                      variant="mini"
+                      icon="calendar"
+                      label="Settimana migliore"
+                      value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
+                      sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
+                      onClick={openWeekNotes}
+                    />
+                  )}
+                  {stats.worstWeek && (
+                    <StatCard
+                      variant="mini"
+                      icon="cloud"
+                      label="Settimana peggiore"
+                      value={`${shortDM(stats.worstWeek.first)} – ${shortDM(stats.worstWeek.last)}`}
+                      sub={`mood ${Math.round(stats.worstWeek.mood * 100)} · ${stats.worstWeek.notes} note`}
+                      onClick={openWorstWeekNotes}
+                    />
+                  )}
+                  {stats.bestMonth && (
+                    <StatCard
+                      variant="mini"
+                      icon="sparkles"
+                      label="Mese più felice"
+                      value={stats.bestMonth.name}
+                      sub={`mood ${Math.round(stats.bestMonth.mood * 100)} · ${stats.bestMonth.count} note`}
+                      onClick={() => openMonthNotes(stats.bestMonth.month, stats.bestMonth.count)}
+                    />
+                  )}
+                  {stats.worstMonth && (
+                    <StatCard
+                      variant="mini"
+                      icon="cloud"
+                      label="Mese più triste"
+                      value={stats.worstMonth.name}
+                      sub={`mood ${Math.round(stats.worstMonth.mood * 100)} · ${stats.worstMonth.count} note`}
+                      onClick={() => openMonthNotes(stats.worstMonth.month, stats.worstMonth.count)}
+                    />
+                  )}
+                  {stats.bestWeekday && (
+                    <StatCard
+                      variant="mini"
+                      icon="sparkles"
+                      label="Giorno più su di morale"
+                      value={stats.bestWeekday.name}
+                      sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
+                      onClick={openWeekdayNotes}
+                    />
+                  )}
+                  {stats.topTag && (
+                    <StatCard
+                      variant="mini"
+                      icon="tag"
+                      label="Tag più usato"
+                      value={stats.topTag.name}
+                      sub={`in ${stats.topTag.count} note`}
+                    />
+                  )}
+                  {stats.topPlace && (
+                    <StatCard
+                      variant="mini"
+                      icon="map-pin"
+                      label="Luogo più frequente"
+                      value={stats.topPlace.name}
+                      sub={`in ${stats.topPlace.count} note`}
+                    />
+                  )}
+                </div>
+              </section>
+            )}
+
             {stats.noteCount > 0 && (
               <section className="mt-5">
                 <span className="st-label">
@@ -507,90 +592,6 @@ export default function StatsView() {
               </section>
             )}
 
-            {(stats.bestWeek ||
-              stats.worstWeek ||
-              stats.bestWeekday ||
-              stats.bestMonth ||
-              stats.worstMonth ||
-              stats.topTag ||
-              stats.topPlace) && (
-              <section className="mt-5">
-                <span className="st-label alt">
-                  <Icon name="layers" size={11} />
-                  In evidenza
-                </span>
-                <div className="st-minitiles">
-                  {stats.bestWeek && (
-                    <StatCard
-                      variant="mini"
-                      icon="calendar"
-                      label="Settimana migliore"
-                      value={`${shortDM(stats.bestWeek.first)} – ${shortDM(stats.bestWeek.last)}`}
-                      sub={`mood ${Math.round(stats.bestWeek.mood * 100)} · ${stats.bestWeek.notes} note`}
-                      onClick={openWeekNotes}
-                    />
-                  )}
-                  {stats.worstWeek && (
-                    <StatCard
-                      variant="mini"
-                      icon="cloud"
-                      label="Settimana peggiore"
-                      value={`${shortDM(stats.worstWeek.first)} – ${shortDM(stats.worstWeek.last)}`}
-                      sub={`mood ${Math.round(stats.worstWeek.mood * 100)} · ${stats.worstWeek.notes} note`}
-                      onClick={openWorstWeekNotes}
-                    />
-                  )}
-                  {stats.bestMonth && (
-                    <StatCard
-                      variant="mini"
-                      icon="sparkles"
-                      label="Mese più felice"
-                      value={stats.bestMonth.name}
-                      sub={`mood ${Math.round(stats.bestMonth.mood * 100)} · ${stats.bestMonth.count} note`}
-                      onClick={() => openMonthNotes(stats.bestMonth.month, stats.bestMonth.count)}
-                    />
-                  )}
-                  {stats.worstMonth && (
-                    <StatCard
-                      variant="mini"
-                      icon="cloud"
-                      label="Mese più triste"
-                      value={stats.worstMonth.name}
-                      sub={`mood ${Math.round(stats.worstMonth.mood * 100)} · ${stats.worstMonth.count} note`}
-                      onClick={() => openMonthNotes(stats.worstMonth.month, stats.worstMonth.count)}
-                    />
-                  )}
-                  {stats.bestWeekday && (
-                    <StatCard
-                      variant="mini"
-                      icon="sparkles"
-                      label="Giorno più su di morale"
-                      value={stats.bestWeekday.name}
-                      sub={`mood medio ${Math.round(stats.bestWeekday.mood * 100)} su ${stats.bestWeekday.count} ${stats.bestWeekday.count === 1 ? 'giorno' : 'giorni'}`}
-                      onClick={openWeekdayNotes}
-                    />
-                  )}
-                  {stats.topTag && (
-                    <StatCard
-                      variant="mini"
-                      icon="tag"
-                      label="Tag più usato"
-                      value={stats.topTag.name}
-                      sub={`in ${stats.topTag.count} note`}
-                    />
-                  )}
-                  {stats.topPlace && (
-                    <StatCard
-                      variant="mini"
-                      icon="map-pin"
-                      label="Luogo più frequente"
-                      value={stats.topPlace.name}
-                      sub={`in ${stats.topPlace.count} note`}
-                    />
-                  )}
-                </div>
-              </section>
-            )}
 
             {!stats.noteCount && (
               <p className="py-10 text-center text-ink-soft">

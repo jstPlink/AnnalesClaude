@@ -54,7 +54,7 @@ export default function NotesListSheet({ open, title, subtitle, notes, onClose, 
                     {Math.round(Number(n.mood) * 100)}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-ink">
+                    <span className="title-2 text-sm font-semibold text-ink">
                       {n.title || <span className="italic text-ink-soft">Senza titolo</span>}
                     </span>
                     <span className="block text-xs text-ink-soft">

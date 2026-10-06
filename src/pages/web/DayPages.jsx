@@ -118,6 +118,7 @@ export default function DayPages({
   immichUrl,
   immichApiKey,
   fit = false,
+  onCreate, // opzionale: con il giorno vuoto offre «Crea la prima nota»
 }) {
   const trackRef = useRef(null)
   const [fitH, setFitH] = useState(0)
@@ -229,7 +230,17 @@ export default function DayPages({
           </div>
 
           {!items.length && (
-            <p className="dp-empty">Nessuna nota per questo giorno.</p>
+            <p className="dp-empty">
+              Nessuna nota per questo giorno.
+              {onCreate && (
+                <>
+                  {' '}
+                  <button type="button" onClick={onCreate} className="dp-empty-btn">
+                    Crea la prima nota
+                  </button>
+                </>
+              )}
+            </p>
           )}
 
           {trackH > 0 && items.map((it) => {
@@ -269,7 +280,7 @@ export default function DayPages({
                   >
                     <span className="dn-title">
                       <span className="hl" aria-hidden="true" />
-                      {it.title}
+                      <span className="dn-title-text">{it.title}</span>
                     </span>
                     <DnBody text={it.body} hand={it.hand} />
                   </span>

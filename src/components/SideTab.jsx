@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Icon from './Icon'
+import { playSound } from '../lib/sounds'
 
 // Linguetta di stato attaccata al bordo destro dello schermo, a metà altezza
 // (StatusPills.jsx): chiusa è solo un'icona con un eventuale numero, così non
@@ -7,18 +8,34 @@ import Icon from './Icon'
 // per intero e, se c'è, il pulsante dell'azione. Tocca di nuovo per chiuderla.
 export default function SideTab({ icon = 'cloud', badge = null, children, body = null, tone = 'warn', actionLabel, onAction, busy }) {
   const [open, setOpen] = useState(false)
+  // La caduta d'ingresso (anim-drop) vale solo al montaggio: se restasse
+  // sull'elemento ripartirebbe quando cambio animazione per lo scatto al tocco.
+  const [dropped, setDropped] = useState(false)
+  const [kick, setKick] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setDropped(true), 700)
+    return () => clearTimeout(t)
+  }, [])
+
+  function toggle() {
+    playSound(open ? 'tabClose' : 'tabOpen')
+    setKick(false)
+    // riparte l'animazione anche con tocchi ravvicinati
+    requestAnimationFrame(() => setKick(true))
+    setOpen((o) => !o)
+  }
 
   return (
     <div
       className={
-        'anim-drop pointer-events-auto flex max-w-[min(17rem,calc(100vw-0.5rem))] flex-col items-stretch overflow-hidden rounded-l-2xl border border-r-0 text-ink shadow-lg ' +
-        (tone === 'paper' ? 'border-line bg-cream ' : 'border-warn-dark bg-warn ') +
+        (dropped ? '' : 'anim-drop ') + (kick ? 'side-tab-kick ' : '') + 'side-tab pointer-events-auto flex max-w-[min(17rem,calc(100vw-0.5rem))] flex-col items-stretch overflow-hidden text-ink ' +
+        (tone === 'paper' ? 'paper bg-cream ' : 'warn bg-warn ') +
         (open ? 'w-64' : 'w-auto')
       }
     >
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         aria-expanded={open}
         className="flex items-center gap-1.5 px-2.5 py-2 text-left"
       >

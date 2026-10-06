@@ -11,6 +11,7 @@ import {
   saveGeminiCustomInstructions,
 } from '../lib/gemini'
 import { plainText, describeError } from '../lib/notes'
+import { haptic } from '../lib/haptics'
 
 // Dialog per le funzioni IA (Gemini) su una nota: ripulire/sintetizzare il
 // testo esistente, o scrivere un nuovo contenuto da zero seguendo delle
@@ -159,7 +160,11 @@ export default function GeminiSheet({
         <div className="ncs-head">
           <div className="flex items-center gap-2">
             {mode !== 'menu' && (
-              <button type="button" onClick={goMenu} className="gms-chev" title="Indietro" aria-label="Indietro">
+              <button type="button" onClick={() => {
+                  haptic()
+                  goMenu()
+                }}
+                className="gms-chev" title="Indietro" aria-label="Indietro">
                 <Icon name="chevron-left" size={15} strokeWidth={2.8} />
               </button>
             )}

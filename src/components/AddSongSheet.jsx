@@ -7,6 +7,7 @@ import {
   searchSpotifyTracks,
   describeSpotifyError,
 } from '../lib/spotify'
+import { haptic } from '../lib/haptics'
 
 // Dialog per aggiungere una canzone a una nota: se Spotify è configurato in
 // Profilo, cerca per titolo/artista; altrimenti incolla un link Spotify e
@@ -184,7 +185,10 @@ export default function AddSongSheet({ open, onClose, onAdd, spotifyClientId, sp
             {spotifyReady && (
               <button
                 type="button"
-                onClick={() => setMode('search')}
+                onClick={() => {
+                  haptic()
+                  setMode('search')
+                }}
                 className="mb-3 text-xs font-semibold text-ink-soft transition hover:text-ink"
               >
                 ← Torna alla ricerca

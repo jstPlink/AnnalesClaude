@@ -9,6 +9,39 @@
 
 export const CHANGELOG = [
   {
+    version: '0.73.2',
+    date: '2026-10-06 10:30',
+    changes: [
+      "Le linguette sul bordo destro si aprono e si chiudono con un piccolo scatto animato e un suono, e hanno un'ombra molto più marcata che le stacca dal resto dell'app.",
+      "Vista giorno: la targhetta «Recap del giorno» sta dentro il riquadro del recap, alla stessa altezza del tasto Genera/Rigenera.",
+    ],
+  },
+  {
+    version: '0.73.1',
+    date: '2026-10-06 10:23',
+    changes: [
+      "Vista giorno: l'evidenziatore dei titoli su due righe resta solo sulla prima; il blocco «Recap del giorno» compare anche senza note, con la sua targhetta al posto del titolo.",
+      "Recap: il mese e l'anno in corso non si aggiornano finché non finiscono; la linguetta dei recap non li elenca più e si intitola «Aggiornamento recap alle 23.00».",
+      "Linguetta di notifica sul bordo destro: forma a etichetta, contorno tratteggiato più spesso (2px), 10% più grande e con più ombra.",
+      "Nota da telefono: se il titolo è più lungo della larghezza dello schermo va su due righe.",
+      "Gemini: tolto il concetto di limite di richieste; resta solo un contatore nelle pagine dove si scrive una nota con Gemini e nelle Impostazioni di Gemini.",
+    ],
+  },
+  {
+    version: '0.73.0',
+    date: '2026-10-06 10:07',
+    changes: [
+      "Aptico anche sui tasti «indietro».",
+      "La linguetta dei recap elenca cosa verrà aggiornato alle 23:00: prima i giorni, poi i mesi, poi gli anni.",
+      "I titoli lunghi delle note vanno su due righe invece di uscire dallo spazio visibile; nella vista giorno l'evidenziatore colora entrambe le righe.",
+      "Gemini: se una richiesta fallisce per un intoppo momentaneo riprova dopo 3, 5, 7 e 9 secondi (5 tentativi in tutto); tolto il tasto «Riprova la trascrizione», restano i vocali salvati.",
+      "Immich: il selettore delle foto si apre sul giorno della nota, con i pulsanti per caricare i giorni successivi e precedenti.",
+      "Web: le immagini della nota si aprono a schermo intero.",
+      "Un giorno senza note mostra comunque tutta l'interfaccia, senza note.",
+      "Statistiche: «In evidenza» subito sotto il recap dell'anno.",
+    ],
+  },
+  {
     version: '0.72.1',
     date: '2026-10-05 09:28',
     changes: [

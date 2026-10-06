@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import SideTab from './SideTab'
 import { useAuth } from '../context/AuthContext'
-import { fetchRecapQueue, jobLabel, onRecapQueuePoke } from '../lib/recapQueue'
+import { fetchRecapQueue, jobShortLabel, onRecapQueuePoke } from '../lib/recapQueue'
 
 const POLL_MS = 60_000
 
@@ -36,14 +36,36 @@ export default function RecapQueueTab() {
 
   if (!isAuthed || !queue.total) return null
 
-  const [first] = queue.items
-  const more = queue.total - 1
+  const GROUPS = [
+    ['day', 'Giorni'],
+    ['month', 'Mesi'],
+    ['year', 'Anni'],
+  ]
   return (
-    <SideTab icon="sparkles" tone="paper" badge={queue.total}>
-      Stasera alle 23:00 aggiorno il recap del{first ? ` ${jobLabel(first)}` : ''}
-      {more > 0 ? ` (e di altri ${more} ${more === 1 ? 'giorno' : 'giorni'})` : ''}, poi
-      quello del mese e dell&apos;anno. Li preparo tutti insieme in blocco, così salvare le
-      note resta veloce.
+    <SideTab
+      icon="sparkles"
+      tone="paper"
+      badge={queue.total}
+      body={
+        <div className="mx-2.5 mb-2.5 max-h-[40vh] overflow-y-auto text-xs text-ink">
+          {GROUPS.map(([period, title]) => {
+            const list = queue.items.filter((j) => j.period === period)
+            if (!list.length) return null
+            return (
+              <div key={period} className="mb-1.5">
+                <p className="font-extrabold">{title}</p>
+                <ul className="ml-3 list-disc">
+                  {list.map((j) => (
+                    <li key={j.id}>{jobShortLabel(j)}</li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
+      }
+    >
+      Aggiornamento recap alle 23.00
     </SideTab>
   )
 }

@@ -446,6 +446,41 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   animation: unfurl 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
   transform-origin: top center;
 }
+/* Linguetta di stato sul bordo destro (SideTab.jsx): forma a etichetta con la
+   punta arrotondata verso l'interno, contorno TRATTEGGIATO di 2px (era pieno da
+   1px), 10% più grande (zoom) e con l'ombra +10% per staccarsi dal resto. */
+.side-tab {
+  border: 2px dashed var(--st-border);
+  border-right: 0;
+  border-radius: 24px 0 0 24px;
+  zoom: 1.1;
+  /* ombra marcata, soprattutto verso il basso, per staccare la linguetta dal foglio */
+  box-shadow:
+    0 18px 24px -6px rgba(0, 0, 0, 0.36),
+    0 8px 12px -4px rgba(0, 0, 0, 0.28),
+    0 2px 3px rgba(0, 0, 0, 0.2);
+}
+/* scatto al tocco: sporge verso sinistra, rimbalza e si assesta */
+.side-tab-kick {
+  animation: sideTabKick 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes sideTabKick {
+  0% {
+    transform: translateX(14px) scale(0.96);
+  }
+  45% {
+    transform: translateX(-6px) scale(1.03);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+.side-tab.paper {
+  --st-border: var(--color-line);
+}
+.side-tab.warn {
+  --st-border: var(--color-warn-dark);
+}
 .anim-drop {
   animation: dropIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -1254,10 +1289,31 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-page.mood-coral .mp-notes {
   --mp-mood: #e0655e;
 }
+/* Titolo di nota su al massimo DUE righe (poi "…"): prima i titoli lunghi
+   uscivano dallo spazio visibile. Usata anche dalle liste di note. */
+.title-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 .mp-n {
   position: relative;
   padding-left: 1.05rem;
   line-height: 1.15;
+  /* due righe al massimo; il padding verticale evita di tagliare le aste dei
+     font a mano */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding-top: 0.08em;
+  padding-bottom: 0.1em;
   /* Rotazione indipendente per nota (--nr, da MonthPages.jsx): ogni titolo
      gira per conto suo, non più insieme al cartoncino/agli altri titoli
      dello stesso giorno — vedi `rot` in `titles` (MonthPages.jsx). */
@@ -2061,6 +2117,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   color: var(--color-ink-soft);
 }
 
+.dp-empty-btn {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .day-sheet {
   position: relative;
   /* colonna orari (58px) + riga rossa, poi margine destro/basso del foglio */
@@ -2223,13 +2287,32 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   line-height: 1.15;
   color: #2b2015;
 }
+/* il testo sta in un figlio che va al massimo su due righe (poi "…") */
+.dn-title-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+/* L'evidenziatore è una sola fascia, sulla PRIMA riga del titolo (line-height
+   1.15em: fascia da 0.57em a 1.11em): se il titolo va su due righe la seconda
+   resta senza. */
 .dn-title .hl {
   position: absolute;
   left: -6px;
   right: -8px;
-  bottom: 0.04em;
-  height: 0.54em;
-  background: rgba(26, 20, 10, 0.16);
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 0.57em,
+    rgba(26, 20, 10, 0.16) 0.57em,
+    rgba(26, 20, 10, 0.16) 1.11em,
+    transparent 1.11em
+  );
   transform: skewX(-11deg) rotate(-1.4deg);
   mix-blend-mode: multiply;
   z-index: -1;
@@ -5723,6 +5806,9 @@ li:last-child > .wf-result {
   gap: 10px;
   margin-bottom: 8px;
 }
+.prc-tab-in {
+  margin-bottom: 0;
+}
 .prc-head-end {
   justify-content: flex-end;
 }
@@ -7173,7 +7259,11 @@ li:last-child > .st-row {
   transform: rotate(3deg);
 }
 .ne-title {
+  display: block;
   width: 100%;
+  resize: none;
+  padding: 0;
+  line-height: 1.2;
   background: none;
   border: none;
   outline: none;

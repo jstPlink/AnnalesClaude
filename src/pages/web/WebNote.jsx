@@ -41,6 +41,9 @@ import {
   parseWall,
   MONTHS_IT,
 } from '../../lib/dates'
+import { haptic } from '../../lib/haptics'
+import ImageLightbox from '../../components/ImageLightbox'
+import TitleInput from '../../components/TitleInput'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -146,6 +149,8 @@ export default function WebNote() {
   const [record, setRecord] = useState(null)
   const [createdId, setCreatedId] = useState(null)
   const [newFiles, setNewFiles] = useState([])
+  // immagine aperta a schermo intero (indice in galleryImages), null = chiuso
+  const [viewerIndex, setViewerIndex] = useState(null)
   const [removedImages, setRemovedImages] = useState([])
   const [loading, setLoading] = useState(!isNew)
   const [busy, setBusy] = useState(false)
@@ -227,6 +232,18 @@ export default function WebNote() {
   useEffect(
     () => () => previews.forEach((p) => URL.revokeObjectURL(p.url)),
     [previews],
+  )
+
+  // immagini della nota (già salvate e appena aggiunte) per il visualizzatore
+  const galleryImages = useMemo(
+    () => [
+      ...existingImages.map((fn) => ({
+        url: record ? fileUrl(record, fn) : '',
+        key: fn,
+      })),
+      ...previews.map((p) => ({ url: p.url, key: p.url })),
+    ],
+    [existingImages, previews, record],
   )
 
   const selectedPeople = useMemo(
@@ -409,7 +426,14 @@ export default function WebNote() {
       <div className="relative mb-[50px] mt-[40px]">
         <span className="header-quadretti bleed-note" aria-hidden="true" />
         <div className="ne-head relative z-[1] px-4">
-          <button type="button" onClick={() => navigate(-1)} className="ne-back">
+          <button
+            type="button"
+            onClick={() => {
+              haptic()
+              navigate(-1)
+            }}
+            className="ne-back"
+          >
             <Icon name="chevron-left" size={16} strokeWidth={2.6} />
             Indietro
           </button>
@@ -561,11 +585,10 @@ export default function WebNote() {
         <div className="ne-sheet">
           <span className="ne-tape ne-tape-a" aria-hidden="true" />
           <span className="ne-tape ne-tape-b" aria-hidden="true" />
-          <input
-            type="text"
+          <TitleInput
             placeholder="Titolo della nota"
             value={form.title}
-            onChange={(e) => set({ title: e.target.value })}
+            onChange={(title) => set({ title })}
             className="ne-title"
           />
           <RichText
@@ -598,6 +621,12 @@ export default function WebNote() {
                       />
                       <button
                         type="button"
+                        title="Visualizza"
+                        onClick={() => setViewerIndex(i)}
+                        className="absolute inset-0 cursor-zoom-in"
+                      />
+                      <button
+                        type="button"
                         title="Rimuovi"
                         onClick={() => {
                           setExistingImages((p) => p.filter((x) => x !== fn))
@@ -616,6 +645,12 @@ export default function WebNote() {
                       style={{ '--pr': `${tilt(`${p.url}p${i}`, 4).toFixed(2)}deg` }}
                     >
                       <span className="mp-ph" style={{ backgroundImage: `url(${p.url})` }} />
+                      <button
+                        type="button"
+                        title="Visualizza"
+                        onClick={() => setViewerIndex(existingImages.length + i)}
+                        className="absolute inset-0 cursor-zoom-in"
+                      />
                       <button
                         type="button"
                         title="Rimuovi"
@@ -758,6 +793,13 @@ export default function WebNote() {
         onClose={() => setDialog(null)}
       />
 
+      <ImageLightbox
+        images={galleryImages}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onIndex={setViewerIndex}
+      />
+
       <AddImagesSheet
         open={addSheetOpen}
         onClose={() => setAddSheetOpen(false)}
@@ -768,6 +810,7 @@ export default function WebNote() {
       {immichReady && (
         <ImmichPicker
           open={immichOpen}
+          dateKey={form.dateKey}
           baseUrl={immichUrl}
           apiKey={immichApiKey}
           onClose={() => setImmichOpen(false)}

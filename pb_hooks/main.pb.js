@@ -3,8 +3,10 @@
 // Recap automatici (giorno/mese/anno) scritti con Gemini, lato server: non
 // serve aprire l'app perché restino aggiornati.
 //  - Creando/cancellando una nota, o modificandone descrizione o mood, i
-//    recap toccati (giorno, mese e anno della nota) vengono SEGNATI da
-//    aggiornare in una coda (recap_jobs); salvare non chiama mai Gemini.
+//    recap toccati vengono SEGNATI da aggiornare in una coda (recap_jobs): il
+//    giorno della nota, e il suo mese e anno solo se già finiti (mese e anno in
+//    corso si riassumono quando chiudono: il primo del mese/anno). Salvare non
+//    chiama mai Gemini.
 //  - Ogni sera alle 23:00 (ora di Roma, TZ del container) un cron li evade
 //    TUTTI in blocco: prima i giorni, poi i mesi, poi gli anni, una richiesta
 //    a Gemini alla volta. Due ritentativi (23:20 e 23:40) riprendono quello

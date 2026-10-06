@@ -63,12 +63,6 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
   const [state, setState] = useState('idle') // idle | recording | transcribing
   const [seconds, setSeconds] = useState(0)
   const [error, setError] = useState('')
-  // Il vocale appena registrato resta qui finché non viene trascritto con
-  // successo: se la trascrizione fallisce (rete assente, tutti i riprovi
-  // automatici di transcribeAudio esauriti…) si può ritrascrivere lo STESSO
-  // audio con un tasto, invece di dover rifare da capo una registrazione
-  // magari lunga.
-  const [lastRecording, setLastRecording] = useState(null) // { blob, mimeType, id } | null
   // Elenco dei vocali salvati sul dispositivo e non ancora trascritti.
   const [saved, setSaved] = useState([])
   const mediaRef = useRef(null)
@@ -142,19 +136,13 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
         text = await transcribeAudio(apiKey, { audioBase64: await blobToBase64(wav), mimeType: 'audio/wav' })
       }
       onTranscribed(text)
-      setLastRecording(null) // andata a buon fine: non serve più tenerlo
       await deleteVoice(id) // né sul dispositivo
     } catch (err) {
-      setLastRecording({ blob, mimeType, id }) // tenuto da parte per "Riprova"
       setError(describeGeminiError(err))
     } finally {
       setState('idle')
       refreshSaved()
     }
-  }
-
-  function retryTranscription() {
-    if (lastRecording) transcribe(lastRecording.blob, lastRecording.mimeType, lastRecording.id)
   }
 
   // Ritrascrive un vocale salvato (anche di una sessione precedente).
@@ -163,13 +151,11 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
   }
   async function discardSaved(v) {
     await deleteVoice(v.id)
-    if (lastRecording?.id === v.id) setLastRecording(null)
     refreshSaved()
   }
 
   async function start() {
     setError('')
-    setLastRecording(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
@@ -260,14 +246,6 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
       {error && (
         <p className="gms-voice-error">
           {error}
-          {lastRecording && (
-            <>
-              {' '}
-              <button type="button" onClick={retryTranscription} className="gms-voice-retry">
-                Riprova la trascrizione (senza registrare di nuovo)
-              </button>
-            </>
-          )}
         </p>
       )}
       {saved.length > 0 && state !== 'recording' && (

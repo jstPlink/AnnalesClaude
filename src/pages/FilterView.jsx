@@ -5,7 +5,6 @@ import MobileTopBar from '../components/MobileTopBar'
 import MobileBottomBar from '../components/MobileBottomBar'
 import Footer from '../components/Footer'
 import Icon from '../components/Icon'
-import MarqueeText from '../components/MarqueeText'
 import PersonAvatar from '../components/PersonAvatar'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -187,7 +186,10 @@ export default function FilterView() {
         <button
           type="button"
           className="mchev"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            haptic()
+            navigate(-1)
+          }}
           title="Indietro"
           aria-label="Indietro"
         >
@@ -599,13 +601,13 @@ export default function FilterView() {
                           {Math.round(Number(n.mood) * 100)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <MarqueeText className="wf-result-title">
+                          <span className="wf-result-title title-2">
                             {n.title || (
                               <span className="italic text-ink-soft">
                                 Senza titolo
                               </span>
                             )}
-                          </MarqueeText>
+                          </span>
                           <span className="wf-result-meta block">
                             {dayMonthLabel(dayKey(n.date))} · {timeLabel(n.timeStart)}–
                             {timeLabel(n.timeEnd)}

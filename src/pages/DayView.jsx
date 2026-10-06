@@ -16,6 +16,7 @@ import { listNotesInRange, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
 import { addDaysKey, dayMonthLabel, dayRange, parseWall } from '../lib/dates'
+import { haptic } from '../lib/haptics'
 
 const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
 
@@ -109,7 +110,10 @@ export default function DayView() {
         <button
           type="button"
           className="mchev"
-          onClick={() => navigate('/')}
+          onClick={() => {
+            haptic()
+            navigate('/')
+          }}
           title="Indietro"
           aria-label="Indietro"
         >
@@ -131,6 +135,10 @@ export default function DayView() {
         periodKey={date}
         notes={notes}
         apiKey={user?.geminiApiKey?.trim()}
+        tab="Recap del giorno"
+        tabInside
+        hideTitle
+        alwaysShow
         className="mx-2 mt-2"
       />
 
@@ -152,8 +160,6 @@ export default function DayView() {
             solo decorativo, non serve scorrere per vedere le note più tarde. */}
         {loading ? (
           <p className="p-6 text-center text-ink-soft">Carico…</p>
-        ) : !notes.length ? (
-          <p className="pt-10 text-center text-ink-soft">Nessuna nota</p>
         ) : (
           <DayPages
             date={date}

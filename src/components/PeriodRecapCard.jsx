@@ -28,6 +28,8 @@ export default function PeriodRecapCard({
   apiKey,
   title,
   tab, // testo di una targhetta (stile .st-label delle Statistiche) sopra la card: sparisce insieme alla card
+  tabInside = false, // la targhetta sta dentro la card, all'altezza del tasto Genera/Rigenera
+  alwaysShow = false, // mostra la card anche senza note né recap (vista giorno)
   hideTitle = false, // il titolo sta già nella targhetta: dentro la card resta solo il tasto
   className = '',
 }) {
@@ -50,7 +52,7 @@ export default function PeriodRecapCard({
   }, [period, periodKey])
 
   if (text === undefined) return null // in caricamento: niente salto di layout per un attimo
-  if (!text && (!apiKey || !notes || !notes.length)) return null
+  if (!alwaysShow && !text && (!apiKey || !notes || !notes.length)) return null
 
   async function regenerate() {
     if (loading) return
@@ -74,13 +76,20 @@ export default function PeriodRecapCard({
   }
 
   const card = (
-    <section className={'prc-card ' + (tab ? '' : className)}>
-      <div className={'prc-head' + (hideTitle ? ' prc-head-end' : '')}>
-        {!hideTitle && (
+    <section className={'prc-card ' + (tab && !tabInside ? '' : className)}>
+      <div className={'prc-head' + (hideTitle && !(tab && tabInside) ? ' prc-head-end' : '')}>
+        {tab && tabInside ? (
+          <span className="st-label prc-tab-in">
+            <Icon name="sparkles" size={12} />
+            {tab}
+          </span>
+        ) : (
+          !hideTitle && (
           <p className="prc-title">
             <Icon name="sparkles" size={14} className="shrink-0" />
             {title || TITLES[period]}
           </p>
+          )
         )}
         {!loading && apiKey && notes?.length > 0 && (
           <button type="button" onClick={regenerate} className="prc-btn">
@@ -93,12 +102,14 @@ export default function PeriodRecapCard({
       ) : text ? (
         <p className="prc-text">{text}</p>
       ) : (
-        <p className="prc-empty">Recap non ancora generato.</p>
+        <p className="prc-empty">
+          {!notes || !notes.length ? 'Nessuna nota: niente da riassumere.' : 'Recap non ancora generato.'}
+        </p>
       )}
       {error && <p className="prc-error">{error}</p>}
     </section>
   )
-  if (!tab) return card
+  if (!tab || tabInside) return card
   return (
     <div className={className}>
       <span className="st-label">

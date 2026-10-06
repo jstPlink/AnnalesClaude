@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
-import { dayKey, fullDayLabel, todayKey } from '../lib/dates'
+import { addDaysKey, dayKey, fullDayLabel, todayKey } from '../lib/dates'
 import {
   searchImmichPhotos,
   fetchImmichThumbnailBlob,
@@ -69,10 +69,16 @@ function ImmichThumb({ baseUrl, apiKey, asset, selected, onToggle }) {
 
 // Dialog per scegliere foto dal server Immich configurato in Profilo.
 // `onConfirm(files)` riceve i File scaricati, pronti per la stessa pipeline
-// di salvataggio usata per gli allegati locali. Il campo data in alto
-// permette di saltare direttamente a un giorno preciso (via `takenAfter`/
-// `takenBefore`), invece di scorrere/"Carica altre" tra le più recenti.
-export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm }) {
+// di salvataggio usata per gli allegati locali. Si apre sul giorno della nota
+// che si sta scrivendo (`dateKey`): le foto di quel giorno, con in alto un
+// pulsante per caricare i 3 giorni successivi e in basso quello per i 3
+// precedenti (le foto potrebbero essere state caricate dopo o prima). Il campo
+// data permette di saltare a un altro giorno; «Mostra tutte» torna all'elenco
+// delle più recenti con «Carica altre». Senza `dateKey` (es. Importa) si parte
+// direttamente dall'elenco delle più recenti.
+const EXTEND_DAYS = 3
+
+export default function ImmichPicker({ open, baseUrl, apiKey, dateKey, onClose, onConfirm }) {
   const [items, setItems] = useState([])
   const [nextPage, setNextPage] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -88,6 +94,15 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
   // scorrere/"Carica altre" tra le foto più recenti. Vuoto = nessun filtro.
   const [dateFilter, setDateFilter] = useState('')
   const loadedRef = useRef(false)
+  // Finestra di giorni caricata attorno al giorno scelto (solo con un giorno
+  // scelto): lo = il più vecchio, hi = il più recente.
+  const [lo, setLo] = useState('')
+  const [hi, setHi] = useState('')
+  const [extending, setExtending] = useState('') // '' | 'up' | 'down'
+  const scrollRef = useRef(null)
+  const anchorRef = useRef(null)
+  const scrollToAnchorRef = useRef(false)
+  const keepScrollRef = useRef(null) // altezza prima di aggiungere giorni in cima
 
   useEffect(() => {
     if (!open) {
@@ -97,14 +112,96 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
       setNextPage(null)
       setError('')
       setDateFilter('')
+      setLo('')
+      setHi('')
       setPendingFallback(null)
       return
     }
     if (loadedRef.current) return
     loadedRef.current = true
-    loadPage(1)
+    if (dateKey) {
+      setDateFilter(dateKey)
+      loadDay(dateKey)
+    } else {
+      loadPage(1)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // Tutte le foto fra due giorni (inclusi), seguendo la paginazione di Immich.
+  async function fetchRange(from, to) {
+    let page = 1
+    let all = []
+    for (let guard = 0; guard < 30; guard += 1) {
+      const { items: got, nextPage: np } = await searchImmichPhotos(baseUrl, apiKey, {
+        page,
+        takenAfter: `${from}T00:00:00.000Z`,
+        takenBefore: `${to}T23:59:59.999Z`,
+      })
+      all = all.concat(got)
+      if (np == null) break
+      page = np
+    }
+    return all
+  }
+
+  // Carica le foto di UN giorno e fa partire da lì la finestra.
+  async function loadDay(day) {
+    setLoading(true)
+    setError('')
+    setNextPage(null)
+    scrollToAnchorRef.current = true
+    try {
+      const got = await fetchRange(day, day)
+      setItems(got)
+      setLo(day)
+      setHi(day)
+    } catch (err) {
+      setError(describeImmichError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Aggiunge i 3 giorni successivi (in cima) o precedenti (in fondo).
+  async function extend(direction) {
+    if (extending || !lo || !hi) return
+    setExtending(direction)
+    setError('')
+    try {
+      if (direction === 'up') {
+        const next = addDaysKey(hi, EXTEND_DAYS) > todayKey() ? todayKey() : addDaysKey(hi, EXTEND_DAYS)
+        if (next <= hi) return
+        const got = await fetchRange(addDaysKey(hi, 1), next)
+        keepScrollRef.current = scrollRef.current ? scrollRef.current.scrollHeight : null
+        setItems((prev) => [...got, ...prev])
+        setHi(next)
+      } else {
+        const next = addDaysKey(lo, -EXTEND_DAYS)
+        const got = await fetchRange(next, addDaysKey(lo, -1))
+        setItems((prev) => [...prev, ...got])
+        setLo(next)
+      }
+    } catch (err) {
+      setError(describeImmichError(err))
+    } finally {
+      setExtending('')
+    }
+  }
+
+  // Dopo il primo caricamento il giorno scelto va in cima alla vista; quando si
+  // aggiungono giorni sopra, la posizione non deve saltare.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    if (scrollToAnchorRef.current && anchorRef.current && !loading) {
+      scrollToAnchorRef.current = false
+      el.scrollTop += anchorRef.current.getBoundingClientRect().top - el.getBoundingClientRect().top
+    } else if (keepScrollRef.current != null) {
+      el.scrollTop += el.scrollHeight - keepScrollRef.current
+      keepScrollRef.current = null
+    }
+  }, [items, loading])
 
   async function loadPage(page, { dateFilter: dayOverride = dateFilter } = {}) {
     const setBusy = page === 1 ? setLoading : setLoadingMore
@@ -131,17 +228,35 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
     setDateFilter(value)
     setItems([])
     setNextPage(null)
-    loadPage(1, { dateFilter: value })
+    if (value) {
+      loadDay(value)
+    } else {
+      setLo('')
+      setHi('')
+      loadPage(1, { dateFilter: '' })
+    }
   }
 
   function handleClearDate() {
     setDateFilter('')
+    setLo('')
+    setHi('')
     setItems([])
     setNextPage(null)
     loadPage(1, { dateFilter: '' })
   }
 
-  const sections = useMemo(() => groupByDay(items), [items])
+  // Con un giorno scelto la sezione di quel giorno c'è sempre, anche se senza
+  // foto, per avere un punto di partenza da cui scorrere sopra e sotto.
+  const sections = useMemo(() => {
+    const list = groupByDay(items)
+    if (dateFilter && lo && !list.some((sec) => sec.key === dateFilter)) {
+      list.push({ key: dateFilter, label: fullDayLabel(dateFilter), assets: [] })
+      list.sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0))
+    }
+    return list
+  }, [items, dateFilter, lo])
+  const rangeMode = Boolean(dateFilter && lo)
 
   function toggle(asset) {
     setPendingFallback(null)
@@ -230,22 +345,42 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
             <p className="py-10 text-center text-ink-soft">Carico foto…</p>
           ) : error && !items.length ? (
             <p className="py-10 text-center text-sm text-delete-dark">{error}</p>
-          ) : !items.length ? (
-            <p className="py-10 text-center text-ink-soft">
-              {dateFilter ? 'Nessuna foto in questo giorno.' : 'Nessuna foto trovata.'}
-            </p>
+          ) : !items.length && !rangeMode ? (
+            <p className="py-10 text-center text-ink-soft">Nessuna foto trovata.</p>
           ) : (
             <>
+              {rangeMode && (
+                <button
+                  type="button"
+                  disabled={Boolean(extending) || hi >= todayKey()}
+                  onClick={() => extend('up')}
+                  className="mb-4 w-full rounded-full border border-line bg-tag px-4 py-2 text-sm font-semibold text-ink transition disabled:opacity-50"
+                >
+                  {extending === 'up'
+                    ? 'Carico…'
+                    : hi >= todayKey()
+                      ? 'Sei arrivato a oggi'
+                      : `↑ Giorni successivi (dopo il ${fullDayLabel(hi)})`}
+                </button>
+              )}
               {sections.map((section) => (
-                <div key={section.key || section.label} className="mb-5 last:mb-0">
+                <div
+                  key={section.key || section.label}
+                  ref={rangeMode && section.key === dateKey ? anchorRef : undefined}
+                  className="mb-5 last:mb-0"
+                >
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                     {section.label}
+                    {rangeMode && section.key === dateKey && ' · giorno della nota'}
                   </p>
+                  {!section.assets.length && (
+                    <p className="py-2 text-sm text-ink-soft">Nessuna foto in questo giorno.</p>
+                  )}
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {section.assets.map((asset) => (
                       <ImmichThumb
@@ -260,6 +395,18 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
                   </div>
                 </div>
               ))}
+              {rangeMode && (
+                <button
+                  type="button"
+                  disabled={Boolean(extending)}
+                  onClick={() => extend('down')}
+                  className="mt-4 w-full rounded-full border border-line bg-tag px-4 py-2 text-sm font-semibold text-ink transition disabled:opacity-50"
+                >
+                  {extending === 'down'
+                    ? 'Carico…'
+                    : `↓ Giorni precedenti (prima del ${fullDayLabel(lo)})`}
+                </button>
+              )}
               {nextPage != null && (
                 <button
                   type="button"
@@ -270,7 +417,7 @@ export default function ImmichPicker({ open, baseUrl, apiKey, onClose, onConfirm
                   {loadingMore ? 'Carico…' : 'Carica altre'}
                 </button>
               )}
-              {error && items.length > 0 && (
+              {error && (items.length > 0 || rangeMode) && (
                 <p className="mt-3 text-center text-sm text-delete-dark">{error}</p>
               )}
             </>
