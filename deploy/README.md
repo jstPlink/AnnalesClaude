@@ -63,15 +63,14 @@ Su Synology: *Container Manager → Progetto → Azione → Ricostruisci* (fa pu
 Il compose pubblica sulla LAN **una sola porta**: `8973:80` (frontend).
 PocketBase è interno: non ha porte pubblicate, lo raggiunge il container
 `annales` (nginx) che inoltra le chiamate `/api/` dell'app. Basta quindi **un
-solo hostname** (es. `annales.fplinio.it`): niente secondo hostname per il
+solo hostname** (es. `annales.tuodominio.it`): niente secondo hostname per il
 database, niente URL da configurare nell'app.
 
 **Opzione A — Cloudflare Tunnel**: nel tunnel un solo *public hostname*
-- `annales.fplinio.it` → **Service = `http://localhost:8973`** (oppure
+- `annales.tuodominio.it` → **Service = `http://localhost:8973`** (oppure
   `http://annales-diario:80` se `cloudflared` gira sulla stessa rete Docker).
 
-Eventuali vecchi hostname del database (`pb-nuovo.fplinio.it`,
-`pocketbase.fplinio.it`) si possono togliere dal tunnel.
+Eventuali vecchi hostname del database si possono togliere dal tunnel.
 
 **Opzione B — reverse proxy del NAS + DNS proxied**: un record DNS proxied
 (arancione) e una regola del reverse proxy verso la porta `8973`.

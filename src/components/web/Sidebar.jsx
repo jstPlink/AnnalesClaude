@@ -87,6 +87,7 @@ export default function Sidebar() {
 
         <NewNoteWithGeminiSheet
           open={geminiNoteOpen}
+          dateKey={newNoteDate}
           onClose={() => setGeminiNoteOpen(false)}
           apiKey={user?.geminiApiKey?.trim()}
           customInstructions={user?.geminiCustomInstructions?.trim()}

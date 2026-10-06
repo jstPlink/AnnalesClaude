@@ -10,7 +10,7 @@
 // Le chiavi sono per-utente, così un altro account sullo stesso dispositivo
 // non vede i dati altrui.
 
-import { pb } from './pocketbase'
+import { pb, isLocal } from './pocketbase'
 import { isNetworkError } from './offlineQueue'
 
 const DB_NAME = 'annales-cache'
@@ -126,6 +126,8 @@ function emitUpdate(key) {
 // Legge con cache: vedi il commento in cima. `fallback` (opzionale) prova a
 // ricostruire il dato da altra cache quando quella esatta manca.
 export async function cachedRead(key, fetcher, { fallback, softMs = SOFT_MS } = {}) {
+  // Archivio sul dispositivo: i dati sono già locali, niente cache da tenere in pari.
+  if (isLocal) return fetcher()
   const cached = await cacheGet(key)
   let servedFromCache = false
 

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { pb, fileUrl } from '../../lib/pocketbase'
+import { pb, fileUrl, isLocal } from '../../lib/pocketbase'
 import { describeError } from '../../lib/notes'
 import { fakeIdNumber, fakeSignature } from '../../lib/idCard'
 import { MONTHS_IT } from '../../lib/dates'
@@ -17,6 +17,7 @@ export default function ProfileCard() {
   const { user } = useAuth()
   const name = user?.name?.trim() || ''
   const email = user?.email || '—'
+  // In modalità locale non ci sono email né password: l'archivio è del dispositivo.
   const initial = (name || email || '?').charAt(0).toUpperCase()
   const avatarUrl = user?.avatar ? fileUrl(user, user.avatar, { thumb: '160x160' }) : ''
   const joinDate = user?.created
@@ -78,7 +79,7 @@ export default function ProfileCard() {
   // (se compilata).
   async function saveAllChanges() {
     if (!user?.id || busy) return
-    if (newPassword && newPassword !== newPasswordConfirm) {
+    if (!isLocal && newPassword && newPassword !== newPasswordConfirm) {
       setFieldMsg({ ok: false, text: 'Le due password non coincidono.' })
       return
     }
@@ -93,7 +94,7 @@ export default function ProfileCard() {
       }
 
       const nextEmail = emailDraft.trim()
-      if (nextEmail && nextEmail !== (user?.email || '')) {
+      if (!isLocal && nextEmail && nextEmail !== (user?.email || '')) {
         try {
           await pb.collection('users').update(user.id, { email: nextEmail })
           notes.push('Email aggiornata.')
@@ -103,7 +104,7 @@ export default function ProfileCard() {
         }
       }
 
-      if (oldPassword && newPassword) {
+      if (!isLocal && oldPassword && newPassword) {
         await pb.collection('users').update(user.id, {
           oldPassword,
           password: newPassword,
@@ -183,6 +184,8 @@ export default function ProfileCard() {
                     onChange={(e) => setNameDraft(e.target.value)}
                   />
                 </label>
+                {!isLocal && (
+                  <>
                 <label className="pf-erow">
                   <span className="pf-flabel">Email</span>
                   <input
@@ -212,6 +215,8 @@ export default function ProfileCard() {
                     onChange={(e) => setNewPasswordConfirm(e.target.value)}
                   />
                 </div>
+                  </>
+                )}
               </div>
             ) : (
               <>
@@ -219,14 +224,23 @@ export default function ProfileCard() {
                   <span className="pf-flabel">Nome</span>
                   <span className="pf-fvalue">{name || '—'}</span>
                 </div>
-                <div className="pf-row">
-                  <span className="pf-flabel">Email</span>
-                  <span className="pf-fvalue">{email}</span>
-                </div>
-                <div className="pf-row">
-                  <span className="pf-flabel">Password</span>
-                  <span className="pf-fvalue dots">{PASSWORD_DOTS}</span>
-                </div>
+                {isLocal ? (
+                  <div className="pf-row">
+                    <span className="pf-flabel">Archivio</span>
+                    <span className="pf-fvalue">Su questo dispositivo</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="pf-row">
+                      <span className="pf-flabel">Email</span>
+                      <span className="pf-fvalue">{email}</span>
+                    </div>
+                    <div className="pf-row">
+                      <span className="pf-flabel">Password</span>
+                      <span className="pf-fvalue dots">{PASSWORD_DOTS}</span>
+                    </div>
+                  </>
+                )}
               </>
             )}
 

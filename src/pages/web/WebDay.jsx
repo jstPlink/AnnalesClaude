@@ -5,9 +5,9 @@ import { useAuth } from '../../context/AuthContext'
 import Icon from '../../components/Icon'
 import DayPages from './DayPages'
 import PeriodRecapCard from '../../components/PeriodRecapCard'
-import { listNotesInRange, describeError } from '../../lib/notes'
+import { listNotesForDay, describeError } from '../../lib/notes'
 import { listPeople } from '../../lib/people'
-import { addDaysKey, dayRange, fullDayLabel, parseWall } from '../../lib/dates'
+import { addDaysKey, fullDayLabel, parseWall } from '../../lib/dates'
 import { haptic } from '../../lib/haptics'
 
 // Stessa logica della vista giorno mobile (src/pages/DayView.jsx): l'intera
@@ -17,6 +17,11 @@ import { haptic } from '../../lib/haptics'
 // il contenuto vero e proprio (skin "Pagine") è a piena larghezza, senza
 // alcun tetto, esattamente come la griglia della vista mese (WebMonth), che
 // non ne ha uno proprio.
+
+// Le note arrivate dal giorno prima partono da mezzanotte.
+function startOf(n) {
+  return n.carriedFromPrevious ? -1 : startMinutes(n.timeStart)
+}
 
 function startMinutes(value) {
   const p = parseWall(value)
@@ -40,8 +45,8 @@ export default function WebDay() {
     setLoading(true)
     setError('')
     try {
-      const list = await listNotesInRange(dayRange(date))
-      list.sort((a, b) => startMinutes(a.timeStart) - startMinutes(b.timeStart))
+      const list = await listNotesForDay(date)
+      list.sort((a, b) => startOf(a) - startOf(b))
       setNotes(list)
     } catch (err) {
       setError(describeError(err))
@@ -138,7 +143,7 @@ export default function WebDay() {
       <PeriodRecapCard
         period="day"
         periodKey={date}
-        notes={notes}
+        notes={notes.filter((n) => !n.carriedFromPrevious)}
         apiKey={user?.geminiApiKey?.trim()}
         tab="Recap del giorno"
         tabInside

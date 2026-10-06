@@ -4,7 +4,7 @@
       <path d="M14 0H0V14" fill="none" stroke="#8fb0c6" stroke-width="1" opacity=".65"/>
     </pattern>
     <filter id="sh" x="-30%" y="-30%" width="160%" height="170%">
-      <feDropShadow dx="2" dy="6" stdDeviation="3.5" flood-color="#1a1208" flood-opacity=".6"/>
+      <feDropShadow dx="2" dy="6" stdDeviation="3.5" flood-color="#1a1208" flood-opacity=".8"/>
     </filter>
     <filter id="shs" x="-40%" y="-40%" width="180%" height="190%">
       <feDropShadow dx="1" dy="2.5" stdDeviation="1.6" flood-color="#1a1208" flood-opacity=".55"/>
@@ -12,8 +12,16 @@
     <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f7d9a0"/><stop offset=".55" stop-color="#8fc7d6"/><stop offset="1" stop-color="#3f8fb0"/>
     </linearGradient>
+    <g id="sheetBack">
+      <rect width="96" height="120" rx="6" fill="#c9bf9f" stroke="#7d7254" stroke-width="2"/>
+      <rect width="96" height="120" rx="6" fill="url(#grid)"/>
+    </g>
+    <g id="sheetMid">
+      <rect width="96" height="120" rx="6" fill="#e4dcc3" stroke="#8a7f60" stroke-width="2"/>
+      <rect width="96" height="120" rx="6" fill="url(#grid)"/>
+    </g>
     <g id="sheet">
-      <rect width="96" height="120" rx="6" fill="#fbf9f0" stroke="#b9ae8f" stroke-width="1.5"/>
+      <rect width="96" height="120" rx="6" fill="#fffef8" stroke="#8a7f60" stroke-width="2"/>
       <rect width="96" height="120" rx="6" fill="url(#grid)"/>
     </g>
     <g id="scrawl">
@@ -33,8 +41,8 @@
       <path d="M8 43c4-4 6 3 11-1s7 3 14-1" fill="none" stroke="#5a4a2a" stroke-width="1.8" stroke-linecap="round"/>
     </g>
   </defs>
-  <g transform="translate(34 30) rotate(-10 48 60)" filter="url(#sh)"><use xlink:href="#sheet"/></g>
-  <g transform="translate(58 34) rotate(7 48 60)" filter="url(#sh)"><use xlink:href="#sheet"/></g>
+  <g transform="translate(34 30) rotate(-10 48 60)" filter="url(#sh)"><use xlink:href="#sheetBack"/></g>
+  <g transform="translate(58 34) rotate(7 48 60)" filter="url(#sh)"><use xlink:href="#sheetMid"/></g>
   <g transform="translate(44 48) rotate(-1 48 60)" filter="url(#sh)">
     <use xlink:href="#sheet"/>
     <g transform="translate(14 22)"><use xlink:href="#scrawl"/></g>

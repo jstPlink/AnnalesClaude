@@ -5,7 +5,8 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { pb } from '../lib/pocketbase'
+import { pb, isLocal } from '../lib/pocketbase'
+import { resetBackend } from '../lib/backend'
 import { setMoodGradient } from '../lib/mood'
 
 const AuthContext = createContext(null)
@@ -64,6 +65,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(() => {
+    if (isLocal) {
+      // Senza account non c'è un "esci": si torna alla scelta dell'archivio
+      // (i dati restano sul dispositivo).
+      resetBackend()
+      window.location.replace('/')
+      return
+    }
     pb.authStore.clear()
   }, [])
 

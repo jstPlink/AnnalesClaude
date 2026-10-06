@@ -7,6 +7,7 @@ import PersonAvatar from '../components/PersonAvatar'
 import ImmichPeoplePicker from '../components/ImmichPeoplePicker'
 import PlacePickerSheet from '../components/PlacePickerSheet'
 import SettingsSection from '../components/SettingsSection'
+import SupportSection from '../components/SupportSection'
 import MymapIntegration from '../components/MymapIntegration'
 import AppearanceControls from '../components/AppearanceControls'
 import SoundSettings from '../components/SoundSettings'
@@ -21,9 +22,10 @@ import PermissionsSettings from '../components/PermissionsSettings'
 import { remindersSupported } from '../lib/reminders'
 import Changelog from '../components/Changelog'
 import DeleteAccount from '../components/DeleteAccount'
+import BackendInfo from '../components/BackendInfo'
 import ProfileCard from '../components/web/ProfileCard'
 import { useAuth } from '../context/AuthContext'
-import { pb } from '../lib/pocketbase'
+import { pb, isLocal } from '../lib/pocketbase'
 import {
   describeError,
   listNotesWithPerson,
@@ -1030,34 +1032,17 @@ export default function Profile() {
           <PermissionsSettings />
         </SettingsSection>
 
-        <SettingsSection title="Uso offline" icon="cloud">
-          <OfflineStorage />
-        </SettingsSection>
+        {!isLocal && (
+          <SettingsSection title="Uso offline" icon="cloud">
+            <OfflineStorage />
+          </SettingsSection>
+        )}
 
         <SettingsSection title="Import ed export" icon="download">
             <ExportButtons />
         </SettingsSection>
 
-        <SettingsSection title="Supporto" icon="mail">
-          <a
-            href="mailto:fp.dignazio@gmail.com"
-            className="flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
-          >
-            <span className="text-xs font-semibold text-ink-soft">Email</span>
-            <span className="text-sm font-medium text-ink">
-              fp.dignazio@gmail.com
-            </span>
-          </a>
-          <a
-            href="https://t.me/fplinio"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 flex items-center justify-between rounded-xl border border-line bg-cream px-3 py-2.5"
-          >
-            <span className="text-xs font-semibold text-ink-soft">Telegram</span>
-            <span className="text-sm font-medium text-ink">@fplinio</span>
-          </a>
-        </SettingsSection>
+        <SupportSection />
 
         <SettingsSection title="Offrimi un caffè" icon="heart">
           {/* Placeholder: account Buy Me a Coffee non ancora attivo. Quando
@@ -1072,15 +1057,19 @@ export default function Profile() {
           <Changelog />
         </SettingsSection>
 
-        <SettingsSection title="Account" icon="user">
-          <button
-            type="button"
-            onClick={onLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
-          >
-            <Icon name="logout" size={18} />
-            Esci
-          </button>
+        <SettingsSection title="Archivio e account" icon="user">
+          <BackendInfo />
+
+          {!isLocal && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-base font-bold text-ink shadow-sm transition active:scale-95"
+            >
+              <Icon name="logout" size={18} />
+              Esci
+            </button>
+          )}
 
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-line-soft pt-4">
             <span className="text-xs text-ink-soft">

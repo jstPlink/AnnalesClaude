@@ -11,6 +11,7 @@ import { useIsWide } from './hooks/useIsWide'
 import RequireAuth from './components/RequireAuth'
 import Sidebar from './components/web/Sidebar'
 import StatusPills from './components/StatusPills'
+import Toaster from './components/Toaster'
 import WidgetLinks from './components/WidgetLinks'
 import WidgetSync from './components/WidgetSync'
 import TiltPhotos from './components/TiltPhotos'
@@ -181,6 +182,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <StatusPills />
+          <Toaster />
         </BrowserRouter>
       </NavProvider>
     </AuthProvider>

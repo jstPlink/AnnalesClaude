@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { describeError } from '../lib/notes'
 import { haptic } from '../lib/haptics'
 import PhoneShell from '../components/PhoneShell'
+import BackendInfo from '../components/BackendInfo'
 
 const MIN_PASSWORD = 8
 
@@ -224,6 +225,7 @@ export default function Login() {
           </p>
 
           <p className="ml-version">Annales · v{__APP_VERSION__}</p>
+          <BackendInfo compact className="ml-version" />
         </div>
       </main>
     </PhoneShell>

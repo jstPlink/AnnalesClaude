@@ -1,5 +1,5 @@
 import { pb } from './pocketbase'
-import { dayKey, timeInputValue, toPbTime } from './dates'
+import { addDaysKey, dayKey, dayRange, parseWall, timeInputValue, toPbTime } from './dates'
 import {
   enqueue,
   allOps,
@@ -41,6 +41,26 @@ export async function listNotesInRange({ start, end }, { fresh = false } = {}) {
       },
     },
   )
+}
+
+// Una nota "a cavallo della notte" (fine prima dell'inizio, es. 22:00 → 03:00)
+// appartiene a due giorni: quello in cui inizia e quello in cui finisce.
+export function crossesMidnight(n) {
+  const a = parseWall(n.timeStart)
+  const b = parseWall(n.timeEnd)
+  if (!a || !b) return false
+  return b.h * 60 + b.mi < a.h * 60 + a.mi
+}
+
+// Note da mostrare nella vista di un giorno: quelle del giorno più quelle del
+// giorno prima che finiscono oggi (marcate `carriedFromPrevious`, stesso id).
+export async function listNotesForDay(date) {
+  const [today, prev] = await Promise.all([
+    listNotesInRange(dayRange(date)),
+    listNotesInRange(dayRange(addDaysKey(date, -1))),
+  ])
+  const carried = prev.filter(crossesMidnight).map((n) => ({ ...n, carriedFromPrevious: true }))
+  return [...today, ...carried]
 }
 
 export async function getNote(id) {
@@ -95,7 +115,7 @@ function commonFields(data, opts) {
   const { newFiles, removedImages, peopleIds, tagIds, appendImages, setUser } =
     opts
   const fd = new FormData()
-  fd.append('title', data.title ?? '')
+  fd.append('title', (data.title ?? '').toUpperCase())
   fd.append('content', data.content ?? '')
   fd.append('mood', String(data.mood ?? 0))
   fd.append('place', serializePlace(data.place))

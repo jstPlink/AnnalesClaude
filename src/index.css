@@ -1097,12 +1097,12 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   top: 14px;
   z-index: 4;
   width: var(--mp-tw, 58px);
-  padding: 7px 6px 8px 11px;
+  padding: 7px 11px 8px 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  border-radius: 3px 11px 11px 3px;
+  border-radius: 11px 3px 3px 11px;
   color: #33291c;
   background-color: color-mix(
     in srgb,
@@ -1117,8 +1117,9 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     rgba(255, 255, 255, 0.04) 100%
   );
   opacity: 0.93;
+  /* contorno: filo interno del colore base della linguetta scurito del 20% */
   box-shadow: 2px 3px 6px rgba(20, 12, 4, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    inset 0 0 0 2px color-mix(in srgb, color-mix(in srgb, var(--mp-tab, var(--color-line)) 50%, #efe6d0) 80%, #000);
   transform: rotate(-2.5deg);
   /* niente più filter: si ripete su ogni giorno CON note (fino a ~25 alla
      volta) — una delle cause più probabili del glitch grafico da telefono
@@ -1133,7 +1134,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
      il clip-path proprio all'altezza del centro: un margine spinge il
      numero, centrato dal flex del genitore, un po' a sinistra così il
      ritaglio non lo taglia più. */
-  margin-right: 4px;
+  margin-left: 4px;
 }
 .mp-tab.is-empty {
   background-color: color-mix(in srgb, var(--color-line-soft) 60%, #efe6d0);
@@ -1141,28 +1142,28 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 }
 /* silhouette diversa per fascia d'umore (classe da MonthPages.jsx) */
 .mp-tab--green {
-  border-radius: 3px 0 0 3px;
-  padding-right: 15px;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 11px) 50%, 100% 100%, 0 100%);
+  border-radius: 0 3px 3px 0;
+  padding-left: 15px;
+  clip-path: polygon(100% 0, 0 0, 11px 50%, 0 100%, 100% 100%);
 }
 .mp-tab--blue {
-  border-radius: 3px 22px 22px 3px;
+  border-radius: 22px 3px 3px 22px;
 }
 .mp-tab--yellow {
-  border-radius: 3px 5px 5px 3px;
-  clip-path: polygon(0 0, 100% 5%, 95% 27%, 100% 50%, 95% 73%, 100% 95%, 0 100%);
+  border-radius: 5px 3px 3px 5px;
+  clip-path: polygon(100% 0, 0 5%, 5% 27%, 0 50%, 5% 73%, 0 95%, 100% 100%);
 }
 .mp-tab--coral {
   clip-path: polygon(
-    0 0,
     100% 0,
-    90% 15%,
-    100% 32%,
-    88% 50%,
-    100% 68%,
-    91% 85%,
-    100% 100%,
-    0 100%
+    0 0,
+    10% 15%,
+    0 32%,
+    12% 50%,
+    0 68%,
+    9% 85%,
+    0 100%,
+    100% 100%
   );
 }
 
@@ -1254,16 +1255,29 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     );
   background-size: 140px 140px, auto;
   background-blend-mode: multiply, normal;
+  /* Bordo alto e basso: strappo irregolare a percentuale. I lati sinistro e
+     destro invece sono dentellati con una maschera a denti piccoli di misura
+     FISSA (3,6px × 7,2px, due seghe a passo diverso), uguali su cartoncini bassi e alti: prima erano nel
+     poligono, in percentuale, e sui cartoncini alti i tagli diventavano grandi. */
   clip-path: polygon(
     0% 2%, 8% 0%, 15% 3%, 23% 1%, 31% 2%, 39% 0%, 47% 3%, 50% 1%, 58% 2%,
     66% 0%, 74% 3%, 82% 1%, 90% 2%, 100% 0%,
-    98% 8%, 96% 15%, 100% 22%, 93% 29%, 98% 36%, 95% 44%, 100% 51%, 96% 58%,
-    99% 66%, 94% 73%, 100% 80%, 97% 88%, 99% 95%, 96% 100%,
+    100% 99%, 96% 100%,
     88% 97%, 80% 100%, 72% 96%, 64% 100%, 56% 97%, 48% 100%, 40% 95%,
-    35% 99%, 28% 100%, 20% 96%, 12% 100%, 5% 97%, 0% 100%,
-    2% 92%, 0% 85%, 3% 77%, 0% 70%, 4% 62%, 1% 54%, 3% 46%, 0% 38%, 4% 30%,
-    1% 22%, 3% 14%, 0% 7%
+    35% 99%, 28% 100%, 20% 96%, 12% 100%, 5% 97%, 0% 100%
   );
+  -webkit-mask:
+    linear-gradient(#000, #000) 6.3px 0 / calc(100% - 12.6px) 100% no-repeat,
+    linear-gradient(to bottom left, #000 50%, #0000 0) 0 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom left, #000 50%, #0000 0) left 2.1px top 5.4px / 4.2px 19.3px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 0 top 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 2.1px top 8.8px / 4.2px 22.8px repeat-y;
+  mask:
+    linear-gradient(#000, #000) 6.3px 0 / calc(100% - 12.6px) 100% no-repeat,
+    linear-gradient(to bottom left, #000 50%, #0000 0) 0 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom left, #000 50%, #0000 0) left 2.1px top 5.4px / 4.2px 19.3px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 0 top 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 2.1px top 8.8px / 4.2px 22.8px repeat-y;
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
      +15% sopra il precedente 1.15 (1.15 * 1.15). Niente più
@@ -1788,7 +1802,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   }
   .mp-tab b {
     font-size: 1.3rem;
-    margin-right: 3px;
+    margin-left: 3px;
   }
   .mp-page {
     padding-left: 50px;
@@ -1864,11 +1878,11 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     left: -9px;
     top: 10px;
     width: 40px;
-    padding: 5px 5px 6px 9px;
+    padding: 5px 9px 6px 5px;
   }
   .mp-tab b {
     font-size: 1.16rem;
-    margin-right: 3px;
+    margin-left: 3px;
   }
   .mp-head {
     gap: 7px;
@@ -2262,10 +2276,25 @@ input[type='time'].time-compact::-webkit-datetime-edit {
      effetto posticcio invece che carta strappata a mano. */
   clip-path: polygon(
     0% 1%, 12% 0%, 25% 2%, 38% 0%, 50% 2%, 62% 0%, 75% 2%, 88% 0%, 100% 1%,
-    98% 12%, 100% 25%, 97% 38%, 100% 50%, 98% 62%, 100% 75%, 97% 88%, 100% 100%,
-    88% 99%, 75% 100%, 62% 98%, 50% 100%, 38% 98%, 25% 100%, 12% 99%, 0% 100%,
-    2% 88%, 0% 75%, 2% 62%, 0% 50%, 2% 38%, 0% 25%, 2% 12%, 0% 0%
+    100% 99%,
+    88% 99%, 75% 100%, 62% 98%, 50% 100%, 38% 98%, 25% 100%, 12% 99%, 0% 100%
   );
+  /* Lati sinistro e destro: piccoli denti a sega di dimensione FISSA (3,6px di
+     profondità, uno ogni 7,2px, con una seconda sega a passo diverso), uguali su cartoncini bassi e alti. Prima i lati
+     erano nel poligono qui sopra, in percentuale: su un cartoncino alto i
+     "taglietti" diventavano grandi decine di pixel. */
+  -webkit-mask:
+    linear-gradient(#000, #000) 6.3px 0 / calc(100% - 12.6px) 100% no-repeat,
+    linear-gradient(to bottom left, #000 50%, #0000 0) 0 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom left, #000 50%, #0000 0) left 2.1px top 5.4px / 4.2px 19.3px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 0 top 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 2.1px top 8.8px / 4.2px 22.8px repeat-y;
+  mask:
+    linear-gradient(#000, #000) 6.3px 0 / calc(100% - 12.6px) 100% no-repeat,
+    linear-gradient(to bottom left, #000 50%, #0000 0) 0 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom left, #000 50%, #0000 0) left 2.1px top 5.4px / 4.2px 19.3px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 0 top 0 / 6.3px 12.7px repeat-y,
+    linear-gradient(to bottom right, #000 50%, #0000 0) right 2.1px top 8.8px / 4.2px 22.8px repeat-y;
   /* saturate(): il colore del mood risalta di più, le fasce si distinguono
      meglio (era troppo simile a se stesso da fascia a fascia). 1.32 = altro
      +15% sopra il precedente 1.15 (1.15 * 1.15).
@@ -8210,4 +8239,244 @@ li:last-child > .st-row {
   font-size: 0.72rem;
   color: var(--color-ink-soft);
   font-variant-numeric: tabular-nums;
+}
+
+/* nota a cavallo della notte, mostrata anche nel giorno in cui finisce */
+.dn-carry {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 2px;
+}
+
+/* ---- Nuova nota con Gemini: font leggibile (niente corsivo a mano) ---- */
+.gms-readable,
+.gms-readable .ncs-title,
+.gms-readable .gms-hint,
+.gms-readable .gms-field,
+.gms-readable .gms-cta,
+.gms-readable .gms-voice-btn,
+.gms-readable .gms-voice-saved,
+.gms-readable .gms-restored,
+.gms-readable .gms-error,
+.gms-readable .gms-instructions-label,
+.gms-readable .gms-instructions-save {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+.gms-readable .ncs-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.gms-readable .gms-hint {
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.gms-readable .gms-field {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* pulsante di registrazione: arriva fino a metà schermo in larghezza */
+.gms-voice {
+  align-self: stretch;
+}
+.gms-voice-btn {
+  width: min(50vw, 100%);
+  justify-content: center;
+}
+
+/* titolo dei vocali salvati */
+.gms-voice-saved li {
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.gms-voice-title {
+  flex: 1 1 8rem;
+  min-width: 0;
+  border: none;
+  border-bottom: 1.5px dashed var(--color-line);
+  background: transparent;
+  padding: 2px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  outline: none;
+}
+.gms-voice-title:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--color-ink);
+}
+.gms-voice-saved li .gms-voice-meta {
+  flex: none;
+  font-weight: 400;
+  color: var(--color-ink-soft);
+}
+
+/* pulsante «Istruzioni per le note»: riquadro ben visibile */
+.gms-instructions-label {
+  padding: 9px 12px;
+  border: 2px solid var(--color-ink);
+  border-radius: 12px;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  box-shadow: 2px 3px 0 rgba(20, 12, 4, 0.28);
+}
+.gms-instructions-label:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(20, 12, 4, 0.28);
+}
+
+/* ---- ritocchi: scelta archivio (pulsanti chiari) e istruzioni Gemini ---- */
+.bc-option {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  text-align: left;
+  color: var(--color-ink);
+  background-color: #fbf6e8;
+  background-image: var(--sb-grain);
+  background-size: 100px 100px;
+  background-blend-mode: multiply;
+  border: 1.5px solid var(--color-line);
+  box-shadow: 0 2px 0 rgba(52, 44, 28, 0.18);
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+.bc-option:hover {
+  background-color: #f6edd3;
+}
+.bc-option:active {
+  transform: translateY(1px);
+}
+.bc-option small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+.bc-primary {
+  background-color: #cfe3bd;
+  border-color: #9bb784;
+}
+.bc-primary:hover {
+  background-color: #c4dbb0;
+}
+.gms-instructions-label {
+  border: 1.5px solid var(--color-line);
+  box-shadow: 1px 2px 0 rgba(52, 44, 28, 0.14);
+}
+.gms-instructions-label:active {
+  box-shadow: none;
+}
+
+/* avviso a centro schermo: foglietto a quadretti (come l'intestazione della vista
+   giorno), bordo leggero e la stessa ombra marcata delle linguette laterali */
+.toast-paper {
+  font-size: 0.9625rem; /* +10% rispetto al testo di prima (0.875rem) */
+  border-radius: 6px;
+  /* cartoncino un filo più scuro dello sfondo + contorno, per staccarsi bene */
+  background-color: #dccfa8;
+  background-image: repeating-linear-gradient(90deg, rgba(92, 78, 52, 0.2) 0 1px, transparent 1px 17px),
+    repeating-linear-gradient(0deg, rgba(92, 78, 52, 0.2) 0 1px, transparent 1px 17px), var(--sb-grain, none);
+  background-size: 17px 17px, 17px 17px, 150px 150px;
+  background-blend-mode: normal, normal, multiply;
+  border: 1.5px solid #8c7a52;
+  color: #261c10;
+  box-shadow:
+    0 18px 24px -6px rgba(0, 0, 0, 0.36),
+    0 8px 12px -4px rgba(0, 0, 0, 0.28),
+    0 2px 3px rgba(0, 0, 0, 0.2);
+  transform-origin: 50% 0;
+  /* livello composto a parte: lo sfondo a grana e le ombre grandi non vengono
+     ridisegnati a ogni fotogramma (prima l'animazione scattava sul telefono) */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  contain: layout paint;
+  animation: toastDrop 0.8s cubic-bezier(0.3, 0, 0.5, 1) both;
+}
+/* Cade dall'alto un po' storto (2°), batte su qualcosa di solido, rimbalza
+   appena e si addrizza. */
+@keyframes toastDrop {
+  0% {
+    transform: translateY(-190px) rotate(-2deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  52% {
+    transform: translateY(0) rotate(-2deg);
+    animation-timing-function: ease-out;
+  }
+  68% {
+    transform: translateY(-9px) rotate(1.2deg);
+    animation-timing-function: ease-in;
+  }
+  82% {
+    transform: translateY(0) rotate(-0.7deg);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-paper {
+    animation: none;
+  }
+}
+
+/* Uscita dell'avviso: si strappa a metà lungo una linea irregolare e le due
+   metà escono una a sinistra e una a destra dello schermo. Le due metà
+   usano la STESSA linea a zig-zag, così combaciano finché sono ferme. */
+.toast-half {
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.3));
+  will-change: transform;
+}
+.toast-torn {
+  box-shadow: none;
+  animation: none;
+}
+.toast-torn-left {
+  clip-path: polygon(0 0, 50% 0, 53% 12%, 47% 25%, 54% 38%, 46% 50%, 53% 63%, 47% 76%, 54% 88%, 50% 100%, 0 100%);
+}
+.toast-torn-right {
+  clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%, 54% 88%, 47% 76%, 53% 63%, 46% 50%, 54% 38%, 47% 25%, 53% 12%);
+}
+.toast-half-left {
+  animation: toastTearLeft 0.8s cubic-bezier(0.5, 0, 0.9, 0.6) both;
+}
+.toast-half-right {
+  animation: toastTearRight 0.8s cubic-bezier(0.5, 0, 0.9, 0.6) both;
+}
+@keyframes toastTearLeft {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  15% {
+    transform: translateX(-6px) rotate(-1.5deg);
+  }
+  100% {
+    transform: translateX(-125vw) rotate(-9deg);
+  }
+}
+@keyframes toastTearRight {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  15% {
+    transform: translateX(6px) rotate(1.5deg);
+  }
+  100% {
+    transform: translateX(125vw) rotate(9deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-half-left,
+  .toast-half-right {
+    animation-duration: 0.01s;
+  }
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { pb } from '../lib/pocketbase'
+import { pb, isLocal } from '../lib/pocketbase'
+import { wipeLocalData } from '../lib/localPocketBase'
 import { describeError } from '../lib/notes'
 
 const CONFIRM_WORD = 'ELIMINA'
@@ -36,6 +37,12 @@ export default function DeleteAccount() {
     setBusy(true)
     setError('')
     try {
+      if (isLocal) {
+        // Archivio sul dispositivo: si svuota tutto, poi si torna alla scelta iniziale.
+        await wipeLocalData()
+        logout()
+        return
+      }
       // Filtro esplicito sull'utente: anche se le regole per-proprietario non
       // fossero ancora attive, si cancellano SOLO i propri record.
       const own = { filter: pb.filter('user = {:uid}', { uid: user.id }), fields: 'id' }
@@ -63,7 +70,7 @@ export default function DeleteAccount() {
         onClick={() => setStep(1)}
         className="text-xs font-semibold text-delete-dark underline underline-offset-2"
       >
-        Elimina account
+        {isLocal ? 'Elimina tutti i dati' : 'Elimina account'}
       </button>
 
       {step > 0 && (
@@ -78,10 +85,10 @@ export default function DeleteAccount() {
             {step === 1 ? (
               <>
                 <h3 className="text-lg font-extrabold text-ink">
-                  Eliminare l'account?
+                  {isLocal ? 'Eliminare tutti i dati?' : "Eliminare l'account?"}
                 </h3>
                 <p className="mt-2 text-sm text-ink-soft">
-                  Verranno cancellati definitivamente l'account, tutte le note,
+                  Verranno cancellati definitivamente {isLocal ? 'da questo dispositivo' : "l'account"}, tutte le note,
                   le persone e i tag. L'operazione è irreversibile.
                 </p>
                 <div className="mt-4 flex gap-2">

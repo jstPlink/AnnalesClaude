@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { newDraftId, removeDraft, saveDraft } from '../lib/drafts'
 import { plainText } from '../lib/notes'
+import { toast } from '../lib/toast'
 
 // Salva da sola, mentre si scrive, la bozza di una NUOVA nota (vedi
 // src/lib/drafts.js). `enabled` = la nota non esiste ancora sul server.
@@ -71,7 +72,11 @@ export function useAutoDraft({ enabled, draftId, form, peopleIds, tagIds, imageC
     return () => {
       document.removeEventListener('visibilitychange', onHide)
       window.removeEventListener('pagehide', flush)
-      flush()
+      // uscita dalla pagina con una nota non salvata: resta come bozza e lo si dice
+      if (latestRef.current && !discardedRef.current) {
+        flush()
+        toast("Nota salvata come bozza: la trovi nell'etichetta a destra dello schermo.")
+      }
     }
   }, [flush])
 

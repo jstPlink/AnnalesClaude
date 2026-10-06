@@ -135,9 +135,13 @@ export default function DayPages({
 
   const items = useMemo(() => {
     const list = notes.map((n) => {
-      const startMin = Math.max(0, Math.min(DAY_MIN, startMinutesOf(n.timeStart)))
+      // Nota del giorno prima che finisce oggi: da mezzanotte all'ora di fine.
+      const carried = Boolean(n.carriedFromPrevious)
+      const startMin = carried ? 0 : Math.max(0, Math.min(DAY_MIN, startMinutesOf(n.timeStart)))
       const dur = durationMinutes(n.timeStart, n.timeEnd)
-      const endMin = Math.min(DAY_MIN, startMin + (dur || 0))
+      const endMin = carried
+        ? Math.min(DAY_MIN, startMinutesOf(n.timeEnd))
+        : Math.min(DAY_MIN, startMin + (dur || 0))
 
       const people = (n.people || [])
         .map((id) => peopleById?.get(id))
@@ -167,6 +171,7 @@ export default function DayPages({
 
       return {
         id: n.id,
+        carried,
         startMin,
         endMin,
         title: n.title?.trim() || 'Senza titolo',
@@ -278,6 +283,7 @@ export default function DayPages({
                     className="dn-card"
                     style={{ '--cr': it.cr, '--mood': moodColor(it.mood) }}
                   >
+                    {it.carried && <span className="dn-carry">continua dalla notte</span>}
                     <span className="dn-title">
                       <span className="hl" aria-hidden="true" />
                       <span className="dn-title-text">{it.title}</span>

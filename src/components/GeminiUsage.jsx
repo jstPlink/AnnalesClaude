@@ -20,8 +20,7 @@ export default function GeminiUsage({ className = '' }) {
 
   return (
     <p className={'text-[11px] leading-snug text-ink-soft ' + className}>
-      Richieste a Gemini da questo dispositivo — ultimo minuto: <b>{usage.minute}</b> · ultima ora:{' '}
-      <b>{usage.hour}</b> · ultime 24 h: <b>{usage.day}</b>
+      Richieste a Gemini nelle ultime 24 ore: <b>{usage.day}</b>
     </p>
   )
 }

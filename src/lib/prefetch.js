@@ -3,7 +3,7 @@
 // le miniature delle immagini. Parte all'apertura (dopo il login) e a ogni
 // ritorno della rete; le letture vere passano da src/lib/cache.js.
 
-import { pb, fileUrl } from './pocketbase'
+import { pb, fileUrl, isLocal } from './pocketbase'
 import { cacheSet, markOk, markSlow, THUMBS_CACHE } from './cache'
 import { isNetworkError } from './offlineQueue'
 
@@ -11,7 +11,8 @@ const THUMB_SIZE = '300x300'
 let running = false
 
 async function prefetchThumbs(notes) {
-  if (typeof caches === 'undefined') return
+  // In modalità locale le immagini sono già sul dispositivo (blob:).
+  if (isLocal || typeof caches === 'undefined') return
   // vecchia cache (versione precedente, con miniature pesanti e risposte opache)
   await caches.delete('annales-thumbs')
   const cache = await caches.open(THUMBS_CACHE)

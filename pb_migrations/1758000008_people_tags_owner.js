@@ -2,11 +2,7 @@
 
 // Rende `people` e `tags` per-utente, come già fatto per `note`:
 //  - aggiunge il campo `user` (relazione singola -> users) se manca;
-//  - assegna i record esistenti senza proprietario all'account personale;
 //  - regole per-proprietario (un nuovo account non vede persone/tag altrui).
-//
-// Su un'istanza dove OWNER_ID non esiste (clone fresco) il backfill è saltato.
-const OWNER_ID = 'koactdxuy0e4ef0'
 const TARGET = ['people', 'tags']
 
 function fieldExists(collection, name) {
@@ -22,13 +18,6 @@ function fieldExists(collection, name) {
 migrate(
   (app) => {
     const users = app.findCollectionByNameOrId('users')
-
-    let owner = null
-    try {
-      owner = app.findRecordById('users', OWNER_ID)
-    } catch {
-      owner = null
-    }
 
     for (const name of TARGET) {
       const col = app.findCollectionByNameOrId(name)
@@ -52,18 +41,6 @@ migrate(
       col.updateRule = 'user = @request.auth.id'
       col.deleteRule = 'user = @request.auth.id'
       app.save(col)
-
-      if (owner) {
-        const recs = app.findAllRecords(name)
-        for (const rec of recs) {
-          const cur = rec.get('user')
-          const empty = !cur || (Array.isArray(cur) && cur.length === 0)
-          if (empty) {
-            rec.set('user', OWNER_ID)
-            app.save(rec)
-          }
-        }
-      }
     }
   },
   (app) => {

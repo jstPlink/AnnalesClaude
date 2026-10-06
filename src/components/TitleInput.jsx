@@ -26,7 +26,7 @@ export default function TitleInput({ value, onChange, placeholder, className = '
       onKeyDown={(e) => {
         if (e.key === 'Enter') e.preventDefault()
       }}
-      className={className}
+      className={className + ' uppercase'}
       aria-label={placeholder}
     />
   )

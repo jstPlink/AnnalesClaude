@@ -7,8 +7,9 @@ la cronologia delle versioni è in `src/lib/changelog.js` (visibile in app: Impo
 
 Annales è un **diario personale** (PWA: funziona dal browser e si installa su telefono). Ogni giorno può avere più **note**, ognuna con
 titolo, testo, **umore** (mood), orario di inizio e fine, immagini, persone, tag, luogo e canzoni. L'app mostra le note per mese, per
-giorno, in statistiche e in una ricerca. Non c'è nessuna parte social: i dati sono su un database **tuo** (online su
-`annales.fplinio.it`, ospitato sul NAS).
+giorno, in statistiche e in una ricerca. Non c'è nessuna parte social: i dati sono **tuoi**: alla prima apertura scegli se tenerli
+**su questo dispositivo** (nessun server, nessun account) o **sul tuo server** (scrivi tu l'indirizzo, per esempio quello di casa tua sul NAS).
+Si cambia da Impostazioni → Archivio e account. Sul dispositivo, se cancelli i dati dell'app o del browser li perdi: usa ogni tanto Esporta.
 
 Ogni schermata ha due versioni: **mobile** (schermo stretto) e **web/desktop** (con barra laterale). Il contenuto è lo stesso; il
 passaggio è automatico in base alla larghezza della finestra.
@@ -45,8 +46,8 @@ passaggio è automatico in base alla larghezza della finestra.
 - **Luogo:** vedi §6.
 - **Nuova nota con Gemini:** dal pulsante "nuova nota" si può scegliere tra manuale e Gemini: scrivi un prompt e la bozza arriva già con
   titolo, testo, tag, persone e luogo, tutto da rivedere prima di salvare.
-- **Bozze:** una nota nuova che chiudi senza salvare (ad esempio con Indietro per sbaglio) non va persa: si salva da sola mentre scrivi e compare nella
-  linguetta **Bozze** sul bordo destro, da riprendere con un tocco o scartare col cestino. Sono sul dispositivo; le immagini non si conservano e vanno
+- **Note in sospeso:** una nota nuova che chiudi senza salvare (ad esempio con Indietro per sbaglio, o con la ✕ del pannello Gemini) non va persa: si salva da sola, compare un
+  avviso a centro schermo e la nota appare nella linguetta con la **matitina** sul bordo destro (icona matita = a mano, scintille = Gemini, con testo e vocali), da riprendere con un tocco o scartare col cestino. Sono sul dispositivo; le immagini non si conservano e vanno
   riaggiunte. Spariscono quando la nota viene salvata.
 - **Senza rete:** il salvataggio va in coda e si sincronizza da solo (vedi §9).
 
@@ -73,7 +74,7 @@ Il luogo di una nota è un nome con coordinate. Dal pulsante "Luogo" si apre il 
   L'ultima sorgente usata viene ricordata.
 
 **Collegare MyMap** (Impostazioni → Integrazioni → MyMap): servono **URL del server MyMap** (HTTPS, senza barra finale: è lo stesso
-indirizzo che inserisci nell'accesso di MyMap, ad esempio `https://pocketbase.fplinio.it`), **email** e **password** dell'account
+indirizzo che inserisci nell'accesso di MyMap, ad esempio `https://pocketbase.tuodominio.it`), **email** e **password** dell'account
 MyMap. Presuppone che MyMap sia usata con un account sul tuo server (non solo "su questo telefono"). C'è una guida scaricabile nella
 sezione stessa.
 
@@ -146,7 +147,7 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
 - **Vibrazione:** anche cambiando scheda di vista (Calendario / Andamento / Statistiche); dal widget un tic leggero appena l'app si apre dal tasto toccato.
 - **Aggiorna tirando:** nella vista mese (telefono) tira verso il basso per rileggere le note dal server.
 - Dentro l'app non c'è service worker: l'interfaccia è nell'APK e si aggiorna installando un nuovo APK; i dati arrivano sempre dal
-  server `annales.fplinio.it`.
+  server che hai scelto (o dal dispositivo, in modalità locale).
 
 ## 11. Importare vecchie note (solo web)
 
@@ -154,3 +155,12 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
 - **Da foglio (testo):** export TSV/CSV di Google Fogli (una riga = un giorno). Si indicano le colonne (mese, giorno, testo, titolo,
   voto 0–100). Uno script locale prepara una nota per giorno, riconoscendo persone e tag già presenti. I giorni che hanno già note
   vengono saltati, quindi si può ridare lo stesso file. I file caricati restano in una libreria personale.
+
+## Novità della serie 0.74–0.75 in breve
+
+- **Dove tieni i dati:** alla prima apertura scegli «Su questo dispositivo» o «Sul mio server» (vedi §1).
+
+- **Note a cavallo della notte:** una nota che inizia alle 22 e finisce alle 3 del giorno dopo compare in entrambi i giorni (nel secondo parte da mezzanotte, con la scritta «continua dalla notte»).
+- **Nuova nota con Gemini:** se chiudi il pannello con la ✕ il testo e i vocali restano come **bozza** (te lo dice un avviso). La linguetta a destra elenca le note Gemini in sospeso con il giorno a cui appartengono (il giorno aperto quando hai premuto «nuova nota», altrimenti oggi): tocca per riprenderle.
+- **Vocali:** finita la registrazione il vocale resta salvato con un titolo (modificabile) e lo trascrivi quando vuoi con «Trascrivi».
+- **Titoli:** le note hanno sempre il titolo in maiuscolo.

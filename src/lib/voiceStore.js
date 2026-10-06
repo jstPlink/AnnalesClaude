@@ -33,12 +33,22 @@ async function run(mode, fn) {
   }
 }
 
+const listeners = new Set()
+const notify = () => listeners.forEach((fn) => fn())
+export function subscribeVoices(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
 // Salva un vocale e ne restituisce l'id. Non lancia: se l'archivio non è
 // disponibile (navigazione privata...) la registrazione resta comunque in memoria.
-export async function saveVoice({ blob, mimeType, seconds }) {
+// `draftId` lo lega a una nota Gemini in sospeso (lib/geminiDrafts.js); `title` è il nome
+// che gli dà l'utente.
+export async function saveVoice({ blob, mimeType, seconds, draftId = null, title = '' }) {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   try {
-    await run('readwrite', (s) => s.put({ id, blob, mimeType, seconds, createdAt: Date.now() }))
+    await run('readwrite', (s) => s.put({ id, blob, mimeType, seconds, draftId, title, createdAt: Date.now() }))
+    notify()
     return id
   } catch {
     return null
@@ -62,4 +72,31 @@ export async function deleteVoice(id) {
   } catch {
     /* già assente o archivio non disponibile */
   }
+  notify()
+}
+
+// Cambia alcuni campi di un vocale salvato (es. il titolo).
+export async function updateVoice(id, patch) {
+  if (!id) return
+  try {
+    const db = await open()
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite')
+        const store = tx.objectStore(STORE)
+        const get = store.get(id)
+        get.onsuccess = () => {
+          if (get.result) store.put({ ...get.result, ...patch })
+        }
+        tx.oncomplete = resolve
+        tx.onerror = () => reject(tx.error)
+        tx.onabort = () => reject(tx.error)
+      })
+    } finally {
+      db.close()
+    }
+  } catch {
+    /* archivio non disponibile */
+  }
+  notify()
 }

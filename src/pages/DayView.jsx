@@ -12,13 +12,18 @@ import NewNoteWithGeminiSheet from '../components/NewNoteWithGeminiSheet'
 import NewNoteChoiceSheet from '../components/NewNoteChoiceSheet'
 import PeriodRecapCard from '../components/PeriodRecapCard'
 import DayPages from './web/DayPages'
-import { listNotesInRange, describeError } from '../lib/notes'
+import { listNotesForDay, describeError } from '../lib/notes'
 import { listPeople } from '../lib/people'
 import { listTags } from '../lib/tags'
-import { addDaysKey, dayMonthLabel, dayRange, parseWall } from '../lib/dates'
+import { addDaysKey, dayMonthLabel, parseWall } from '../lib/dates'
 import { haptic } from '../lib/haptics'
 
 const SWIPE_THRESHOLD = 55 // px, swipe orizzontale per cambiare giorno
+
+// Le note arrivate dal giorno prima partono da mezzanotte.
+function startOf(n) {
+  return n.carriedFromPrevious ? -1 : startMinutes(n.timeStart)
+}
 
 function startMinutes(value) {
   const p = parseWall(value)
@@ -48,8 +53,8 @@ export default function DayView() {
     setLoading(true)
     setError('')
     try {
-      const list = await listNotesInRange(dayRange(date))
-      list.sort((a, b) => startMinutes(a.timeStart) - startMinutes(b.timeStart))
+      const list = await listNotesForDay(date)
+      list.sort((a, b) => startOf(a) - startOf(b))
       setNotes(list)
     } catch (err) {
       setError(describeError(err))
@@ -133,7 +138,7 @@ export default function DayView() {
       <PeriodRecapCard
         period="day"
         periodKey={date}
-        notes={notes}
+        notes={notes.filter((n) => !n.carriedFromPrevious)}
         apiKey={user?.geminiApiKey?.trim()}
         tab="Recap del giorno"
         tabInside
@@ -196,6 +201,7 @@ export default function DayView() {
 
       <NewNoteWithGeminiSheet
         open={geminiNoteOpen}
+        dateKey={date}
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
         customInstructions={user?.geminiCustomInstructions?.trim()}

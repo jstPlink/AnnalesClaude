@@ -378,13 +378,13 @@ export default function WebNote() {
 
   async function handleDelete() {
     if (!window.confirm('Eliminare definitivamente questa nota?')) return
+    playSound('delete')
     setBusy(true)
     setDialog(null)
     try {
       await deleteNote(effectiveId)
       pokeRecapQueue()
       notifyNotesChanged()
-      playSound('delete')
       navigate(`/day/${form.dateKey}`, { replace: true })
     } catch (err) {
       setBusy(false)

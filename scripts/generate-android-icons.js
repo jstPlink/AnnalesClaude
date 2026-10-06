@@ -8,7 +8,7 @@ import sharp from 'sharp'
 const here = dirname(fileURLToPath(import.meta.url))
 const res = resolve(here, '..', 'android', 'app', 'src', 'main', 'res')
 const svg = await readFile(resolve(here, 'icon-source.svg'))
-const BG = '#2b2218' // fondo scuro: contrasta con la carta chiara dell'icona
+const BG = '#3d3f41' // fondo scuro: contrasta con la carta chiara dell'icona
 
 const dens = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
 

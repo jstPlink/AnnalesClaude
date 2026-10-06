@@ -29,7 +29,7 @@ L'app parte su `http://localhost:5173`. La prima schermata è il **login**
 Il dev server non ha un database proprio: inoltra `/api/` a `VITE_DEV_API`
 oppure, se non impostata, a uno stack Docker locale su `http://localhost:8973`.
 Per lavorare contro il server online crea `.env.local` con
-`VITE_DEV_API=https://annales.fplinio.it` (attenzione: sono i dati veri).
+`VITE_DEV_API=https://annales.tuodominio.it` (attenzione: sono i dati veri).
 
 Documentazione: [docs/GUIDA.md](docs/GUIDA.md) (uso) e
 [ARCHITETTURA.md](ARCHITETTURA.md) (com'è fatta, deploy, domande frequenti).
@@ -42,6 +42,16 @@ npm run preview   # serve la build (utile per testare la PWA installabile)
 npm run lint      # oxlint
 npm run icons     # rigenera le icone PWA da scripts/icon-source.svg
 ```
+
+## Dove tieni i dati
+
+Alla prima apertura l'app chiede dove salvare il diario:
+
+- **Su questo dispositivo** — telefono o browser, senza server né account (i dati stanno in IndexedDB: se cancelli i dati dell'app o del
+  browser li perdi, quindi usa Esporta).
+- **Sul mio server** — l'indirizzo della tua istanza (vedi sotto), scritto da te: nessun indirizzo è incluso nell'app.
+
+Si cambia da Impostazioni → Archivio e account. Dettagli in [ARCHITETTURA.md](ARCHITETTURA.md) §12.
 
 ## Fai girare la TUA istanza (il tuo diario, il tuo database)
 
@@ -130,8 +140,9 @@ frontend (vedi sopra). In produzione l'app la raggiunge sulla propria origin
 stack Docker locale (`docker compose up -d`, porta 8973; `VITE_DEV_API` per un altro
 indirizzo). Endpoint note: `/api/collections/note/records`.
 
-Per puntare a un'altra istanza, copia `.env.example` in `.env` e imposta
-`VITE_PB_URL` (in produzione: build-arg del Dockerfile).
+L'indirizzo del server si sceglie nell'app alla prima apertura. Per precompilarlo
+nella tua build copia `.env.example` in `.env` e imposta `VITE_PB_URL` (in produzione: build-arg del Dockerfile).
+I contatti di supporto in Impostazioni compaiono solo se imposti `VITE_SUPPORT_EMAIL` / `VITE_SUPPORT_TELEGRAM`.
 
 ### Collection `note`
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { pb } from '../../lib/pocketbase'
+import { pb, isLocal } from '../../lib/pocketbase'
 import {
   describeError,
   listNotesWithPerson,
@@ -51,9 +51,11 @@ import GeminiUsage from '../../components/GeminiUsage'
 import { Capacitor } from '@capacitor/core'
 import Changelog from '../../components/Changelog'
 import DeleteAccount from '../../components/DeleteAccount'
+import BackendInfo from '../../components/BackendInfo'
 import Icon from '../../components/Icon'
 import ProfileCard from '../../components/web/ProfileCard'
 import SettingsSection from '../../components/SettingsSection'
+import SupportSection from '../../components/SupportSection'
 import MymapIntegration from '../../components/MymapIntegration'
 
 // Link a una guida .md scaricabile su come ottenere il token/credenziali.
@@ -991,9 +993,11 @@ export default function WebProfile() {
         </SettingsSection>
       </SettingsSection>
 
-      <SettingsSection title="Uso offline" icon="cloud">
-        <OfflineStorage />
-      </SettingsSection>
+      {!isLocal && (
+        <SettingsSection title="Uso offline" icon="cloud">
+          <OfflineStorage />
+        </SettingsSection>
+      )}
 
       {!Capacitor.isNativePlatform() && (
         <SettingsSection title="App Android" icon="download">
@@ -1027,37 +1031,7 @@ export default function WebProfile() {
         <ExportButtons />
       </SettingsSection>
 
-      <SettingsSection
-        title="Supporto"
-        icon="mail"
-      >
-        <dl className="mt-5 divide-y divide-line-soft border-y border-line-soft text-sm">
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-ink-soft">Email</dt>
-            <dd>
-              <a
-                href="mailto:fp.dignazio@gmail.com"
-                className="font-medium text-ink underline decoration-line-soft underline-offset-2 hover:decoration-ink"
-              >
-                fp.dignazio@gmail.com
-              </a>
-            </dd>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-ink-soft">Telegram</dt>
-            <dd>
-              <a
-                href="https://t.me/fplinio"
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-ink underline decoration-line-soft underline-offset-2 hover:decoration-ink"
-              >
-                @fplinio
-              </a>
-            </dd>
-          </div>
-        </dl>
-      </SettingsSection>
+        <SupportSection />
 
       <SettingsSection
         title="Offrimi un caffè"
@@ -1077,18 +1051,22 @@ export default function WebProfile() {
         <Changelog />
       </SettingsSection>
 
-      <SettingsSection title="Account" icon="user">
-        <button
-          type="button"
-          onClick={() => {
-            logout()
-            navigate('/login', { replace: true })
-          }}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-sm font-bold text-ink shadow-sm transition hover:brightness-105"
-        >
-          <Icon name="logout" size={18} />
-          Esci
-        </button>
+      <SettingsSection title="Archivio e account" icon="user">
+        <BackendInfo />
+
+        {!isLocal && (
+          <button
+            type="button"
+            onClick={() => {
+              logout()
+              navigate('/login', { replace: true })
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-delete-dark bg-delete px-6 py-3 text-sm font-bold text-ink shadow-sm transition hover:brightness-105"
+          >
+            <Icon name="logout" size={18} />
+            Esci
+          </button>
+        )}
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-line-soft pt-4">
           <span className="text-xs text-ink-soft">

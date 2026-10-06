@@ -148,8 +148,8 @@ const SOUNDS = {
   },
   // nota eliminata: nota che scende e fruscio
   delete: (c, o) => {
-    tone(c, o, { freq: 360, to: 160, dur: 0.22, type: 'triangle', gain: 0.24 })
-    noise(c, o, { dur: 0.14, gain: 0.16, freq: 1200, q: 0.8, at: 0.04 })
+    tone(c, o, { freq: 420, to: 150, dur: 0.28, type: 'triangle', gain: 0.32 })
+    noise(c, o, { dur: 0.18, gain: 0.26, freq: 1200, q: 0.8, at: 0.04 })
   },
   // linguetta laterale che si apre / si chiude: due note brevi, su e giù
   tabOpen: (c, o) => {
@@ -158,6 +158,12 @@ const SOUNDS = {
   },
   tabClose: (c, o) => {
     tone(c, o, { freq: 700, to: 420, dur: 0.1, type: 'triangle', gain: 0.2 })
+  },
+  // avviso a schermo (toast): tre note che salgono, per farsi notare
+  notice: (c, o) => {
+    tone(c, o, { freq: 784, dur: 0.14, type: 'triangle', gain: 0.26 })
+    tone(c, o, { freq: 1047, dur: 0.14, type: 'triangle', gain: 0.26, at: 0.13 })
+    tone(c, o, { freq: 1319, dur: 0.28, type: 'triangle', gain: 0.24, at: 0.26 })
   },
   // dettatura: avvio, stop, avviso degli ultimi secondi
   recStart: (c, o) => tone(c, o, { freq: 520, to: 880, dur: 0.13, gain: 0.22 }),

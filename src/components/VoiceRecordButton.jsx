@@ -5,7 +5,7 @@ import { transcribeAudio, describeGeminiError } from '../lib/gemini'
 import { blobToWav } from '../lib/audio'
 import { hapticAlert } from '../lib/haptics'
 import { playSound } from '../lib/sounds'
-import { deleteVoice, listVoices, saveVoice } from '../lib/voiceStore'
+import { deleteVoice, listVoices, saveVoice, subscribeVoices, updateVoice } from '../lib/voiceStore'
 
 const fmtLen = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 const fmtAgo = (t) => {
@@ -59,7 +59,13 @@ function blobToBase64(blob) {
 // (`onTranscribed`), che decide se accodarlo o sostituire il prompt: qui non
 // si tocca il campo direttamente. Non renderizza nulla se il browser non
 // supporta la registrazione o manca la chiave Gemini.
-export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
+//
+// Finita la registrazione il vocale NON viene trascritto da solo: si salva sul
+// dispositivo con un titolo (modificabile) e l'utente sceglie quando premere
+// «Trascrivi». `draftId` lega i vocali a una nota Gemini in sospeso: l'elenco
+// mostra solo quelli di quella nota (più quelli vecchi senza nota); senza
+// `draftId` mostra solo i vocali non legati a nessuna nota.
+export default function VoiceRecordButton({ apiKey, onTranscribed, disabled, draftId }) {
   const [state, setState] = useState('idle') // idle | recording | transcribing
   const [seconds, setSeconds] = useState(0)
   const [error, setError] = useState('')
@@ -95,10 +101,17 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
 
   // Vocali salvati sul dispositivo e non ancora trascritti (anche di sessioni
   // precedenti): vedi lib/voiceStore.js.
-  const refreshSaved = useCallback(async () => setSaved(await listVoices()), [])
+  const refreshSaved = useCallback(async () => {
+    const all = await listVoices()
+    setSaved(all.filter((v) => !v.draftId || v.draftId === draftId))
+  }, [draftId])
   useEffect(() => {
     const t = setTimeout(refreshSaved, 0)
-    return () => clearTimeout(t)
+    const off = subscribeVoices(refreshSaved)
+    return () => {
+      clearTimeout(t)
+      off()
+    }
   }, [refreshSaved])
 
   if (!apiKey) return null
@@ -169,11 +182,14 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
         streamRef.current?.getTracks().forEach((t) => t.stop())
         const type = rec.mimeType || mimeType || 'audio/webm'
         const blob = new Blob(chunksRef.current, { type })
-        // Salvato subito sul dispositivo, PRIMA di trascrivere: se Gemini è
-        // intasato o si chiude l'app il vocale non va perso.
-        const id = await saveVoice({ blob, mimeType: type, seconds: elapsedRef.current })
+        // Salvato sul dispositivo con un titolo; la trascrizione la decide
+        // l'utente dall'elenco (così non si spreca una richiesta a Gemini e
+        // il vocale non si perde se Gemini è intasato o si chiude l'app).
+        const d = new Date()
+        const title = `Vocale ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+        await saveVoice({ blob, mimeType: type, seconds: elapsedRef.current, draftId: draftId || null, title })
         refreshSaved()
-        transcribe(blob, type, id)
+        setState('idle')
       }
       mediaRef.current = rec
       rec.start()
@@ -252,13 +268,25 @@ export default function VoiceRecordButton({ apiKey, onTranscribed, disabled }) {
         <div className="gms-voice-saved">
           <p>
             {saved.length === 1
-              ? 'Hai 1 vocale salvato sul dispositivo, non ancora trascritto:'
-              : `Hai ${saved.length} vocali salvati sul dispositivo, non ancora trascritti:`}
+              ? '1 vocale salvato sul dispositivo, da trascrivere quando vuoi:'
+              : `${saved.length} vocali salvati sul dispositivo, da trascrivere quando vuoi:`}
           </p>
           <ul>
             {saved.map((v) => (
               <li key={v.id}>
-                <span>
+                <input
+                  type="text"
+                  defaultValue={v.title || ''}
+                  placeholder="Titolo del vocale"
+                  aria-label="Titolo del vocale"
+                  maxLength={60}
+                  onBlur={(e) => {
+                    const t = e.target.value.trim()
+                    if (t !== (v.title || '')) updateVoice(v.id, { title: t })
+                  }}
+                  className="gms-voice-title"
+                />
+                <span className="gms-voice-meta">
                   {fmtLen(v.seconds || 0)} · {fmtAgo(v.createdAt)}
                 </span>
                 <button

@@ -251,6 +251,7 @@ export default function MonthView() {
 
       <NewNoteWithGeminiSheet
         open={geminiNoteOpen}
+        dateKey={todayKey()}
         onClose={() => setGeminiNoteOpen(false)}
         apiKey={user?.geminiApiKey?.trim()}
         customInstructions={user?.geminiCustomInstructions?.trim()}

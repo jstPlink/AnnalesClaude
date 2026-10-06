@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { describeError } from '../../lib/notes'
+import BackendInfo from '../../components/BackendInfo'
 import { moodColor } from '../../lib/mood'
 
 const MIN_PASSWORD = 8
@@ -236,6 +237,7 @@ export default function WebLogin() {
 
           <div className="wl-foot">
             <span className="wl-version">Annales · v{__APP_VERSION__}</span>
+            <BackendInfo compact className="wl-version" />
           </div>
         </aside>
       </div>

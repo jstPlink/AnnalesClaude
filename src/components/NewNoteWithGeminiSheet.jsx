@@ -7,16 +7,23 @@ import {
   draftNoteFromPrompt,
   describeGeminiError,
   loadGeminiPromptDraft,
-  saveGeminiPromptDraft,
   clearGeminiPromptDraft,
   saveGeminiCustomInstructions,
 } from '../lib/gemini'
+import { newGeminiDraftId, removeGeminiDraft, saveGeminiDraft } from '../lib/geminiDrafts'
+import { listVoices } from '../lib/voiceStore'
+import { toast } from '../lib/toast'
 import { describeError } from '../lib/notes'
 import { searchPlaces } from '../lib/leaflet'
 
 // Dialog per creare una nota intera con Gemini da un prompt scritto. Il
 // risultato apre la nota già compilata, da rivedere prima di salvare — nulla
 // viene salvato da qui.
+//
+// Quello che si scrive (e i vocali registrati) è una bozza legata a `dateKey`,
+// il giorno della nota: chiudendo il pannello resta salvata sul dispositivo e
+// compare nella linguetta a destra (DraftsTab), da cui si riapre passando
+// `draft`.
 
 // Esempi vari per il placeholder del prompt: uno diverso a ogni apertura del
 // dialog, invece di un unico esempio fisso (con un nome sempre uguale).
@@ -54,9 +61,11 @@ export default function NewNoteWithGeminiSheet({
   allPeople,
   allTags,
   onGenerated,
+  dateKey,
+  draft: resumeDraft = null,
 }) {
   const [prompt, setPrompt] = useState('')
-  const [restoredDraft, setRestoredDraft] = useState(false)
+  const [draftId, setDraftId] = useState('')
   const [placeholder, setPlaceholder] = useState(PROMPT_PLACEHOLDERS[0])
   const [loading, setLoading] = useState(false)
   const [retry, setRetry] = useState(null)
@@ -72,9 +81,17 @@ export default function NewNoteWithGeminiSheet({
     // Se un tentativo precedente è fallito (rete, chiave, limite...) il
     // prompt scritto è ancora in locale: lo si ritrova qui invece di
     // doverlo riscrivere da capo.
-    const draft = loadGeminiPromptDraft()
-    setPrompt(draft)
-    setRestoredDraft(Boolean(draft))
+    let text = ''
+    if (resumeDraft) {
+      setDraftId(resumeDraft.id)
+      text = resumeDraft.text || ''
+    } else {
+      setDraftId(newGeminiDraftId())
+      // testo di un tentativo fallito prima che esistessero le bozze per nota
+      text = loadGeminiPromptDraft()
+      if (text) clearGeminiPromptDraft()
+    }
+    setPrompt(text)
     setPlaceholder(
       PROMPT_PLACEHOLDERS[Math.floor(Math.random() * PROMPT_PLACEHOLDERS.length)],
     )
@@ -84,12 +101,30 @@ export default function NewNoteWithGeminiSheet({
     setInstructions(customInstructions || '')
     setInstructionsStatus(null)
     setInstructionsOpen(false)
-  }, [open, customInstructions])
+  }, [open, customInstructions, resumeDraft])
 
   if (!open) return null
 
   const ready = Boolean(apiKey)
 
+  // Tiene la bozza in pari col testo (se c'è testo); i vocali hanno già il loro
+  // `draftId` e si salvano da soli.
+  function keepDraft(text) {
+    if (text.trim()) saveGeminiDraft({ id: draftId, dateKey, text })
+  }
+
+  // Chiusura col pulsante ✕ (o toccando fuori): se c'è qualcosa di scritto o
+  // registrato resta come bozza e lo si dice.
+  async function closeSheet() {
+    const voices = (await listVoices()).filter((v) => v.draftId === draftId)
+    if (prompt.trim() || voices.length) {
+      saveGeminiDraft({ id: draftId, dateKey, text: prompt })
+      toast("Nota salvata come bozza: la trovi nell'etichetta a destra dello schermo.")
+    } else {
+      removeGeminiDraft(draftId)
+    }
+    onClose()
+  }
   async function saveInstructions() {
     setSavingInstructions(true)
     setInstructionsStatus(null)
@@ -125,7 +160,11 @@ export default function NewNoteWithGeminiSheet({
         timeStart: draft.timeStart,
         timeEnd: draft.timeEnd,
       })
-      clearGeminiPromptDraft()
+      // nota generata: la bozza non serve più (restano solo eventuali vocali
+      // non ancora trascritti, per non perderli)
+      const left = (await listVoices()).filter((v) => v.draftId === draftId)
+      if (left.length) saveGeminiDraft({ id: draftId, dateKey, text: '' })
+      else removeGeminiDraft(draftId)
       onClose()
     } catch (err) {
       setError(describeGeminiError(err))
@@ -136,8 +175,8 @@ export default function NewNoteWithGeminiSheet({
   }
 
   return (
-    <div className="ncs-backdrop" onClick={onClose}>
-      <div className="ncs-sheet gms-sheet" onClick={(e) => e.stopPropagation()}>
+    <div className="ncs-backdrop" onClick={closeSheet}>
+      <div className="ncs-sheet gms-sheet gms-readable" onClick={(e) => e.stopPropagation()}>
         <span className="ncs-tape a" aria-hidden="true" />
         <span className="ncs-tape b" aria-hidden="true" />
 
@@ -145,7 +184,7 @@ export default function NewNoteWithGeminiSheet({
           <div className="flex items-center gap-2">
             <h3 className="ncs-title">Nuova nota con Gemini</h3>
           </div>
-          <button type="button" onClick={onClose} className="gms-chev" title="Chiudi" aria-label="Chiudi">
+          <button type="button" onClick={closeSheet} className="gms-chev" title="Chiudi" aria-label="Chiudi">
             <Icon name="x" size={15} strokeWidth={2.8} />
           </button>
         </div>
@@ -164,12 +203,6 @@ export default function NewNoteWithGeminiSheet({
                 Racconta cosa è successo: Gemini prova a ricavare titolo, testo,
                 tag, persone e luogo. Potrai correggere tutto prima di salvare.
               </p>
-              {restoredDraft && (
-                <p className="gms-restored">
-                  Testo ripristinato dall'ultimo tentativo (non era andato a
-                  buon fine).
-                </p>
-              )}
               <textarea
                 autoFocus
                 rows={9}
@@ -178,21 +211,20 @@ export default function NewNoteWithGeminiSheet({
                 onChange={(e) => {
                   const v = e.target.value
                   setPrompt(v)
-                  setRestoredDraft(false)
-                  saveGeminiPromptDraft(v)
+                  keepDraft(v)
                 }}
                 className="gms-field gms-field-lg"
               />
               <VoiceRecordButton
                 apiKey={apiKey}
+                draftId={draftId}
                 disabled={loading}
                 onTranscribed={(text) => {
                   setPrompt((p) => {
                     const next = p.trim() ? `${p.trim()} ${text}` : text
-                    saveGeminiPromptDraft(next)
+                    keepDraft(next)
                     return next
                   })
-                  setRestoredDraft(false)
                 }}
               />
               <GeminiUsage />

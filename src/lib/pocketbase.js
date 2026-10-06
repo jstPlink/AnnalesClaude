@@ -1,32 +1,27 @@
 import PocketBase from 'pocketbase'
+import { getBackend } from './backend'
+import { createLocalClient } from './localPocketBase'
 
-// Indirizzo del database (non configurabile dall'utente):
-//  - build di produzione: la STESSA origin da cui è servita l'app (es.
-//    annales.fplinio.it) — il container del frontend inoltra /api/ a
-//    PocketBase (vedi nginx.conf.template), quindi non c'è nessun URL da
-//    configurare;
-//  - `npm run dev`: idem, con il proxy di Vite (vite.config.js) verso lo
-//    stack Docker locale;
-//  - VITE_PB_URL (build time) vince su tutto, per puntare a un backend
-//    esterno (vedi .env.example). L'app Android (Capacitor) gira su
-//    https://localhost, quindi la sua build lo richiede (`npm run android:build`).
-const PB_URL = import.meta.env.VITE_PB_URL?.trim() || window.location.origin
+// Client dei dati. Dove puntano lo decide l'utente (src/lib/backend.js):
+//  - modalità "server": l'indirizzo scelto al primo avvio, nessun valore nel
+//    codice;
+//  - modalità "locale": un client con la stessa interfaccia ma che salva
+//    tutto in questo dispositivo (src/lib/localPocketBase.js).
+// Cambiare scelta = tornare alla schermata iniziale e ricaricare l'app.
+// Questo modulo si carica solo dopo la scelta (vedi main.jsx).
+const backend = getBackend()
 
-// Fino alla v0.60 l'indirizzo si poteva cambiare da login/Impostazioni e restava
-// in localStorage: un valore vecchio (es. l'hostname del database rimosso dal
-// tunnel) farebbe puntare l'app nel vuoto. Ora l'indirizzo è uno solo, quindi
-// il valore salvato si scarta.
-try {
-  localStorage.removeItem('annales.pbUrl')
-} catch {
-  // localStorage non disponibile
-}
+export const isLocal = backend?.mode === 'local'
+export const serverUrl = backend?.mode === 'server' ? backend.url : ''
 
-export const pb = new PocketBase(PB_URL)
+export const pb = isLocal ? createLocalClient() : new PocketBase(serverUrl)
 
 // Non annullare automaticamente le richieste duplicate: in React 18/19 con
 // StrictMode i doppi mount genererebbero errori "autocancelled" fuorvianti.
-pb.autoCancellation(false)
+if (!isLocal) pb.autoCancellation(false)
+
+// Da attendere prima di montare l'app: in modalità locale carica i dati.
+export const backendReady = isLocal ? pb.ready : Promise.resolve()
 
 // URL pubblico di un file allegato a un record.
 export function fileUrl(record, filename, query = {}) {

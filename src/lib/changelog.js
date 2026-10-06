@@ -9,6 +9,86 @@
 
 export const CHANGELOG = [
   {
+    version: '0.75.7',
+    date: '2026-10-07 00:40',
+    changes: [
+      "Dentellatura dei lati dei cartoncini ingrandita di un altro 35%.",
+      "Linguette del mood: contorno più scuro del 20% rispetto al colore dell'etichetta.",
+      "Avviso «salvata come bozza»: comparsa più fluida (livello grafico dedicato, parte a ridisegno finito).",
+    ],
+  },
+  {
+    version: '0.75.6',
+    date: '2026-10-07 00:10',
+    changes: [
+      "Linguette del mood sui giorni: contorno molto più chiaro e forma invertita, con il taglio irregolare a sinistra invece che a destra.",
+      "Dentellatura dei lati dei cartoncini ingrandita del 30%.",
+      "Avviso «salvata come bozza»: dura 4 secondi e sparisce strappandosi a metà, con le due metà che escono a sinistra e a destra dello schermo.",
+    ],
+  },
+  {
+    version: '0.75.5',
+    date: '2026-10-06 23:20',
+    changes: [
+      "Avviso «salvata come bozza»: dura 6 secondi (uno in meno).",
+      "Cartoncini del mood (mese e giorno): dentellatura dei lati ingrandita del 20% e meno ripetitiva (due seghe con passo diverso).",
+      "Linguette del mood sui giorni: ora hanno un contorno più scuro ben visibile.",
+    ],
+  },
+  {
+    version: '0.75.4',
+    date: '2026-10-06 22:50',
+    changes: [
+      "Vista mese: i cartoncini del mood hanno i lati sinistro e destro con dentellature piccole e sottili (prima i tagli erano grandi, soprattutto sui cartoncini alti).",
+      "Avviso «salvata come bozza»: testo più grande del 10%, cartoncino più scuro con contorno per staccarsi dallo sfondo, dura 2 secondi in più e compare cadendo dall'alto un po' storto, rimbalzando e addrizzandosi.",
+    ],
+  },
+  {
+    version: '0.75.3',
+    date: '2026-10-06 22:10',
+    changes: [
+      "Suono quando elimini una nota o scarti una bozza (parte subito dopo la conferma, più evidente di prima).",
+      "Avviso «salvata come bozza»: nuovo testo, su un foglietto a quadretti con bordo leggero e la stessa ombra marcata delle linguette a destra.",
+      "Vista giorno: i lati dei cartoncini del mood hanno ora dentellature piccole e sottili, uguali su cartoncini bassi e alti.",
+    ],
+  },
+  {
+    version: '0.75.2',
+    date: '2026-10-06 21:40',
+    changes: [
+      "Icona dell'app Android: sfondo grigio caldo meno saturato (non più marrone) e più contrasto fra i fogli, con quelli dietro più scuri.",
+    ],
+  },
+  {
+    version: '0.75.1',
+    date: '2026-10-06 21:10',
+    changes: [
+      "Note in sospeso: una sola linguetta con la matitina per tutte, con un'icona per ogni nota (matita = iniziata a mano, scintille = iniziata con Gemini) e il giorno a cui appartiene.",
+      "Avviso «salvata come bozza»: compare a centro schermo sotto l'intestazione, con un suono, sia per le note iniziate con Gemini sia per quelle a mano.",
+      "Scelta dell'archivio all'avvio: pulsanti più chiari. «Istruzioni per le note» di Gemini: contorno più leggero. Tolto l'avviso «testo ripristinato».",
+    ],
+  },
+  {
+    version: '0.75.0',
+    date: '2026-10-06 20:30',
+    changes: [
+      "Vista giorno: le note a cavallo della notte (es. dalle 22 del 26 alle 3 del 27) compaiono sia nel giorno in cui iniziano sia in quello in cui finiscono.",
+      "Nuova nota con Gemini: chiudendo con la ✕ la nota resta salvata come bozza (con un avviso) e compare nella linguetta a destra con il giorno a cui appartiene, il testo e i vocali; da lì si riprende.",
+      "Nuova nota con Gemini: font più leggibile, pulsante «Istruzioni per le note» ben contornato, pulsante di registrazione fino a metà schermo e, nel pannello, solo il numero di richieste delle ultime 24 ore.",
+      "Vocali: finita la registrazione non si trascrive più da soli. Ogni vocale ha un titolo modificabile e si trascrive quando lo decidi tu.",
+      "I titoli delle note sono sempre in maiuscolo, anche quelli già esistenti (sul server dopo l'aggiornamento).",
+    ],
+  },
+  {
+    version: '0.74.0',
+    date: '2026-10-06 19:00',
+    changes: [
+      "Alla prima apertura scegli dove tenere il diario: su questo dispositivo (telefono o browser, senza server né account) oppure sul tuo server, scrivendo tu l'indirizzo. Nessun indirizzo è più incluso nell'app. Si cambia da Impostazioni → Archivio e account.",
+      "Android: niente più backup automatico dei dati dell'app su Google Drive.",
+      "Impostazioni → Supporto compare solo se la build ha un contatto configurato; tolti i contatti personali dal codice.",
+    ],
+  },
+  {
     version: '0.73.2',
     date: '2026-10-06 10:30',
     changes: [
