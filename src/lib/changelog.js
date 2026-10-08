@@ -9,6 +9,23 @@
 
 export const CHANGELOG = [
   {
+    version: '0.78.3',
+    date: '2026-10-08 16:59',
+    changes: [
+      "Vista mese (web): le targhette dei nomi non finiscono più sopra il cartoncino del mood, nemmeno con titoli lunghi: partono sempre dopo il bordo vero del cartoncino.",
+      "Vista mese (web): nelle pagine con il bordo strappato l'etichetta del mood e le foto non vengono più tagliate ai lati del foglio.",
+    ],
+  },
+  {
+    version: '0.78.2',
+    date: '2026-10-08 15:13',
+    changes: [
+      "Vista mese: quando una giornata ha tante persone le targhette non si addossano più alle altre informazioni: se sono più di 4 si vedono le prime 3 e una targhetta «+x persone» per le altre.",
+      "Le targhette delle persone hanno colori più vari: ogni persona ha una tonalità diversa ricavata dal nome (prima erano poche tinte simili e spesso uguali).",
+      "Versione web: i titoli delle note (mese e giorno) sono più piccoli del 10%.",
+    ],
+  },
+  {
     version: '0.78.1',
     date: '2026-10-07 07:10',
     changes: [

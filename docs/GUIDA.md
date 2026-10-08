@@ -24,7 +24,7 @@ passaggio è automatico in base alla larghezza della finestra.
 
 | Schermata | Percorso | Cosa fa |
 |---|---|---|
-| **Calendario** (mese) | `/` | Un foglio per ogni giorno con note: umore medio, titoli, persone, luogo, canzone, foto. Si cambia mese con le frecce o scorrendo; l'app apre sul mese corrente. In cima "In questo giorno" (note degli anni passati) e il recap del mese. |
+| **Calendario** (mese) | `/` | Un foglio per ogni giorno con note: umore medio, titoli, persone, luogo, canzone, foto. Le persone sono targhette di colori diversi (uno per persona); se in un giorno sono più di 4 se ne vedono 3 e una targhetta «+x persone» per le altre. Si cambia mese con le frecce o scorrendo; l'app apre sul mese corrente. In cima "In questo giorno" (note degli anni passati) e il recap del mese. |
 | **Giorno** | `/day/AAAA-MM-GG` | Le note del giorno su una timeline di 24 ore (altezza del blocco = durata); un giorno senza note mostra comunque la timeline, vuota, e il blocco «Recap del giorno». I titoli lunghi vanno su due righe (nell'editor della nota il titolo va a capo da solo). Recap del giorno in cima. |
 | **Nota** | `/note/new?date=…` e `/note/:id` | Editor: data, orari, mood, titolo, testo, e i pulsanti per immagini, persone, tag, canzoni, luogo. Salva (verde) o elimina (rosso). |
 | **Andamento** | `/dati` | Grafico dell'umore nell'anno e mese per mese; da web ogni barretta apre quel giorno. |
@@ -173,3 +173,8 @@ Oltre alla PWA esiste un'app Android (file **APK**) con lo stesso account e gli 
 - **Vocali:** finita la registrazione il vocale resta salvato con un titolo (modificabile) e lo trascrivi quando vuoi con «Trascrivi».
 - **Titoli:** le note hanno sempre il titolo in maiuscolo.
 - **Mood Lab (nascosto):** in fondo alle Impostazioni, toccando 5 volte di seguito la riga «Annales · versione», si apre un banco di prova per la formula del mood con dati di esempio (non tocca le tue note). Con **Applica all'app** la formula che hai impostato (curva delle note, peso di durata e persone, curva dei giorni nel mese) diventa quella di tutto il tuo account; **Formula originale** la ripristina.
+
+## Novità della serie 0.78 in breve
+
+- **Calendario, persone:** le targhette dei nomi hanno colori diversi (una tonalità per persona); se in un giorno le persone sono più di 4 se ne vedono 3 e una targhetta «+x persone» per le altre. Le targhette non finiscono più sopra il cartoncino del mood, nemmeno con titoli lunghi.
+- **Calendario (web):** l'etichetta del mood e le foto non sono più tagliate ai lati nelle pagine con il bordo strappato; i titoli delle note sono più piccoli del 10%.

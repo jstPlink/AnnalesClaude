@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
 import { dayMood, moodColor } from '../../lib/mood'
 import { plainText, parsePlace } from '../../lib/notes'
@@ -110,6 +110,11 @@ function buildScribbles(key, titles) {
 // sfondo, polaroid col nastro (due se ci sono ≥2 foto), etichette coi nomi
 // delle persone e, se presenti, un francobollo del luogo e un dischetto CD
 // della canzone.
+// Oltre questo numero le targhette dei nomi si addossano alle altre informazioni
+// della pagina: se le persone sono di più se ne mostrano le prime (MAX_TAPES - 1)
+// e una targhetta «+x persone» per le altre.
+const MAX_TAPES = 4
+
 export default function MonthPages({
   grid,
   byDay,
@@ -250,6 +255,29 @@ export default function MonthPages({
     stackRef.current?.querySelector('.is-today')?.scrollIntoView({ block: 'center' })
   }, [pages])
 
+  // La colonna delle targhette (.mp-side) è posizionata in modo assoluto: deve
+  // partire DOPO il cartoncino del mood. La larghezza del cartoncino dipende dal
+  // titolo più lungo e dal font, quindi una stima dal numero di caratteri
+  // (cardWidthFor) non basta: i nomi finivano sopra il cartoncino. Si misura il
+  // bordo destro vero (rispetto alla pagina) e lo si passa al CSS come
+  // --mp-card-r; un ResizeObserver lo tiene aggiornato (font che si caricano,
+  // finestra ridimensionata).
+  useLayoutEffect(() => {
+    const root = stackRef.current
+    if (!root) return undefined
+    const sync = (card) => {
+      const page = card.closest('.mp-page')
+      if (!page) return
+      page.style.setProperty('--mp-card-r', `${card.offsetLeft + card.offsetWidth}px`)
+    }
+    const cards = root.querySelectorAll('.mp-notes')
+    cards.forEach(sync)
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const ro = new ResizeObserver((entries) => entries.forEach((e) => sync(e.target)))
+    cards.forEach((c) => ro.observe(c))
+    return () => ro.disconnect()
+  }, [pages])
+
   return (
     <div className="month-pages">
       <div className="mp-stack" ref={stackRef}>
@@ -383,7 +411,10 @@ export default function MonthPages({
                 <span className="mp-side" aria-hidden="true">
                   {pg.people.length > 0 && (
                     <span className="mp-tapes">
-                      {pg.people.map((person) => {
+                      {(pg.people.length > MAX_TAPES
+                        ? pg.people.slice(0, MAX_TAPES - 1)
+                        : pg.people
+                      ).map((person) => {
                         return (
                           <span
                             key={person.id}
@@ -400,6 +431,14 @@ export default function MonthPages({
                           </span>
                         )
                       })}
+                      {pg.people.length > MAX_TAPES && (
+                        <span className="mp-tape mp-tape-more" style={{ '--tape-c': '#a39a86' }}>
+                          <span className="mp-tape-name">
+                            +{pg.people.length - (MAX_TAPES - 1)}{' '}
+                            {pg.people.length - (MAX_TAPES - 1) === 1 ? 'persona' : 'persone'}
+                          </span>
+                        </span>
+                      )}
                     </span>
                   )}
 

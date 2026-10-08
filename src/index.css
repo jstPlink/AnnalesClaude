@@ -1052,7 +1052,17 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     ),
     linear-gradient(45deg, var(--paper-fold, #e7ddc7) 0 50%, transparent 50%);
 }
+/* Pagina strappata: il bordo a zig-zag si ritaglia SOLO sulla carta (::before),
+   non sull'intera pagina. Con il clip-path sulla pagina venivano tagliate
+   anche l'etichetta del mood (che sporge a sinistra) e le foto (che sporgono
+   a destra), perché il ritaglio non lascia vedere niente fuori dal suo
+   riquadro. Senza ombra: sotto il bordo strappato un'ombra rettangolare
+   si vedrebbe a vuoto. */
 .mp-page.torn {
+  box-shadow: none;
+  padding-bottom: 34px;
+}
+.mp-page.torn::before {
   clip-path: polygon(
     0 0,
     100% 0,
@@ -1085,7 +1095,6 @@ input[type='time'].time-compact::-webkit-datetime-edit {
     2% 94.4%,
     0 98.6%
   );
-  padding-bottom: 34px;
 }
 
 /* Linguetta umore = NASTRO ADESIVO dello stesso colore del cartoncino (mix
@@ -1316,6 +1325,14 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   overflow-wrap: anywhere;
   white-space: normal;
 }
+/* Titoli delle note nella versione WEB (finestra >= 1024px, quella con la barra
+   laterale): -10% di dimensione rispetto a prima, sia nel mese (.mp-n) sia nel
+   giorno (.dn-title). Nella versione telefono restano come erano. */
+@media (min-width: 1024px) {
+  :root {
+    --title-k: 0.9;
+  }
+}
 .mp-n {
   position: relative;
   padding-left: 1.05rem;
@@ -1347,20 +1364,20 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-n[data-hand='a'] {
   font-family: 'Annales Marker', 'Caveat', cursive;
   font-weight: 700;
-  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 0.92);
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 0.92 * var(--title-k, 1));
 }
 .mp-n[data-hand='b'] {
   font-family: 'Annales Hand', 'Kalam', sans-serif;
-  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69);
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * var(--title-k, 1));
   margin-left: 0.4rem;
 }
 .mp-n[data-hand='c'] {
   font-family: 'Annales Hand Gochi', 'Gochi Hand', cursive;
-  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69);
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * var(--title-k, 1));
 }
 .mp-n[data-hand='d'] {
   font-family: 'Annales Hand Shadows', 'Shadows Into Light', cursive;
-  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 1.06);
+  font-size: calc(var(--mp-wd-fs, 1.562rem) * 0.69 * 1.06 * var(--title-k, 1));
   margin-left: 0.25rem;
 }
 .mp-empty {
@@ -1379,12 +1396,13 @@ input[type='time'].time-compact::-webkit-datetime-edit {
    canzone. Ordine: giorno+titoli | persone | luogo+musica | foto. */
 .mp-side {
   position: absolute;
-  /* segue il cartoncino (--mp-cw): stesso margine di 3% prima, stessi 18%
-     di riserva per le polaroid dopo, indipendentemente da quanto è largo */
-  left: calc(var(--mp-cw, 33%) + 3%);
+  /* parte dopo il bordo destro VERO del cartoncino (--mp-card-r, misurato da
+     MonthPages.jsx; senza misura, la stima --mp-cw) più 22px di respiro, e
+     lascia il 18% di riserva per le polaroid */
+  left: calc(var(--mp-card-r, var(--mp-cw, 33%)) + 22px);
   top: 40px;
   z-index: 6;
-  width: calc(79% - var(--mp-cw, 33%));
+  width: calc(82% - var(--mp-card-r, var(--mp-cw, 33%)) - 22px);
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -1399,7 +1417,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   min-width: 0;
 }
 .mp-page.has-photo.two-photo .mp-side {
-  width: calc(73% - var(--mp-cw, 33%));
+  width: calc(76% - var(--mp-card-r, var(--mp-cw, 33%)) - 22px);
   gap: 12px;
 }
 
@@ -1440,6 +1458,10 @@ input[type='time'].time-compact::-webkit-datetime-edit {
 .mp-tape > span:first-child {
   flex: none;
   box-shadow: 0 0 0 1.5px rgba(255, 253, 246, 0.8), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+/* targhetta «+x persone»: niente tondino con la foto davanti, solo il testo */
+.mp-tape-more > span:first-child {
+  box-shadow: none;
 }
 .mp-tape-name {
   overflow: hidden;
@@ -2303,7 +2325,7 @@ input[type='time'].time-compact::-webkit-datetime-edit {
   align-self: flex-start;
   flex: none;
   font-family: 'Annales Pen', 'Permanent Marker', cursive;
-  font-size: 1.06rem;
+  font-size: calc(1.06rem * var(--title-k, 1));
   line-height: 1.15;
   color: #2b2015;
 }

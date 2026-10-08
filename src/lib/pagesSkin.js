@@ -97,22 +97,49 @@ export function moodKind(value) {
 // come già fa il colore del mood sul cartoncino. Così vista mese e vista
 // giorno, che leggono lo STESSO colore, non possono più andare fuori
 // sincrono come succedeva quando la vista giorno applicava solo il bordo.
-const TAPE_BASE_COLORS = [
+// Le tinte non sono più 12 fisse (tutte simili e sul beige: con più persone
+// nella stessa nota le targhette si assomigliavano e nomi diversi finivano
+// spesso sullo stesso colore): il colore si ricava dal nome con 24 tonalità
+// (una ogni 15°) in due luminosità, quindi 48 varianti ben distinte, sempre con
+// lo stesso aspetto "di carta" (saturazione e luminosità contenute).
+function hslToHex(h, s, l) {
+  const a = s * Math.min(l, 1 - l)
+  const f = (n) => {
+    const k = (n + h / 30) % 12
+    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
+    return Math.round(255 * c)
+      .toString(16)
+      .padStart(2, '0')
+  }
+  return `#${f(0)}${f(8)}${f(4)}`
+}
+
+// La vecchia tavolozza: i colori salvati sulle persone prima del cambio
+// (`tapeColor`, assegnato alla creazione) vengono ricalcolati dal nome con la
+// tavolozza nuova, così anche le persone esistenti ottengono i colori più vari.
+const LEGACY_TAPE_COLORS = new Set([
   '#8397a6', '#a58e6a', '#8a9c6a', '#a889a0', '#a89465', '#9089ac',
   '#7ea6a0', '#c19077', '#8b98b3', '#b39cae', '#93a575', '#b9a874',
-]
+])
 
 // Colore per nome (non per id): stabile anche se la persona viene
 // ricreata, e la stessa formula da poter salvare lato server (vedi
 // pb_migrations/1758000014_people_tape_color.js, campo `tapeColor`).
 export function colorForName(name) {
   const key = (name || '').trim().toLowerCase()
-  return TAPE_BASE_COLORS[hash(key) % TAPE_BASE_COLORS.length]
+  // hash() ha i bit bassi poco mescolati (molti nomi finivano sullo stesso colore):
+  // si usano quelli alti
+  const h = Math.floor(hash(key) / 4096)
+  const hue = (h % 24) * 15 + 6
+  const light = Math.floor(h / 24) % 2 === 0 ? 0.5 : 0.6
+  return hslToHex(hue, 0.5, light)
 }
 
 // Colore attivo di una persona: quello salvato sul record (`tapeColor`,
 // assegnato alla creazione — vedi src/lib/people.js) se presente, altrimenti
 // ricalcolato dal nome (persone create prima di questo campo).
 export function personTapeColor(person) {
-  return person?.tapeColor || colorForName(person?.name)
+  const saved = (person?.tapeColor || '').toLowerCase()
+  if (saved && !LEGACY_TAPE_COLORS.has(saved)) return person.tapeColor
+  return colorForName(person?.name)
 }
