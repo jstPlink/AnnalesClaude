@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { fileUrl } from '../../lib/pocketbase'
-import { plainText, parsePlace } from '../../lib/notes'
+import { noteText, parsePlace } from '../../lib/notes'
 import { dayMood, moodColor } from '../../lib/mood'
 import { durationMinutes, parseWall } from '../../lib/dates'
 import PersonAvatar from '../../components/PersonAvatar'
@@ -175,7 +175,7 @@ export default function DayPages({
         startMin,
         endMin,
         title: n.title?.trim() || 'Senza titolo',
-        body: plainText(n.content),
+        body: noteText(n.content),
         hand: handFor(n.id),
         mood: n.mood,
         cw: cardWidthFor(n.id),

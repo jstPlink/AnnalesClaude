@@ -478,6 +478,47 @@ export function plainText(s) {
     .trim()
 }
 
+// Testo di una nota come lo si vede nell'editor, per le anteprime: gli a capo
+// (<br>, <div>, <p>), le righe vuote, gli spazi e gli elenchi (un «• » per ogni
+// punto) restano com'erano scritti, a differenza di plainText() che schiaccia
+// tutto in una riga sola (quello serve a ricerche e recap, non alla lettura).
+// Va mostrato con `white-space: pre-wrap`.
+export function noteText(content) {
+  const raw = String(content ?? '')
+  if (!/<[a-z!/][\s\S]*>/i.test(raw)) return raw.replace(/\r\n?/g, '\n').trim()
+  const root = document.createElement('div')
+  root.innerHTML = raw
+  let out = ''
+  const newline = () => {
+    if (out && !out.endsWith('\n')) out += '\n'
+  }
+  const walk = (n) => {
+    if (n.nodeType === 3) {
+      out += n.textContent.replace(/\u00a0/g, ' ')
+      return
+    }
+    if (n.nodeType !== 1) return
+    const tag = n.nodeName
+    if (tag === 'BR') {
+      out += '\n'
+      return
+    }
+    if (tag === 'LI') {
+      newline()
+      out += '• '
+      n.childNodes.forEach(walk)
+      newline()
+      return
+    }
+    const block = tag === 'DIV' || tag === 'P' || tag === 'UL' || tag === 'OL' || /^H[1-6]$/.test(tag)
+    if (block) newline()
+    n.childNodes.forEach(walk)
+    if (block) newline()
+  }
+  root.childNodes.forEach(walk)
+  return out.replace(/^\n+/, '').replace(/\s+$/, '')
+}
+
 // Confronta la nota salvata sul server con quanto inserito nell'editor.
 // Ritorna un elenco di problemi (vuoto = tutto ok).
 export function checkSavedNote(rec, expected) {

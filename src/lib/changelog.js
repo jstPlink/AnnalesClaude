@@ -9,6 +9,15 @@
 
 export const CHANGELOG = [
   {
+    version: '0.78.4',
+    date: '2026-10-09 15:26',
+    changes: [
+      "Editor: scrivendo «-» e uno spazio a inizio riga il punto elenco compare sulla stessa riga, senza far salire il testo su quella precedente. Backspace a inizio di un punto elenco lo toglie, e si può ricrearlo subito dopo.",
+      "Vista giorno: l'anteprima del testo di ogni nota rispetta gli a capo, le righe vuote, gli spazi e gli elenchi come sono scritti nella nota.",
+      "I disegnini sullo sfondo del foglio (mese e giorno) sono più visibili del 15%.",
+    ],
+  },
+  {
     version: '0.78.3',
     date: '2026-10-08 16:59',
     changes: [
